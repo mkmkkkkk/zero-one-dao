@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zero One</title>
+<style>
+  :root { --ink: #1f1d1a; --paper: #f5f2ec; --rule: #c9c2b4; --muted: #6b655b; --accent: #245c3a; }
+  html { background: var(--paper); color: var(--ink); }
+  body { margin: 0 auto; max-width: 68rem; padding: 2rem 1.25rem 4rem; font: 15px/1.5 Georgia, "Times New Roman", serif; }
+  h1 { font-size: 1.6rem; font-weight: normal; margin: 0 0 .25rem; letter-spacing: .01em; }
+  h2 { font-size: 1.05rem; font-weight: normal; text-transform: uppercase; letter-spacing: .12em; margin: 2.25rem 0 .5rem; color: var(--muted); }
+  p.lead { margin: 0 0 1.5rem; font-size: 1.05rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: .4rem .5rem; border-bottom: 1px solid var(--rule); }
+  th { font-weight: normal; color: var(--muted); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code, .mono { font: 13px/1.4 "SF Mono", Menlo, Consolas, monospace; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1.25rem; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  a { color: var(--accent); }
+  .state { border: 1px solid var(--rule); padding: 0 .35rem; font-size: 12px; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: 13px; }
+  .empty { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<h1>Zero One</h1>
+<p class="lead">Any member can propose anything; only the other members' votes or exits can stop it.</p>
+<p><a href="README.txt">README.txt</a> <a href="state.json">state.json</a> <a href="proposals.json">proposals.json</a> <a href="llms.txt">llms.txt</a> <a href="{{CONSTITUTION_URL}}">constitution</a></p>
+
+<h2>Treasury</h2>
+<dl class="kv" id="treasury"></dl>
+
+<h2>Governance</h2>
+<dl class="kv" id="governance"></dl>
+
+<h2>Members</h2>
+<table id="members"><thead><tr><th>address</th><th class="num">shares</th><th class="num">percent</th></tr></thead><tbody></tbody></table>
+
+<h2>Proposals</h2>
+<table id="proposals"><thead><tr><th>id</th><th>state</th><th>effect</th><th class="num">yes</th><th class="num">no</th><th>voting ends</th><th>grace ends</th></tr></thead><tbody></tbody></table>
+
+<h2>Tasks</h2>
+<table id="tasks"><thead><tr><th>id</th><th>status</th><th class="num">reward (shares)</th><th>proposer</th><th>worker</th><th>verifiers</th><th class="num">confirmations</th></tr></thead><tbody></tbody></table>
+
+<footer id="footer"></footer>
+<script>
+(async () => {
+  const text = (value) => document.createTextNode(String(value));
+  const cell = (value, cls) => { const td = document.createElement("td"); if (cls) td.className = cls; td.appendChild(text(value)); return td; };
+  const row = (cells) => { const tr = document.createElement("tr"); cells.forEach((c) => tr.appendChild(c)); return tr; };
+  const kv = (id, pairs) => { const dl = document.getElementById(id); pairs.forEach(([k, v]) => { const dt = document.createElement("dt"); dt.appendChild(text(k)); const dd = document.createElement("dd"); dd.appendChild(text(v)); dl.appendChild(dt); dl.appendChild(dd); }); };
+  const when = (unix) => (unix ? new Date(unix * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "-");
+  const fill = (id, rows, empty) => { const body = document.querySelector("#" + id + " tbody"); if (rows.length === 0) { const td = cell(empty, "empty"); td.colSpan = 8; body.appendChild(row([td])); return; } rows.forEach((r) => body.appendChild(r)); };
+  let s;
+  try { s = await (await fetch("state.json", { cache: "no-store" })).json(); } catch (error) { document.getElementById("footer").appendChild(text("state.json could not be loaded: " + error)); return; }
+  kv("treasury", [["USDC in the Safe", s.treasury.usdcFormatted], ["shares outstanding", s.treasury.totalSharesFormatted], ["NAV (USDC per share)", s.treasury.navUsdcPerShare], ["Safe", s.treasury.safe], ["constitution keccak256", s.constitution.textHash]]);
+  kv("governance", [["voting period", s.governance.votingPeriod + " s"], ["grace period", s.governance.gracePeriod + " s"], ["sponsor threshold (raw shares)", s.governance.sponsorThreshold], ["quorum %", s.governance.quorumPercent], ["min retention %", s.governance.minRetentionPercent], ["proposal offering (wei)", s.governance.proposalOffering]]);
+  fill("members", s.members.map((m) => row([cell(m.address, "mono"), cell(m.sharesFormatted, "num"), cell(m.percent + "%", "num")])), "no members");
+  fill("proposals", s.proposals.map((p) => row([cell(p.id), cell(p.state), cell(p.treasuryEffect.summary), cell(p.yesShares, "num"), cell(p.noShares, "num"), cell(when(p.votingEnds)), cell(when(p.graceEnds))])), "no proposals");
+  fill("tasks", s.tasks.map((t) => row([cell(t.taskId), cell(t.status), cell(t.rewardSharesFormatted, "num"), cell(t.proposer, "mono"), cell(t.worker, "mono"), cell(t.verifiers.join(" "), "mono"), cell(t.confirmations + "/" + t.threshold, "num")])), "no tasks");
+  document.getElementById("footer").appendChild(text("Chain " + s.chain.name + " (" + s.chain.id + "), block " + s.chain.blockNumber + ", snapshot " + s.generatedAt + ". Chain facts only."));
+})();
+</script>
+</body>
+</html>
