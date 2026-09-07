@@ -12,6 +12,7 @@
  */
 import {
   decodeAbiParameters,
+  decodeEventLog,
   encodeAbiParameters,
   encodeFunctionData,
   getAddress,
@@ -22,8 +23,8 @@ import {
   type Hex,
 } from "viem";
 
-import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, type GovernanceConfig, type PackedCall, type WriteContext } from "./baal.js";
-import { writeAndWait } from "./onchain.js";
+import { awaitCode, encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, type GovernanceConfig, type PackedCall, type WriteContext } from "./baal.js";
+import { awaitRead, simulateSettled, writeAndWait } from "./onchain.js";
 import type { ZeroOneDao } from "./zeroOne.js";
 
 /** The addresses the builder needs (a full ZeroOneDao satisfies it; a deployment record does too). */
@@ -282,14 +283,15 @@ export async function deployTemplate(proposer: WriteContext, dao: DaoAddresses, 
   let deployHash: Hex | undefined;
   const existing = await proposer.publicClient.getCode({ address: predicted });
   if (existing === undefined || existing === "0x") {
-    const simulation = await proposer.publicClient.simulateContract({ address: dao.templateFactory, abi: factoryAbi(), functionName: "deploy", args: [TEMPLATE_IDS[spec.template], paramsBytes, member, useSalt], account: proposer.account } as never);
+    const simulation = await simulateSettled<{ result: unknown; request: Record<string, unknown> }>(proposer, { address: dao.templateFactory, abi: factoryAbi(), functionName: "deploy", args: [TEMPLATE_IDS[spec.template], paramsBytes, member, useSalt] });
     const [deployed] = simulation.result as unknown as [Address, Hex];
     if (getAddress(deployed) !== predicted) throw new Error(`factory would deploy at ${deployed}, predicted ${predicted}`);
-    deployHash = (await writeAndWait(proposer, simulation.request as unknown as Record<string, unknown>)).hash;
+    deployHash = (await writeAndWait(proposer, simulation.request)).hash;
   }
-  const code = await proposer.publicClient.getCode({ address: predicted });
+  // A load-balanced public RPC may answer from a node that has not seen the receipt's block yet.
+  const code = await awaitCode(proposer.publicClient, predicted);
   if (code === undefined || code === "0x") throw new Error(`no code at ${predicted}`);
-  const description = await describe(proposer, predicted);
+  const description = await awaitRead(() => describe(proposer, predicted), () => true);
   const paramsHash = keccak256(paramsBytes);
   if (description.paramsHash !== paramsHash) {
     throw new Error(`paramsHash mismatch for ${spec.template}: contract ${description.paramsHash}, local ${paramsHash}`);
@@ -429,17 +431,23 @@ export async function submitCalls(
   const baalAbi = loadBaalArtifact("Baal").abi;
   const data = encodeProposalData(calls);
   const before = (await proposer.publicClient.readContract({ address: dao.baal, abi: baalAbi, functionName: "proposalCount" })) as number | bigint;
-  const simulation = await proposer.publicClient.simulateContract({
-    address: dao.baal,
-    abi: baalAbi,
-    functionName: "submitProposal",
-    args: [data, expiration, 0n, details],
-    account: proposer.account,
-  } as never);
-  const { hash } = await writeAndWait(proposer, simulation.request as unknown as Record<string, unknown>);
-  const after = (await proposer.publicClient.readContract({ address: dao.baal, abi: baalAbi, functionName: "proposalCount" })) as number | bigint;
-  if (Number(after) !== Number(before) + 1) throw new Error(`proposalCount did not advance by one (${before} -> ${after})`);
-  return { id: Number(after), data, submitHash: hash };
+  const simulation = await simulateSettled<{ request: Record<string, unknown> }>(proposer, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [data, expiration, 0n, details] });
+  const { hash, receipt } = await writeAndWait(proposer, simulation.request);
+  // The id comes from the receipt's SubmitProposal event (a lagging node could still report the old count).
+  let id: number | undefined;
+  for (const log of receipt.logs) {
+    if (log.address.toLowerCase() !== dao.baal.toLowerCase()) continue;
+    try {
+      const event = decodeEventLog({ abi: baalAbi, data: log.data, topics: log.topics });
+      if (event.eventName === "SubmitProposal") id = Number((event.args as unknown as { proposal: bigint }).proposal);
+    } catch {
+      // not a Baal event we decode
+    }
+  }
+  if (id === undefined) throw new Error(`no SubmitProposal event in ${hash}`);
+  if (id !== Number(before) + 1) throw new Error(`proposalCount did not advance by one (${before} -> ${id})`);
+  await awaitRead(() => proposer.publicClient.readContract({ address: dao.baal, abi: baalAbi, functionName: "proposalCount" }) as Promise<number | bigint>, (count) => Number(count) >= id!);
+  return { id, data, submitHash: hash };
 }
 
 /**
