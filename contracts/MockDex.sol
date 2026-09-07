@@ -22,6 +22,7 @@ contract MockDex {
     error TransferFailed();
 
     event PriceSet(uint256 price);
+    event Drained(address indexed token, address indexed to, uint256 amount);
     event Bought(address indexed buyer, uint256 settlementIn, uint256 assetOut);
     event Sold(address indexed seller, uint256 assetIn, uint256 settlementOut);
 
@@ -42,6 +43,18 @@ contract MockDex {
         if (price_ == 0) revert ZeroPrice();
         price = price_;
         emit PriceSet(price_);
+    }
+
+    /// @notice Remove the whole balance of `token` (mirror control; anyone): simulates a dead venue
+    /// whose sells revert, so scenarios can show that stop()/migrate() never call it.
+    /// @param token The token to drain (settlement or asset).
+    /// @param to Recipient of the drained balance.
+    /// @return amount Units moved.
+    function drain(IERC20Minimal token, address to) external returns (uint256 amount) {
+        amount = token.balanceOf(address(this));
+        if (amount == 0) revert ZeroAmount();
+        if (!token.transfer(to, amount)) revert TransferFailed();
+        emit Drained(address(token), to, amount);
     }
 
     /// @notice Asset received for `settlementIn` at the current price.

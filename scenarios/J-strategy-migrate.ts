@@ -1,11 +1,13 @@
 /**
  * DESIGN.md §11 J: a running Strategy is migrated to a new contract by vote: the voted multicall is
- * [old.migrate(new), new.start()]; the old contract unwinds its position, hands every settlement
- * unit to the new voted contract and holds nothing after; the new one runs by its own rules.
+ * [old.migrate(new), new.start()]; the old contract moves its raw holdings (every settlement unit and
+ * every asset unit) to the new voted contract WITHOUT calling the venue (DESIGN.md §7; decision.md
+ * phase 2a ruling 2) and holds nothing after; the new one runs by its own rules. The venue's price
+ * is moved and the MockDex is drained before the migration to show that neither is consulted.
  * The proposer alone cannot migrate.
  */
 import { deployTemplate, migrateCalls, proposalDetails, type StrategyParams } from "../src/proposals.js";
-import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, HOUR, now, processProposal, propose, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, simulateAt, stateOf, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
+import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, HOUR, now, processProposal, propose, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, stateOf, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 export async function main(): Promise<void> {
   const mirror = await boot("scenario-J");
@@ -45,28 +47,37 @@ export async function main(): Promise<void> {
     const migration = await propose(mirror, "A", calls, proposalDetails(s2, `A: migrate S1 ${s1} -> S2`));
     assert((await stateOf(mirror, migration.id)) === "Voting", "migration proposal is in voting");
 
-    step("A YES, B YES, C NO; grace passes; O executes: S1 unwinds and hands 1000 USDC to S2; S2 starts");
+    step("the venue dies (MockDex drained of USDC, price moved): the migration must not depend on it");
+    const dexUsdc = await usdcOf(mirror, market.dex);
+    await sendAt(mirror, "F", market.dex, "dex", "drain", [mirror.dao.settlement, mirror.actors.F.account.address], `F drains ${fmtS(dexUsdc)} USDC from MockDex (a sell would now fail)`);
+    await setPrice(mirror, market, 5n * SETTLEMENT_UNIT);
+    assert((await usdcOf(mirror, market.dex)) === 0n, "MockDex holds no USDC: an unwind (sell) would revert");
+
+    step("A YES, B YES, C NO; grace passes; O executes: S1 moves its raw holdings (700 USDC + 150 MOCK) to S2 without touching the venue; S2 starts");
     await vote(mirror, "A", migration.id, true);
     await vote(mirror, "B", migration.id, true);
     await vote(mirror, "C", migration.id, false);
     await warpPastGrace(mirror, migration.id);
     const safeBefore = await usdcOf(mirror, mirror.dao.safe);
     const processed2 = await processProposal(mirror, "O", migration);
-    assert(processed2.info.status.passed && !processed2.info.status.actionFailed, "migrate + start executed by the Safe");
+    assert(processed2.info.status.passed && !processed2.info.status.actionFailed, "migrate + start executed by the Safe (no venue call: the drained venue did not fail the action)");
     const old = await describeAt(mirror, s1, "S1 after migration");
     assert(old.status === "Migrated", "S1 is Migrated");
     assert((await usdcOf(mirror, s1)) === 0n && (await mockOf(s1)) === 0n, "S1 holds nothing (no USDC, no MOCK)");
     const next = await describeAt(mirror, s2.address, "S2 after migration");
-    assert(next.status === "Running" && (await usdcOf(mirror, s2.address)) === 1_000n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 0n, "S2 is Running with the whole 1000 USDC (150 MOCK unwound at 2 = 300)");
+    assert(next.status === "Running" && (await usdcOf(mirror, s2.address)) === 700n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 150n * SETTLEMENT_UNIT, "S2 is Running with the raw holdings: 700 USDC + 150 MOCK (nothing sold)");
+    assert((await usdcOf(mirror, market.dex)) === 0n, "the venue was not called by the migration (still drained)");
     assert((await usdcOf(mirror, mirror.dao.safe)) === safeBefore && safeBefore === seeded.safeSettlement - 1_000n * SETTLEMENT_UNIT, "the migration moved nothing through the treasury");
 
-    step("S1 can no longer run; S2 runs by its own rule (100 per run)");
+    step("the venue is refilled; S1 can no longer run; S2 runs by its own rule (100 per run) on the migrated position");
+    await sendAt(mirror, "F", mirror.dao.settlement, "settlement", "transfer", [market.dex, dexUsdc], `F refills MockDex with ${fmtS(dexUsdc)} USDC`);
+    await setPrice(mirror, market, 2n * SETTLEMENT_UNIT);
     await expectRevert(simulateAt(mirror, "W", s1, "strategy", "run", []), "WrongStatus", "run() on the migrated S1 is refused");
     await sendAt(mirror, "W", s2.address, "strategy", "run", [], "W run() S2 #1");
-    assert((await usdcOf(mirror, s2.address)) === 900n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 50n * SETTLEMENT_UNIT, "S2 bought 100 USDC of MOCK (50 MOCK)");
+    assert((await usdcOf(mirror, s2.address)) === 600n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 200n * SETTLEMENT_UNIT, "S2 bought 100 USDC of MOCK (50 MOCK): 600 USDC + 200 MOCK");
     await warp(mirror, HOUR, "minInterval");
     await sendAt(mirror, "B", s2.address, "strategy", "run", [], "B run() S2 #2");
-    assert((await usdcOf(mirror, s2.address)) === 800n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 100n * SETTLEMENT_UNIT, "S2 holds 800 USDC + 100 MOCK");
+    assert((await usdcOf(mirror, s2.address)) === 500n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 250n * SETTLEMENT_UNIT, "S2 holds 500 USDC + 250 MOCK");
     passed = true;
   } finally {
     verdict("J", passed);

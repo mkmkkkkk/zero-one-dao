@@ -20,8 +20,10 @@ interface IStrategyVenue {
 ///      value >= budget x (1 + takeProfit) or stopLossBps != 0 and value <= budget x (1 - stopLoss)
 ///      -> unwind, return, Complete;
 ///   4. otherwise buy the asset with min(maxPerRun, settlement held) settlement units.
-/// stop() and migrate(newContract) (Safe only) unwind first, then move all settlement to the Safe /
-/// the new contract. params = abi.encode(address venue, address asset, uint256 budget, Rule rule);
+/// stop() and migrate(newContract) (Safe only) move the raw holdings (every settlement unit and every
+/// asset unit) to the Safe / the new contract WITHOUT calling the venue, so a dead venue can never trap
+/// funds (DESIGN.md §7; decision.md phase 2a ruling 2). Unwinding on the venue is run()'s job before the
+/// deadline. params = abi.encode(address venue, address asset, uint256 budget, Rule rule);
 /// amend(params) replaces the Rule only (venue, asset and budget do not change by amend).
 contract StrategyProposal is ProposalBase {
     struct Rule {
@@ -52,6 +54,7 @@ contract StrategyProposal is ProposalBase {
 
     event Ran(uint256 indexed run, uint256 valueBefore, uint256 bought, uint256 assetOut);
     event Unwound(uint256 assetIn, uint256 settlementOut, string reason);
+    event Moved(address indexed to, uint256 settlementMoved, uint256 assetMoved, string reason);
 
     /// @param safe_ The treasury Safe.
     /// @param settlement_ The settlement ERC-20.
@@ -121,10 +124,12 @@ contract StrategyProposal is ProposalBase {
         emit Ran(runs, valueBefore, size, assetOut);
     }
 
-    /// @dev Funding check only; the rule runs through run().
+    /// @dev Funding check only; the rule runs through run(). A migrated position arrives as raw
+    /// holdings (settlement plus asset), so the settlement-only check applies when no asset is held;
+    /// valuing the asset here would call the venue, which stop()/migrate() must never depend on.
     function _start() internal view override {
         uint256 balance = held();
-        if (balance < budget) revert Underfunded(budget, balance);
+        if (balance < budget && asset.balanceOf(address(this)) == 0) revert Underfunded(budget, balance);
     }
 
     /// @dev Replace the rule; venue, asset and budget stay.
@@ -134,16 +139,23 @@ contract StrategyProposal is ProposalBase {
         paramsHash = keccak256(abi.encode(address(venue), address(asset), budget, next));
     }
 
-    /// @dev Unwind, then return all settlement to the Safe.
+    /// @dev Move the raw holdings (settlement + asset) to the Safe; the venue is not called.
     function _stop() internal override returns (uint256 returned) {
-        _unwind("stop");
-        return _returnSettlement(safe);
+        return _moveHoldings(safe, "stop");
     }
 
-    /// @dev Unwind, then move all settlement to the new voted contract.
+    /// @dev Move the raw holdings (settlement + asset) to the new voted contract; the venue is not called.
     function _migrate(address newContract) internal override returns (uint256 moved) {
-        _unwind("migrate");
-        return _returnSettlement(newContract);
+        return _moveHoldings(newContract, "migrate");
+    }
+
+    /// @dev Transfer every settlement unit and every asset unit held to `to` without touching the venue.
+    /// @return settlementMoved Settlement units transferred (the asset amount is in the Moved event).
+    function _moveHoldings(address to, string memory reason) private returns (uint256 settlementMoved) {
+        settlementMoved = _returnSettlement(to);
+        uint256 assetBalance = asset.balanceOf(address(this));
+        if (assetBalance != 0 && !asset.transfer(to, assetBalance)) revert TransferFailed();
+        emit Moved(to, settlementMoved, assetBalance, reason);
     }
 
     function _setRule(Rule memory next) private {

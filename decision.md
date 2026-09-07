@@ -86,3 +86,7 @@
 7. paramsHash = keccak of the latest voted params: accepted.
 8. MockDex on testnet; a Uniswap v3 adapter implementing IStrategyVenue is required before any mainnet Strategy proposal (phase 3, not blocking genesis).
 9. Explicit processProposal gas (5M) in mirror and relay: accepted, written into DESIGN §7.
+
+## 2026-09-08 phase 2b (DW worker): ruling 2 implemented, relay, beacon, cold-start E2E — provisional until Fable reviews
+- Ruling 2: `StrategyProposal._stop/_migrate` now transfer every settlement unit and every asset unit to the Safe / the successor (`_moveHoldings`, event `Moved`); the venue is not called. `_unwind` (sell on the venue) is reached only from `run()`. `_start()` keeps the `held() >= budget` check when the contract holds no asset and accepts a migrated position (asset balance > 0) without valuing it (valuing would call the venue). Design point (worker, provisional): alternative was `value() >= budget` via the venue price, rejected as venue-dependent.
+- Scenario J now drains the MockDex (`MockDex.drain`, mirror-only) and moves its price before the migration vote executes; the migration still passes, S2 receives 700 USDC + 150 MOCK raw and runs on that position. G unchanged and green. TEMPLATES.md §2 and PARAMETERS.md updated.

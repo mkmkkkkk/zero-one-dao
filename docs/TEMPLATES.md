@@ -49,8 +49,11 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
   3. `value = settlement held + asset held × price`; `takeProfit` and `value >= budget × (1 + tp)` or
      `stopLoss` and `value <= budget × (1 - sl)` → unwind, return, `Complete`.
   4. otherwise buy the asset with `min(maxPerRun, settlement held)`.
-- `stop()` / `migrate(new)` (Safe only): unwind (sell all asset) then move all settlement to the Safe / to
-  `new`; `new.start()` requires `new` to hold at least its own `budget`.
+- `stop()` / `migrate(new)` (Safe only): move the raw holdings (every settlement unit and every asset unit)
+  to the Safe / to `new` without calling the venue, so a dead venue can never trap funds; unwinding on the
+  venue is `run()`'s job before the deadline. `new.start()` requires `new` to hold at least its own `budget`
+  in settlement unless it already holds the asset (a migrated position); an asset that lands in the Safe is
+  sold or added to guild assets by a later proposal.
 - `amend(abi.encode(Rule))` replaces the rule (venue, asset, budget unchanged); `topUp` raises `budget`
   (the take-profit / stop-loss reference).
 - operator role: leads by default; no special power. Views: `value()`, `rule()`, `runs()`, `lastRun()`.
