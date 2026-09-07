@@ -1,0 +1,72 @@
+MockUSDC submission {"status": "1", "message": "OK", "result": "zcx2xeves7fnrmrqpcqby8lns7uzuewup8gm2jyxumieyh49ux"}
+MockUSDC verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+MockUSDC verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+MockUSDC source-present True
+NavShareToken submission {"status": "1", "message": "OK", "result": "ke8vjrr9bqlwaeckqh74n6ejhbpxqj4k6xugluppwt88lxbfde"}
+NavShareToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+NavShareToken verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+NavShareToken source-present True
+LootToken submission {"status": "1", "message": "OK", "result": "il2qafbpd82jkslrrdkmzvui8uxvzkzatkshjhnefwfgmc9gnk"}
+LootToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+LootToken verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+LootToken source-present True
+DepositShaman submission {"status": "1", "message": "OK", "result": "6yvg5niiggh5gu9srzru7aq6gcfmvvkh9ee2fdf4zbr7nbgmyv"}
+DepositShaman verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+DepositShaman verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+DepositShaman source-present True
+WorkManager submission {"status": "1", "message": "OK", "result": "b9qtdwzpbuhvclmbw3p8cnjmuxjhi6wsfbjbrf1htr3cnwpell"}
+WorkManager verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+WorkManager verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+WorkManager source-present True
+PaymentDeployer submission {"status": "1", "message": "OK", "result": "edyripqwqhdh7wypgctbkg37gbl7zz85xxsiuphwkmqjwajyfy"}
+PaymentDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+PaymentDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+PaymentDeployer source-present True
+StrategyDeployer submission {"status": "1", "message": "OK", "result": "emcb2ybrk7ciwrz8l94evsjxqpqidvsettkktvvuh44ajdsrln"}
+StrategyDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+StrategyDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+StrategyDeployer source-present True
+ProjectDeployer submission {"status": "1", "message": "OK", "result": "qaurcmugkd8teffpf3gdfqdbxrn9cdxrxf6hk2qxscbhkpppvw"}
+ProjectDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ProjectDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ProjectDeployer source-present True
+ConfigDeployer submission {"status": "1", "message": "OK", "result": "nqjy7awstlrjuy7hvy9ydecik3fwfi2yefqggq9xlt85yzidbe"}
+ConfigDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ConfigDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ConfigDeployer source-present True
+TemplateFactory submission {"status": "1", "message": "OK", "result": "trgnj9d2c5u1cbjs6ehs1xqcmk68bmj2kcpbsrwh4fd4ckgxmg"}
+TemplateFactory verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TemplateFactory verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TemplateFactory verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+TemplateFactory source-present True
+ZeroOneIntentAccount submission {"status": "1", "message": "OK", "result": "twvjdn14ba3vqqktf1nyzeh1nmil13u9mvjp72ztapgnfypnij"}
+ZeroOneIntentAccount verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ZeroOneIntentAccount verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ZeroOneIntentAccount verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ZeroOneIntentAccount source-present True
+Constitution submission {"status": "1", "message": "OK", "result": "wgbngedvnh4f3y6ujk6vle1unayvkqxvtgydzyp6cbeipvligk"}
+Constitution verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Constitution verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+Constitution source-present True
+{"MockUSDC": "verified", "NavShareToken": "verified", "LootToken": "verified", "DepositShaman": "verified", "WorkManager": "verified", "PaymentDeployer": "verified", "StrategyDeployer": "verified", "ProjectDeployer": "verified", "ConfigDeployer": "verified", "TemplateFactory": "verified", "ZeroOneIntentAccount": "verified", "Constitution": "verified"}
+BaalSingleton submission {"status": "1", "message": "OK", "result": "puipxffgrvfhaxkzmmzskkvzibaixsqfea13m5jiytyjqkb8xp"}
+BaalSingleton verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+BaalSingleton verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+BaalSingleton source-present True
+ModuleProxyFactory submission {"status": "1", "message": "OK", "result": "9zipr4yj5nfx9y7zdzxhlhuhutdc9yztkiiqygaw541wd1jzcr"}
+ModuleProxyFactory verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ModuleProxyFactory source-present True
+SafeSingleton submission {"status": "1", "message": "OK", "result": "icbf3sx1wxrla6ndcsghtnpadihx5uie1igps5frtxmd6jwuar"}
+SafeSingleton verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+SafeSingleton verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+SafeSingleton source-present True
+SafeProxyFactory submission {"status": "1", "message": "OK", "result": "pitvpkm2dkk1vbedlgqzmymqnvbcwjdnxfvrlwuvbqtj6tbcys"}
+SafeProxyFactory verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+SafeProxyFactory source-present True
+MultiSend submission {"status": "1", "message": "OK", "result": "yd4a4rx3hukbxj7x4g5ptgnvpv6tjvjqdcl1jnbetinsarj8c9"}
+MultiSend verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+MultiSend source-present True
+Safe submission {"status": "1", "message": "OK", "result": "qk7arhr9bzl4il9myvz7dgfrvjuvkycxgb6yhtbwabb3tqq2ip"}
+Safe verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+Safe source-present True
+{"BaalSingleton": "verified", "ModuleProxyFactory": "verified", "SafeSingleton": "verified", "SafeProxyFactory": "verified", "MultiSend": "verified", "Safe": "verified"}

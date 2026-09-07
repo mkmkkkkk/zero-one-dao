@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Content-Security-Policy", "value": "default-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/(relay|me/.*|health.json|state.json|proposals.json)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, private" }]
+    }
+  ],
+  "rewrites": [
+    { "source": "/relay", "destination": "https://relay-zero.mkyang.ai/relay" },
+    { "source": "/me/:path*", "destination": "https://relay-zero.mkyang.ai/me/:path*" },
+    { "source": "/health.json", "destination": "https://relay-zero.mkyang.ai/health.json" },
+    { "source": "/state.json", "destination": "https://relay-zero.mkyang.ai/state.json" },
+    { "source": "/proposals.json", "destination": "https://relay-zero.mkyang.ai/proposals.json" }
+  ]
+}
