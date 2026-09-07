@@ -16,6 +16,10 @@
     "scenario:D": "tsx scenarios/D-governance-param-change.ts",
     "scenario:E": "tsx scenarios/E-task-verifier-not-proposer.ts",
     "scenario:F": "tsx scenarios/F-founder-ordinary-member.ts",
+    "scenario:G": "tsx scenarios/G-strategy-contract.ts",
+    "scenario:H": "tsx scenarios/H-project-tranches.ts",
+    "scenario:I": "tsx scenarios/I-project-topup-stop.ts",
+    "scenario:J": "tsx scenarios/J-strategy-migrate.ts",
     "scenarios": "tsx scenarios/run-all.ts"
   },
   "dependencies": {

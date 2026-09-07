@@ -6,6 +6,9 @@
  */
 import { fileURLToPath } from "node:url";
 import {
+  BaseError,
+  decodeErrorResult,
+  encodeDeployData,
   encodeFunctionData,
   formatUnits,
   getAddress,
@@ -14,12 +17,14 @@ import {
   type Hex,
 } from "viem";
 
-import { encodeProposalData, loadBaalArtifact, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
+import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
-import { connectDevnet, increaseTime, type LocalChain } from "../src/onchain.js";
-import { DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
+import { connectDevnet, deployLocal, increaseTime, type LocalChain } from "../src/onchain.js";
+import { describe, submitTemplateProposal, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
+import { constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
 export { GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT };
+export const DAY = 24 * HOUR;
 
 export const PROPOSAL_STATES = ["Unborn", "Submitted", "Voting", "Cancelled", "Grace", "Ready", "Processed", "Defeated"] as const;
 export type ProposalStateName = (typeof PROPOSAL_STATES)[number];
@@ -39,7 +44,7 @@ export interface Mirror {
   devnet: Devnet;
   chain: LocalChain;
   dao: ZeroOneDao;
-  abi: Record<"baal" | "shares" | "settlement" | "deposit" | "work" | "safe", Abi>;
+  abi: Record<"baal" | "shares" | "settlement" | "deposit" | "work" | "safe" | "constitution" | "proposal" | "payment" | "strategy" | "project" | "config" | "dex", Abi>;
   actors: Record<ActorName, WriteContext>;
 }
 
@@ -99,6 +104,34 @@ export async function expectRevert(promise: Promise<unknown>, needle: string, me
   assert(false, `${message}: expected revert ${needle} but the call succeeded`);
 }
 
+/**
+ * Expect a contract deployment to revert in its constructor with the custom error `needle`.
+ * Simulates the creation with eth_call (no transaction is sent) and decodes the revert data.
+ */
+export async function expectDeployRevert(mirror: Mirror, actor: ActorName, contractName: string, args: readonly unknown[], needle: string, message: string): Promise<void> {
+  const artifact = loadLocalArtifact(contractName);
+  const data = encodeDeployData({ abi: artifact.abi, bytecode: artifact.bytecode, args } as never);
+  try {
+    await mirror.chain.publicClient.call({ data, account: mirror.actors[actor].account });
+  } catch (error) {
+    let decoded = "";
+    if (error instanceof BaseError) {
+      const withData = error.walk((candidate) => typeof (candidate as { data?: unknown }).data === "string") as { data?: Hex } | null;
+      if (withData?.data !== undefined && withData.data !== "0x") {
+        try {
+          decoded = decodeErrorResult({ abi: artifact.abi, data: withData.data }).errorName;
+        } catch {
+          decoded = withData.data;
+        }
+      }
+    }
+    const text = `${decoded} ${error instanceof Error ? error.message : String(error)}`;
+    assert(text.includes(needle), `${message} (constructor reverted with ${needle})`);
+    return;
+  }
+  assert(false, `${message}: expected constructor revert ${needle} but the deployment succeeded`);
+}
+
 function isMainModule(url: string): boolean {
   return process.argv[1] !== undefined && fileURLToPath(url) === process.argv[1];
 }
@@ -120,7 +153,13 @@ export async function boot(name: string): Promise<Mirror> {
   const chain = connectDevnet(devnet);
   const deployer = chain.contexts[0]!;
   console.log(`anvil ${devnet.rpcUrl} chainId ${devnet.chainId}`);
-  const dao = await deployZeroOne(deployer, { ...DEFAULT_PARAMS, founder: deployer.account.address });
+  let dao: ZeroOneDao;
+  try {
+    dao = await deployZeroOne(deployer, { ...DEFAULT_PARAMS, founder: deployer.account.address });
+  } catch (error) {
+    await stopDevnet(devnet);
+    throw error;
+  }
   const mirror: Mirror = {
     devnet,
     chain,
@@ -132,6 +171,14 @@ export async function boot(name: string): Promise<Mirror> {
       settlement: loadLocalArtifact("TestToken").abi,
       deposit: loadLocalArtifact("DepositShaman").abi,
       work: loadLocalArtifact("WorkManager").abi,
+      constitution: loadLocalArtifact("Constitution").abi,
+      // Common surface plus the base contract's custom errors, so negative cases decode OnlySafe / WrongStatus.
+      proposal: [...loadLocalAbi("IProposalContract"), ...loadLocalAbi("ProposalBase").filter((item) => item.type === "error" || item.type === "event")],
+      payment: loadLocalArtifact("PaymentProposal").abi,
+      strategy: loadLocalArtifact("StrategyProposal").abi,
+      project: loadLocalArtifact("ProjectProposal").abi,
+      config: loadLocalArtifact("ConfigProposal").abi,
+      dex: loadLocalArtifact("MockDex").abi,
     },
     actors: {
       F: chain.contexts[0]!,
@@ -144,12 +191,28 @@ export async function boot(name: string): Promise<Mirror> {
     },
   };
   console.log(`deployed: safe ${dao.safe} baal ${dao.baal} shares ${dao.shares} settlement ${dao.settlement}`);
-  console.log(`          depositShaman ${dao.depositShaman} workManager ${dao.workManager}`);
+  console.log(`          depositShaman ${dao.depositShaman} workManager ${dao.workManager} constitution ${dao.constitution}`);
   for (const [actor, context] of Object.entries(mirror.actors) as [ActorName, WriteContext][]) {
     console.log(`   ${actor} = ${context.account.address}  ${ACTOR_ROLES[actor]}`);
   }
-  await assertOnlyMintPaths(mirror);
+  try {
+    await assertOnlyMintPaths(mirror);
+    await assertConstitution(mirror);
+  } catch (error) {
+    await stopDevnet(devnet);
+    throw error;
+  }
   return mirror;
+}
+
+/** Assert the deployed Constitution carries exactly keccak256(docs/CONSTITUTION.md) and no setter. */
+export async function assertConstitution(mirror: Mirror): Promise<void> {
+  const onChain = await read<Hex>(mirror, "constitution", "textHash");
+  const local = constitutionHash();
+  console.log(`   constitution textHash ${onChain} url ${await read<string>(mirror, "constitution", "textUrl")}`);
+  assert(onChain === local, "Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)");
+  const setters = mirror.abi.constitution.filter((item) => item.type === "function" && item.stateMutability !== "view" && item.stateMutability !== "pure");
+  assert(setters.length === 0, "Constitution has no state-changing function (immutable, no amendment path)");
 }
 
 /**
@@ -180,25 +243,110 @@ export async function shutdown(mirror: Mirror): Promise<void> {
   console.log(`anvil stopped (${mirror.devnet.rpcUrl})`);
 }
 
-async function write(context: WriteContext, request: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[]; value?: bigint }): Promise<Receipt> {
-  const simulation = await context.publicClient.simulateContract({ ...request, account: context.account } as never);
-  const hash = await context.walletClient.writeContract({ ...simulation.request, account: context.account, chain: context.chain } as never);
+/**
+ * Simulate, send and wait. `gas` overrides the estimate: Baal.processProposal swallows an action
+ * failure (actionFailed = true, no revert), so eth_estimateGas can return a limit at which the outer
+ * call succeeds while the voted multicall runs out of gas inside; execution must send an explicit
+ * limit (the relay must do the same).
+ */
+async function write(context: WriteContext, request: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[]; value?: bigint; gas?: bigint }): Promise<Receipt> {
+  const { gas, ...call } = request;
+  const simulation = await context.publicClient.simulateContract({ ...call, account: context.account } as never);
+  const hash = await context.walletClient.writeContract({ ...simulation.request, ...(gas === undefined ? {} : { gas }), account: context.account, chain: context.chain } as never);
   const receipt = await context.publicClient.waitForTransactionReceipt({ hash });
   if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
   return { hash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed };
 }
 
-/** Read helper bound to the mirror. */
-export async function read<T>(mirror: Mirror, target: keyof Mirror["abi"], functionName: string, args: readonly unknown[] = []): Promise<T> {
-  const address = {
+/** Address of a fixed mirror target (template instances use readAt / sendAt with an explicit address). */
+function addressOf(mirror: Mirror, target: keyof Mirror["abi"]): Address {
+  const fixed: Partial<Record<keyof Mirror["abi"], Address>> = {
     baal: mirror.dao.baal,
     safe: mirror.dao.safe,
     shares: mirror.dao.shares,
     settlement: mirror.dao.settlement,
     deposit: mirror.dao.depositShaman,
     work: mirror.dao.workManager,
-  }[target];
-  return (await mirror.chain.publicClient.readContract({ address, abi: mirror.abi[target], functionName, args } as never)) as T;
+    constitution: mirror.dao.constitution,
+  };
+  const address = fixed[target];
+  if (address === undefined) throw new Error(`target ${target} has no fixed address; use readAt/sendAt`);
+  return address;
+}
+
+/** Read helper bound to the mirror. */
+export async function read<T>(mirror: Mirror, target: keyof Mirror["abi"], functionName: string, args: readonly unknown[] = []): Promise<T> {
+  return readAt<T>(mirror, addressOf(mirror, target), target, functionName, args);
+}
+
+/** Read any contract by address with one of the mirror's ABIs. */
+export async function readAt<T>(mirror: Mirror, address: Address, abi: keyof Mirror["abi"], functionName: string, args: readonly unknown[] = []): Promise<T> {
+  return (await mirror.chain.publicClient.readContract({ address, abi: mirror.abi[abi], functionName, args } as never)) as T;
+}
+
+/** Write to any contract by address with one of the mirror's ABIs. */
+export async function sendAt(mirror: Mirror, actor: ActorName, address: Address, abi: keyof Mirror["abi"], functionName: string, args: readonly unknown[], label: string): Promise<Receipt> {
+  const receipt = await write(mirror.actors[actor], { address, abi: mirror.abi[abi], functionName, args });
+  printReceipt(label, receipt);
+  return receipt;
+}
+
+/** Simulate a write to any contract by address, expecting it to revert (for negative cases). */
+export async function simulateAt(mirror: Mirror, actor: ActorName, address: Address, abi: keyof Mirror["abi"], functionName: string, args: readonly unknown[]): Promise<unknown> {
+  const context = mirror.actors[actor];
+  return mirror.chain.publicClient.simulateContract({ address, abi: mirror.abi[abi], functionName, args, account: context.account } as never);
+}
+
+/** Settlement balance of any address. */
+export async function usdcOf(mirror: Mirror, address: Address): Promise<bigint> {
+  return read<bigint>(mirror, "settlement", "balanceOf", [address]);
+}
+
+/** describe() of a proposal contract, printed. */
+export async function describeAt(mirror: Mirror, address: Address, label: string): Promise<Description> {
+  const d = await describe(mirror.actors.F, address);
+  console.log(`   [${label}] ${d.template} @ ${address}: status ${d.status} budget ${fmtS(d.budget)} deadline ${d.deadline} operator ${d.operator} params ${d.paramsHash} held ${fmtS(await usdcOf(mirror, address))} USDC`);
+  return d;
+}
+
+/** Deploy a template instance and submit the Baal proposal that funds and starts it (src/proposals.ts). */
+export async function proposeTemplate(mirror: Mirror, actor: ActorName, spec: TemplateSpec, summary: string): Promise<SubmittedProposal & Proposal> {
+  const submitted = await submitTemplateProposal(mirror.actors[actor], mirror.dao, spec, summary);
+  console.log(`   ${actor} deployed ${submitted.instance.contractName} @ ${submitted.instance.address} (tx ${submitted.instance.deployHash}) paramsHash ${submitted.instance.paramsHash} codeHash ${submitted.instance.codeHash}`);
+  const receipt = await mirror.chain.publicClient.getTransactionReceipt({ hash: submitted.submitHash });
+  const submit: Receipt = { hash: submitted.submitHash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed };
+  printReceipt(`${actor} submitProposal #${submitted.id} "${submitted.details.slice(0, 80)}..."`, submit);
+  console.log(`   details: ${submitted.details}`);
+  await warp(mirror, 1, "let votingStarts become past");
+  console.log(`   proposal #${submitted.id} state = ${await stateOf(mirror, submitted.id)}`);
+  return { ...submitted, submit };
+}
+
+export interface MockMarket {
+  asset: Address;
+  dex: Address;
+  price: bigint;
+}
+
+/**
+ * Deploy the mirror venue: a 6-dec "Mock Asset" (MOCK) TestToken held by the founder and a MockDex
+ * at `price` (settlement units per whole MOCK), seeded with `liquidity` of each side by the founder.
+ */
+export async function deployMockMarket(mirror: Mirror, price: bigint, liquidity: bigint): Promise<MockMarket> {
+  const F = mirror.actors.F;
+  const asset = await deployLocal(F, "TestToken", ["Mock Asset", "MOCK", 1_000_000_000n * SETTLEMENT_UNIT]);
+  const dex = await deployLocal(F, "MockDex", [mirror.dao.settlement, asset.address, price]);
+  console.log(`   MOCK ${asset.address} (tx ${asset.hash}); MockDex ${dex.address} (tx ${dex.hash}) price ${fmtS(price)} USDC per MOCK`);
+  const seedUsdc = await write(F, { address: mirror.dao.settlement, abi: mirror.abi.settlement, functionName: "transfer", args: [dex.address, liquidity] });
+  printReceipt(`F seeds MockDex with ${fmtS(liquidity)} USDC`, seedUsdc);
+  const seedAsset = await write(F, { address: asset.address, abi: mirror.abi.settlement, functionName: "transfer", args: [dex.address, liquidity] });
+  printReceipt(`F seeds MockDex with ${fmtS(liquidity)} MOCK`, seedAsset);
+  return { asset: asset.address, dex: dex.address, price };
+}
+
+/** Move the MockDex price (mirror control). */
+export async function setPrice(mirror: Mirror, market: MockMarket, price: bigint): Promise<Receipt> {
+  return sendAt(mirror, "F", market.dex, "dex", "setPrice", [price], `MockDex price -> ${fmtS(price)} USDC per MOCK`);
 }
 
 /** Advance chain time and mine one block. */
@@ -362,9 +510,12 @@ export async function warpPastGrace(mirror: Mirror, id: number): Promise<void> {
   console.log(`   proposal #${id} state = ${await stateOf(mirror, id)}`);
 }
 
-/** Process (execute) a Ready proposal; returns the resulting flags. */
+/** Gas limit for processProposal: explicit, never the estimate (see write()). */
+export const PROCESS_GAS = 5_000_000n;
+
+/** Process (execute) a Ready proposal with an explicit gas limit; returns the resulting flags. */
 export async function processProposal(mirror: Mirror, actor: ActorName, proposal: Proposal): Promise<{ receipt: Receipt; info: ProposalInfo }> {
-  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [proposal.id, proposal.data] });
+  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [proposal.id, proposal.data], gas: PROCESS_GAS });
   const info = await proposalInfo(mirror, proposal.id);
   printReceipt(`${actor} processProposal #${proposal.id} -> passed=${info.status.passed} actionFailed=${info.status.actionFailed} state=${await stateOf(mirror, proposal.id)}`, receipt);
   return { receipt, info };
@@ -395,31 +546,12 @@ export function transferCall(mirror: Mirror, to: Address, amount: bigint): Packe
 
 /** Generic write for scenario-specific calls. */
 export async function send(mirror: Mirror, actor: ActorName, target: keyof Mirror["abi"], functionName: string, args: readonly unknown[], label: string): Promise<Receipt> {
-  const address = {
-    baal: mirror.dao.baal,
-    safe: mirror.dao.safe,
-    shares: mirror.dao.shares,
-    settlement: mirror.dao.settlement,
-    deposit: mirror.dao.depositShaman,
-    work: mirror.dao.workManager,
-  }[target];
-  const receipt = await write(mirror.actors[actor], { address, abi: mirror.abi[target], functionName, args });
-  printReceipt(label, receipt);
-  return receipt;
+  return sendAt(mirror, actor, addressOf(mirror, target), target, functionName, args, label);
 }
 
 /** Simulate a write expecting it to revert (for negative cases). */
 export async function simulate(mirror: Mirror, actor: ActorName, target: keyof Mirror["abi"], functionName: string, args: readonly unknown[]): Promise<unknown> {
-  const address = {
-    baal: mirror.dao.baal,
-    safe: mirror.dao.safe,
-    shares: mirror.dao.shares,
-    settlement: mirror.dao.settlement,
-    deposit: mirror.dao.depositShaman,
-    work: mirror.dao.workManager,
-  }[target];
-  const context = mirror.actors[actor];
-  return mirror.chain.publicClient.simulateContract({ address, abi: mirror.abi[target], functionName, args, account: context.account } as never);
+  return simulateAt(mirror, actor, addressOf(mirror, target), target, functionName, args);
 }
 
 /** Print the scenario verdict block. */
