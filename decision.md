@@ -101,3 +101,15 @@
 - Beacon (`beacon/templates`, `beacon/scripts/build.ts`, `validate.ts`): README.txt is 38 lines; state.json, proposals.json, llms.txt, snippets (Node / Python, keccak + secp256k1 in the standard library, Zero One intent type with dynamic `data`/`details`), dashboard with tables only. Validate asserts line count, principle, verbs, intent type, addresses, no placeholders, code at every address including template instances, design rules, and constitution bytes == on-chain hash.
 - Mirror E2E through the relay (`npm run e2e:relay`, `evidence/relay-e2e-mirror-2026-09-08.log`): PASS. The T1 agent's only inputs are the published snippets and the relay; the founder and verifiers act through the python snippet; the T0 agent through pass URLs; six rejected requests print decoded reasons; node, python and viem signatures of one intent are byte-identical. A–J re-run green after ruling 2: `evidence/mirror-scenarios-A-J-2026-09-08-ruling2.log`.
 - Findings during the E2E worth a line in TESTNET_PLAN corner cases: a vote in the same second as the submission reverts `TimePointNotDetermined` (timestamp checkpoints), so agents must wait one block; a task proposal needs a member's sponsorship; a mined revert is decoded by replaying the call at the previous block.
+
+## 2026-09-08 phase 2b rulings (dev as designer)
+1. Strategy start() after migration: held() ≥ budget unless the contract already holds the asset (venue-free): accepted.
+2. Propose: a CREATE2 template factory so the instance address is deterministic from (template, params, member) and propose is ONE signed intent; the two-step prepare flow is retired before Sepolia. Reason: the relay must never be able to substitute code between prepare and submit.
+3. Sponsored template deployment only for members holding ≥ sponsorThreshold, rate-limited: accepted.
+4. 'work' self-sponsors: the member's intent account calls WorkManager.submitTask then Baal.sponsorProposal in the same transaction; the ninth verb 'sponsor' is dropped; eight verbs stay.
+5. Relay faucet for mock USDC: testnet only; none on mainnet: accepted.
+6. Deadlines against chain time: accepted.
+7. Relay waits one block before a vote that follows a fresh submission: accepted (relay behavior, no contract change).
+8. Incremental relay index + cross-process sponsor lock: required before mainnet (phase 3), not before Sepolia.
+9. Beacon carries its own copy of the constitution validated by hash; on-chain textUrl = GitHub raw at the genesis tag: accepted.
+Next: phase 2c = Base Sepolia (mock USDC, deploy, genesis 50 mock USDC, relay on the mini under ~/srv/zero-one-dao behind its own cloudflared tunnel, beacon on Vercel), scenarios A–J on Sepolia, cold start from README only, then docs/TESTNET_PLAN.md corner cases with receipts.
