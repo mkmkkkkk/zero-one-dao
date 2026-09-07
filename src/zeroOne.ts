@@ -16,7 +16,7 @@ import {
   type GovernanceConfig,
   type WriteContext,
 } from "./baal.js";
-import { assertInvariant, deployLocal, writeAndWait } from "./onchain.js";
+import { assertInvariant, awaitRead, deployLocal, simulateSettled, writeAndWait } from "./onchain.js";
 
 export const UNIT = 10n ** 18n;
 /** One settlement unit: USDC has 6 decimals (mirror TestToken "USDC-mock" matches). */
@@ -163,14 +163,14 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   txHashes["TemplateFactory"] = templateFactory.hash;
   txHashes["ZeroOneIntentAccount"] = intentAccount.hash;
   for (const [index, name] of ["Payment", "Strategy", "Project", "Config"].entries()) {
-    const reported = (await deployer.publicClient.readContract({ address: templateFactory.address, abi: templateFactory.artifact.abi, functionName: "templateName", args: [index] })) as string;
+    const reported = await awaitRead(() => deployer.publicClient.readContract({ address: templateFactory.address, abi: templateFactory.artifact.abi, functionName: "templateName", args: [index] }) as Promise<string>, (value) => value === name);
     assertInvariant(reported === name, `TemplateFactory template ${index} is ${name}`);
   }
   const textHash = constitutionHash();
   const textUrl = params.constitutionTextUrl ?? CONSTITUTION_TEXT_URL;
   const constitution = await deployLocal(deployer, "Constitution", [textHash, textUrl]);
   txHashes["Constitution"] = constitution.hash;
-  const onChainHash = (await deployer.publicClient.readContract({ address: constitution.address, abi: constitution.artifact.abi, functionName: "textHash" })) as Hex;
+  const onChainHash = await awaitRead(() => deployer.publicClient.readContract({ address: constitution.address, abi: constitution.artifact.abi, functionName: "textHash" }) as Promise<Hex>, (value) => value === textHash);
   assertInvariant(onChainHash === textHash, "Constitution.textHash equals keccak256(docs/CONSTITUTION.md)");
 
   const initialized = await initializeSafeAndBaal(deployer, infrastructure, {
@@ -185,7 +185,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   txHashes["Baal.setUp"] = initialized.baalSetupHash;
 
   const baalAbi = loadBaalArtifact("Baal").abi;
-  const totalShares = await deployer.publicClient.readContract({ address: baal, abi: baalAbi, functionName: "totalShares" });
+  const totalShares = await awaitRead(() => deployer.publicClient.readContract({ address: baal, abi: baalAbi, functionName: "totalShares" }) as Promise<bigint>, (value) => value === 0n);
   assertInvariant(totalShares === 0n, "genesis must start with zero shares; every share comes from a shaman");
 
   return {
@@ -234,26 +234,14 @@ export async function genesisDeposit(
   assertInvariant((await readShares("totalSupply")) === 0n, "genesis deposit requires totalSupply == 0");
   assertInvariant((await readShares("treasuryValue")) === 0n, "genesis deposit requires an empty treasury (never pre-fund the Safe)");
 
-  const approve = await founder.publicClient.simulateContract({
-    address: dao.settlement,
-    abi: settlementAbi,
-    functionName: "approve",
-    args: [dao.depositShaman, amount],
-    account: founder.account,
-  } as never);
-  const { hash: approveHash } = await writeAndWait(founder, approve.request as unknown as Record<string, unknown>);
+  const approve = await simulateSettled<{ request: Record<string, unknown> }>(founder, { address: dao.settlement, abi: settlementAbi, functionName: "approve", args: [dao.depositShaman, amount] });
+  const { hash: approveHash } = await writeAndWait(founder, approve.request);
 
-  const deposit = await founder.publicClient.simulateContract({
-    address: dao.depositShaman,
-    abi: depositAbi,
-    functionName: "deposit",
-    args: [amount],
-    account: founder.account,
-  } as never);
-  const { hash: depositHash } = await writeAndWait(founder, deposit.request as unknown as Record<string, unknown>);
+  const deposit = await simulateSettled<{ request: Record<string, unknown> }>(founder, { address: dao.depositShaman, abi: depositAbi, functionName: "deposit", args: [amount] });
+  const { hash: depositHash } = await writeAndWait(founder, deposit.request);
 
-  const sharesMinted = (await readShares("balanceOf", [founder.account.address])) as bigint;
   const expected = (amount * UNIT) / SETTLEMENT_UNIT;
+  const sharesMinted = await awaitRead(() => readShares("balanceOf", [founder.account.address]) as Promise<bigint>, (value) => value === expected);
   assertInvariant(sharesMinted === expected, `genesis minted ${sharesMinted} shares, expected ${expected}`);
   assertInvariant((await readShares("totalSupply")) === expected, "genesis: founder holds 100% of supply");
   return { approveHash, depositHash, sharesMinted };

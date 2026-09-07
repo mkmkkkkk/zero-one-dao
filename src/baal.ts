@@ -25,6 +25,8 @@ import {
   type WalletClient,
 } from "viem";
 
+import { awaitRead, simulateSettled } from "./onchain.js";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BAAL_PACKAGE_ROOT = path.join(ROOT, "node_modules", "@daohaus", "baal-contracts");
 
@@ -317,13 +319,12 @@ export async function initializeSafeAndBaal(
       ]),
     ],
   });
-  const safeSetup = await context.publicClient.simulateContract({
+  const safeSetup = (await simulateSettled(context, {
     address: input.safe,
     abi: safeArtifact.abi,
     functionName: "setup",
     args: [[input.baal], 1n, infrastructure.multiSend, enableData, zeroAddress, zeroAddress, 0n, zeroAddress],
-    account: context.account,
-  });
+  })) as { request: Record<string, unknown> };
   const safeSetupHash = await context.walletClient.writeContract({
     ...safeSetup.request,
     account: context.account,
@@ -376,13 +377,14 @@ export async function initializeSafeAndBaal(
       initializationMultiSend,
     ],
   );
-  const baalSetup = await context.publicClient.simulateContract({
+  // The Safe must report Baal as an enabled module on the node that answers before setUp is simulated.
+  await awaitRead(() => context.publicClient.readContract({ address: input.safe, abi: safeArtifact.abi, functionName: "isModuleEnabled", args: [input.baal] }) as Promise<boolean>, (enabled) => enabled === true);
+  const baalSetup = (await simulateSettled(context, {
     address: input.baal,
     abi: baalArtifact.abi,
     functionName: "setUp",
     args: [initializationParameters],
-    account: context.account,
-  });
+  })) as { request: Record<string, unknown> };
   const baalSetupHash = await context.walletClient.writeContract({
     ...baalSetup.request,
     account: context.account,
@@ -392,6 +394,7 @@ export async function initializeSafeAndBaal(
 
   const read = (functionName: string, args: readonly unknown[] = []) =>
     context.publicClient.readContract({ address: input.baal, abi: baalArtifact.abi, functionName, args } as never);
+  await awaitRead(() => read("avatar") as Promise<Address>, (value) => getAddress(value) === getAddress(input.safe));
   const [avatar, shares, loot, trustedForwarder, adminLock, managerLock, governorLock, votingPeriod, gracePeriod, quorum, sponsor, minRetention, offering, baalEnabled] =
     await Promise.all([
       read("avatar"),

@@ -73,6 +73,52 @@ export async function writeAndWait(
   return { hash, receipt };
 }
 
+/**
+ * simulateContract that tolerates a load-balanced public RPC whose `latest` lags the receipt just
+ * awaited: on failure it retries every 1.5 s for up to `attempts` tries, then throws the last error.
+ * Never used for negative cases (a revert that is expected must surface at once).
+ *
+ * @param context Signer context.
+ * @param request The simulateContract request (address, abi, functionName, args, ...).
+ * @param attempts Maximum tries (default 8, about 12 s).
+ * @returns The simulation result.
+ * @throws The last simulation error after `attempts` failures.
+ */
+export async function simulateSettled<T = unknown>(context: WriteContext, request: Record<string, unknown>, attempts = 8): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return (await context.publicClient.simulateContract({ ...request, account: context.account } as never)) as T;
+    } catch (error) {
+      last = error;
+      if (attempt + 1 < attempts) await new Promise((resolve) => setTimeout(resolve, 1_500));
+    }
+  }
+  throw last;
+}
+
+/**
+ * Poll a read until `predicate` accepts its value (public RPC lag after a receipt), then return it.
+ *
+ * @param read Function performing the read.
+ * @param predicate Accept condition.
+ * @param attempts Maximum tries 1.5 s apart (default 10).
+ * @returns The last value read (accepted, or the final one after `attempts`).
+ */
+export async function awaitRead<T>(read: () => Promise<T>, predicate: (value: T) => boolean, attempts = 10): Promise<T> {
+  let value: T | undefined;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      value = await read();
+      if (predicate(value)) return value;
+    } catch (error) {
+      if (attempt + 1 === attempts) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+  }
+  return value as T;
+}
+
 export async function increaseTime(context: WriteContext, seconds: number | bigint): Promise<void> {
   const amount = typeof seconds === "bigint" ? seconds : BigInt(seconds);
   if (amount < 0n) throw new RangeError("Cannot move devnet time backwards");
