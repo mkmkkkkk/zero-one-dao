@@ -1,0 +1,398 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xb75AeDCE8139Bbe84f31AE7fDb91E93dBDEDd178 baal 0xA4ad2D07a6a2647147215EBc648B73F883147c05 shares 0x7CC7C9c429608C3F48DAf1652a05E6F50A5369de settlement 0xc262CA39A560163A001b244ff2516cFFd80c1234
+          founderStream 0xC632cE62007790864F755072e8578405fF50b7ed depositShaman 0x2838F3c5a951587D3DC77966f3b5113D04B75bAE workManager 0xD36BCfcDcaAb28ee5C6c08dE296883066C2228a9
+   F = 0x5dD6cC1eE8C44DCd5c8179FCA2C8cD28f2ad9FD6  founder (stream + genesis deposit)
+   A = 0xAB18Ca504C95991c07E857c5F19DF515feEe6BC3  member agent A
+   B = 0x74Ebac9fD514E0BAc8c26f69aD1AcFB6ACD97C74  member agent B
+   C = 0xcb8b9b22e1f4e38600B249f396603cd41C98e0E3  member agent C
+   D = 0xb0a332564D454427aeE3311E10Ec409B969E9176  depositor D (joins later)
+   O = 0x93c3a714f58Aba53e34134Cd0294760aa7957f63  operator O (mandate recipient)
+   W = 0x831e97A5B660FAE3944845b96bcaBbF0a6f1840d  worker W (task deliverer)
+
+== step 1: seed: fund actors with test settlement
+   tx fund A with 10000 settlement: 0x50779ef92299749cf5b0c2026f57571bc7c05e05514b1585aef48c3a5b2da2f5 (block 17, gas 51298)
+   tx fund B with 10000 settlement: 0x0381bfa490d450d621fa7b795a8ac73542972f67acc7cba570994b2d486b1233 (block 18, gas 51298)
+   tx fund C with 10000 settlement: 0x048f7a5c094bed0f99ee7fa76976d4af4a19aaa8e5a1e222e825cfd7c07b5e85 (block 19, gas 51286)
+   tx fund D with 10000 settlement: 0x6004cd7a27599015efd97fcf5ca5173aedafc05943a62749b8cda3d29bb95bf2 (block 20, gas 51298)
+   tx fund O with 10000 settlement: 0xa0962aa8bc94d97959cd967efd923876adc4ecba28706a36e1b3b972c05ce443 (block 21, gas 51298)
+   tx fund W with 10000 settlement: 0x4dc29608f51761cf71e3dfeadfa1db00bf77262dce641c0e9dd1af4029424353 (block 22, gas 51298)
+
+== step 2: seed: founder stream claim after 1 h, then genesis deposit by the founder
+   warp +3600s (1 h after genesis) -> block 23 timestamp 1788818151
+   tx founder stream claim 28.519279032626055213 shares: 0x2f2330b5f265ac9cd5b974730cb9c428fe45d39608a1491feed286fcd05a5cd7 (block 24, gas 180670)
+   tx F approve deposit shaman: 0x92fa5cf0fd96c0e2823ef0d27e101238237b38805ec65a404b17e79b98cb76dd (block 25, gas 45937)
+   tx F deposit 1000 -> 1000 shares (quoted 1000): 0x27c56e9599cdd823730f2dcac17e8e99699e54a4082edd405a8bde17bdf2fb15 (block 26, gas 112234)
+
+== step 3: seed: A, B, C deposit 1000 each at NAV
+   tx A approve deposit shaman: 0x13ed05575a079b8c36d12a758cb7195e74f9409222552803dccf85f1336102b4 (block 27, gas 45937)
+   tx A deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x8d833ba7fbab8cf51bd6027795e57cc38dcd9bd33a3fba15ea7006a5f9baf96a (block 28, gas 169225)
+   tx B approve deposit shaman: 0xceca63ff973b7b76e3a27e994fdbc3e33c65d5ba9d8bf02efe43a6eb44fbe44e (block 29, gas 45937)
+   tx B deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x007f4a531f2b8e5b3dfafcaf8b90c2dd6ed452dca860aaad95eca1f4cd3b650e (block 30, gas 169225)
+   tx C approve deposit shaman: 0x3617232e3d3ac4ff3f7581a3a8f244b384a8e0e46cbf8cee7b08a80c61813089 (block 31, gas 45937)
+   tx C deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x8067c93be2010327e88b12c12d36e617b153c170d73c37c7d56a3b89027d888b (block 32, gas 169225)
+   [seeded] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [seeded] F: settlement = 99939000  shares = 1028.519279032626055213
+   [seeded] A: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] B: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] C: settlement = 9000  shares = 1028.519279032626055213
+
+== step 4: A proposes: transfer 100% of the treasury to A (submits and self-sponsors; nothing in code refuses)
+   tx A submitProposal #1 "A: send 100% of treasury to A": 0x74a215cc633e1dbcaf7ab3ffdae386e2e0bce8ebc643bc0906670e3fd72e03b9 (block 33, gas 204240)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788818152
+   proposal #1 state = Voting
+   ok: the 100% proposal entered voting; no cap refused it
+
+== step 5: A votes YES on its own proposal; B and C vote NO
+   tx A votes YES on #1 -> yes 1028.519279032626055213 / no 0: 0x9e8a157af79a000c6f4d2514e060518f1838f6b4f36d36d93def9e0ac19587de (block 35, gas 117855)
+   tx B votes NO on #1 -> yes 1028.519279032626055213 / no 1028.519279032626055213: 0x0b74a14d66c83ad3e210ceb49e7061d76dfa50903f7900043a60d4a2f8507fd0 (block 36, gas 117833)
+   tx C votes NO on #1 -> yes 1028.519279032626055213 / no 2057.038558065252110426: 0x8418c2bcd5a777d43e49dbca09813f059655276f6dcc21646288b6c147985b1e (block 37, gas 100733)
+
+== step 6: voting ends, grace passes
+   warp +21600s (to grace of #1) -> block 38 timestamp 1788839752
+   proposal #1 state = Grace
+   warp +21600s (past grace of #1) -> block 39 timestamp 1788861352
+   proposal #1 state = Defeated
+
+== step 7: outcome
+   ok: proposal #1 is Defeated (state=Defeated)
+   ok: processProposal on a defeated proposal reverts (reverted with !ready)
+   [after] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [after] A: settlement = 9000  shares = 1028.519279032626055213
+   [after] B: settlement = 9000  shares = 1028.519279032626055213
+   [after] C: settlement = 9000  shares = 1028.519279032626055213
+   ok: treasury unchanged at 4000000000000000000000
+   ok: A received nothing
+
+=== SCENARIO A: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xCe85aC071413A7356D25c5F5dEa87384Cb73A4c5 baal 0xBA22F8a57C5C0c023e436eB20611B3248Ca2e6CB shares 0x8522869E7354Ff4056c036932deADd9751b368DE settlement 0x4aC19F201eB5f8b93Cd06121f4c36cb0168fdE65
+          founderStream 0x599eaB90A582e46D2C204b5F23e7DEd6cC20B32C depositShaman 0x4FBE88202F0be8df6b56CB1E9f5f01116257C0B5 workManager 0x58dd8974aAfc05c12f3baf511638f3F8b36662e9
+   F = 0xb54066859a445353F4e3c77132B15eca81a1a3B8  founder (stream + genesis deposit)
+   A = 0xba7BD12ceD1fe0B83EDf540881459fb8Abb05e4A  member agent A
+   B = 0x83d9983a72BF0346635ba61e3A6610f69e2B5249  member agent B
+   C = 0x8Ff1BaEE97FB2AC369392091b970bAE7dF8073A7  member agent C
+   D = 0xcD3DA40639e3AAA54914C5426d36A3F53AAD3Da1  depositor D (joins later)
+   O = 0xb024D35e923FbA9fe530Ed019B43B09aF563F061  operator O (mandate recipient)
+   W = 0x58EF8A848704A4ea27C022426b2233fB24E557e1  worker W (task deliverer)
+
+== step 1: seed: fund actors with test settlement
+   tx fund A with 10000 settlement: 0xdb75967ab958a182e0534b392de04d38be0e28e7ac1fd5752e5f418e9baad28e (block 17, gas 51298)
+   tx fund B with 10000 settlement: 0x24331828de4fc3a78f7f7f063b6960616156b6605e3b45e7f43de0a902ea617f (block 18, gas 51298)
+   tx fund C with 10000 settlement: 0xd7798b502faf129342602f7f1dd92602f5aa536ab7367e6e4565f7c9091f6fbb (block 19, gas 51298)
+   tx fund D with 10000 settlement: 0xc8f4e99cf244db8f37305e0e97d5bf2ecf65ed350b7ee96362842f3a54872de3 (block 20, gas 51298)
+   tx fund O with 10000 settlement: 0x98874f51ee4f19b19d9bebafb3843911fa52c63c1b0d9d654566eb01a7b86d72 (block 21, gas 51298)
+   tx fund W with 10000 settlement: 0xeca0fae4b5bd4b3b23149979b092e298b4e929abd4481669ffbe1bac2b577f9e (block 22, gas 51298)
+
+== step 2: seed: founder stream claim after 1 h, then genesis deposit by the founder
+   warp +3600s (1 h after genesis) -> block 23 timestamp 1788818152
+   tx founder stream claim 28.519279032626055213 shares: 0x6dfb3e2f6b37507b5487e4c52ee50206c19ef3206ad5fddb5672c353a67422a7 (block 24, gas 180670)
+   tx F approve deposit shaman: 0x94724b3e78a9f824ddeb32d384d3e5098cd6741dd2aaa441c3ddec88f3ac4c83 (block 25, gas 45937)
+   tx F deposit 1000 -> 1000 shares (quoted 1000): 0x902accab445c59bb1566da25aaffb46b4d0560fc3789e7bf4f02c3ee45f58a02 (block 26, gas 112234)
+
+== step 3: seed: A, B, C deposit 1000 each at NAV
+   tx A approve deposit shaman: 0x41be4a5d67c284fd1d91ee5986bb171d03452c079cb0c4f9258793aa1f72a116 (block 27, gas 45937)
+   tx A deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xe580709f9e2d7fe9eafba3564409c3dc659857b42bafbb32e878aca6093e4317 (block 28, gas 169225)
+   tx B approve deposit shaman: 0x1ac1111ce98c25ae12e8ebbabf56d77a02e809cd3b6daba6def06407f376809f (block 29, gas 45937)
+   tx B deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xd8e53a79a0b70f9e0c69a0bdd37e85d3d7b83c66c209e793e955817175e3de87 (block 30, gas 169225)
+   tx C approve deposit shaman: 0x7f2bb808168d2e51ed6346b47c6768fe251a5f4d6edf69e181e23a771138a759 (block 31, gas 45937)
+   tx C deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xd493162c1343af10d1d8e29218bd58e0a65dba4dca1f78f5b8377bae372c6a87 (block 32, gas 169225)
+   [seeded] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [seeded] F: settlement = 99939000  shares = 1028.519279032626055213
+   [seeded] A: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] B: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] C: settlement = 9000  shares = 1028.519279032626055213
+
+== step 4: A proposes: 10% mandate = transfer 400 settlement to operator O
+   tx A submitProposal #1 "A: 10% mandate to operator O (strategy S, rules R in text)": 0x0a294d163b0719b5075c5b1f1536416e4060a913ec7dbd77c4a2b0bbd06318ba (block 33, gas 204996)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788818153
+   proposal #1 state = Voting
+
+== step 5: A YES, B YES, C NO
+   tx A votes YES on #1 -> yes 1028.519279032626055213 / no 0: 0x50e4399dd03fe7f950a0c805d9baaa7c502c64f03df6d2ea70ead8d0149b0f43 (block 35, gas 117855)
+   tx B votes YES on #1 -> yes 2057.038558065252110426 / no 0: 0x5aa1cfb0a37db9158a68b39655aecb0c691c530e3da5942470cdaa9cdbf29864 (block 36, gas 100755)
+   tx C votes NO on #1 -> yes 2057.038558065252110426 / no 1028.519279032626055213: 0x20cfafa8bde8be5182d7b898a9440f0574f88bdc2653c1ef35d75bfc1451cfad (block 37, gas 117833)
+
+== step 6: voting closes; C leaves during grace with its pro-rata share
+   warp +21600s (to grace of #1) -> block 38 timestamp 1788839753
+   proposal #1 state = Grace
+   ok: proposal is in Grace
+   [before C exits] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [before C exits] C: settlement = 9000  shares = 1028.519279032626055213
+   [before C exits] O: settlement = 10000  shares = 0
+   tx C ragequit 1028.519279032626055213 shares -> paid 1000 settlement (pro-rata of 4000 at supply 4114.077116130504220852): 0x54f430f12c9d729e0e733353946d06064b90bfa22cd361dd52b606210b5a4913 (block 39, gas 149722)
+   ok: C paid exactly sharesC * treasury / totalShares = 1000
+   ok: C's payout used the pre-execution treasury (mandate not yet transferred)
+   [after C exits] treasury(Safe) settlement = 3000  totalShares = 3085.557837097878165639
+   [after C exits] C: settlement = 10000  shares = 0
+   [after C exits] O: settlement = 10000  shares = 0
+   ok: C holds no shares
+   ok: treasury decreased by exactly C's payout
+   minRetention check: totalShares 3085.557837097878165639 vs 66% of high-water 4114.077116130504220852 = 2715.290896646132785762; yes 2057.038558065252110426 > no 1028.519279032626055213
+   ok: C's exit (25%) stays within minRetention 66%, so the proposal survives
+
+== step 7: grace ends; anyone (here O) executes the exact multicall that was voted
+   warp +21600s (past grace of #1) -> block 40 timestamp 1788861353
+   proposal #1 state = Ready
+   ok: proposal is Ready
+   tx O processProposal #1 -> passed=true actionFailed=false state=Processed: 0xa67c6733ace4eb4937ae268a281734a0dad456e2be2bf5178848a84bb379fd87 (block 41, gas 154466)
+   ok: proposal passed and the action executed
+   [after execution] treasury(Safe) settlement = 2600  totalShares = 3085.557837097878165639
+   [after execution] A: settlement = 9000  shares = 1028.519279032626055213
+   [after execution] B: settlement = 9000  shares = 1028.519279032626055213
+   [after execution] C: settlement = 10000  shares = 0
+   [after execution] O: settlement = 10400  shares = 0
+   ok: O received the mandate 400
+   ok: treasury = start - C's payout - mandate
+   ok: C's balance is its pro-rata payout, paid before execution
+
+=== SCENARIO B: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x270F97B8CB86A95D1425eF7bbF56158F16689b65 baal 0xEd856311953F832E423de01B39b4EAC2e523dF55 shares 0x7e9Beca276C54CBAaF1A3e3FB6c10e7B728406f6 settlement 0x2c8965ae51A4773692389eED65aFa0D5C4016aC8
+          founderStream 0xbC5918FEA02557034e78A1C6f777b30523bf57b1 depositShaman 0x53f394699a0579B4f6f6e5DB9BC1167a9ae63259 workManager 0x51A51128F5d7aD453320fBD7b9F2c4eD5c390989
+   F = 0x18fa8A1e1251E9bF124cdbF4d0e1f21Bfd216135  founder (stream + genesis deposit)
+   A = 0x1F20B1230ffD4De73C01ab9DA55151724961A1D9  member agent A
+   B = 0xC212128027cdEA73bB1b80AE3C4735132b14A9fF  member agent B
+   C = 0x480b6A1E17Bb659BeEB3A5aDa9fccFb16F73204E  member agent C
+   D = 0x506131a08230Be7E46B882e842512798B1EA66AC  depositor D (joins later)
+   O = 0x0980790D66Bc26E3282C73d9F14959c97fF78CA1  operator O (mandate recipient)
+   W = 0x6958fA42Fba8Bad39d2eE0C9931560200840f507  worker W (task deliverer)
+
+== step 1: seed: fund actors with test settlement
+   tx fund A with 10000 settlement: 0x4ac3163b6c317e797dc4aaf4d6cd7bd4a5e0fa221089b0fba3b6444a220f74cd (block 17, gas 51298)
+   tx fund B with 10000 settlement: 0xa2014fdaeb93ebb8f5f3c0684e9f0bf69c4ef6307e53e81a495be80c98dec760 (block 18, gas 51298)
+   tx fund C with 10000 settlement: 0xdcf3bf2f562bfb7cf3105956bb322b96599b714a691aa380df22fe27c7dbc644 (block 19, gas 51298)
+   tx fund D with 10000 settlement: 0xe8e52cf7ccbcb0d2269f43c3465767904e070d8a85c77ede5e6b9bbe6426d17e (block 20, gas 51298)
+   tx fund O with 10000 settlement: 0xe5cd43f39e29b81f86e071c82fa87b799345c97d7dd842c4e002d8d5680e0aa6 (block 21, gas 51298)
+   tx fund W with 10000 settlement: 0x34063adb1a9c0d9daf76ef5bb948fd495e242077b149b717f32591c537176e62 (block 22, gas 51298)
+
+== step 2: seed: founder stream claim after 1 h, then genesis deposit by the founder
+   warp +3600s (1 h after genesis) -> block 23 timestamp 1788818152
+   tx founder stream claim 28.519279032626055213 shares: 0xfdce1f6b0ddc971f0cf6444a5f71d9af57110bcb55f0ec78be2a0daf746c0112 (block 24, gas 180670)
+   tx F approve deposit shaman: 0xe92c5ac8bb525a41012aa6f3d62332a39e52c091a82f22ac6d37fc9027d1d847 (block 25, gas 45937)
+   tx F deposit 1000 -> 1000 shares (quoted 1000): 0x7dcf21eb94768cb21cf2570a5421fe433e182b78b1263de2e7e34c5c836c1cb5 (block 26, gas 112234)
+
+== step 3: seed: A, B, C deposit 1000 each at NAV
+   tx A approve deposit shaman: 0xeab44e13284f5aa3719cb9ee2a2b3c6d09e8208d2383375c42d9f3139901836b (block 27, gas 45937)
+   tx A deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x90d99d795981a52068b3e0a644e84c26a915e07449aa220f05079f0a19ec892d (block 28, gas 169225)
+   tx B approve deposit shaman: 0xfd9a3d6e0f177325041692870959a2f27261b6b332aef8b43739b9a834816996 (block 29, gas 45937)
+   tx B deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xa351868d71bac23f9a152473531ca53d8034af64ea095bd06454b322e9469bdb (block 30, gas 169225)
+   tx C approve deposit shaman: 0x0b06ccaec1a0360d2703a0c55ee5426f89d83c23cba4d8aa509a20806a977d1d (block 31, gas 45937)
+   tx C deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x8fcdcb29a424ae40b1914a0b5133bbc7c4d275d0b39eece2fb706b68b9233352 (block 32, gas 169225)
+   [seeded] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [seeded] F: settlement = 99939000  shares = 1028.519279032626055213
+   [seeded] A: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] B: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] C: settlement = 9000  shares = 1028.519279032626055213
+
+== step 4: D deposits 1000 settlement at current NAV
+   [before deposit] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [before deposit] D: settlement = 10000  shares = 0
+   tx D approve deposit shaman: 0x5fbd88817cec214a5090a4d20b1d4628329ae5191d0e1a589920888758bd6f8f (block 33, gas 45937)
+   tx D deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x6e2c977105aa534164e2cafafbd9a086f516a52a36a83f3f837546640ea8e473 (block 34, gas 169225)
+   ok: D received amount * totalShares / treasury = 1028.519279032626055213 shares (NAV per share unchanged)
+   ok: minted shares equal the quote
+   [after deposit] treasury(Safe) settlement = 5000  totalShares = 5142.596395163130276065
+   [after deposit] D: settlement = 9000  shares = 1028.519279032626055213
+   ok: treasury grew by exactly the deposit
+
+== step 5: DAO votes to spend 20% of the treasury (pay operator O); D votes NO and is outvoted
+   tx A submitProposal #1 "A: pay O 1000 for services": 0x778d89f190bd064575390742286ae513649716331ff2e967f4ee5f530a43ac22 (block 35, gas 204216)
+   warp +1s (let votingStarts become past) -> block 36 timestamp 1788818153
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1028.519279032626055213 / no 0: 0xb7b3aea29d5859d56bee2c5531330be86e420ca9f50351d58d0c423bc986c718 (block 37, gas 117855)
+   tx B votes YES on #1 -> yes 2057.038558065252110426 / no 0: 0x316371cf5a64abd19d82970380c34f83ab4c1fe65e27526ea4f6ef2e60f5c956 (block 38, gas 100755)
+   tx D votes NO on #1 -> yes 2057.038558065252110426 / no 1028.519279032626055213: 0x20e9f09e39a0a2c5e130b2ffffb1ad809286b5c271797fd5105cfcd3c1aaa695 (block 39, gas 117833)
+   warp +43199s (past grace of #1) -> block 40 timestamp 1788861353
+   proposal #1 state = Ready
+   tx B processProposal #1 -> passed=true actionFailed=false state=Processed: 0xacbed706ecada68154fcc2ea9709e3852d4d4064c54f919ec5a12f741e4c3af9 (block 41, gas 154466)
+   ok: spend executed
+   [after spend] treasury(Safe) settlement = 4000  totalShares = 5142.596395163130276065
+   [after spend] D: settlement = 9000  shares = 1028.519279032626055213
+   [after spend] O: settlement = 11000  shares = 0
+   ok: treasury decreased by the spend
+
+== step 6: D ragequits all shares and receives its pro-rata of the remainder
+   tx D ragequit 1028.519279032626055213 shares -> paid 800 settlement (pro-rata of 4000 at supply 5142.596395163130276065): 0x810720488e9c9f7878cd20122e604169a508880edf34ccba631a29a146c4daa6 (block 42, gas 149722)
+   ok: D paid exactly sharesD * remaining treasury / totalShares = 800
+   ok: payout is D's share of what remains after the DAO spent
+   ok: D bore its pro-rata (20%) of the spend: got back 800 of 1000
+   [after exit] treasury(Safe) settlement = 3200  totalShares = 4114.077116130504220852
+   [after exit] D: settlement = 9800  shares = 0
+   ok: D holds no shares
+   ok: D's settlement balance = start - deposit + payout
+
+=== SCENARIO C: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x6531b4cab9A89d7132Cb152FEFBF5433B3E9110b baal 0xB0B570DB58613F560b4b98B19b4eFF9E5c2c0a00 shares 0x2DA51Ba4e29BBd5D416E10Aa4497131CAA00c34f settlement 0x8A74DEa85385c491cEC5Fc12DAcd1f9De7756f41
+          founderStream 0x3D1Be8EE032123a613c52c5bE6096F1288352d4E depositShaman 0x6684B76A1397e51457b53559571Db7E0E5AD8220 workManager 0xB18fd82ae3850Ca115495cb9B707ABeB43d7a41a
+   F = 0x4Cdd39B9A40e319bA260E825684137b5B64841Cf  founder (stream + genesis deposit)
+   A = 0x0207318f2FfFE3cc8373aB6Fa0678AAe7b35eE7E  member agent A
+   B = 0x01AF236f494B6503b0C5d2bDaf98d6ec44625989  member agent B
+   C = 0x992C0cE1CCE03462EDB591f30CCbda3F829D19C4  member agent C
+   D = 0x9eB97cf01D52a5ae858B37F7C5521E6410547A49  depositor D (joins later)
+   O = 0x92FC20aA79E0494e465D640fd7e6d38E3a1917bD  operator O (mandate recipient)
+   W = 0x3AA66758EEcb7360FA7e35f8884066F8a8E14Cf6  worker W (task deliverer)
+
+== step 1: seed: fund actors with test settlement
+   tx fund A with 10000 settlement: 0x6e9b1a64508d7cd41ad357e047d2cfbdfa0f9339844ab3a3aa7e426256cc8cb2 (block 17, gas 51298)
+   tx fund B with 10000 settlement: 0xb79f1bdc1018afbb66096ac07d79b67d4593415a14820c9f45b67ebc0eb5cee9 (block 18, gas 51298)
+   tx fund C with 10000 settlement: 0x1c8f5d21cf447701e2dda9f4e7e3db543d6c7ae4cba348136b6083b09d91bd07 (block 19, gas 51298)
+   tx fund D with 10000 settlement: 0xcff6e6d1b420b6041e51674df3664d90cda4a023f1f40dbbfa24b9aac5bddae0 (block 20, gas 51298)
+   tx fund O with 10000 settlement: 0x8a4f3b2aca4f6e5b4d7daf5c371e332a06bad0ea92bc4723004613cd7c9a148e (block 21, gas 51298)
+   tx fund W with 10000 settlement: 0x9bf779809a1cd28b7987fd2d085da982117fcce11f9f7f24a0d41a2f6c3b08d5 (block 22, gas 51298)
+
+== step 2: seed: founder stream claim after 1 h, then genesis deposit by the founder
+   warp +3600s (1 h after genesis) -> block 23 timestamp 1788818153
+   tx founder stream claim 28.519279032626055213 shares: 0xd961517c3a69d3ceb1ca7867927a2b0a3863544962f4873711df71ecd0d5c00e (block 24, gas 180670)
+   tx F approve deposit shaman: 0xa3757c6e409a7f7c8882e53bda5a77b138f221a17eb39377b5ef8bcef43e623a (block 25, gas 45937)
+   tx F deposit 1000 -> 1000 shares (quoted 1000): 0x5f1a9e315c71b2fb4649dadcdeaa5672ff656cd59ff469a4be4bed9b06cea960 (block 26, gas 112234)
+
+== step 3: seed: A, B, C deposit 1000 each at NAV
+   tx A approve deposit shaman: 0x02dc627bc1b49977381587543274c918e4c256bf64d83c2cfe07e10eb0e424cf (block 27, gas 45937)
+   tx A deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xbe77e2ee55a53f81ec7782f7500b821d126426434b238e9c8d6ca42dba4b6f4a (block 28, gas 169225)
+   tx B approve deposit shaman: 0x0d6d4b8d25ebfdd728185bece6fb512227393ed4403a48ff32a6f9acef0fae9e (block 29, gas 45937)
+   tx B deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0xfa29f51a4ce3087e2d2faf025ffe81b327f27eb1156d7b4ba9491eedcba4b5e8 (block 30, gas 169225)
+   tx C approve deposit shaman: 0xe71beead7638c49187cd31625a83eb3701635752949a7bffcab92c3e3d56e3d2 (block 31, gas 45937)
+   tx C deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x63507adc06894991acad11b0001f46b71c8ea73ffe586428e9fe6443316f9ea7 (block 32, gas 169225)
+   [seeded] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [seeded] F: settlement = 99939000  shares = 1028.519279032626055213
+   [seeded] A: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] B: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] C: settlement = 9000  shares = 1028.519279032626055213
+   ok: initial votingPeriod is 6 h
+
+== step 4: A proposes setGovernanceConfig(votingPeriod = 1 h, everything else unchanged)
+   tx A submitProposal #1 "A: votingPeriod 6h -> 1h": 0xe1e1d7e823238fb60b84b7eb8299aae8f80bc8070b61d25035a3d022b55c8214 (block 33, gas 206921)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788818154
+   proposal #1 state = Voting
+   ok: the change proposal itself runs under the old 6 h voting period
+   tx A votes YES on #1 -> yes 1028.519279032626055213 / no 0: 0x1089db16c03f5305b1244fb87d4645a91eccf3fe4db5234c3d54dc74f92dc37f (block 35, gas 117855)
+   tx B votes YES on #1 -> yes 2057.038558065252110426 / no 0: 0xd7a305feed9e3b17e407429b5fb9c2c32ab9cca7744cb2e178ee7cc67906103e (block 36, gas 100755)
+   warp +43200s (past grace of #1) -> block 37 timestamp 1788861354
+   proposal #1 state = Ready
+   tx C processProposal #1 -> passed=true actionFailed=false state=Processed: 0x7aaa4e4a606e43dbc680a695111d2a2b198a8dd5011d1755976abe5c53202cb8 (block 38, gas 158483)
+   ok: parameter change executed
+   ok: votingPeriod is now 1 h
+   ok: gracePeriod still 6 h
+   ok: minRetention still 66%
+   ok: sponsorThreshold still 1 share
+
+== step 5: next proposal (B, text-only, empty multicall) honors the 1 h voting period
+   tx B submitProposal #2 "B: text-only proposal after the change": 0x6e85a6a4aa3ec1203c73b07552fcadf670d9ce3cb63f464090251f9d2b7ffee7 (block 39, gas 201715)
+   warp +1s (let votingStarts become past) -> block 40 timestamp 1788861355
+   proposal #2 state = Voting
+   ok: votingEnds - votingStarts == 3600
+   ok: grace still 6 h
+   tx A votes YES on #2 -> yes 1028.519279032626055213 / no 0: 0x9f3e4f0eb52b4256beaf0a535ef5a0a3874a229e6816e90a4f4362936ade02cc (block 41, gas 117855)
+   warp +3598s (to 1 s before voting ends) -> block 42 timestamp 1788864953
+   ok: still Voting 1 s before the 1 h mark
+   warp +2s (past the 1 h mark) -> block 43 timestamp 1788864955
+   ok: in Grace right after 1 h (would still be Voting under 6 h)
+   warp +21600s (past grace of #2) -> block 44 timestamp 1788886555
+   proposal #2 state = Ready
+   tx A processProposal #2 -> passed=true actionFailed=false state=Processed: 0x656eb49c0538d1718ffa53216165f44c63ad26cd7e6ea55f53d33c0c2025ac77 (block 45, gas 136991)
+   ok: the 1 h proposal processed
+
+=== SCENARIO D: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x391129B81388CB2D3c928ddC8eEB6d6E3C950dDC baal 0x5cC9AEf10e1b259A6CbDAEfddA6f4b2F188375d8 shares 0x0631281B0c9079006700d8F50a30D9873fE4897b settlement 0x54786A7a0a63D10652cA5ABf9eBF37F12a00376e
+          founderStream 0x86C6F7bc1662C02804640D78b5271896EA02aF1F depositShaman 0xfe5e51983Af89caAa1899895261bc0f340703b38 workManager 0xa7DE332e701bfb6eA06755CCde883D112452B9Ed
+   F = 0x089c5C13D261f347bCd2DdDf39147285e356cb7c  founder (stream + genesis deposit)
+   A = 0xA68Bbb5de16dd44C52A0851853cFD22230f20e73  member agent A
+   B = 0xE6A1ab7B1B06D63C64B240bC731F7430D8C52104  member agent B
+   C = 0xd294B15AddA5EbB00Bf8136e4b6160f33B7b6175  member agent C
+   D = 0x4e5412D7403d78b0308864976AAfacaE6F5aC7c7  depositor D (joins later)
+   O = 0xf5D33b8848940Ea89Dd8700D1908256780dFea54  operator O (mandate recipient)
+   W = 0xD13C3313ed4036A2A3919fcf61b5aaD3e463d662  worker W (task deliverer)
+
+== step 1: seed: fund actors with test settlement
+   tx fund A with 10000 settlement: 0x0d106cde2de16f08ffd6776ab4a0b91009101d2f6dc4eb096f2a62a87287eede (block 17, gas 51298)
+   tx fund B with 10000 settlement: 0xa52f20943bec8f8c9af7fad0f6880f89a089a07aac999a10d76fdb97be41edc4 (block 18, gas 51298)
+   tx fund C with 10000 settlement: 0x622c09e3a80d3d688e32962a26b44e18f7433e6430ca6f9a7a6b506c4f7d2401 (block 19, gas 51298)
+   tx fund D with 10000 settlement: 0x254ce519627c42c998c782dd6de498b0107e528ce4ff67ff4d8d94c0c43a63cd (block 20, gas 51298)
+   tx fund O with 10000 settlement: 0x984793217848e9b56d56b5c83648d8f91abcdb3758447814384faad0dc998518 (block 21, gas 51298)
+   tx fund W with 10000 settlement: 0xe12b390ec6e6044cf7e9325defcc2a549a7e66cbfc64cd6b9e31af9a9f387c1d (block 22, gas 51298)
+
+== step 2: seed: founder stream claim after 1 h, then genesis deposit by the founder
+   warp +3600s (1 h after genesis) -> block 23 timestamp 1788818154
+   tx founder stream claim 28.519279032626055213 shares: 0x1052c0845530e5cff3f656de28b38943d68155f22aeb52d086249b80e505d155 (block 24, gas 180670)
+   tx F approve deposit shaman: 0x7388f59b2263aa63f9d187eb5ecc68e01e65432f34aad298ee74741312220e92 (block 25, gas 45937)
+   tx F deposit 1000 -> 1000 shares (quoted 1000): 0x34bdd62378c06de15bff4448e5920152e4333a55a56eba2e8a6f959836305836 (block 26, gas 112234)
+
+== step 3: seed: A, B, C deposit 1000 each at NAV
+   tx A approve deposit shaman: 0x144b9eb383e86cbefd7ca9852b42b6fed600010aa650aca5ad8a343f23da207d (block 27, gas 45937)
+   tx A deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x98e244a203f17e6047a6e361f398ff0d3a65ae728a336b64d5a70913d58aa671 (block 28, gas 169225)
+   tx B approve deposit shaman: 0x31287d9e7d6cfe94c6115fbc656bedd2d3ce488d2115dcdef6cbc44749f08b11 (block 29, gas 45937)
+   tx B deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x1b30836d4a15dafffd78c1ff88739c4f82f5037af5cef2ca7fdc70d50b8b6bf7 (block 30, gas 169225)
+   tx C approve deposit shaman: 0x4f289e2ce23a3660333457f41020fc90e3a0b0a8a4fbb373c6c7a8da31b06e1b (block 31, gas 45937)
+   tx C deposit 1000 -> 1028.519279032626055213 shares (quoted 1028.519279032626055213): 0x01818dede771b27456044eb73a2a70b4fb4737cd3156160b352e0d5964106267 (block 32, gas 169225)
+   [seeded] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [seeded] F: settlement = 99939000  shares = 1028.519279032626055213
+   [seeded] A: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] B: settlement = 9000  shares = 1028.519279032626055213
+   [seeded] C: settlement = 9000  shares = 1028.519279032626055213
+
+== step 4: A submits task #1: verifiers [B, C], threshold 2, reward 500 settlement-worth of shares
+   tx A submitTask -> Baal proposal: 0x78cc5ef7323e8074b97d9976ca7076e925b6fac12835bf979a9f0854ee839831 (block 33, gas 365096)
+   ok: task #1 recorded as Proposed
+   ok: proposer recorded as A (msg.sender)
+   warp +1s -> block 34 timestamp 1788818155
+   ok: Baal proposal #1 is Submitted (WorkManager holds no shares, needs a member sponsor)
+
+== step 5: A (member) sponsors; A and B vote YES; grace passes; C executes the activation
+   tx A sponsorProposal #1: 0xab10b0f73c7755895292c370c60a22f4f587a6850de6ececf7f1c6ed4bee1ece (block 35, gas 142451)
+   warp +1s (let votingStarts become past) -> block 36 timestamp 1788818156
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1028.519279032626055213 / no 0: 0x3a0cfb5f4a89a54d50b9e5bdcd7b572446f1b72ce6c56607b0ae4ed9a79d5898 (block 37, gas 117855)
+   tx B votes YES on #1 -> yes 2057.038558065252110426 / no 0: 0x34df0240b88a84f57c773e547ea1ee04460e39e3a2af367050e7e32573d7f3ac (block 38, gas 100755)
+   warp +43200s (past grace of #1) -> block 39 timestamp 1788861356
+   proposal #1 state = Ready
+   tx C processProposal #1 -> passed=true actionFailed=false state=Processed: 0x77077cd4437fd1c35c1b3f60c173d180459a3796d92d57b1a6df51dc879075a8 (block 40, gas 148066)
+   ok: activation multicall executed by the Safe
+   ok: task #1 is Active
+
+== step 6: verifier B cannot claim; worker W claims
+   ok: verifier B is refused as worker (reverted with VerifierCannotClaim)
+   tx W claims task #1: 0x8dc0d2cef15f52830dce4de00e1e6356b814945c2b3ece186e949aa0491a73b2 (block 41, gas 52324)
+
+== step 7: W delivers an evidence hash; B and C confirm; shares mint to W at the NAV of verification
+   tx W deliver evidence hash: 0xc324611049502b5b0ef16bc7301ef713d009a5f6a505079ac06d3fa6e55579fe (block 42, gas 56675)
+   tx B confirms (1/2): 0x11ff158365f0b4ef0ff98fd13ff87f71a348bb50c9685dc0b52d8b47bb866dc2 (block 43, gas 60337)
+   ok: still Active after 1 of 2 confirmations; nothing minted yet
+   ok: W has no shares before threshold
+   [before final confirmation] treasury(Safe) settlement = 4000  totalShares = 4114.077116130504220852
+   [before final confirmation] W: settlement = 10000  shares = 0
+   NAV per share = 0.972271517302573203 settlement; 500 settlement-worth = 514.259639516313027606 shares
+   tx C confirms (2/2) -> mint: 0x4682b4280930c1257ad2630baf594f2bae83b9846cc9fa941b28143356785001 (block 44, gas 217449)
+   ok: task #1 Complete
+   [after verification] treasury(Safe) settlement = 4000  totalShares = 4628.336755646817248458
+   [after verification] W: settlement = 10000  shares = 514.259639516313027606
+   ok: W received reward * totalShares / treasury = 514.259639516313027606 shares
+   ok: task records the minted amount
+   ok: verification moved no settlement; W's claim is shares at NAV
+   ok: no further confirmation or mint after completion (reverted with WrongStatus)
+
+== step 8: negative: a task whose verifier == proposer is rejected at submission
+   ok: A naming A as verifier is rejected (reverted with VerifierIsProposer)
+   ok: B naming B as verifier is rejected (reverted with VerifierIsProposer)
+   ok: duplicate verifiers are rejected (reverted with DuplicateVerifier)
+   ok: no second task exists
+
+=== SCENARIO E: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+
+===== SUMMARY =====
+A: PASS
+B: PASS
+C: PASS
+D: PASS
+E: PASS
