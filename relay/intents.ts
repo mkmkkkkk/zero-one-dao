@@ -8,8 +8,8 @@ import { encodeAbiParameters, getAddress, isAddress, isHex, keccak256, stringToH
 import { ZERO_HASH } from "./common.js";
 import { fail } from "./errors.js";
 
-/** Contract ops of ZeroOneIntentAccount.executeIntent. */
-export const OPS = { propose: 0, sponsor: 1, vote: 2, execute: 3, ragequit: 4, deposit: 5, work: 6, task: 7, deliver: 8, confirm: 9 } as const;
+/** Contract ops of ZeroOneIntentAccount.executeIntent (op 1, sponsor, no longer exists: work self-sponsors; decision.md phase 2b ruling 4). */
+export const OPS = { propose: 0, vote: 2, execute: 3, ragequit: 4, deposit: 5, work: 6, task: 7, deliver: 8, confirm: 9 } as const;
 export type Verb = keyof typeof OPS;
 export const VERBS = Object.keys(OPS) as Verb[];
 export const OP_NAMES: Record<number, Verb> = Object.fromEntries(Object.entries(OPS).map(([verb, op]) => [op, verb])) as Record<number, Verb>;
@@ -90,7 +90,7 @@ export function normalize(raw: unknown): Intent {
   const m = raw as Partial<WireIntent> | null;
   if (m === null || typeof m !== "object") fail(400, "intent message missing");
   if (typeof m.member !== "string" || !isAddress(m.member)) fail(400, "intent.member is not an address");
-  if (!Number.isInteger(m.op) || (m.op as number) < 0 || (m.op as number) > 9) fail(400, "intent.op must be an integer 0..9");
+  if (!Number.isInteger(m.op) || OP_NAMES[m.op as number] === undefined) fail(400, `intent.op must be one of ${Object.entries(OPS).map(([verb, op]) => `${op} (${verb})`).join(", ")}`);
   if (!Number.isInteger(m.proposalId) || (m.proposalId as number) < 0 || (m.proposalId as number) > 4294967295) fail(400, "intent.proposalId must be a uint32");
   for (const key of ["amount", "nonce", "deadline"] as const) {
     if (typeof m[key] !== "string" || !UINT256.test(m[key] as string) || BigInt(m[key] as string) >= 2n ** 256n) fail(400, `intent.${key} must be a decimal uint256 string`);
@@ -111,7 +111,7 @@ export function normalize(raw: unknown): Intent {
   };
 }
 
-/** Wire form of a normalized intent (what the T0 path signs and what /prepare returns). */
+/** Wire form of a normalized intent (what the T0 path signs and what op=quote returns). */
 export function toWire(intent: Intent): WireIntent {
   return { ...intent, amount: intent.amount.toString(), nonce: intent.nonce.toString(), deadline: intent.deadline.toString() };
 }
@@ -157,7 +157,7 @@ export function evidenceHashOf(text: string): Hex {
   return keccak256(stringToHex(text));
 }
 
-/** Query parameters a verb accepts (T0 path and the prepare helper). */
+/** Query parameters a verb accepts (T0 path and the quote helper). */
 export interface VerbQuery {
   get(name: string): string | null;
 }
@@ -202,7 +202,7 @@ export interface BuildContext {
 
 /**
  * Build the intent message for a verb from query parameters (used by the T0 path and by the
- * `prepare` helper that hands T1 agents the exact message to sign).
+ * `quote` helper that hands T1 agents the exact message to sign).
  *
  * @param verb The verb.
  * @param q Query parameters.
@@ -220,8 +220,6 @@ export function buildIntent(verb: Verb, q: VerbQuery, ctx: BuildContext): Intent
       if (!["yes", "no", "true", "false", "1", "0"].includes(approve)) fail(400, "approve must be yes or no");
       return { ...base, proposalId: uint32Param(q, "proposalId"), amount: ["yes", "true", "1"].includes(approve) ? 1n : 0n };
     }
-    case "sponsor":
-      return { ...base, proposalId: uint32Param(q, "proposalId") };
     case "execute": {
       const id = uint32Param(q, "proposalId");
       const data = (q.get("data") as Hex | null) ?? ctx.proposalData?.(id);
@@ -256,8 +254,9 @@ export function buildIntent(verb: Verb, q: VerbQuery, ctx: BuildContext): Intent
       return { ...base, data: workData(verifiers, threshold, reward, expiration), details };
     }
     case "propose": {
+      // data = abi.encode(uint8 template, bytes params, bytes32 salt); details = summary + JSON (from op=quote).
       const data = q.get("data");
-      if (data === null || !isHex(data)) fail(400, "propose needs data=<proposalData> and details from /relay?op=prepare");
+      if (data === null || !isHex(data)) fail(400, "propose needs data=<abi.encode(template, params, salt)> and details from /relay?op=quote");
       return { ...base, data: data.toLowerCase() as Hex, details: q.get("details") ?? "", amount: q.get("expiration") ? integerParam(q, "expiration") : 0n };
     }
   }

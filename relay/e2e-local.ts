@@ -3,18 +3,20 @@
  * (50 USDC founder), a sponsor float, the relay against it, the beacon built and validated, then a
  * cold-start agent that uses ONLY the published README.txt helpers (snippet.js / snippet.py) and the
  * relay: a fresh T1 agent joins, deposits 100 mock USDC, reads /me, proposes a Payment (10 USDC to
- * itself), the founder votes YES via the relay (python snippet), warp, execute via the relay, sees the
- * payment, claims a task the founder proposed (via the relay), delivers, the verifiers confirm via the
- * relay, sees shares, ragequits, sees 0 shares. A T0 (passphrase) agent joins, deposits, votes and
- * ragequits with fetch-only URLs. Every request and response is printed. One anvil at a time.
- * Usage: npm run e2e:relay
+ * itself) with ONE signed intent (op=quote -> sign -> the relay deploys the CREATE2 instance and the
+ * account submits the fund+start proposal; ruling 2), the founder votes YES via the relay (python
+ * snippet) right after the submission (the relay waits one block; ruling 7), warp, execute via the
+ * relay, sees the payment, claims a task the founder proposed and self-sponsored in one transaction
+ * (ruling 4), delivers, the verifiers confirm via the relay, sees shares, ragequits, sees 0 shares.
+ * A T0 (passphrase) agent joins, deposits, votes and ragequits with fetch-only URLs. Every request
+ * and response is printed. One anvil at a time. Usage: npm run e2e:relay
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAddress, type Address, type Hex } from "viem";
+import { getAddress, keccak256, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { loadLocalArtifact } from "../src/baal.js";
@@ -23,6 +25,7 @@ import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
 import { buildBeacon } from "../beacon/scripts/build.js";
 import { validateBeacon } from "../beacon/scripts/validate.js";
+import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -107,10 +110,18 @@ async function main(): Promise<void> {
     const usdcOf = async (address: Address): Promise<bigint> => (await chain.publicClient.readContract({ address: dao.settlement, abi: settlementAbi, functionName: "balanceOf", args: [address] })) as bigint;
     const sharesOf = async (address: Address): Promise<bigint> => (await chain.publicClient.readContract({ address: dao.shares, abi: sharesAbi, functionName: "balanceOf", args: [address] })) as bigint;
 
-    /** Votes need a block after votingStarts (share checkpoints are per timestamp; anvil mines several blocks per second): move the mirror clock 1 s. */
-    const nextSecond = async (): Promise<void> => {
+    /**
+     * Ruling 7 on the mirror: a vote that follows a fresh submission is held by the relay until a block
+     * with a later timestamp exists. Anvil mines only on transactions, so the E2E mines exactly one block
+     * (clock +1 s) 1.5 s after sending the vote; the relay's answer must report `waitedBlocks: 1`.
+     */
+    const voteRightAfterSubmission = async (url: string, expectOk = true): Promise<Record<string, unknown>> => {
+      const pending = get(url, expectOk);
+      await sleep(1_500);
       await increaseTime(F, 1);
-      await sleep(2_500);
+      const body = await pending;
+      if (expectOk) assert(body.waitedBlocks === 1, "the relay waited exactly one block before sending a vote that followed a fresh submission (ruling 7)");
+      return body;
     };
 
     step("deploy Zero One on a fresh anvil (prague) + genesis: founder deposits 50 USDC -> 50e18 shares");
@@ -134,6 +145,8 @@ async function main(): Promise<void> {
       loot: dao.loot,
       depositShaman: dao.depositShaman,
       workManager: dao.workManager,
+      templateFactory: dao.templateFactory,
+      templateDeployers: dao.templateDeployers,
       intentAccount: dao.intentAccount,
       constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" },
       governance: { votingPeriod: dao.params.governance.votingPeriod, gracePeriod: dao.params.governance.gracePeriod, proposalOffering: "0", quorumPercent: "0", sponsorThreshold: dao.params.governance.sponsorThreshold.toString(), minRetentionPercent: "66" },
@@ -201,21 +214,33 @@ async function main(): Promise<void> {
     console.log(`   /me: shares ${me2.sharesFormatted} (${me2.percent}%) nav ${me2.navUsdcPerShare} exitValue ${me2.exitValueUsdc} usdc ${me2.usdcFormatted} nonce ${me2.nonce}`);
     assert(me2.sharesFormatted === "100" && me2.navUsdcPerShare === "1" && me2.exitValueUsdc === "100" && me2.nonce === "1", "/me: 100 shares, NAV 1 USDC/share, exit value 100 USDC, nonce 1");
 
-    step("T1 agent: propose a Payment of 10 USDC to itself (propose --template Payment): prepare deploys the instance, then the signed op-0 intent submits the proposal");
+    step("founder: join via the relay (python3 snippet.py) before any proposal exists");
+    await get(snippet("python", beacon, ["join", "--key", founderFile]));
+
+    step("T1 agent: propose a Payment of 10 USDC to itself with ONE signed intent (propose --template Payment): op=quote (read-only) -> sign -> the relay deploys the CREATE2 instance -> the account submits fund+start of exactly that address");
     const paymentParams = JSON.stringify({ recipients: [agent.address], amounts: [(10n * SETTLEMENT_UNIT).toString()] });
+    const quoteUrl = `${origin}/relay?op=quote&member=${agent.address}&template=Payment&params=${encodeURIComponent(paymentParams)}&summary=${encodeURIComponent("agent: pay me 10 USDC")}`;
+    const quoted = await get(quoteUrl);
+    assert(quoted.exists === false && typeof quoted.instance === "string" && typeof quoted.codeHash === "string" && quoted.canPropose === true, "quote: the instance address is known before deployment (exists: false), with its code hash");
     const proposed = await get(snippet("node", beacon, ["propose", "--key", agentFile, "--template", "Payment", "--params", paymentParams, "--summary", "agent: pay me 10 USDC"]));
     const proposal1 = Number(proposed.proposalId);
-    assert(proposal1 === 1 && proposed.sponsored === true, "proposal #1 submitted and self-sponsored (agent holds >= 1 share)");
-    await nextSecond();
+    assert(proposal1 === 1 && proposed.sponsored === true, "proposal #1 submitted and self-sponsored (agent holds >= 1 share) in one intent");
+    assert(proposed.deployedBy === "relay sponsor" && typeof proposed.deployHash === "string" && getAddress(String(proposed.instance)) === getAddress(String(quoted.instance)), "the relay deployed the instance at the quoted CREATE2 address before the intent (sponsored, member >= 1 share)");
+    const instanceCode = await chain.publicClient.getCode({ address: getAddress(String(proposed.instance)) });
+    assert(instanceCode !== undefined && keccak256(instanceCode) === quoted.codeHash, "the code hash quoted before deployment equals keccak256 of the code now at the address");
     const proposalsBody = (await (await fetch(`${origin}/proposals.json`)).json()) as { proposals: Array<Record<string, unknown>> };
     const p1 = proposalsBody.proposals.find((p) => p.id === 1)!;
     console.log(`   /proposals.json #1: state ${p1.state} effect "${(p1.treasuryEffect as { summary: string }).summary}" instance ${JSON.stringify(p1.instance).slice(0, 300)}`);
     assert(p1.state === "Voting" && (p1.treasuryEffect as { usdcOut: string }).usdcOut === (10n * SETTLEMENT_UNIT).toString(), "proposal #1 is Voting with treasury effect 10 USDC out");
     assert((p1.instance as { template: string; status: string; operator: string }).template === "Payment" && (p1.instance as { status: string }).status === "Pending" && getAddress((p1.instance as { operator: string }).operator) === agent.address, "instance is a Pending Payment whose operator is the agent");
+    assert(p1.proposalData === quoted.proposalData && String(p1.details).includes(String(quoted.codeHash)) && String(p1.details).includes(String(quoted.paramsHash)), "the proposalData the account built on-chain equals the quoted (off-chain) multicall; details carry codeHash and paramsHash");
+    const quotedAgain = await get(quoteUrl.replace(/&summary=.*$/u, `&summary=x&salt=${String(quoted.salt)}`));
+    assert(quotedAgain.exists === true && getAddress(String(quotedAgain.instance)) === getAddress(String(quoted.instance)) && quotedAgain.codeHash === quoted.codeHash, "quoting the same (template, params, member, salt) again finds the deployed instance (deterministic address)");
+    const signedData = decodeProposeIntentData((JSON.parse(Buffer.from(new URL(snippet("node", beacon, ["propose", "--key", agentFile, "--template", "Payment", "--params", paymentParams, "--summary", "x"])).searchParams.get("intent")!, "base64url").toString()) as { message: { data: Hex } }).message.data);
+    assert(signedData.template === "Payment" && signedData.paramsBytes === encodeParams({ template: "Payment", params: { recipients: [agent.address], amounts: [10n * SETTLEMENT_UNIT] } }), "the signed intent carries only the template id, the exact abi.encode(params) and a salt (nothing the relay chose)");
 
-    step("founder: join + vote YES on #1 via the relay (python3 snippet.py)");
-    await get(snippet("python", beacon, ["join", "--key", founderFile]));
-    const founderVote = await get(snippet("python", beacon, ["vote", "--key", founderFile, "--proposal", "1", "--approve", "yes"]));
+    step("founder votes YES on #1 right after the submission (python3 snippet.py): the relay waits one block (ruling 7)");
+    const founderVote = await voteRightAfterSubmission(snippet("python", beacon, ["vote", "--key", founderFile, "--proposal", "1", "--approve", "yes"]));
     assert((founderVote.vote as { approved: boolean; shares: string }).approved === true && (founderVote.vote as { shares: string }).shares === "50", "founder voted YES with 50 shares");
 
     step("warp past voting + grace (12 h); T1 agent executes #1 via the relay (explicit 5,000,000 gas)");
@@ -229,15 +254,16 @@ async function main(): Promise<void> {
     assert(me3.usdcFormatted === "10", "the agent sees the 10 USDC payment");
     assert((await usdcOf(dao.safe)) === 140n * SETTLEMENT_UNIT, "the Safe holds 140 USDC (50 + 100 - 10)");
 
-    step("founder proposes a task via the relay (work: verifiers V1,V2 threshold 2, reward 5 shares) and sponsors it; founder + agent vote YES; warp; agent executes");
+    step("founder proposes a task via the relay (work: verifiers V1,V2 threshold 2, reward 5 shares): submitTask + sponsorProposal in ONE transaction (ruling 4); founder votes right after (relay waits one block); agent votes; warp; agent executes");
     const task = await get(snippet("python", beacon, ["work", "--key", founderFile, "--verifiers", `${v1},${v2}`, "--threshold", "2", "--reward-shares", (5n * UNIT).toString(), "--details", "ops: run the relay e2e"]));
     const taskInfo = task.task as { taskId: number; proposalId: number };
     assert(taskInfo.taskId === 1 && taskInfo.proposalId === 2, "task #1 recorded, proposal #2 submitted");
-    const sponsoredTask = await get(snippet("python", beacon, ["sponsor", "--key", founderFile, "--proposal", "2"]));
-    assert(sponsoredTask.sponsored === true, "the WorkManager submitted #2 unsponsored; the founder sponsors it (op 1) so voting starts");
-    await nextSecond();
-    await get(snippet("python", beacon, ["vote", "--key", founderFile, "--proposal", "2", "--approve", "yes"]));
-    await get(snippet("node", beacon, ["vote", "--key", agentFile, "--proposal", "2", "--approve", "yes"]));
+    assert(task.sponsored === true, "the same transaction sponsored #2 (SponsorProposal event): no ninth verb");
+    const p2 = ((await (await fetch(`${origin}/proposals.json`)).json()) as { proposals: Array<Record<string, unknown>> }).proposals.find((p) => p.id === 2)!;
+    assert(p2.state === "Voting" && getAddress(String(p2.sponsor)) === F.account.address, "proposal #2 is Voting, sponsored by the founder's own account");
+    await voteRightAfterSubmission(snippet("python", beacon, ["vote", "--key", founderFile, "--proposal", "2", "--approve", "yes"]));
+    const agentVote2 = await get(snippet("node", beacon, ["vote", "--key", agentFile, "--proposal", "2", "--approve", "yes"]));
+    assert(agentVote2.waitedBlocks === 0, "a vote after a later block exists is sent at once (waitedBlocks 0)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
     const activated = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "2"]));
@@ -279,9 +305,8 @@ async function main(): Promise<void> {
     step("T1 agent proposes Payment #2 (1 USDC to the T0 address); T0 votes YES then ragequits during voting (allowed); T0 sees 0 shares");
     const p2Params = JSON.stringify({ recipients: [t0Address], amounts: [SETTLEMENT_UNIT.toString()] });
     const proposed2 = await get(snippet("node", beacon, ["propose", "--key", agentFile, "--template", "Payment", "--params", p2Params, "--summary", "agent: 1 USDC to the T0 agent"]));
-    assert(Number(proposed2.proposalId) === 3, "proposal #3 submitted");
-    await nextSecond();
-    const t0Vote = await get(`${origin}/relay?op=vote&proposalId=3&approve=yes&pass=${encodeURIComponent(pass)}`);
+    assert(Number(proposed2.proposalId) === 3 && proposed2.deployedBy === "relay sponsor", "proposal #3 submitted; its instance deployed by the sponsor at the CREATE2 address");
+    const t0Vote = await voteRightAfterSubmission(`${origin}/relay?op=vote&proposalId=3&approve=yes&pass=${encodeURIComponent(pass)}`);
     assert((t0Vote.vote as { approved: boolean }).approved === true, "T0 voted YES on #3");
     const t0Usdc = await usdcOf(t0Address);
     const t0Exit = await get(`${origin}/relay?op=ragequit&pass=${encodeURIComponent(pass)}`);
@@ -316,8 +341,14 @@ async function main(): Promise<void> {
     assert((badDeposit.error as { name: string })?.name === "ZeroAmount", "deposit 0 -> DepositShaman.ZeroAmount decoded");
     const badTemplate = await get(`${origin}/relay?op=propose&template=Bogus&params=%7B%7D&pass=${encodeURIComponent(pass)}`, false);
     assert(String(badTemplate.reason).includes("unknown template"), "unknown template -> 400 with a reason");
-    const strangerPrepare = await get(`${origin}/relay?op=prepare&member=${F.account.address}&template=Payment&params=${encodeURIComponent(paymentParams)}&sig=0x${"11".repeat(64)}1b`, false);
-    assert(strangerPrepare.status === 401 && /signature/u.test(String(strangerPrepare.reason)), "prepare with a bad signature -> 401 with a signature reason");
+    const noShares = await get(snippet("python", beacon, ["propose", "--key", v1File, "--template", "Payment", "--params", paymentParams, "--summary", "v1: no shares"]), false);
+    assert(noShares.status === 409 && /at least 1 shares/u.test(String(noShares.reason)), "propose by a member below sponsorThreshold -> 409 (no sponsored deployment, no unsponsorable proposal)");
+    const ninth = await get(`${origin}/relay?op=sponsor&proposalId=3&pass=${encodeURIComponent(pass)}`, false);
+    assert(ninth.status === 400 && /unknown op sponsor/u.test(String(ninth.reason)), "op=sponsor no longer exists -> 400");
+    const retired = await get(`${origin}/relay?op=prepare&member=${F.account.address}&template=Payment&params=${encodeURIComponent(paymentParams)}`, false);
+    assert(retired.status === 400, "op=prepare is retired -> 400");
+    const badQuote = await get(`${origin}/relay?op=quote&member=${F.account.address}&template=Payment&params=${encodeURIComponent(JSON.stringify({ recipients: [F.account.address], amounts: ["0"] }))}`, false);
+    assert((badQuote.error as { name: string })?.name === "ZeroAmount", "quote with a zero payment -> the template constructor's ZeroAmount decoded from the factory dry run");
 
     step("cross-check: node, python and viem produce byte-identical signatures for the same intent (deterministic RFC 6979)");
     const founderMe = (await (await fetch(`${origin}/me/${F.account.address}.json`)).json()) as { nonce: string; chainTime: number };

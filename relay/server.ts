@@ -1,21 +1,26 @@
 /**
  * Zero One relay: sponsored GET intents for the eight verbs (join, deposit, task, deliver, propose,
- * vote, execute, ragequit) plus work (submitTask) and confirm, over the EIP-7702 adapter
- * (ZeroOneIntentAccount). Pattern: agent-only-wallet/relay/server.mjs. T1 agents sign with their own
- * key; T0 agents use a passphrase whose key the relay derives (custodial-lite). Every response is JSON;
- * every failure carries a decoded reason (docs/RELAY.md).
+ * vote, execute, ragequit) plus work (submitTask + self-sponsor) and confirm, over the EIP-7702
+ * adapter (ZeroOneIntentAccount). Pattern: agent-only-wallet/relay/server.mjs. T1 agents sign with
+ * their own key; T0 agents use a passphrase whose key the relay derives (custodial-lite). Every
+ * response is JSON; every failure carries a decoded reason (docs/RELAY.md).
  *
  * Endpoints: /health.json, /me/<address>.json, /me/pass/<sha256(pass)>.json, /proposals.json,
  * /state.json, /relay?intent=<base64url envelope>, /relay?op=<verb>&pass=<secret>&..., /relay?op=join,
- * /relay?op=prepare (T1 propose step 1). Usage: tsx relay/server.ts (env: ZERO_ONE_DEPLOYMENT,
- * RELAY_SPONSOR_KEY, RELAY_PORT, RELAY_STATE_DIR, ZERO_ONE_STATE_FILE, ZERO_ONE_RPC_URL).
+ * /relay?op=quote (read-only: the op-0 intent to sign for a template + params). Usage: tsx
+ * relay/server.ts (env: ZERO_ONE_DEPLOYMENT, RELAY_SPONSOR_KEY, RELAY_PORT, RELAY_STATE_DIR,
+ * ZERO_ONE_STATE_FILE, ZERO_ONE_RPC_URL).
+ * Relay behaviors ruled in decision.md phase 2b: a propose intent whose instance address is still
+ * empty gets the instance deployed by the sponsor first (members holding >= sponsorThreshold only,
+ * rate-limited; ruling 3); a vote that follows a fresh submission waits for the next block before it
+ * is sent, because Baal reads the share checkpoint at votingStarts (ruling 7).
  */
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import http from "node:http";
 import path from "node:path";
 
-import { decodeEventLog, encodeFunctionData, getAddress, hashTypedData, isAddress, recoverTypedDataAddress, verifyMessage, type Address, type Hex, type TransactionReceipt } from "viem";
+import { decodeEventLog, encodeFunctionData, getAddress, hashTypedData, isAddress, keccak256, numberToHex, recoverTypedDataAddress, type Address, type Hex, type TransactionReceipt } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import { recoverAuthorizationAddress } from "viem/utils";
 
@@ -24,7 +29,8 @@ import { atomic, connect, fmtShares, fmtUsdc, json, PROCESS_GAS, sponsorAccount,
 import { decodeRevert, explain, fail, RelayError } from "./errors.js";
 import { buildIntent, INTENT_TYPES, intentDomain, normalize, normalizeAuthorization, OP_NAMES, OPS, toWire, VERBS, type Envelope, type Intent, type Verb } from "./intents.js";
 import { identity, me, type Me } from "./me.js";
-import { parseSpec, prepareMessage, prepareProposal } from "./templates.js";
+import { decodeProposeIntentData, TEMPLATE_IDS } from "../src/proposals.js";
+import { parseSpec, quoteProposal } from "./templates.js";
 
 const env: Env = connect();
 const sponsor: PrivateKeyAccount = sponsorAccount();
@@ -204,6 +210,72 @@ async function faucet(member: Address, amount: bigint): Promise<{ topped: bigint
   return { topped: needed, hash };
 }
 
+/** Shares held and the sponsor threshold. */
+async function sharesAndThreshold(member: Address): Promise<{ shares: bigint; threshold: bigint }> {
+  const [shares, threshold] = await Promise.all([
+    client.readContract({ address: D.shares, abi: env.abi.shares, functionName: "balanceOf", args: [member] }) as Promise<bigint>,
+    client.readContract({ address: D.baal, abi: env.abi.baal, functionName: "sponsorThreshold" }) as Promise<bigint>,
+  ]);
+  return { shares, threshold };
+}
+
+/**
+ * Ruling 3: deploy the template instance a propose intent names when its CREATE2 address is still
+ * empty. Sponsored, members holding >= sponsorThreshold only, rate-limited, under the daily budget.
+ *
+ * @param member The proposer (operator of the instance).
+ * @param data The intent's data: abi.encode(template id, params, salt).
+ * @returns The instance address and, when the sponsor deployed it, the deployment hash.
+ */
+async function ensureInstance(member: Address, data: Hex): Promise<{ instance: Address; template: string; deployHash?: Hex; codeHash: Hex }> {
+  let decoded: ReturnType<typeof decodeProposeIntentData>;
+  try {
+    decoded = decodeProposeIntentData(data);
+  } catch (error) {
+    return fail(400, `propose data must be abi.encode(uint8 template, bytes params, bytes32 salt) from op=quote: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const instance = getAddress((await client.readContract({ address: D.templateFactory, abi: env.abi.factory, functionName: "predict", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] })) as Address);
+  const existing = await client.getCode({ address: instance });
+  if (existing !== undefined && existing !== "0x") return { instance, template: decoded.template, codeHash: keccak256(existing) };
+  const { shares, threshold } = await sharesAndThreshold(member);
+  if (shares < threshold) fail(409, `sponsored template deployments need at least ${fmtShares(threshold)} shares (you hold ${fmtShares(shares)}); deposit first`);
+  rate(`deploy:${member.toLowerCase()}`, RATE_ADDRESS);
+  persist();
+  const simulation = await client.simulateContract({ address: D.templateFactory, abi: env.abi.factory, functionName: "deploy", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt], account: sponsor.address } as never);
+  const [predicted] = simulation.result as unknown as [Address, Hex];
+  if (getAddress(predicted) !== instance) fail(422, `factory would deploy at ${predicted}, predicted ${instance}`);
+  const gas = ((simulation.request as { gas?: bigint }).gas ?? (await client.estimateGas({ account: sponsor.address, to: D.templateFactory, data: encodeFunctionData({ abi: env.abi.factory, functionName: "deploy", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] }) } as never))) as bigint;
+  const receipt = await sponsored({ to: D.templateFactory, data: encodeFunctionData({ abi: env.abi.factory, functionName: "deploy", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] }), gas: (gas * 13n) / 10n + 30_000n });
+  const code = await client.getCode({ address: instance });
+  if (code === undefined || code === "0x") fail(422, `template instance did not appear at ${instance} (tx ${receipt.transactionHash})`, { hash: receipt.transactionHash });
+  return { instance, template: decoded.template, deployHash: receipt.transactionHash, codeHash: keccak256(code) };
+}
+
+/**
+ * Ruling 7: a vote reads the member's share checkpoint at the proposal's votingStarts, which is
+ * undetermined until a block with a later timestamp exists. When the latest block is not past
+ * votingStarts, wait for the next block(s) before sending the vote.
+ *
+ * @param proposalId The proposal being voted on.
+ * @returns Blocks waited (0 when the checkpoint was already determined).
+ * @throws RelayError 409 if no later block appears within 120 s.
+ */
+async function awaitVotingCheckpoint(proposalId: number): Promise<number> {
+  const raw = (await client.readContract({ address: D.baal, abi: env.abi.baal, functionName: "proposals", args: [proposalId] })) as readonly unknown[];
+  const votingStarts = BigInt(raw[2] as bigint);
+  if (votingStarts === 0n) return 0;
+  let block = await client.getBlock();
+  if (block.timestamp > votingStarts) return 0;
+  const first = block.number;
+  const started = Date.now();
+  while (block.timestamp <= votingStarts) {
+    if (Date.now() - started > 120_000) fail(409, `vote too early: proposal ${proposalId} was sponsored at chain time ${votingStarts} and no later block exists yet; retry after the next block`);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    block = await client.getBlock();
+  }
+  return Number(block.number - first);
+}
+
 /** Record a member transaction in the db. */
 function record(member: Address, custodial: boolean, entry: { hash: Hex; op: number; verb: string; nonce: string; status: string }, passHash?: string): void {
   const key = member.toLowerCase();
@@ -281,6 +353,15 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
     const topped = await faucet(m.member, m.amount);
     if (topped.topped > 0n) faucetNote = { faucet: { toppedUpUsdc: fmtUsdc(topped.topped), hash: topped.hash } };
   }
+  if (m.op === OPS.propose) {
+    // Proposals through the relay are self-sponsored: the ninth verb (sponsor) does not exist (ruling 4).
+    const { shares, threshold } = await sharesAndThreshold(m.member);
+    if (shares < threshold) fail(409, `propose needs at least ${fmtShares(threshold)} shares so the proposal is self-sponsored (you hold ${fmtShares(shares)}); deposit first`);
+    const ensured = await ensureInstance(m.member, m.data);
+    faucetNote = { instance: ensured.instance, template: ensured.template, codeHash: ensured.codeHash, ...(ensured.deployHash ? { deployHash: ensured.deployHash, deployedBy: "relay sponsor" } : { deployedBy: "already on chain" }) };
+  }
+  let waitedBlocks = 0;
+  if (m.op === OPS.vote) waitedBlocks = await awaitVotingCheckpoint(m.proposalId);
   const data = encodeFunctionData({ abi: env.abi.account, functionName: "executeIntent", args: [m, envelope.signature] });
   const estimate = await simulate(m.member, data, id.delegated);
   const gas = m.op === OPS.execute ? (estimate > PROCESS_GAS ? (estimate * 13n) / 10n : PROCESS_GAS + 600_000n) : (estimate * 13n) / 10n + 30_000n;
@@ -301,11 +382,20 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
   db.requests[digest] = { hash: receipt.transactionHash, member: m.member, op: m.op, status: "success" };
   record(m.member, custodial, { hash: receipt.transactionHash, op: m.op, verb, nonce: m.nonce.toString(), status: "success" }, passHash);
   const summary = summarizeReceipt(receipt, m.member);
-  return { ok: true, verb, op: m.op, member: m.member, hash: receipt.transactionHash, blockNumber: receipt.blockNumber.toString(), gasUsed: receipt.gasUsed.toString(), nonceUsed: m.nonce.toString(), nextNonce: (m.nonce + 1n).toString(), ...summary, ...faucetNote };
+  return { ok: true, verb, op: m.op, member: m.member, hash: receipt.transactionHash, blockNumber: receipt.blockNumber.toString(), gasUsed: receipt.gasUsed.toString(), nonceUsed: m.nonce.toString(), nextNonce: (m.nonce + 1n).toString(), ...(m.op === OPS.vote ? { waitedBlocks } : {}), ...summary, ...faucetNote };
 }
 
-/** T1 propose step 1: deploy the template instance for a member and return the message to sign. */
-async function prepare(q: URLSearchParams, memberOverride?: PrivateKeyAccount): Promise<Record<string, unknown>> {
+/**
+ * Read-only quote for propose: the deterministic instance for (template, params, member, salt) and
+ * the ONE op-0 intent to sign. Nothing is deployed and nothing is signed here; the sponsor deploys
+ * the instance only when the signed intent arrives (ruling 3), and the account rebuilds the same
+ * address and multicall from the signed data on-chain (ruling 2).
+ *
+ * @param q Query: member, template, params (JSON), summary, salt (default: the member's intent nonce).
+ * @param memberOverride T0 account (the pass path).
+ * @returns The quote and the intent message to sign.
+ */
+async function quote(q: URLSearchParams, memberOverride?: PrivateKeyAccount): Promise<Record<string, unknown>> {
   const member = memberOverride ? memberOverride.address : (q.get("member") as string | null);
   if (member === null || !isAddress(member)) fail(400, "member (address) is required");
   const template = q.get("template") ?? "";
@@ -320,52 +410,37 @@ async function prepare(q: URLSearchParams, memberOverride?: PrivateKeyAccount): 
   }
   const spec = parseSpec(template, parsedParams);
   const id = await identity(env, getAddress(member));
-  if (memberOverride === undefined) {
-    const sig = q.get("sig");
-    if (sig === null || !/^0x[0-9a-fA-F]{130}$/u.test(sig)) fail(400, "sig (EIP-191 signature of the prepare message) is required");
-    const message = prepareMessage(getAddress(member), template, params, id.nonce);
-    const valid = await recovering("prepare signature", () => verifyMessage({ address: getAddress(member), message, signature: sig as Hex }));
-    if (!valid) fail(401, `prepare signature mismatch; sign exactly: ${JSON.stringify(message)}`);
-  }
-  const shares = (await client.readContract({ address: D.shares, abi: env.abi.shares, functionName: "balanceOf", args: [getAddress(member)] })) as bigint;
-  const threshold = (await client.readContract({ address: D.baal, abi: env.abi.baal, functionName: "sponsorThreshold" })) as bigint;
-  if (shares < threshold) fail(409, `sponsored deployments need at least ${fmtShares(threshold)} shares (you hold ${fmtShares(shares)}); deposit first`);
-  rate(`address:${member.toLowerCase()}`, RATE_ADDRESS);
-  persist();
-  const { budget } = budgetRow();
-  const reserve = 3_000_000n * policy.maxFeePerGas;
-  if (BigInt(budget.wei) + reserve > policy.dailyWei) fail(503, "daily gas sponsorship budget reached");
-  budget.wei = (BigInt(budget.wei) + reserve).toString();
-  persist();
-  let prepared: Awaited<ReturnType<typeof prepareProposal>> | undefined;
-  try {
-    prepared = await prepareProposal(env, sponsorCtx, getAddress(member), spec, summary);
-  } finally {
-    const spent = prepared ? (await client.getTransactionReceipt({ hash: prepared.instance.deployHash })).gasUsed * policy.maxFeePerGas : 0n;
-    budget.wei = (BigInt(budget.wei) - reserve + spent).toString();
-    persist();
-  }
-  invalidateState();
-  if (prepared === undefined) fail(503, "template deployment failed");
-  const intent = buildIntent("propose", new URLSearchParams({ data: prepared.proposalData, details: prepared.details }), { member: getAddress(member), nonce: BigInt(id.nonce), chainTime: id.chainTime, settlement: D.settlement });
+  const saltParam = q.get("salt");
+  if (saltParam !== null && !/^0x[0-9a-fA-F]{64}$/u.test(saltParam)) fail(400, "salt must be bytes32 hex");
+  const salt = (saltParam?.toLowerCase() as Hex | undefined) ?? numberToHex(BigInt(id.nonce), { size: 32 });
+  const quoted = await quoteProposal(env, getAddress(member), spec, summary, salt);
+  const intent = buildIntent("propose", new URLSearchParams({ data: quoted.intentData, details: quoted.details }), { member: getAddress(member), nonce: BigInt(id.nonce), chainTime: id.chainTime, settlement: D.settlement });
+  const { shares, threshold } = await sharesAndThreshold(getAddress(member));
   return {
     ok: true,
-    verb: "prepare",
-    instance: prepared.instance.address,
-    template: prepared.instance.template,
-    contract: prepared.instance.contractName,
-    codeHash: prepared.instance.codeHash,
-    paramsHash: prepared.instance.paramsHash,
-    operator: prepared.instance.description.operator,
-    budget: prepared.instance.description.budget.toString(),
-    budgetUsdc: fmtUsdc(prepared.instance.description.budget),
-    deployHash: prepared.instance.deployHash,
-    calls: prepared.calls,
-    proposalData: prepared.proposalData,
-    details: prepared.details,
+    verb: "quote",
+    instance: quoted.instance.address,
+    exists: quoted.exists,
+    template: quoted.instance.template,
+    templateId: TEMPLATE_IDS[quoted.instance.template],
+    contract: quoted.instance.contractName,
+    codeHash: quoted.instance.codeHash,
+    paramsHash: quoted.instance.paramsHash,
+    paramsBytes: quoted.instance.paramsBytes,
+    salt,
+    operator: quoted.instance.description.operator,
+    budget: quoted.instance.description.budget.toString(),
+    budgetUsdc: fmtUsdc(quoted.instance.description.budget),
+    deadline: quoted.instance.description.deadline.toString(),
+    calls: quoted.calls,
+    proposalData: quoted.proposalData,
+    details: quoted.details,
+    canPropose: shares >= threshold,
+    shares: shares.toString(),
+    sponsorThreshold: threshold.toString(),
     message: toWire(intent),
     domain: id.domain,
-    next: "sign `message` (EIP-712 Intent, op 0) with your key and GET /relay?intent=<base64url {message, signature}>",
+    next: "sign `message` (EIP-712 Intent, op 0: data = abi.encode(template, params, salt)) with your key and GET /relay?intent=<base64url {message, signature}>; the relay deploys the instance at `instance` if it is still empty, then your account submits the proposal that funds and starts exactly that address",
   };
 }
 
@@ -380,15 +455,15 @@ async function custodial(q: URLSearchParams): Promise<Record<string, unknown>> {
   const authorization = id.delegated ? undefined : await key.signAuthorization({ contractAddress: adapter, chainId: D.chainId, nonce: id.authorizationNonce });
   const auth = authorization ? { chainId: D.chainId, address: adapter, nonce: authorization.nonce, r: authorization.r, s: authorization.s, yParity: authorization.yParity as 0 | 1 } : undefined;
   if (op === "join") return join(key.address, auth, true, ph);
-  if (!(VERBS as string[]).includes(op)) fail(400, `unknown op ${op}; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm, sponsor`);
+  if (!(VERBS as string[]).includes(op)) fail(400, `unknown op ${op}; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm (sponsor no longer exists: work self-sponsors)`);
   const state = await readDaoState(env);
   let query = q;
   let extra: Record<string, unknown> = {};
   if (op === "propose") {
     if (!id.delegated) fail(409, "join first (op=join) so the proposal is submitted from your delegated account");
-    const prepared = await prepare(q, key);
-    query = new URLSearchParams({ data: prepared.proposalData as string, details: prepared.details as string });
-    extra = { instance: prepared.instance, codeHash: prepared.codeHash, paramsHash: prepared.paramsHash, operator: prepared.operator, budgetUsdc: prepared.budgetUsdc, deployHash: prepared.deployHash };
+    const quoted = await quote(q, key);
+    query = new URLSearchParams({ data: (quoted.message as { data: string }).data, details: quoted.details as string });
+    extra = { instance: quoted.instance, codeHash: quoted.codeHash, paramsHash: quoted.paramsHash, operator: quoted.operator, budgetUsdc: quoted.budgetUsdc, salt: quoted.salt };
   }
   const shares = (await client.readContract({ address: D.shares, abi: env.abi.shares, functionName: "balanceOf", args: [key.address] })) as bigint;
   const intent = buildIntent(op as Verb, query, { member: key.address, nonce: BigInt(id.nonce), chainTime: id.chainTime, settlement: D.settlement, shares, proposalData: (pid) => state.proposals.find((p) => p.id === pid)?.proposalData });
@@ -410,7 +485,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
     const u = new URL(rawUrl, "http://localhost");
     if (u.pathname === "/health.json") {
       const [balance, block] = await Promise.all([client.getBalance({ address: sponsor.address }), client.getBlockNumber()]);
-      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8 }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm", "sponsor"], startedAt, queued, alive: true }));
+      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8 }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, startedAt, queued, alive: true }));
     }
     if (u.pathname === "/proposals.json") {
       const state = await readDaoState(env);
@@ -449,8 +524,8 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
         const signer = await recovering("authorization", () => recoverAuthorizationAddress({ authorization: normalized }));
         return join(getAddress(signer), normalized, false);
       }
-      if (op === "prepare") return prepare(q);
-      return fail(400, "expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=prepare&member=..&template=..&params=..&sig=.., or op=<verb>&pass=<secret>");
+      if (op === "quote") return quote(q);
+      return fail(400, "expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=quote&member=..&template=..&params=..[&summary=&salt=], or op=<verb>&pass=<secret>");
     });
     queue = task.catch(() => undefined);
     let result: Record<string, unknown>;

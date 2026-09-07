@@ -1,14 +1,17 @@
 /**
- * `propose` for agents: template name + JSON parameters -> the relay deploys the instance with the
- * member as operator (sponsored gas), builds the fund+start multicall with src/proposals.ts and
- * returns instance address, code hash, params hash, proposalData and details. The member then signs
- * the op-0 intent that submits the Baal proposal (T1) or the relay signs it with the T0 key.
+ * `propose` for agents (decision.md phase 2b ruling 2): template name + JSON parameters -> the relay
+ * quotes the deterministic CREATE2 instance (address, code hash, params hash, budget, proposalData)
+ * with an eth_call of `TemplateFactory.quote` (nothing is deployed by the quote), and returns the
+ * ONE op-0 intent to sign: data = abi.encode(template id, params, salt), details = summary + JSON.
+ * The account derives the instance and the fund+start multicall from the signed data on-chain, so
+ * the relay can never substitute code. The relay deploys the instance (sponsored) only when the
+ * signed intent arrives and the address is still empty.
  */
-import { getAddress, isAddress, keccak256, stringToHex, type Address, type Hex } from "viem";
-
-import type { WriteContext } from "../src/baal.js";
-import { deployTemplate, fundAndStartCalls, proposalDetails, TEMPLATE_NAMES, type ConfigParams, type PaymentParams, type ProjectParams, type StrategyParams, type TemplateInstance, type TemplateName, type TemplateSpec, type Tranche } from "../src/proposals.js";
 import { encodeProposalData } from "../src/baal.js";
+import { encodeParams, fundAndStartCalls, proposalDetails, proposeIntentData, TEMPLATE_CONTRACTS, TEMPLATE_IDS, TEMPLATE_NAMES, type ConfigParams, type PaymentParams, type ProjectParams, type StrategyParams, type TemplateInstance, type TemplateName, type TemplateSpec, type Tranche } from "../src/proposals.js";
+import { loadLocalArtifact } from "../src/baal.js";
+import { getAddress, isAddress, keccak256, type Address, type Hex } from "viem";
+
 import type { Env } from "./common.js";
 import { fail } from "./errors.js";
 
@@ -90,33 +93,65 @@ export function parseSpec(template: string, raw: unknown): TemplateSpec {
   }
 }
 
-export interface Prepared {
+export interface Quote {
   instance: TemplateInstance;
+  /** Whether code already exists at the instance address. */
+  exists: boolean;
+  /** abi.encode(template id, params, salt): the `data` field of the op-0 intent. */
+  intentData: Hex;
   proposalData: Hex;
   details: string;
   calls: Array<{ to: Address; data: Hex }>;
 }
 
 /**
- * Deploy the template instance for `member` (operator) with the sponsor's gas and build the exact
- * Baal proposal (multicall + details) that funds and starts it.
+ * Quote the deterministic instance for (spec, member, salt) without deploying it: eth_call
+ * `TemplateFactory.quote` (which deploys inside the call and describes the result), then build the
+ * exact op-0 intent data, the proposalData and the details JSON (template, instance, operator,
+ * budget, deadline, params, paramsHash, codeHash, salt).
  *
  * @param env The connected environment.
- * @param sponsor The sponsor write context (pays the deployment).
  * @param member The proposer; becomes the instance's operator.
  * @param spec Template and parameters.
  * @param summary One-line summary prefixed to the details JSON.
- * @returns Instance, proposalData, details and the calls.
+ * @param salt CREATE2 salt (the relay uses the member's intent nonce).
+ * @returns The quote.
+ * @throws RelayError 422 when the factory refuses the parameters (decoded reason) or when the
+ *   factory's proposalData differs from the builder's.
  */
-export async function prepareProposal(env: Env, sponsor: WriteContext, member: Address, spec: TemplateSpec, summary: string): Promise<Prepared> {
-  const dao = { safe: env.deployment.safe, settlement: env.deployment.settlement, baal: env.deployment.baal };
-  const instance = await deployTemplate(sponsor, dao, spec, member);
+export async function quoteProposal(env: Env, member: Address, spec: TemplateSpec, summary: string, salt: Hex): Promise<Quote> {
+  const dao = { safe: env.deployment.safe, settlement: env.deployment.settlement, baal: env.deployment.baal, templateFactory: env.deployment.templateFactory };
+  const paramsBytes = encodeParams(spec);
+  const templateId = TEMPLATE_IDS[spec.template];
+  const simulation = await env.publicClient.simulateContract({ address: dao.templateFactory, abi: env.abi.factory, functionName: "quote", args: [templateId, paramsBytes, member, salt], account: member } as never);
+  const [instanceAddress, codeHash, paramsHash, budget, deadline, onChainData] = simulation.result as unknown as [Address, Hex, Hex, bigint, bigint, Hex];
+  const localParamsHash = keccak256(paramsBytes);
+  if (paramsHash !== localParamsHash) fail(422, `paramsHash mismatch: factory ${paramsHash}, local ${localParamsHash}`);
+  const existing = await env.publicClient.getCode({ address: instanceAddress });
+  const exists = existing !== undefined && existing !== "0x";
+  const artifact = loadLocalArtifact(TEMPLATE_CONTRACTS[spec.template]) as { compiler?: string };
+  const instance: TemplateInstance = {
+    address: getAddress(instanceAddress),
+    deployHash: undefined,
+    salt,
+    paramsBytes,
+    template: spec.template,
+    contractName: TEMPLATE_CONTRACTS[spec.template],
+    compiler: artifact.compiler ?? "unknown",
+    spec,
+    paramsHash,
+    codeHash,
+    description: { template: spec.template, paramsHash, operator: getAddress(member), budget, deadline, status: "Pending" },
+  };
   const calls = fundAndStartCalls(dao, instance);
-  const details = proposalDetails(instance, summary);
-  return { instance, proposalData: encodeProposalData(calls), details, calls: calls.map((call) => ({ to: call.to, data: call.data })) };
+  const proposalData = encodeProposalData(calls).toLowerCase() as Hex;
+  if (proposalData !== onChainData.toLowerCase()) fail(422, `TemplateFactory.proposalData (${onChainData.length} bytes) differs from the builder's multicall (${proposalData.length} bytes)`);
+  return { instance, exists, intentData: proposeIntentData(spec.template, paramsBytes, salt), proposalData, details: proposalDetails(instance, summary), calls: calls.map((call) => ({ to: call.to, data: call.data })) };
 }
 
-/** The EIP-191 message a T1 member signs to authorize a sponsored template deployment. */
-export function prepareMessage(member: Address, template: string, params: string, nonce: string): string {
-  return `Zero One prepare\nmember: ${getAddress(member)}\ntemplate: ${template}\nparamsHash: ${keccak256(stringToHex(params))}\nnonce: ${nonce}`;
+/** Template name for a factory template id. */
+export function templateNameOf(templateId: number): TemplateName {
+  const name = TEMPLATE_NAMES[templateId];
+  if (name === undefined) fail(400, `unknown template id ${templateId}`);
+  return name;
 }

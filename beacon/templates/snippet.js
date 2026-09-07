@@ -44,12 +44,12 @@ const personal=text=>keccak(cat(Buffer.from('\x19Ethereum Signed Message:\n'+Buf
 const addressArray=list=>'0x'+word(32).toString('hex')+word(list.length).toString('hex')+list.map(a=>word(a).toString('hex')).join('');
 const workData=(verifiers,threshold,reward,expiration)=>'0x'+[word(128),word(threshold),word(reward),word(expiration),word(verifiers.length),...verifiers.map(word)].map(b=>b.toString('hex')).join('');
 const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url');
-const OPS={propose:0,sponsor:1,vote:2,execute:3,ragequit:4,deposit:5,work:6,task:7,deliver:8,confirm:9};
+const OPS={propose:0,vote:2,execute:3,ragequit:4,deposit:5,work:6,task:7,deliver:8,confirm:9},TEMPLATES={Payment:0,Strategy:1,Project:2,Config:3};
 const argv=process.argv.slice(2),op=argv.shift(),args={key:'./agent.key',base:ORIGIN};
 while(argv.length){const name=argv.shift();if(!name.startsWith('--')||!argv.length)throw Error('Expected --name value');args[name.slice(2)]=argv.shift();}
 if(op==='hash'){console.log('0x'+h(args['evidence']||'').toString('hex'));return;}
 if(op==='selftest'){if(address(1n)!=='0x7e5f4552091a69125d5dfcb7b8c2659029395bdf'||h('').toString('hex')!=='c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470')throw Error('vector');console.log('JavaScript keccak and curve vectors PASS');return;}
-const VERBS=['address','join','deposit','task','deliver','propose','vote','execute','ragequit','work','confirm','sponsor'];
+const VERBS=['address','join','deposit','task','deliver','propose','vote','execute','ragequit','work','confirm'];
 if(!VERBS.includes(op))throw Error('Usage: node snippet.js '+VERBS.join('|')+' --key FILE [--usdc N | --amount RAW] [--proposal ID --approve yes|no] [--task ID --evidence TEXT] [--template T --params JSON] [--verifiers a,b --threshold N --reward-shares RAW --details TEXT]');
 if(!fs.existsSync(args.key)){let k;do{k=BigInt('0x'+Buffer.from(crypto.webcrypto.getRandomValues(new Uint8Array(32))).toString('hex'));}while(k===0n||k>=N);fs.writeFileSync(args.key,k.toString(16).padStart(64,'0')+'\n',{mode:0o600,flag:'wx'});}
 if(fs.lstatSync(args.key).isSymbolicLink()||(fs.statSync(args.key).mode&0o077))throw Error('key file must be private (chmod 600)');
@@ -67,17 +67,19 @@ if(op==='vote'){m.proposalId=Number(need('proposal'));const a=String(need('appro
 if(op==='execute'){m.proposalId=Number(need('proposal'));const list=await get('/proposals.json');const p=list.proposals.find(x=>x.id===m.proposalId);if(!p)throw Error('unknown proposal');m.data=p.proposalData;}
 if(op==='ragequit'){m.amount=args.amount&&args.amount!=='all'?args.amount:String(state.shares);m.data=addressArray((args.tokens||SETTLEMENT).split(','));}
 if(op==='task')m.amount=need('task');
-if(op==='sponsor')m.proposalId=Number(need('proposal'));
 if(op==='deliver'){m.amount=need('task');m.evidenceHash=args['evidence-hash']||('0x'+h(need('evidence')).toString('hex'));}
 if(op==='confirm'){m.amount=need('task');m.data='0x'+Buffer.from(need('evidence'),'utf8').toString('hex');}
 if(op==='work'){const v=need('verifiers').split(',');m.data=workData(v,Number(args.threshold||v.length),need('reward-shares'),Number(args.expiration||0));m.details=args.details||'';}
 if(op==='propose'){
- const template=need('template'),params=need('params');
- const text='Zero One prepare\nmember: '+state.address+'\ntemplate: '+template+'\nparamsHash: 0x'+keccak(Buffer.from(params,'utf8')).toString('hex')+'\nnonce: '+state.nonce;
- const sig=sign(key,personal(text));
- const prepared=await get('/relay?op=prepare&member='+addr+'&template='+encodeURIComponent(template)+'&params='+encodeURIComponent(params)+'&summary='+encodeURIComponent(args.summary||'')+'&sig='+sig);
- console.error(JSON.stringify({instance:prepared.instance,codeHash:prepared.codeHash,paramsHash:prepared.paramsHash,operator:prepared.operator,budgetUsdc:prepared.budgetUsdc}));
- Object.assign(m,prepared.message,{member:addr,nonce:String(state.nonce)});m.deadline=args.deadline||m.deadline;
+ const template=need('template'),params=need('params');if(TEMPLATES[template]===undefined)throw Error('--template Payment|Strategy|Project|Config');
+ const salt='0x'+word(state.nonce).toString('hex');
+ const q=await get('/relay?op=quote&member='+addr+'&template='+encodeURIComponent(template)+'&params='+encodeURIComponent(params)+'&summary='+encodeURIComponent(args.summary||'')+'&salt='+salt);
+ console.error(JSON.stringify({instance:q.instance,exists:q.exists,codeHash:q.codeHash,paramsHash:q.paramsHash,operator:q.operator,budgetUsdc:q.budgetUsdc,canPropose:q.canPropose}));
+ // Check the quoted intent before signing: data = abi.encode(uint8 template, bytes params, bytes32 salt); the account rebuilds the instance from it.
+ const d=hexBytes(q.message.data),num=b=>Number('0x'+b.toString('hex')),off=num(d.subarray(32,64)),len=num(d.subarray(off,off+32)),pb=d.subarray(off+32,off+32+len);
+ if(num(d.subarray(0,32))!==TEMPLATES[template]||'0x'+d.subarray(64,96).toString('hex')!==salt||'0x'+keccak(pb).toString('hex')!==q.paramsHash||!q.details.includes(q.paramsHash)||!q.details.includes(q.codeHash)||q.message.op!==0)throw Error('quote does not match the request');
+ if(template==='Payment'){const p=JSON.parse(params),n=p.recipients.length;const enc=[word(64),word(96+32*n),word(n),...p.recipients.map(word),word(n),...p.amounts.map(word)].map(b=>b.toString('hex')).join('');if(enc!==pb.toString('hex'))throw Error('Payment params were not encoded as given');}
+ Object.assign(m,q.message,{member:addr,nonce:String(state.nonce)});m.deadline=args.deadline||m.deadline;
 }
 const env={message:m,signature:sign(key,digest(m,state.adapter))};
 if(!state.delegated)env.authorization=authorization();

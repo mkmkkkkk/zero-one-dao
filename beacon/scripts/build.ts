@@ -76,6 +76,7 @@ export async function buildBeacon(options: { deployment: string; origin: string;
     DEPOSIT: deployment.depositShaman,
     WORK: deployment.workManager,
     ADAPTER: deployment.intentAccount,
+    FACTORY: deployment.templateFactory,
     SPONSOR_THRESHOLD: fmtShares(BigInt(state.governance.sponsorThreshold)),
     VOTING_PERIOD: duration(state.governance.votingPeriod),
     GRACE_PERIOD: duration(state.governance.gracePeriod),

@@ -31,6 +31,9 @@ export interface Deployment {
   loot: Address;
   depositShaman: Address;
   workManager: Address;
+  /** CREATE2 TemplateFactory (decision.md phase 2b ruling 2). */
+  templateFactory: Address;
+  templateDeployers?: [Address, Address, Address, Address];
   intentAccount: Address;
   constitution: { address: Address; textHash: Hex; textUrl: string; text?: string };
   singletons?: { multiSend?: Address };
@@ -40,7 +43,7 @@ export interface Deployment {
   startBlock?: number;
 }
 
-const ADDRESS_FIELDS = ["settlement", "safe", "baal", "shares", "loot", "depositShaman", "workManager", "intentAccount"] as const;
+const ADDRESS_FIELDS = ["settlement", "safe", "baal", "shares", "loot", "depositShaman", "workManager", "templateFactory", "intentAccount"] as const;
 
 /**
  * Read and validate a deployment record.
@@ -130,6 +133,7 @@ export interface Env {
     work: Abi;
     constitution: Abi;
     account: Abi;
+    factory: Abi;
     proposal: Abi;
     payment: Abi;
     strategy: Abi;
@@ -166,6 +170,7 @@ export function connect(deployment: Deployment = loadDeployment()): Env {
       work: loadLocalArtifact("WorkManager").abi,
       constitution: loadLocalArtifact("Constitution").abi,
       account: loadLocalArtifact("ZeroOneIntentAccount").abi,
+      factory: loadLocalArtifact("TemplateFactory").abi,
       proposal: loadLocalAbi("ProposalBase"),
       payment: loadLocalArtifact("PaymentProposal").abi,
       strategy: loadLocalArtifact("StrategyProposal").abi,

@@ -176,6 +176,9 @@ export function decodeProposalData(env: Env, proposalData: Hex): { calls: Decode
     } else if (call.to === d.workManager) {
       const decoded = tryDecode(env.abi.work);
       if (decoded) label = `WorkManager.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
+    } else if (call.to === d.templateFactory) {
+      const decoded = tryDecode(env.abi.factory);
+      if (decoded) label = `TemplateFactory.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
     } else if (call.to === d.safe) {
       const decoded = tryDecode(env.abi.safe);
       if (decoded) label = `Safe.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
@@ -410,7 +413,7 @@ async function buildDaoState(env: Env): Promise<DaoState> {
   const now = new Date();
   return {
     chain: { id: d.chainId, blockNumber: toBlock.toString(), timestamp: Number(block.timestamp), name: env.policy.name },
-    contracts: { safe: d.safe, baal: d.baal, shares: d.shares, loot: d.loot, settlement: d.settlement, depositShaman: d.depositShaman, workManager: d.workManager, intentAccount: d.intentAccount, constitution: d.constitution.address },
+    contracts: { safe: d.safe, baal: d.baal, shares: d.shares, loot: d.loot, settlement: d.settlement, depositShaman: d.depositShaman, workManager: d.workManager, templateFactory: d.templateFactory, intentAccount: d.intentAccount, constitution: d.constitution.address },
     constitution: { address: d.constitution.address, textHash, textUrl },
     governance: { votingPeriod: Number(votingPeriod), gracePeriod: Number(gracePeriod), proposalOffering: proposalOffering.toString(), quorumPercent: quorumPercent.toString(), sponsorThreshold: sponsorThreshold.toString(), minRetentionPercent: minRetentionPercent.toString() },
     treasury: { safe: d.safe, usdc: treasuryUsdc.toString(), usdcFormatted: fmtUsdc(treasuryUsdc), totalShares: totalShares.toString(), totalSharesFormatted: fmtShares(totalShares), navUsdcPerShare: navPerShare(treasuryUsdc, totalShares), assets: [{ token: d.settlement, symbol: "USDC", balance: treasuryUsdc.toString() }] },

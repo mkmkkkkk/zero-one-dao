@@ -34,6 +34,8 @@ export async function validateBeacon(options: { deployment: string; out: string 
   assert(readme.includes("Intent(address member,uint8 op,uint32 proposalId,uint256 amount,bytes32 evidenceHash,bytes data,string details,uint256 nonce,uint256 deadline)"), "README lacks the intent type");
   assert(!/\{\{[A-Z_]+\}\}/u.test(readme), "README has unfilled placeholders");
   assert(!/[—\p{Extended_Pictographic}]/u.test(readme), "README contains an em dash or emoji");
+  assert(!/op=1\b|\bsponsor\s+op=|op=prepare/u.test(readme), "README still mentions the retired sponsor verb (op 1) or op=prepare");
+  assert(/op=quote/u.test(readme) && /abi\.encode\(uint8 template,bytes params,bytes32 salt\)/u.test(readme), "README lacks the one-intent propose format (op=quote, abi.encode(template, params, salt))");
 
   const state = JSON.parse(readFileSync(path.join(options.out, "state.json"), "utf8")) as DaoState;
   assert.equal(state.chain.id, deployment.chainId, "state.json chain id differs from the deployment");
@@ -46,7 +48,7 @@ export async function validateBeacon(options: { deployment: string; out: string 
     const code = await env.publicClient.getCode({ address: address as `0x${string}` });
     assert(code !== undefined && code !== "0x", `${label} ${address} has no code on chain ${deployment.chainId}`);
   }
-  for (const name of ["safe", "baal", "shares", "settlement", "depositShaman", "workManager", "intentAccount"]) {
+  for (const name of ["safe", "baal", "shares", "settlement", "depositShaman", "workManager", "templateFactory", "intentAccount"]) {
     const address = state.contracts[name];
     assert(address !== undefined && isAddress(address) && readme.includes(getAddress(address)), `README lacks the ${name} address`);
   }

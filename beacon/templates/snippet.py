@@ -79,7 +79,8 @@ def personal(text):
 def address_array(items):return '0x'+(word(32)+word(len(items))+b''.join(word(a) for a in items)).hex()
 def work_data(verifiers,threshold,reward,expiration):return '0x'+(word(128)+word(threshold)+word(reward)+word(expiration)+word(len(verifiers))+b''.join(word(a) for a in verifiers)).hex()
 def b64(o):return base64.urlsafe_b64encode(json.dumps(o,separators=(',',':')).encode()).decode().rstrip('=')
-OPS={'propose':0,'sponsor':1,'vote':2,'execute':3,'ragequit':4,'deposit':5,'work':6,'task':7,'deliver':8,'confirm':9}
+OPS={'propose':0,'vote':2,'execute':3,'ragequit':4,'deposit':5,'work':6,'task':7,'deliver':8,'confirm':9}
+TEMPLATES={'Payment':0,'Strategy':1,'Project':2,'Config':3}
 def load_key(path):
     if not os.path.exists(path):
         fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
@@ -98,7 +99,7 @@ def get(base,path):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('op',choices=['address','join','deposit','task','deliver','propose','vote','execute','ragequit','work','confirm','sponsor','hash','selftest'])
+    p.add_argument('op',choices=['address','join','deposit','task','deliver','propose','vote','execute','ragequit','work','confirm','hash','selftest'])
     for name in ['key','base','usdc','amount','proposal','approve','task','evidence','evidence-hash','template','params','summary','verifiers','threshold','reward-shares','details','expiration','tokens','deadline']:p.add_argument('--'+name)
     a=p.parse_args();base=a.base or ORIGIN
     if a.op=='hash':print('0x'+keccak((a.evidence or '').encode()).hex());return
@@ -133,18 +134,24 @@ def main():
     if a.op=='ragequit':
         m['amount']=a.amount if a.amount and a.amount!='all' else str(state['shares']);m['data']=address_array((a.tokens or SETTLEMENT).split(','))
     if a.op=='task':m['amount']=need('task')
-    if a.op=='sponsor':m['proposalId']=int(need('proposal'))
     if a.op=='deliver':m['amount']=need('task');m['evidenceHash']=a.evidence_hash or '0x'+keccak(need('evidence').encode()).hex()
     if a.op=='confirm':m['amount']=need('task');m['data']='0x'+need('evidence').encode().hex()
     if a.op=='work':
         v=need('verifiers').split(',');m['data']=work_data(v,int(a.threshold or len(v)),need('reward-shares'),int(a.expiration or 0));m['details']=a.details or ''
     if a.op=='propose':
         template=need('template');params=need('params')
-        text='Zero One prepare\nmember: '+state['address']+'\ntemplate: '+template+'\nparamsHash: 0x'+keccak(params.encode()).hex()+'\nnonce: '+str(state['nonce'])
-        sig=sign(key,personal(text))
-        prepared=get(base,'/relay?op=prepare&member='+addr+'&template='+urllib.parse.quote(template)+'&params='+urllib.parse.quote(params)+'&summary='+urllib.parse.quote(a.summary or '')+'&sig='+sig)
-        print(json.dumps({k:prepared.get(k) for k in('instance','codeHash','paramsHash','operator','budgetUsdc')}),file=sys.stderr)
-        m.update(prepared['message']);m['member']=addr;m['nonce']=str(state['nonce'])
+        if template not in TEMPLATES:raise ValueError('--template Payment|Strategy|Project|Config')
+        salt='0x'+word(state['nonce']).hex()
+        q=get(base,'/relay?op=quote&member='+addr+'&template='+urllib.parse.quote(template)+'&params='+urllib.parse.quote(params)+'&summary='+urllib.parse.quote(a.summary or '')+'&salt='+salt)
+        print(json.dumps({k:q.get(k) for k in('instance','exists','codeHash','paramsHash','operator','budgetUsdc','canPropose')}),file=sys.stderr)
+        # Check the quoted intent before signing: data = abi.encode(uint8 template, bytes params, bytes32 salt); the account rebuilds the instance from it.
+        d=hexbytes(q['message']['data']);num=lambda b:int.from_bytes(b,'big');off=num(d[32:64]);ln=num(d[off:off+32]);pb=d[off+32:off+32+ln]
+        if num(d[:32])!=TEMPLATES[template] or '0x'+d[64:96].hex()!=salt or '0x'+keccak(pb).hex()!=q['paramsHash'] or q['paramsHash'] not in q['details'] or q['codeHash'] not in q['details'] or q['message']['op']!=0:raise ValueError('quote does not match the request')
+        if template=='Payment':
+            pj=json.loads(params);n=len(pj['recipients'])
+            enc=word(64)+word(96+32*n)+word(n)+b''.join(word(x) for x in pj['recipients'])+word(n)+b''.join(word(x) for x in pj['amounts'])
+            if enc!=pb:raise ValueError('Payment params were not encoded as given')
+        m.update(q['message']);m['member']=addr;m['nonce']=str(state['nonce'])
         if a.deadline:m['deadline']=a.deadline
     env={'message':m,'signature':sign(key,digest(m,state['adapter']))}
     if not state['delegated']:env['authorization']=authorization()
