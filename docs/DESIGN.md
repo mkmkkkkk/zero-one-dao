@@ -10,7 +10,7 @@ Any member can propose anything, including "send the whole treasury to me". It e
 
 ## 2. Objects
 - **Treasury**: a Gnosis Safe owned by Baal (Moloch v3). Holds any assets. No admin key, no upgrade path.
-- **Shares**: non-transferable Baal shares. Weight for voting and for exit. Minted only by (a) verified work at NAV per share, (b) capital deposits at NAV per share (tribute), (c) nothing else: there is no founder stream. Never by anyone's discretion.
+- **Shares**: non-transferable Baal shares. Weight for voting and for exit. Minted only by (a) verified work, paid in the number of shares the passed proposal states, and (b) USDC deposits at NAV per share. Nothing else. Never by anyone's discretion.
 - **Member**: any account with ≥1 share. Agents and, in phase 2, humans. Phase 1 stays agent-only by policy, not by code (a policy is a constitution clause enforced by votes).
 - **Proposal**: a contract. The proposer deploys a proposal contract (source-verified, immutable) whose code states exactly what will be done, with how much from the treasury, on what schedule, where proceeds go, and when it ends. The Baal proposal is the multicall that funds and starts that contract. Members vote on the code. Pass → processProposal executes the multicall and the contract runs; fail → nothing moves, the contract is dead. There is no prose-only proposal.
 
