@@ -1,5 +1,9 @@
-/** Stand up the whole Zero One DAO (Baal + Safe + tokens + shamans) on a connected chain. */
-import { getAddress, parseAbiItem, zeroAddress, type Address, type Hex } from "viem";
+/** Stand up the whole Zero One DAO (Baal + Safe + tokens + shamans + constitution) on a connected chain. */
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { getAddress, keccak256, parseAbiItem, zeroAddress, type Address, type Hex } from "viem";
 
 import {
   createBaalProxy,
@@ -20,6 +24,23 @@ export const SETTLEMENT_UNIT = 10n ** 6n;
 /** Base mainnet USDC; documented in docs/PARAMETERS.md, not deployed to or used anywhere yet. */
 export const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 export const HOUR = 60 * 60;
+/** The constitution text whose keccak256 is the immutable hash of the deployment (DESIGN.md §10). */
+export const CONSTITUTION_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "docs", "CONSTITUTION.md");
+/** Where the text can be read; the hash, not the URL, is the authority. Mainnet value: docs/PARAMETERS.md (DECIDE). */
+export const CONSTITUTION_TEXT_URL = "docs/CONSTITUTION.md";
+
+/**
+ * keccak256 over the exact bytes of docs/CONSTITUTION.md (no normalization of any kind).
+ *
+ * @param file Path of the constitution text (default CONSTITUTION_PATH).
+ * @returns The 32-byte hash as hex.
+ * @throws Error if the file is missing or empty.
+ */
+export function constitutionHash(file: string = CONSTITUTION_PATH): Hex {
+  const bytes = readFileSync(file);
+  if (bytes.length === 0) throw new Error(`constitution text is empty: ${file}`);
+  return keccak256(bytes);
+}
 /** Genesis deposit by the founder: 50 USDC -> 50e18 shares, the only thing minted at genesis (DESIGN.md §6). */
 export const GENESIS_DEPOSIT = 50n * SETTLEMENT_UNIT;
 
@@ -64,14 +85,19 @@ export interface ZeroOneDao {
   depositShaman: Address;
   workManager: Address;
   intentAccount: Address;
+  /** Constitution contract: immutable keccak256 of docs/CONSTITUTION.md + text URL, no setter. */
+  constitution: Address;
+  constitutionHash: Hex;
+  constitutionTextUrl: string;
   params: ZeroOneParams;
   txHashes: Record<string, Hex>;
 }
 
 /**
  * Deploy Zero One: vendored Baal/Safe singletons, Safe + Baal proxies, NavShareToken, LootToken,
- * DepositShaman, WorkManager, the 7702 intent adapter, then initialize Baal and the Safe. The only
- * two manager shamans are DepositShaman and WorkManager; nothing is minted here (see genesisDeposit).
+ * DepositShaman, WorkManager, the 7702 intent adapter, the Constitution (hash of docs/CONSTITUTION.md,
+ * immutable), then initialize Baal and the Safe. The only two manager shamans are DepositShaman and
+ * WorkManager; nothing is minted here (see genesisDeposit).
  *
  * @param deployer Signer that pays for every deployment; becomes `params.founder` by convention.
  * @param params Names, governance config, settlement token and create2 salt.
@@ -111,6 +137,11 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   txHashes["DepositShaman"] = depositShaman.hash;
   txHashes["WorkManager"] = workManager.hash;
   txHashes["ZeroOneIntentAccount"] = intentAccount.hash;
+  const textHash = constitutionHash();
+  const constitution = await deployLocal(deployer, "Constitution", [textHash, CONSTITUTION_TEXT_URL]);
+  txHashes["Constitution"] = constitution.hash;
+  const onChainHash = (await deployer.publicClient.readContract({ address: constitution.address, abi: constitution.artifact.abi, functionName: "textHash" })) as Hex;
+  assertInvariant(onChainHash === textHash, "Constitution.textHash equals keccak256(docs/CONSTITUTION.md)");
 
   const initialized = await initializeSafeAndBaal(deployer, infrastructure, {
     safe,
@@ -137,6 +168,9 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     depositShaman: depositShaman.address,
     workManager: workManager.address,
     intentAccount: intentAccount.address,
+    constitution: constitution.address,
+    constitutionHash: textHash,
+    constitutionTextUrl: CONSTITUTION_TEXT_URL,
     params,
     txHashes,
   };

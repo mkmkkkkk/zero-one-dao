@@ -1,6 +1,7 @@
 /**
  * Stand the Zero One DAO up on a fresh local anvil mirror (no fork) with a test settlement token,
- * then perform genesis: the founder deposits 50 USDC through the DepositShaman -> 50e18 shares.
+ * (the Constitution contract carries keccak256(docs/CONSTITUTION.md), immutable), then perform genesis:
+ * the founder deposits 50 USDC through the DepositShaman -> 50e18 shares.
  * Nothing else is minted. Deployment and genesis happen in one script on purpose (never pre-fund
  * the Safe: a treasury with zero supply cannot be priced, see docs/PARAMETERS.md).
  * Usage: npm run deploy:local [-- --keep]   (--keep leaves anvil running until Ctrl-C)
@@ -43,6 +44,7 @@ async function main(): Promise<void> {
       depositShaman: dao.depositShaman,
       workManager: dao.workManager,
       intentAccount: dao.intentAccount,
+      constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" },
       singletons: dao.infrastructure,
       governance: {
         votingPeriod: dao.params.governance.votingPeriod,
