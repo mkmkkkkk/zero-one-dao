@@ -14,6 +14,10 @@ import {
 import { assertInvariant, deployLocal } from "./onchain.js";
 
 export const UNIT = 10n ** 18n;
+/** One settlement unit: USDC has 6 decimals (mirror TestToken "USDC-mock" matches). */
+export const SETTLEMENT_UNIT = 10n ** 6n;
+/** Base mainnet USDC; documented in docs/PARAMETERS.md, not deployed to or used anywhere yet. */
+export const BASE_USDC = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 export const HOUR = 60 * 60;
 export const FOUR_YEARS = 4 * 365 * 24 * 60 * 60 + 24 * 60 * 60; // 1461 days incl. one leap day
 
@@ -34,8 +38,9 @@ export interface ZeroOneParams {
   shareName: string;
   shareSymbol: string;
   governance: GovernanceConfig;
-  /** Existing settlement ERC-20; when absent a TestToken is deployed and held by the deployer. */
+  /** Existing settlement ERC-20 (Base: BASE_USDC); when absent a 6-dec "USDC-mock" TestToken is deployed and held by the deployer. */
   settlement?: Address;
+  /** Fixed supply of the mirror USDC-mock, in 6-decimal units. */
   testSettlementSupply: bigint;
   salt: bigint;
 }
@@ -45,7 +50,7 @@ export const DEFAULT_PARAMS: Omit<ZeroOneParams, "founder"> = {
   shareName: "Zero One Shares",
   shareSymbol: "ZERO1",
   governance: INITIAL_GOVERNANCE,
-  testSettlementSupply: 100_000_000n * UNIT,
+  testSettlementSupply: 100_000_000n * SETTLEMENT_UNIT,
   salt: 1n,
 };
 
@@ -80,7 +85,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   if (params.settlement !== undefined) {
     settlement = getAddress(params.settlement);
   } else {
-    const token = await deployLocal(deployer, "TestToken", ["Zero One Test Settlement", "ZOTS", params.testSettlementSupply]);
+    const token = await deployLocal(deployer, "TestToken", ["USDC-mock", "USDC", params.testSettlementSupply]);
     settlement = token.address;
     txHashes["TestToken"] = token.hash;
   }

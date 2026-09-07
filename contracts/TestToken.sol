@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/// @notice Zero-value devnet settlement asset with immutable/simple ERC20 semantics.
-/// @dev Supply is minted once in the constructor. There is no owner, later mint, burn,
-/// pause, rebase, fee, hook, permit, blacklist, upgrade, or recovery mechanism.
+/// @notice Zero-value devnet settlement asset mirroring USDC (6 decimals) with simple ERC20 semantics.
+/// @dev Mirror stand-in for Base USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, see
+/// docs/PARAMETERS.md). Supply is minted once in the constructor. There is no owner, later mint,
+/// burn, pause, rebase, fee, hook, permit, blacklist, upgrade, or recovery mechanism.
 contract TestToken {
     string public name;
     string public symbol;
-    uint8 public constant decimals = 18;
+    uint8 public constant decimals = 6;
     uint256 public immutable totalSupply;
 
     mapping(address account => uint256) public balanceOf;
