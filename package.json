@@ -20,7 +20,11 @@
     "scenario:H": "tsx scenarios/H-project-tranches.ts",
     "scenario:I": "tsx scenarios/I-project-topup-stop.ts",
     "scenario:J": "tsx scenarios/J-strategy-migrate.ts",
-    "scenarios": "tsx scenarios/run-all.ts"
+    "scenarios": "tsx scenarios/run-all.ts",
+    "relay": "tsx relay/server.ts",
+    "beacon:build": "tsx beacon/scripts/build.ts",
+    "beacon:validate": "tsx beacon/scripts/validate.ts",
+    "e2e:relay": "tsx relay/e2e-local.ts"
   },
   "dependencies": {
     "@daohaus/baal-contracts": "1.2.18",

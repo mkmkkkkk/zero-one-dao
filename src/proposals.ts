@@ -21,6 +21,9 @@ import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, 
 import { deployLocal, writeAndWait } from "./onchain.js";
 import type { ZeroOneDao } from "./zeroOne.js";
 
+/** The three addresses the builder needs (a full ZeroOneDao satisfies it; a deployment record does too). */
+export type DaoAddresses = Pick<ZeroOneDao, "safe" | "settlement" | "baal">;
+
 export const TEMPLATE_NAMES = ["Payment", "Strategy", "Project", "Config"] as const;
 export type TemplateName = (typeof TEMPLATE_NAMES)[number];
 
@@ -194,7 +197,7 @@ export function paramsHashOf(spec: TemplateSpec): Hex {
 }
 
 /** Constructor arguments for a template instance owned by `dao.safe`. */
-function constructorArgs(dao: ZeroOneDao, operator: Address, spec: TemplateSpec): readonly unknown[] {
+function constructorArgs(dao: DaoAddresses, operator: Address, spec: TemplateSpec): readonly unknown[] {
   switch (spec.template) {
     case "Payment":
       return [dao.safe, dao.settlement, operator, spec.params.recipients, spec.params.amounts];
@@ -227,18 +230,21 @@ export async function describe(context: WriteContext, address: Address): Promise
 }
 
 /**
- * Deploy a template instance for `spec`; the caller is the operator (proposer). Verifies that the
- * contract's paramsHash equals the local keccak256(abi.encode(params)) and records the code hash.
+ * Deploy a template instance for `spec`. The operator is the proposer by default; a relay deploying
+ * with sponsored gas passes the member's address as `operator` so the instance belongs to the member
+ * (Project tranches pay the operator). Verifies that the contract's paramsHash equals the local
+ * keccak256(abi.encode(params)) and records the code hash.
  *
- * @param proposer Signer that deploys (pays gas) and becomes the operator.
+ * @param proposer Signer that deploys (pays gas).
  * @param dao The deployed DAO (Safe, settlement, Baal).
  * @param spec Template and parameters.
+ * @param operator The instance's operator (default: the deployer).
  * @returns The instance with its description, params hash and code hash.
- * @throws Error if the on-chain paramsHash or template name disagrees with the spec.
+ * @throws Error if the on-chain paramsHash, template name or operator disagrees with the spec.
  */
-export async function deployTemplate(proposer: WriteContext, dao: ZeroOneDao, spec: TemplateSpec): Promise<TemplateInstance> {
+export async function deployTemplate(proposer: WriteContext, dao: DaoAddresses, spec: TemplateSpec, operator: Address = proposer.account.address): Promise<TemplateInstance> {
   const contractName = TEMPLATE_CONTRACTS[spec.template];
-  const deployed = await deployLocal(proposer, contractName, constructorArgs(dao, proposer.account.address, spec));
+  const deployed = await deployLocal(proposer, contractName, constructorArgs(dao, getAddress(operator), spec));
   const code = await proposer.publicClient.getCode({ address: deployed.address });
   if (code === undefined || code === "0x") throw new Error(`no code at ${deployed.address}`);
   const description = await describe(proposer, deployed.address);
@@ -247,7 +253,7 @@ export async function deployTemplate(proposer: WriteContext, dao: ZeroOneDao, sp
     throw new Error(`paramsHash mismatch for ${spec.template}: contract ${description.paramsHash}, local ${paramsHash}`);
   }
   if (description.template !== spec.template) throw new Error(`template mismatch: contract ${description.template}, spec ${spec.template}`);
-  if (description.operator !== getAddress(proposer.account.address)) throw new Error("operator is not the proposer");
+  if (description.operator !== getAddress(operator)) throw new Error(`operator mismatch: contract ${description.operator}, expected ${getAddress(operator)}`);
   const artifact = deployed.artifact as { compiler?: string };
   return {
     address: deployed.address,
@@ -262,7 +268,7 @@ export async function deployTemplate(proposer: WriteContext, dao: ZeroOneDao, sp
   };
 }
 
-function transferCall(dao: ZeroOneDao, to: Address, amount: bigint): PackedCall {
+function transferCall(dao: DaoAddresses, to: Address, amount: bigint): PackedCall {
   return { to: dao.settlement, data: encodeFunctionData({ abi: loadLocalArtifact("TestToken").abi, functionName: "transfer", args: [to, amount] }) };
 }
 
@@ -278,7 +284,7 @@ function instanceCall(instance: Address, functionName: string, args: readonly un
  * @param instance A deployed template instance.
  * @returns Packed calls in execution order.
  */
-export function fundAndStartCalls(dao: ZeroOneDao, instance: TemplateInstance): PackedCall[] {
+export function fundAndStartCalls(dao: DaoAddresses, instance: TemplateInstance): PackedCall[] {
   const calls: PackedCall[] = [];
   if (instance.spec.template === "Config") {
     const config = instance.spec.params;
@@ -295,7 +301,7 @@ export function fundAndStartCalls(dao: ZeroOneDao, instance: TemplateInstance): 
 }
 
 /** Multicall for a later proposal: transfer `amount` more from the Safe, then `topUp(amount)`. */
-export function topUpCalls(dao: ZeroOneDao, instance: Address, amount: bigint): PackedCall[] {
+export function topUpCalls(dao: DaoAddresses, instance: Address, amount: bigint): PackedCall[] {
   return [transferCall(dao, instance, amount), instanceCall(instance, "topUp", [amount])];
 }
 
@@ -362,7 +368,7 @@ export interface SubmittedProposal {
  */
 export async function submitCalls(
   proposer: WriteContext,
-  dao: ZeroOneDao,
+  dao: DaoAddresses,
   calls: readonly PackedCall[],
   details: string,
   expiration = 0,
@@ -395,7 +401,7 @@ export async function submitCalls(
  */
 export async function submitTemplateProposal(
   proposer: WriteContext,
-  dao: ZeroOneDao,
+  dao: DaoAddresses,
   spec: TemplateSpec,
   summary: string,
   expiration = 0,

@@ -4,6 +4,7 @@
 !.env.example
 state/
 deployments/local.json
+beacon/public/
 
 # Local dependencies and build output.
 node_modules/

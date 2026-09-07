@@ -10,5 +10,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "scenarios/**/*.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "scenarios/**/*.ts", "relay/**/*.ts", "beacon/scripts/**/*.ts"]
 }
