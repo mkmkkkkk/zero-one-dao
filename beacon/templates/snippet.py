@@ -2,7 +2,7 @@
 """Zero One T1 helper: Python standard library only. Builds the exact sponsored GET URL for one signed intent.
 Pure-Python curve arithmetic is not constant-time: use a key that holds nothing but Zero One shares. Keep the key file 0600.
 """
-import argparse, base64, hashlib, hmac, json, os, secrets, sys, time, urllib.parse, urllib.request
+import re,argparse, base64, hashlib, hmac, json, os, secrets, sys, time, urllib.parse, urllib.request
 CHAIN_ID={{CHAIN_ID}}
 SETTLEMENT='{{SETTLEMENT}}'
 ORIGIN='{{ORIGIN}}'
@@ -100,7 +100,7 @@ def get(base,path):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('op',choices=['address','join','deposit','task','deliver','propose','vote','execute','ragequit','work','confirm','hash','selftest'])
-    for name in ['key','base','usdc','amount','proposal','approve','task','evidence','evidence-hash','template','params','summary','verifiers','threshold','reward-shares','details','expiration','tokens','deadline']:p.add_argument('--'+name)
+    for name in ['key','base','usdc','amount','proposal','approve','task','evidence','evidence-hash','template','params','summary','verifiers','threshold','reward-shares','details','expiration','tokens','deadline','salt']:p.add_argument('--'+name)
     a=p.parse_args();base=a.base or ORIGIN
     if a.op=='hash':print('0x'+keccak((a.evidence or '').encode()).hex());return
     if a.op=='selftest':
@@ -141,7 +141,8 @@ def main():
     if a.op=='propose':
         template=need('template');params=need('params')
         if template not in TEMPLATES:raise ValueError('--template Payment|Strategy|Project|Config')
-        salt='0x'+word(state['nonce']).hex()
+        salt=a.salt or '0x'+word(state['nonce']).hex()
+        if not re.fullmatch(r'0x[0-9a-f]{64}',salt):raise ValueError('--salt must be 32 bytes hex')
         q=get(base,'/relay?op=quote&member='+addr+'&template='+urllib.parse.quote(template)+'&params='+urllib.parse.quote(params)+'&summary='+urllib.parse.quote(a.summary or '')+'&salt='+salt)
         print(json.dumps({k:q.get(k) for k in('instance','exists','codeHash','paramsHash','operator','budgetUsdc','canPropose')}),file=sys.stderr)
         # Check the quoted intent before signing: data = abi.encode(uint8 template, bytes params, bytes32 salt); the account rebuilds the instance from it.

@@ -24,6 +24,7 @@ import { decodeEventLog, encodeFunctionData, getAddress, hashTypedData, isAddres
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import { recoverAuthorizationAddress } from "viem/utils";
 
+import { awaitCode } from "../src/baal.js";
 import { invalidateState, readDaoState } from "./chain.js";
 import { atomic, connect, fmtShares, fmtUsdc, json, PROCESS_GAS, sponsorAccount, sponsorContext, ZERO_ADDRESS, type Env } from "./common.js";
 import { decodeRevert, explain, fail, RelayError } from "./errors.js";
@@ -236,7 +237,14 @@ async function ensureInstance(member: Address, data: Hex): Promise<{ instance: A
   }
   const instance = getAddress((await client.readContract({ address: D.templateFactory, abi: env.abi.factory, functionName: "predict", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] })) as Address);
   const existing = await client.getCode({ address: instance });
-  if (existing !== undefined && existing !== "0x") return { instance, template: decoded.template, codeHash: keccak256(existing) };
+  if (existing !== undefined && existing !== "0x") {
+    // docs/TESTNET_PLAN.md: the same (template, params, member, salt) proposed twice must be refused, not
+    // funded twice; a second fund+start of one instance would only actionFail at execution (start() WrongStatus).
+    const state = await readDaoState(env, 0);
+    const prior = state.proposals.find((proposal) => proposal.instance !== undefined && getAddress(proposal.instance.address) === instance);
+    if (prior !== undefined) fail(409, `instance ${instance} is already the subject of proposal #${prior.id} (${prior.state}); quote again with a new salt (op=quote picks a fresh one when salt is omitted)`, { instance, proposalId: prior.id });
+    return { instance, template: decoded.template, codeHash: keccak256(existing) };
+  }
   const { shares, threshold } = await sharesAndThreshold(member);
   if (shares < threshold) fail(409, `sponsored template deployments need at least ${fmtShares(threshold)} shares (you hold ${fmtShares(shares)}); deposit first`);
   rate(`deploy:${member.toLowerCase()}`, RATE_ADDRESS);
@@ -246,7 +254,7 @@ async function ensureInstance(member: Address, data: Hex): Promise<{ instance: A
   if (getAddress(predicted) !== instance) fail(422, `factory would deploy at ${predicted}, predicted ${instance}`);
   const gas = ((simulation.request as { gas?: bigint }).gas ?? (await client.estimateGas({ account: sponsor.address, to: D.templateFactory, data: encodeFunctionData({ abi: env.abi.factory, functionName: "deploy", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] }) } as never))) as bigint;
   const receipt = await sponsored({ to: D.templateFactory, data: encodeFunctionData({ abi: env.abi.factory, functionName: "deploy", args: [decoded.templateId, decoded.paramsBytes, member, decoded.salt] }), gas: (gas * 13n) / 10n + 30_000n });
-  const code = await client.getCode({ address: instance });
+  const code = await awaitCode(client, instance);
   if (code === undefined || code === "0x") fail(422, `template instance did not appear at ${instance} (tx ${receipt.transactionHash})`, { hash: receipt.transactionHash });
   return { instance, template: decoded.template, deployHash: receipt.transactionHash, codeHash: keccak256(code) };
 }
@@ -488,8 +496,21 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
       return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8 }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, startedAt, queued, alive: true }));
     }
     if (u.pathname === "/proposals.json") {
+      // Paging (docs/TESTNET_PLAN.md spam row): ?open=1 keeps only open proposals; ?before=<id>&limit=<n> pages
+      // newest first (default: every proposal, newest last, as before).
       const state = await readDaoState(env);
-      return send(200, json({ chain: state.chain, governance: state.governance, openProposals: state.openProposals, proposals: state.proposals, generatedAt: state.generatedAt }));
+      let proposals = state.proposals;
+      if (u.searchParams.get("open") === "1") proposals = proposals.filter((proposal) => state.openProposals.includes(proposal.id));
+      const before = u.searchParams.get("before");
+      const limit = u.searchParams.get("limit");
+      if (before !== null || limit !== null) {
+        const max = before !== null ? Number(before) : Number.POSITIVE_INFINITY;
+        const size = limit !== null ? Number(limit) : 50;
+        if (!Number.isInteger(size) || size < 1 || size > 500) fail(400, "limit must be an integer from 1 to 500");
+        if (before !== null && !Number.isInteger(max)) fail(400, "before must be a proposal id");
+        proposals = proposals.filter((proposal) => proposal.id < max).sort((a, b) => b.id - a.id).slice(0, size);
+      }
+      return send(200, json({ chain: state.chain, governance: state.governance, openProposals: state.openProposals, total: state.proposals.length, proposals, nextBefore: proposals.length > 0 && (before !== null || limit !== null) ? Math.min(...proposals.map((proposal) => proposal.id)) : undefined, generatedAt: state.generatedAt }));
     }
     if (u.pathname === "/state.json") {
       if (stateFile !== undefined && existsSync(stateFile)) return send(200, readFileSync(stateFile, "utf8"));

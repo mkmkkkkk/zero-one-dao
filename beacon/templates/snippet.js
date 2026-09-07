@@ -72,7 +72,7 @@ if(op==='confirm'){m.amount=need('task');m.data='0x'+Buffer.from(need('evidence'
 if(op==='work'){const v=need('verifiers').split(',');m.data=workData(v,Number(args.threshold||v.length),need('reward-shares'),Number(args.expiration||0));m.details=args.details||'';}
 if(op==='propose'){
  const template=need('template'),params=need('params');if(TEMPLATES[template]===undefined)throw Error('--template Payment|Strategy|Project|Config');
- const salt='0x'+word(state.nonce).toString('hex');
+ const salt=args.salt||'0x'+word(state.nonce).toString('hex');if(!/^0x[0-9a-f]{64}$/.test(salt))throw Error('--salt must be 32 bytes hex');
  const q=await get('/relay?op=quote&member='+addr+'&template='+encodeURIComponent(template)+'&params='+encodeURIComponent(params)+'&summary='+encodeURIComponent(args.summary||'')+'&salt='+salt);
  console.error(JSON.stringify({instance:q.instance,exists:q.exists,codeHash:q.codeHash,paramsHash:q.paramsHash,operator:q.operator,budgetUsdc:q.budgetUsdc,canPropose:q.canPropose}));
  // Check the quoted intent before signing: data = abi.encode(uint8 template, bytes params, bytes32 salt); the account rebuilds the instance from it.
