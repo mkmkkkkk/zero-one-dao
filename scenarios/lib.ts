@@ -1,7 +1,8 @@
 /**
- * Shared mirror harness for DESIGN.md §11 scenarios: boots one anvil, deploys Zero One, seeds
- * members through the design's own paths (founder stream claim + deposits at NAV), and wraps every
- * Baal verb with receipt printing. One anvil at a time; shutdown() always kills it.
+ * Shared mirror harness for DESIGN.md §11 scenarios: boots one anvil, deploys Zero One, asserts
+ * that DepositShaman and WorkManager are the only mint paths, seeds members through the design's
+ * own path (deposits at NAV; the founder's genesis deposit first), and wraps every Baal verb with
+ * receipt printing. One anvil at a time; shutdown() always kills it.
  */
 import { fileURLToPath } from "node:url";
 import {
@@ -16,18 +17,16 @@ import {
 import { encodeProposalData, loadBaalArtifact, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, type LocalChain } from "../src/onchain.js";
-import { DEFAULT_PARAMS, deployZeroOne, FOUR_YEARS, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
+import { DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
-export { FOUR_YEARS, HOUR, SETTLEMENT_UNIT, UNIT };
-/** Genesis deposit by the founder: 50 USDC -> 50 shares (DESIGN.md §6). */
-export const GENESIS_DEPOSIT = 50n * SETTLEMENT_UNIT;
+export { GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT };
 
 export const PROPOSAL_STATES = ["Unborn", "Submitted", "Voting", "Cancelled", "Grace", "Ready", "Processed", "Defeated"] as const;
 export type ProposalStateName = (typeof PROPOSAL_STATES)[number];
 
 export type ActorName = "F" | "A" | "B" | "C" | "D" | "O" | "W";
 export const ACTOR_ROLES: Record<ActorName, string> = {
-  F: "founder (stream + genesis deposit)",
+  F: "founder (deployer; ordinary member via the 50 USDC genesis deposit)",
   A: "member agent A",
   B: "member agent B",
   C: "member agent C",
@@ -40,7 +39,7 @@ export interface Mirror {
   devnet: Devnet;
   chain: LocalChain;
   dao: ZeroOneDao;
-  abi: Record<"baal" | "shares" | "settlement" | "founderStream" | "deposit" | "work" | "safe", Abi>;
+  abi: Record<"baal" | "shares" | "settlement" | "deposit" | "work" | "safe", Abi>;
   actors: Record<ActorName, WriteContext>;
 }
 
@@ -131,7 +130,6 @@ export async function boot(name: string): Promise<Mirror> {
       safe: loadBaalArtifact("GnosisSafe").abi,
       shares: loadLocalArtifact("NavShareToken").abi,
       settlement: loadLocalArtifact("TestToken").abi,
-      founderStream: loadLocalArtifact("FounderStream").abi,
       deposit: loadLocalArtifact("DepositShaman").abi,
       work: loadLocalArtifact("WorkManager").abi,
     },
@@ -146,11 +144,34 @@ export async function boot(name: string): Promise<Mirror> {
     },
   };
   console.log(`deployed: safe ${dao.safe} baal ${dao.baal} shares ${dao.shares} settlement ${dao.settlement}`);
-  console.log(`          founderStream ${dao.founderStream} depositShaman ${dao.depositShaman} workManager ${dao.workManager}`);
+  console.log(`          depositShaman ${dao.depositShaman} workManager ${dao.workManager}`);
   for (const [actor, context] of Object.entries(mirror.actors) as [ActorName, WriteContext][]) {
     console.log(`   ${actor} = ${context.account.address}  ${ACTOR_ROLES[actor]}`);
   }
+  await assertOnlyMintPaths(mirror);
   return mirror;
+}
+
+/**
+ * Assert that the only addresses able to mint shares are the two design shamans plus the Safe
+ * (Baal.mintShares is baalOrManagerOnly: avatar == Safe, i.e. a passed proposal, or a manager).
+ * Enumerates every ShamanSet event since block 0 and reads each address's live permission.
+ */
+export async function assertOnlyMintPaths(mirror: Mirror): Promise<void> {
+  const shamans = await enumerateShamans(mirror.actors.F, mirror.dao.baal);
+  for (const { shaman, permission } of shamans) {
+    const label = shaman === getAddress(mirror.dao.depositShaman) ? "DepositShaman" : shaman === getAddress(mirror.dao.workManager) ? "WorkManager" : "UNKNOWN";
+    console.log(`   shaman ${shaman} permission ${permission} (${label})`);
+  }
+  const managers = shamans.filter(({ permission }) => [2n, 3n, 6n, 7n].includes(permission)).map(({ shaman }) => shaman);
+  const expected = [getAddress(mirror.dao.depositShaman), getAddress(mirror.dao.workManager)];
+  assert(shamans.every(({ permission }) => permission === 0n || permission === 2n), "every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor");
+  assert(managers.length === 2 && expected.every((address) => managers.includes(address)), "the only manager (mint) shamans are DepositShaman and WorkManager");
+  const avatar = getAddress(await read<Address>(mirror, "baal", "avatar"));
+  assert(avatar === getAddress(mirror.dao.safe), "Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe");
+  assert((await read<boolean>(mirror, "baal", "isManager", [mirror.actors.F.account.address])) === false, "the founder holds no shaman permission");
+  assert((await read<boolean>(mirror, "baal", "adminLock")) === true, "adminLock is on");
+  await expectRevert(simulate(mirror, "F", "baal", "mintShares", [[mirror.actors.F.account.address], [UNIT]]), "!baal & !manager", "the founder cannot call Baal.mintShares directly");
 }
 
 /** Kill the anvil child owned by this mirror. */
@@ -174,7 +195,6 @@ export async function read<T>(mirror: Mirror, target: keyof Mirror["abi"], funct
     safe: mirror.dao.safe,
     shares: mirror.dao.shares,
     settlement: mirror.dao.settlement,
-    founderStream: mirror.dao.founderStream,
     deposit: mirror.dao.depositShaman,
     work: mirror.dao.workManager,
   }[target];
@@ -186,17 +206,6 @@ export async function warp(mirror: Mirror, seconds: number, label?: string): Pro
   await increaseTime(mirror.actors.F, seconds);
   const block = await mirror.chain.publicClient.getBlock();
   console.log(`   warp +${seconds}s${label ? ` (${label})` : ""} -> block ${block.number} timestamp ${block.timestamp}`);
-}
-
-/** Set the next block's timestamp exactly and mine it (for stream-fraction assertions). */
-export async function warpTo(mirror: Mirror, timestamp: bigint, label?: string): Promise<void> {
-  const current = await now(mirror);
-  if (timestamp <= current) throw new RangeError(`warpTo ${timestamp} is not after the current timestamp ${current}`);
-  await mirror.chain.publicClient.request({ method: "evm_setNextBlockTimestamp" as never, params: [Number(timestamp)] as never });
-  await mirror.chain.publicClient.request({ method: "evm_mine" as never, params: [] as never });
-  const block = await mirror.chain.publicClient.getBlock();
-  if (block.timestamp !== timestamp) throw new Error(`warpTo: block timestamp ${block.timestamp} != ${timestamp}`);
-  console.log(`   warpTo ${timestamp}${label ? ` (${label})` : ""} -> block ${block.number} timestamp ${block.timestamp}`);
 }
 
 /** Current block timestamp. */
@@ -255,35 +264,19 @@ export async function deposit(mirror: Mirror, actor: ActorName, amount: bigint):
   return { receipt, sharesMinted, quoted };
 }
 
-/** Claim the founder stream (anyone may call, default the founder; mints only to the founder). */
-export async function claimFounderStream(mirror: Mirror, caller: ActorName = "F"): Promise<{ receipt: Receipt; minted: bigint; cumulative: bigint }> {
-  const founder = mirror.actors.F.account.address;
-  const claimable = await read<bigint>(mirror, "founderStream", "claimable");
-  const before = await read<bigint>(mirror, "shares", "balanceOf", [founder]);
-  const receipt = await write(mirror.actors[caller], { address: mirror.dao.founderStream, abi: mirror.abi.founderStream, functionName: "claim" });
-  const after = await read<bigint>(mirror, "shares", "balanceOf", [founder]);
-  const minted = after - before;
-  const cumulative = await read<bigint>(mirror, "founderStream", "minted");
-  const supply = await read<bigint>(mirror, "shares", "totalSupply");
-  printReceipt(`${caller} calls founder stream claim -> ${fmt(minted)} shares to F (claimable read ${fmt(claimable)}; stream total ${fmt(cumulative)} = ${pct(cumulative, supply)} of supply)`, receipt);
-  if (minted !== claimable) throw new Error(`stream claim minted ${minted} but claimable read ${claimable}`);
-  return { receipt, minted, cumulative };
-}
-
 /**
- * Standard seed used by scenarios A-E: the founder makes the genesis deposit (50 USDC -> 50 shares)
- * before any stream claim; 1 h later the stream is claimed (a sliver of 10% x 1h/4y of others'
- * shares); A, B, C each deposit 1000 USDC at NAV. Result: A, B, C hold ~1000 shares each, F ~50.
+ * Standard seed used by scenarios A-E: the founder makes the genesis deposit (50 USDC -> 50e18
+ * shares, 100% of supply); A, B, C each deposit 1000 USDC at NAV. Result: A, B, C hold exactly
+ * 1000 shares each, F exactly 50; nothing is minted by any other path.
  */
 export async function seedMembers(mirror: Mirror): Promise<Snapshot> {
   step("seed: fund actors with USDC-mock");
   for (const actor of ["A", "B", "C", "D", "O", "W"] as ActorName[]) await fund(mirror, actor, 10_000n * SETTLEMENT_UNIT);
-  step("seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later");
+  step("seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply");
   const genesis = await deposit(mirror, "F", GENESIS_DEPOSIT);
-  assert(genesis.sharesMinted === 50n * UNIT, "genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)");
-  await warp(mirror, HOUR, "1 h after genesis");
-  await claimFounderStream(mirror);
-  step("seed: A, B, C deposit 1000 USDC each at NAV");
+  assert(genesis.sharesMinted === 50n * UNIT, "genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)");
+  assert((await read<bigint>(mirror, "shares", "totalSupply")) === 50n * UNIT, "the founder holds 100% of supply after genesis; nothing else was minted");
+  step("seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)");
   for (const actor of ["A", "B", "C"] as ActorName[]) await deposit(mirror, actor, 1_000n * SETTLEMENT_UNIT);
   return snapshot(mirror, "seeded", ["F", "A", "B", "C"]);
 }
@@ -407,7 +400,6 @@ export async function send(mirror: Mirror, actor: ActorName, target: keyof Mirro
     safe: mirror.dao.safe,
     shares: mirror.dao.shares,
     settlement: mirror.dao.settlement,
-    founderStream: mirror.dao.founderStream,
     deposit: mirror.dao.depositShaman,
     work: mirror.dao.workManager,
   }[target];
@@ -423,7 +415,6 @@ export async function simulate(mirror: Mirror, actor: ActorName, target: keyof M
     safe: mirror.dao.safe,
     shares: mirror.dao.shares,
     settlement: mirror.dao.settlement,
-    founderStream: mirror.dao.founderStream,
     deposit: mirror.dao.depositShaman,
     work: mirror.dao.workManager,
   }[target];

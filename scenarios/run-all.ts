@@ -4,7 +4,7 @@ import { main as B } from "./B-mandate-ragequit-then-execute.js";
 import { main as C } from "./C-deposit-spend-ragequit.js";
 import { main as D } from "./D-governance-param-change.js";
 import { main as E } from "./E-task-verifier-not-proposer.js";
-import { main as F } from "./F-founder-proportion.js";
+import { main as F } from "./F-founder-ordinary-member.js";
 
 const SCENARIOS: Array<[string, () => Promise<void>]> = [["A", A], ["B", B], ["C", C], ["D", D], ["E", E], ["F", F]];
 

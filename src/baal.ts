@@ -1,7 +1,7 @@
 /**
  * Baal (Moloch v3) + Safe deployment helpers for the Zero One mirror.
  * Copied from agent-only-wallet/exit/src/baal.ts; initializeSafeAndBaal is re-shaped for
- * Baal-native governance: Baal is the only Safe module, three manager shamans, governance config
+ * Baal-native governance: Baal is the only Safe module, two manager shamans, governance config
  * set in the setUp multisend, admin locked (tokens cannot be paused), manager/governor unlocked.
  */
 import { readFileSync } from "node:fs";
@@ -274,7 +274,7 @@ export interface InitializeBaalInput {
   baal: Address;
   shares: Address;
   loot: Address;
-  /** Manager shamans (permission 2): FounderStream, DepositShaman, WorkManager. */
+  /** Manager shamans (permission 2): DepositShaman, WorkManager; the only mint paths. */
   managerShamans: Address[];
   governance: GovernanceConfig;
   forwarder?: Address;

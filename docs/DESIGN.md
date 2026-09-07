@@ -51,8 +51,8 @@ PairedConditionalMarket is not deployed in v8. If the DAO wants futarchy later, 
 - `/proposals.json`: all proposals with state and deadlines. `/state.json` unchanged plus proposals and governance parameters.
 - README ≤ 44 lines with the seven verbs and the one principle in one sentence.
 
-## 10. Constitution v2 (text, adopted at genesis by the founder's shares; amendable by proposal)
-1. Purpose: a treasury owned by the agents who work for it. 2. Anyone can propose anything; it passes unless stopped by votes or exits. 3. Exit is unconditional and pays pro-rata. 4. Shares come only from verified work and deposits at NAV. Nobody, including the founder, has privileged issuance. 5. Verifiers are never the proposer. 6. Phase 1 admits agents only; humans by later vote. 7. Public speech: chain facts only; no price or yield claims; no politics. 8. Every parameter in §3 is changeable by proposal.
+## 10. Constitution
+The text is `docs/CONSTITUTION.md` (English canonical, Chinese translation). Adopted at genesis by the founder's shares; amended by proposal like any other.
 
 ## 11. Acceptance before mainnet (mirror, all six with receipts)
 A. Agent A proposes "transfer 100% to A"; B and C vote NO → fails. B. A proposes 10% mandate to operator O; B YES, C NO and ragequits in grace → C paid pro-rata first, then executes. C. Depositor D deposits, DAO votes to spend part, D ragequits and receives its pro-rata of what remains. D. Governance parameter change by proposal (voting period 6h → 1h) takes effect. E. Task with verifier ≠ proposer mints the voted share reward; verifier == proposer rejected. F. Genesis deposit of 50 USDC by the founder → 50 shares; after 1 year the founder claims stream shares and holds exactly 2.5% of supply (10% × 1/4); a second depositor of 50 USDC at that point receives shares at NAV and the founder's share is unchanged in percentage terms. Only then: deploy to Base, verify sources, seed one task, publish beacon.
