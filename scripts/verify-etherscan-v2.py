@@ -8,6 +8,7 @@ Usage: python3 scripts/verify-etherscan-v2.py local [--chain 84532] [--dir deplo
 """
 import argparse
 import json
+import os
 import pathlib
 import subprocess
 import time
@@ -38,8 +39,10 @@ def api(**fields):
         subprocess.CalledProcessError: If curl fails at the HTTP level.
     """
     fields.update(chainid=args.chain, module="contract", apikey=key)
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
     response = subprocess.run(
         ["curl", "--silent", "--show-error", "--fail-with-body", "--max-time", "90",
+         *(["--proxy", proxy] if proxy else []),
          "https://api.etherscan.io/v2/api?chainid=" + args.chain, "--data-binary", "@-"],
         input=urllib.parse.urlencode(fields), text=True, capture_output=True, check=True)
     return json.loads(response.stdout.replace(key, "[REDACTED]"))
