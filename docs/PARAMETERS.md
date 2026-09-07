@@ -11,6 +11,10 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - settlement asset (`NavShareToken.settlementToken`) = USDC on Base, `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (6 decimals; `BASE_USDC` in `src/zeroOne.ts`, documented only, nothing deployed). **IMMUTABLE** — defines NAV forever: deposits and exits are priced in it (task rewards are not, see Work). Mirror uses `TestToken` "USDC-mock" (6 decimals, fixed supply, no admin). USDC is upgradeable and has a blacklist (Circle); a blacklisted Safe could not pay exits — accepted as the user's choice (DESIGN.md §6). Must not be fee-on-transfer or rebasing (DepositShaman reverts on inexact transfers; ragequit assumes balanceOf accounting).
 - salt = 1 (Safe/Baal proxy create2 nonces 2 and 3). **IMMUTABLE** — only affects addresses.
 
+## Constitution (Constitution contract, DESIGN.md §10)
+- `Constitution.textHash` = keccak256 of the exact bytes of `docs/CONSTITUTION.md` = `0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a` (computed by `constitutionHash()` in `src/zeroOne.ts` at deploy time and asserted equal on-chain; every scenario boot re-asserts it). **IMMUTABLE** — no setter, no owner, no amendment path (constitution Art. VII). Changing one byte of the text changes the hash; the text file is therefore frozen with the deployment. A new constitution means a new deployment.
+- `Constitution.textUrl` = `"docs/CONSTITUTION.md"` (`CONSTITUTION_TEXT_URL` in `src/zeroOne.ts`; mirror value, a repo-relative pointer). **DECIDE** — the mainnet value should be a stable public URL of the exact bytes (the hash, not the URL, is the authority). Written once in the constructor; Solidity strings cannot be `immutable`, and no function writes storage afterwards.
+
 ## Treasury and governance module
 - Safe owners = [Baal], threshold 1, enabled modules = [Baal] only. **IMMUTABLE in practice** — no EOA can sign for the Safe; Baal executes passed proposals through the module path. A proposal could in theory add owners/modules (it is "anything"); by design that is a vote, not a code rule.
 - Baal implementation = vendored @daohaus/baal-contracts 1.2.18, minimal proxy via ModuleProxyFactory. **IMMUTABLE** — no upgrade path.
@@ -48,6 +52,15 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - reward is a number of shares (`rewardShares`, 18 dec) fixed at `submitTask`, voted as part of the task proposal, and minted exactly on the final confirmation; no NAV or settlement conversion, so tasks work at zero treasury. **IMMUTABLE** (DESIGN.md §5).
 - single delivery per round, re-delivery resets confirmations; activate / cancel only by the Safe (i.e. by a passed proposal). **IMMUTABLE**.
 - no referral grants in phase 1 (AowReferralRewards is not in the reuse list); adding them later means a new shaman by proposal.
+
+## Proposal-contract templates (DESIGN.md §7; docs/TEMPLATES.md; scenarios D, G-J)
+- Per instance, set in the constructor and never changed: `safe` (owner of every instance), `settlement` (USDC), `operator` (= the proposer, msg.sender of the deployment). **IMMUTABLE per instance** — a proposal contract belongs to the Safe from birth; the proposer can never reclaim it.
+- `start / topUp / amend / stop / migrate` are `onlySafe` in `ProposalBase`. **IMMUTABLE** — the only caller is a passed proposal executed by Baal through the Safe module path (constitution Art. IV.3). Scenarios G, H, I, J assert the proposer's direct calls revert `OnlySafe`.
+- Strategy: `venue` and `asset` immutable per instance; the rule (`maxPerRun`, `minInterval`, `deadline`, `takeProfitBps`, `stopLossBps`) and `budget` change only by `amend` / `topUp` (Safe). `run()` is permissionless. `stop()` / `migrate()` unwind on the venue before moving settlement (a dead venue would make the vote's action fail; members would then vote a migration to a contract that does not unwind — provisional, see decision.md).
+- Project: verifiers ≠ operator, distinct, non-zero, `1 <= threshold <= n` enforced in the constructor and in `amend` (the only two entries). **IMMUTABLE**. Tranches are released to the operator only; `end()` after the deadline and the last release return everything else to the Safe.
+- Config: applies nothing itself; the Safe calls `Baal.setGovernanceConfig` in the same multicall and `start()` verifies the six values (`NotApplied` reverts the whole action). No governor shaman is installed (governorLock false, see above).
+- MockDex: mirror only, constant price settable by anyone; never deployed to mainnet. Strategy venues on mainnet are named in the proposal parameters and must implement `IStrategyVenue`.
+- Execution gas: `Baal.processProposal` marks `actionFailed` instead of reverting when the voted multicall runs out of gas, and `eth_estimateGas` can therefore return a limit that is too small for the action. The mirror sends `processProposal` with an explicit 5,000,000 gas limit (`PROCESS_GAS` in `scenarios/lib.ts`); the relay's `execute` verb must do the same. **PROCEDURAL**.
 
 ## EIP-7702 adapter (ZeroOneIntentAccount)
 - EIP-712 domain name "ZeroOneIntent", version "1", chain-bound; ops 0-9 map to Baal/shaman verbs. **IMMUTABLE** — compiled and deployed on the mirror, but NOT exercised by scenarios A-F (relay is phase 2 of the work order). Re-verify before relying on it.
