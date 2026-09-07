@@ -10,6 +10,7 @@
     "compile": "tsx scripts/compile.ts",
     "typecheck": "tsc --noEmit",
     "deploy:local": "tsx scripts/deploy-local.ts",
+    "deploy:base-sepolia": "tsx scripts/deploy-base-sepolia.ts",
     "scenario:A": "tsx scenarios/A-full-treasury-fails.ts",
     "scenario:B": "tsx scenarios/B-mandate-ragequit-then-execute.ts",
     "scenario:C": "tsx scenarios/C-deposit-spend-ragequit.ts",

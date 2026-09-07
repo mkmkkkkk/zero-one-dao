@@ -65,6 +65,10 @@ export interface ZeroOneParams {
   /** Fixed supply of the mirror USDC-mock, in 6-decimal units. */
   testSettlementSupply: bigint;
   salt: bigint;
+  /** Constitution text URL written into the Constitution contract (default CONSTITUTION_TEXT_URL; testnet/mainnet: a pinned public URL of the exact bytes). */
+  constitutionTextUrl?: string;
+  /** Already-deployed Baal/Safe singletons to reuse (testnet scenario DAOs share the canonical ones); when absent all five are deployed. */
+  infrastructure?: BaalInfrastructure;
 }
 
 export const DEFAULT_PARAMS: Omit<ZeroOneParams, "founder"> = {
@@ -93,6 +97,8 @@ export interface ZeroOneDao {
   constitution: Address;
   constitutionHash: Hex;
   constitutionTextUrl: string;
+  /** Block number just before the first deployment transaction; every log scan of this DAO starts here. */
+  startBlock: bigint;
   params: ZeroOneParams;
   txHashes: Record<string, Hex>;
 }
@@ -111,10 +117,13 @@ export interface ZeroOneDao {
  */
 export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParams): Promise<ZeroOneDao> {
   const txHashes: Record<string, Hex> = {};
-  const infrastructure = await deployBaalInfrastructure(deployer);
-  ["Baal", "ModuleProxyFactory", "GnosisSafe", "GnosisSafeProxyFactory", "MultiSend"].forEach((name, index) => {
-    txHashes[`singleton:${name}`] = infrastructure.deploymentTransactions[index]!;
-  });
+  const startBlock = await deployer.publicClient.getBlockNumber();
+  const infrastructure = params.infrastructure ?? (await deployBaalInfrastructure(deployer));
+  if (params.infrastructure === undefined) {
+    ["Baal", "ModuleProxyFactory", "GnosisSafe", "GnosisSafeProxyFactory", "MultiSend"].forEach((name, index) => {
+      txHashes[`singleton:${name}`] = infrastructure.deploymentTransactions[index]!;
+    });
+  }
 
   let settlement: Address;
   if (params.settlement !== undefined) {
@@ -158,7 +167,8 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     assertInvariant(reported === name, `TemplateFactory template ${index} is ${name}`);
   }
   const textHash = constitutionHash();
-  const constitution = await deployLocal(deployer, "Constitution", [textHash, CONSTITUTION_TEXT_URL]);
+  const textUrl = params.constitutionTextUrl ?? CONSTITUTION_TEXT_URL;
+  const constitution = await deployLocal(deployer, "Constitution", [textHash, textUrl]);
   txHashes["Constitution"] = constitution.hash;
   const onChainHash = (await deployer.publicClient.readContract({ address: constitution.address, abi: constitution.artifact.abi, functionName: "textHash" })) as Hex;
   assertInvariant(onChainHash === textHash, "Constitution.textHash equals keccak256(docs/CONSTITUTION.md)");
@@ -192,7 +202,8 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     intentAccount: intentAccount.address,
     constitution: constitution.address,
     constitutionHash: textHash,
-    constitutionTextUrl: CONSTITUTION_TEXT_URL,
+    constitutionTextUrl: textUrl,
+    startBlock,
     params,
     txHashes,
   };
@@ -213,6 +224,7 @@ export async function genesisDeposit(
   dao: ZeroOneDao,
   amount: bigint = GENESIS_DEPOSIT,
 ): Promise<{ approveHash: Hex; depositHash: Hex; sharesMinted: bigint }> {
+  // MockUSDC and TestToken share the ERC-20 surface used here (approve / balanceOf).
   const settlementAbi = loadLocalArtifact("TestToken").abi;
   const sharesAbi = loadLocalArtifact("NavShareToken").abi;
   const depositAbi = loadLocalArtifact("DepositShaman").abi;
@@ -260,13 +272,14 @@ export interface ShamanPermission {
  *
  * @param context Any connected client.
  * @param baal The Baal address.
+ * @param fromBlock First block to scan (the DAO's startBlock on a public chain; default 0 on a mirror).
  * @returns Every address ever named in a ShamanSet event with its live permission from `shamans(address)`.
  */
-export async function enumerateShamans(context: WriteContext, baal: Address): Promise<ShamanPermission[]> {
+export async function enumerateShamans(context: WriteContext, baal: Address, fromBlock: bigint = 0n): Promise<ShamanPermission[]> {
   const logs = await context.publicClient.getLogs({
     address: baal,
     event: parseAbiItem("event ShamanSet(address indexed shaman, uint256 permission)"),
-    fromBlock: 0n,
+    fromBlock,
     toBlock: "latest",
   });
   const baalAbi = loadBaalArtifact("Baal").abi;

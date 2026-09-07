@@ -247,7 +247,7 @@ export async function assertFactory(mirror: Mirror): Promise<void> {
  * Enumerates every ShamanSet event since block 0 and reads each address's live permission.
  */
 export async function assertOnlyMintPaths(mirror: Mirror): Promise<void> {
-  const shamans = await enumerateShamans(mirror.actors.F, mirror.dao.baal);
+  const shamans = await enumerateShamans(mirror.actors.F, mirror.dao.baal, mirror.dao.startBlock);
   for (const { shaman, permission } of shamans) {
     const label = shaman === getAddress(mirror.dao.depositShaman) ? "DepositShaman" : shaman === getAddress(mirror.dao.workManager) ? "WorkManager" : "UNKNOWN";
     console.log(`   shaman ${shaman} permission ${permission} (${label})`);

@@ -30,10 +30,11 @@ async function main(): Promise<void> {
     const deployer = chain.contexts[0]!;
     const dao = await deployZeroOne(deployer, { ...DEFAULT_PARAMS, founder: deployer.account.address });
     const genesis = await genesisDeposit(deployer, dao, GENESIS_DEPOSIT);
-    const shamans = await enumerateShamans(deployer, dao.baal);
+    const shamans = await enumerateShamans(deployer, dao.baal, dao.startBlock);
     const record = {
       rpcUrl: devnet.rpcUrl,
       chainId: devnet.chainId,
+      startBlock: Number(dao.startBlock),
       deployer: deployer.account.address,
       founder: dao.params.founder,
       settlement: dao.settlement,
