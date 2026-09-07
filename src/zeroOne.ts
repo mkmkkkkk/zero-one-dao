@@ -84,6 +84,10 @@ export interface ZeroOneDao {
   loot: Address;
   depositShaman: Address;
   workManager: Address;
+  /** CREATE2 template factory (decision.md phase 2b ruling 2); the intent account's op 0 deploys through it. */
+  templateFactory: Address;
+  /** Per-template CREATE2 deployers the factory dispatches to: [Payment, Strategy, Project, Config]. */
+  templateDeployers: [Address, Address, Address, Address];
   intentAccount: Address;
   /** Constitution contract: immutable keccak256 of docs/CONSTITUTION.md + text URL, no setter. */
   constitution: Address;
@@ -95,8 +99,9 @@ export interface ZeroOneDao {
 
 /**
  * Deploy Zero One: vendored Baal/Safe singletons, Safe + Baal proxies, NavShareToken, LootToken,
- * DepositShaman, WorkManager, the 7702 intent adapter, the Constitution (hash of docs/CONSTITUTION.md,
- * immutable), then initialize Baal and the Safe. The only two manager shamans are DepositShaman and
+ * DepositShaman, WorkManager, the four CREATE2 template deployers + TemplateFactory, the 7702 intent
+ * adapter (bound to the factory), the Constitution (hash of docs/CONSTITUTION.md, immutable), then
+ * initialize Baal and the Safe. The only two manager shamans are DepositShaman and
  * WorkManager; nothing is minted here (see genesisDeposit).
  *
  * @param deployer Signer that pays for every deployment; becomes `params.founder` by convention.
@@ -131,12 +136,27 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   const loot = await deployLocal(deployer, "LootToken", [`${params.shareName} Loot`, `${params.shareSymbol}-LOOT`, baal]);
   const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address]);
   const workManager = await deployLocal(deployer, "WorkManager", [baal, shares.address]);
-  const intentAccount = await deployLocal(deployer, "ZeroOneIntentAccount", [baal, depositShaman.address, workManager.address]);
+  const paymentDeployer = await deployLocal(deployer, "PaymentDeployer", [safe, settlement]);
+  const strategyDeployer = await deployLocal(deployer, "StrategyDeployer", [safe, settlement]);
+  const projectDeployer = await deployLocal(deployer, "ProjectDeployer", [safe, settlement]);
+  const configDeployer = await deployLocal(deployer, "ConfigDeployer", [safe, settlement, baal]);
+  const templateDeployers: [Address, Address, Address, Address] = [paymentDeployer.address, strategyDeployer.address, projectDeployer.address, configDeployer.address];
+  const templateFactory = await deployLocal(deployer, "TemplateFactory", [safe, settlement, baal, templateDeployers]);
+  const intentAccount = await deployLocal(deployer, "ZeroOneIntentAccount", [baal, depositShaman.address, workManager.address, templateFactory.address]);
   txHashes["NavShareToken"] = shares.hash;
   txHashes["LootToken"] = loot.hash;
   txHashes["DepositShaman"] = depositShaman.hash;
   txHashes["WorkManager"] = workManager.hash;
+  txHashes["PaymentDeployer"] = paymentDeployer.hash;
+  txHashes["StrategyDeployer"] = strategyDeployer.hash;
+  txHashes["ProjectDeployer"] = projectDeployer.hash;
+  txHashes["ConfigDeployer"] = configDeployer.hash;
+  txHashes["TemplateFactory"] = templateFactory.hash;
   txHashes["ZeroOneIntentAccount"] = intentAccount.hash;
+  for (const [index, name] of ["Payment", "Strategy", "Project", "Config"].entries()) {
+    const reported = (await deployer.publicClient.readContract({ address: templateFactory.address, abi: templateFactory.artifact.abi, functionName: "templateName", args: [index] })) as string;
+    assertInvariant(reported === name, `TemplateFactory template ${index} is ${name}`);
+  }
   const textHash = constitutionHash();
   const constitution = await deployLocal(deployer, "Constitution", [textHash, CONSTITUTION_TEXT_URL]);
   txHashes["Constitution"] = constitution.hash;
@@ -167,6 +187,8 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     loot: loot.address,
     depositShaman: depositShaman.address,
     workManager: workManager.address,
+    templateFactory: templateFactory.address,
+    templateDeployers,
     intentAccount: intentAccount.address,
     constitution: constitution.address,
     constitutionHash: textHash,

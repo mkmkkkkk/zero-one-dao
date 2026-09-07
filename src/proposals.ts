@@ -1,31 +1,39 @@
 /**
  * Baal-proposal builder for the proposal-contract templates (DESIGN.md §7).
  *
- * A proposer picks a template and parameters; the builder deploys the instance (the proposer pays
- * the gas), reads back its `describe()` and code hash, and submits the Baal proposal whose multicall
- * funds the instance from the Safe and calls `start()`. Voters see template, parameters, params hash,
- * instance address and code hash in the proposal details. Management proposals (topUp / amend /
- * stop / migrate) are built the same way as multicalls the Safe executes when they pass.
+ * A proposer picks a template and parameters; the builder deploys the instance through the CREATE2
+ * TemplateFactory (decision.md phase 2b ruling 2: the address is a pure function of template, params,
+ * member and salt, so nobody can substitute code), reads back its `describe()` and code hash, and
+ * submits the Baal proposal whose multicall funds the instance from the Safe and calls `start()`.
+ * The multicall is built twice, off-chain here and on-chain by `TemplateFactory.proposalData`, and
+ * the two must be byte-identical (the intent account submits the on-chain one). Voters see template,
+ * parameters, params hash, instance address and code hash in the proposal details. Management
+ * proposals (topUp / amend / stop / migrate) are built the same way as multicalls the Safe executes.
  */
 import {
+  decodeAbiParameters,
   encodeAbiParameters,
   encodeFunctionData,
   getAddress,
   keccak256,
+  numberToHex,
   type Abi,
   type Address,
   type Hex,
 } from "viem";
 
 import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, type GovernanceConfig, type PackedCall, type WriteContext } from "./baal.js";
-import { deployLocal, writeAndWait } from "./onchain.js";
+import { writeAndWait } from "./onchain.js";
 import type { ZeroOneDao } from "./zeroOne.js";
 
-/** The three addresses the builder needs (a full ZeroOneDao satisfies it; a deployment record does too). */
-export type DaoAddresses = Pick<ZeroOneDao, "safe" | "settlement" | "baal">;
+/** The addresses the builder needs (a full ZeroOneDao satisfies it; a deployment record does too). */
+export type DaoAddresses = Pick<ZeroOneDao, "safe" | "settlement" | "baal" | "templateFactory">;
 
 export const TEMPLATE_NAMES = ["Payment", "Strategy", "Project", "Config"] as const;
 export type TemplateName = (typeof TEMPLATE_NAMES)[number];
+
+/** Template id per name, as TemplateFactory numbers them (0 Payment, 1 Strategy, 2 Project, 3 Config). */
+export const TEMPLATE_IDS: Record<TemplateName, number> = { Payment: 0, Strategy: 1, Project: 2, Config: 3 };
 
 /** Contract name of each template's artifact. */
 export const TEMPLATE_CONTRACTS: Record<TemplateName, string> = {
@@ -94,7 +102,12 @@ export interface Description {
 
 export interface TemplateInstance {
   address: Address;
-  deployHash: Hex;
+  /** Deployment transaction; `undefined` when the instance already existed at its CREATE2 address. */
+  deployHash?: Hex;
+  /** The CREATE2 salt the instance was deployed with. */
+  salt: Hex;
+  /** abi.encode(params): the bytes the factory deploys from and the template hashes as paramsHash. */
+  paramsBytes: Hex;
   template: TemplateName;
   contractName: string;
   compiler: string;
@@ -196,18 +209,28 @@ export function paramsHashOf(spec: TemplateSpec): Hex {
   return keccak256(encodeParams(spec));
 }
 
-/** Constructor arguments for a template instance owned by `dao.safe`. */
-function constructorArgs(dao: DaoAddresses, operator: Address, spec: TemplateSpec): readonly unknown[] {
-  switch (spec.template) {
-    case "Payment":
-      return [dao.safe, dao.settlement, operator, spec.params.recipients, spec.params.amounts];
-    case "Strategy":
-      return [dao.safe, dao.settlement, operator, spec.params.venue, spec.params.asset, spec.params.budget, spec.params.rule];
-    case "Project":
-      return [dao.safe, dao.settlement, operator, trancheTuples(spec.params.tranches), spec.params.deadline];
-    case "Config":
-      return [dao.safe, dao.settlement, operator, dao.baal, spec.params];
-  }
+/** ABI of TemplateFactory. */
+export function factoryAbi(): Abi {
+  return loadLocalArtifact("TemplateFactory").abi;
+}
+
+/** abi.encode(uint8 template, bytes params, bytes32 salt): the `data` of an op-0 (propose) intent. */
+export function proposeIntentData(template: TemplateName, paramsBytes: Hex, salt: Hex): Hex {
+  return encodeAbiParameters([{ type: "uint8" }, { type: "bytes" }, { type: "bytes32" }], [TEMPLATE_IDS[template], paramsBytes, salt]);
+}
+
+/** Decode the `data` of an op-0 intent back into template id, params bytes and salt. */
+export function decodeProposeIntentData(data: Hex): { template: TemplateName; templateId: number; paramsBytes: Hex; salt: Hex } {
+  const [templateId, paramsBytes, salt] = decodeAbiParameters([{ type: "uint8" }, { type: "bytes" }, { type: "bytes32" }], data);
+  const template = TEMPLATE_NAMES[templateId];
+  if (template === undefined) throw new Error(`unknown template id ${templateId}`);
+  return { template, templateId, paramsBytes, salt };
+}
+
+/** The factory's CREATE2 address for (template, params, member, salt). */
+export async function predictInstance(context: WriteContext, dao: DaoAddresses, spec: TemplateSpec, member: Address, salt: Hex): Promise<Address> {
+  const address = (await context.publicClient.readContract({ address: dao.templateFactory, abi: factoryAbi(), functionName: "predict", args: [TEMPLATE_IDS[spec.template], encodeParams(spec), getAddress(member), salt] })) as Address;
+  return getAddress(address);
 }
 
 /** ABI of the common surface (IProposalContract). */
@@ -229,35 +252,56 @@ export async function describe(context: WriteContext, address: Address): Promise
   return { template: result[0], paramsHash: result[1], operator: getAddress(result[2]), budget: result[3], deadline: result[4], status };
 }
 
+/** A salt that is unique per deployer transaction: the deployer's transaction count, as bytes32. */
+export async function nextSalt(context: WriteContext): Promise<Hex> {
+  const count = await context.publicClient.getTransactionCount({ address: context.account.address, blockTag: "pending" });
+  return numberToHex(count, { size: 32 });
+}
+
 /**
- * Deploy a template instance for `spec`. The operator is the proposer by default; a relay deploying
- * with sponsored gas passes the member's address as `operator` so the instance belongs to the member
- * (Project tranches pay the operator). Verifies that the contract's paramsHash equals the local
- * keccak256(abi.encode(params)) and records the code hash.
+ * Deploy a template instance for `spec` through the TemplateFactory (CREATE2). The operator is the
+ * proposer by default; a relay deploying with sponsored gas passes the member's address as
+ * `operator` so the instance belongs to the member. If the deterministic address already has code
+ * the factory returns it without deploying. Verifies that the contract's paramsHash equals the local
+ * keccak256(abi.encode(params)), that template and operator match, and records the code hash.
  *
- * @param proposer Signer that deploys (pays gas).
- * @param dao The deployed DAO (Safe, settlement, Baal).
+ * @param proposer Signer that sends the factory call (pays gas).
+ * @param dao The deployed DAO (Safe, settlement, Baal, factory).
  * @param spec Template and parameters.
  * @param operator The instance's operator (default: the deployer).
+ * @param salt CREATE2 salt (default: the deployer's transaction count).
  * @returns The instance with its description, params hash and code hash.
- * @throws Error if the on-chain paramsHash, template name or operator disagrees with the spec.
+ * @throws Error if the factory's predicted address, the on-chain paramsHash, template name or operator disagrees with the spec.
  */
-export async function deployTemplate(proposer: WriteContext, dao: DaoAddresses, spec: TemplateSpec, operator: Address = proposer.account.address): Promise<TemplateInstance> {
+export async function deployTemplate(proposer: WriteContext, dao: DaoAddresses, spec: TemplateSpec, operator: Address = proposer.account.address, salt?: Hex): Promise<TemplateInstance> {
   const contractName = TEMPLATE_CONTRACTS[spec.template];
-  const deployed = await deployLocal(proposer, contractName, constructorArgs(dao, getAddress(operator), spec));
-  const code = await proposer.publicClient.getCode({ address: deployed.address });
-  if (code === undefined || code === "0x") throw new Error(`no code at ${deployed.address}`);
-  const description = await describe(proposer, deployed.address);
-  const paramsHash = paramsHashOf(spec);
+  const member = getAddress(operator);
+  const paramsBytes = encodeParams(spec);
+  const useSalt = salt ?? (await nextSalt(proposer));
+  const predicted = await predictInstance(proposer, dao, spec, member, useSalt);
+  let deployHash: Hex | undefined;
+  const existing = await proposer.publicClient.getCode({ address: predicted });
+  if (existing === undefined || existing === "0x") {
+    const simulation = await proposer.publicClient.simulateContract({ address: dao.templateFactory, abi: factoryAbi(), functionName: "deploy", args: [TEMPLATE_IDS[spec.template], paramsBytes, member, useSalt], account: proposer.account } as never);
+    const [deployed] = simulation.result as unknown as [Address, Hex];
+    if (getAddress(deployed) !== predicted) throw new Error(`factory would deploy at ${deployed}, predicted ${predicted}`);
+    deployHash = (await writeAndWait(proposer, simulation.request as unknown as Record<string, unknown>)).hash;
+  }
+  const code = await proposer.publicClient.getCode({ address: predicted });
+  if (code === undefined || code === "0x") throw new Error(`no code at ${predicted}`);
+  const description = await describe(proposer, predicted);
+  const paramsHash = keccak256(paramsBytes);
   if (description.paramsHash !== paramsHash) {
     throw new Error(`paramsHash mismatch for ${spec.template}: contract ${description.paramsHash}, local ${paramsHash}`);
   }
   if (description.template !== spec.template) throw new Error(`template mismatch: contract ${description.template}, spec ${spec.template}`);
-  if (description.operator !== getAddress(operator)) throw new Error(`operator mismatch: contract ${description.operator}, expected ${getAddress(operator)}`);
-  const artifact = deployed.artifact as { compiler?: string };
+  if (description.operator !== member) throw new Error(`operator mismatch: contract ${description.operator}, expected ${member}`);
+  const artifact = loadLocalArtifact(contractName) as { compiler?: string };
   return {
-    address: deployed.address,
-    deployHash: deployed.hash,
+    address: predicted,
+    deployHash,
+    salt: useSalt,
+    paramsBytes,
     template: spec.template,
     contractName,
     compiler: artifact.compiler ?? "unknown",
@@ -298,6 +342,14 @@ export function fundAndStartCalls(dao: DaoAddresses, instance: TemplateInstance)
   }
   calls.push(instanceCall(instance.address, "start"));
   return calls;
+}
+
+/**
+ * The proposalData TemplateFactory.proposalData builds on-chain for an instance (what the intent
+ * account submits). Must equal `encodeProposalData(fundAndStartCalls(dao, instance))`.
+ */
+export async function onChainProposalData(context: WriteContext, dao: DaoAddresses, instance: Pick<TemplateInstance, "template" | "paramsBytes" | "address">): Promise<Hex> {
+  return (await context.publicClient.readContract({ address: dao.templateFactory, abi: factoryAbi(), functionName: "proposalData", args: [TEMPLATE_IDS[instance.template], instance.paramsBytes, instance.address] })) as Hex;
 }
 
 /** Multicall for a later proposal: transfer `amount` more from the Safe, then `topUp(amount)`. */
@@ -344,6 +396,7 @@ export function proposalDetails(instance: TemplateInstance, summary: string): st
     params: instance.spec.params,
     paramsHash: instance.paramsHash,
     codeHash: instance.codeHash,
+    salt: instance.salt,
   })}`;
 }
 
@@ -390,14 +443,18 @@ export async function submitCalls(
 }
 
 /**
- * Deploy a template instance and submit the Baal proposal that funds and starts it.
+ * Deploy a template instance through the factory and submit the Baal proposal that funds and starts
+ * it. The proposalData submitted is the off-chain build, asserted byte-identical to the factory's
+ * on-chain `proposalData` (the bytes the intent account submits for the same instance).
  *
  * @param proposer Signer that deploys the instance and submits the proposal.
  * @param dao The deployed DAO.
  * @param spec Template and parameters.
  * @param summary One-line human summary for the details.
  * @param expiration Baal expiration (0 = none).
+ * @param salt CREATE2 salt (default: the proposer's transaction count).
  * @returns The instance, proposal id, multicall, proposalData and details.
+ * @throws Error if the on-chain and off-chain proposalData differ.
  */
 export async function submitTemplateProposal(
   proposer: WriteContext,
@@ -405,10 +462,14 @@ export async function submitTemplateProposal(
   spec: TemplateSpec,
   summary: string,
   expiration = 0,
+  salt?: Hex,
 ): Promise<SubmittedProposal> {
-  const instance = await deployTemplate(proposer, dao, spec);
+  const instance = await deployTemplate(proposer, dao, spec, proposer.account.address, salt);
   const calls = fundAndStartCalls(dao, instance);
   const details = proposalDetails(instance, summary);
+  const onChain = (await onChainProposalData(proposer, dao, instance)).toLowerCase();
+  const offChain = encodeProposalData(calls).toLowerCase();
+  if (onChain !== offChain) throw new Error(`TemplateFactory.proposalData differs from the builder's multicall for ${instance.address}`);
   const submitted = await submitCalls(proposer, dao, calls, details, expiration);
   return { instance, id: submitted.id, calls, data: submitted.data, details, submitHash: submitted.submitHash };
 }

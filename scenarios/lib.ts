@@ -20,7 +20,7 @@ import {
 import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
 import { connectDevnet, deployLocal, increaseTime, type LocalChain } from "../src/onchain.js";
-import { describe, submitTemplateProposal, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
+import { describe, factoryAbi, submitTemplateProposal, TEMPLATE_NAMES, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
 import { constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
 export { GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT };
@@ -44,7 +44,7 @@ export interface Mirror {
   devnet: Devnet;
   chain: LocalChain;
   dao: ZeroOneDao;
-  abi: Record<"baal" | "shares" | "settlement" | "deposit" | "work" | "safe" | "constitution" | "proposal" | "payment" | "strategy" | "project" | "config" | "dex", Abi>;
+  abi: Record<"baal" | "shares" | "settlement" | "deposit" | "work" | "safe" | "constitution" | "factory" | "proposal" | "payment" | "strategy" | "project" | "config" | "dex", Abi>;
   actors: Record<ActorName, WriteContext>;
 }
 
@@ -172,6 +172,7 @@ export async function boot(name: string): Promise<Mirror> {
       deposit: loadLocalArtifact("DepositShaman").abi,
       work: loadLocalArtifact("WorkManager").abi,
       constitution: loadLocalArtifact("Constitution").abi,
+      factory: factoryAbi(),
       // Common surface plus the base contract's custom errors, so negative cases decode OnlySafe / WrongStatus.
       proposal: [...loadLocalAbi("IProposalContract"), ...loadLocalAbi("ProposalBase").filter((item) => item.type === "error" || item.type === "event")],
       payment: loadLocalArtifact("PaymentProposal").abi,
@@ -192,12 +193,14 @@ export async function boot(name: string): Promise<Mirror> {
   };
   console.log(`deployed: safe ${dao.safe} baal ${dao.baal} shares ${dao.shares} settlement ${dao.settlement}`);
   console.log(`          depositShaman ${dao.depositShaman} workManager ${dao.workManager} constitution ${dao.constitution}`);
+  console.log(`          templateFactory ${dao.templateFactory} deployers ${dao.templateDeployers.join(" ")} intentAccount ${dao.intentAccount}`);
   for (const [actor, context] of Object.entries(mirror.actors) as [ActorName, WriteContext][]) {
     console.log(`   ${actor} = ${context.account.address}  ${ACTOR_ROLES[actor]}`);
   }
   try {
     await assertOnlyMintPaths(mirror);
     await assertConstitution(mirror);
+    await assertFactory(mirror);
   } catch (error) {
     await stopDevnet(devnet);
     throw error;
@@ -213,6 +216,29 @@ export async function assertConstitution(mirror: Mirror): Promise<void> {
   assert(onChain === local, "Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)");
   const setters = mirror.abi.constitution.filter((item) => item.type === "function" && item.stateMutability !== "view" && item.stateMutability !== "pure");
   assert(setters.length === 0, "Constitution has no state-changing function (immutable, no amendment path)");
+}
+
+/**
+ * Assert the CREATE2 TemplateFactory is bound to this DAO (Safe, settlement, Baal), dispatches ids
+ * 0..3 to deployers named Payment / Strategy / Project / Config, each bound to the same Safe and
+ * settlement, and that the intent account points at this factory (decision.md phase 2b ruling 2).
+ */
+export async function assertFactory(mirror: Mirror): Promise<void> {
+  const factory = mirror.dao.templateFactory;
+  const readFactory = <T,>(functionName: string, args: readonly unknown[] = []) => readAt<T>(mirror, factory, "factory", functionName, args);
+  assert(getAddress(await readFactory<Address>("safe")) === getAddress(mirror.dao.safe) && getAddress(await readFactory<Address>("settlement")) === getAddress(mirror.dao.settlement) && getAddress(await readFactory<Address>("baal")) === getAddress(mirror.dao.baal), "TemplateFactory is bound to this Safe, settlement and Baal");
+  const deployerAbi = loadLocalArtifact("PaymentDeployer").abi;
+  for (const [index, name] of TEMPLATE_NAMES.entries()) {
+    const deployer = getAddress(await readFactory<Address>("deployer", [index]));
+    assert(deployer === getAddress(mirror.dao.templateDeployers[index]!) && (await readFactory<string>("templateName", [index])) === name, `factory template ${index} -> ${name} deployer ${deployer}`);
+    const [safe, settlement] = await Promise.all([
+      mirror.chain.publicClient.readContract({ address: deployer, abi: deployerAbi, functionName: "safe" }) as Promise<Address>,
+      mirror.chain.publicClient.readContract({ address: deployer, abi: deployerAbi, functionName: "settlement" }) as Promise<Address>,
+    ]);
+    assert(getAddress(safe) === getAddress(mirror.dao.safe) && getAddress(settlement) === getAddress(mirror.dao.settlement), `${name} deployer is bound to the same Safe and settlement`);
+  }
+  const accountFactory = (await mirror.chain.publicClient.readContract({ address: mirror.dao.intentAccount, abi: loadLocalArtifact("ZeroOneIntentAccount").abi, functionName: "factory" })) as Address;
+  assert(getAddress(accountFactory) === getAddress(factory), "ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)");
 }
 
 /**
@@ -309,10 +335,11 @@ export async function describeAt(mirror: Mirror, address: Address, label: string
   return d;
 }
 
-/** Deploy a template instance and submit the Baal proposal that funds and starts it (src/proposals.ts). */
+/** Deploy a template instance through the CREATE2 factory and submit the Baal proposal that funds and starts it (src/proposals.ts). */
 export async function proposeTemplate(mirror: Mirror, actor: ActorName, spec: TemplateSpec, summary: string): Promise<SubmittedProposal & Proposal> {
   const submitted = await submitTemplateProposal(mirror.actors[actor], mirror.dao, spec, summary);
-  console.log(`   ${actor} deployed ${submitted.instance.contractName} @ ${submitted.instance.address} (tx ${submitted.instance.deployHash}) paramsHash ${submitted.instance.paramsHash} codeHash ${submitted.instance.codeHash}`);
+  console.log(`   ${actor} deployed ${submitted.instance.contractName} @ ${submitted.instance.address} via TemplateFactory (tx ${submitted.instance.deployHash ?? "already deployed"}, salt ${submitted.instance.salt}) paramsHash ${submitted.instance.paramsHash} codeHash ${submitted.instance.codeHash}`);
+  console.log(`   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)`);
   const receipt = await mirror.chain.publicClient.getTransactionReceipt({ hash: submitted.submitHash });
   const submit: Receipt = { hash: submitted.submitHash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed };
   printReceipt(`${actor} submitProposal #${submitted.id} "${submitted.details.slice(0, 80)}..."`, submit);

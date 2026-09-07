@@ -4,7 +4,9 @@
  * returns every proceed to the Safe and ends; a second Strategy voted down leaves the treasury
  * untouched and its contract holding nothing. The proposer cannot stop or top up its own contract.
  */
-import type { StrategyParams } from "../src/proposals.js";
+import { getAddress } from "viem";
+
+import { encodeParams, predictInstance, TEMPLATE_IDS, type StrategyParams } from "../src/proposals.js";
 import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, HOUR, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, snapshot, stateOf, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 export async function main(): Promise<void> {
@@ -29,6 +31,13 @@ export async function main(): Promise<void> {
     const proposal = await proposeTemplate(mirror, "A", { template: "Strategy", params }, "A: DCA 500 USDC into MOCK, take profit +20%");
     const s1 = proposal.instance.address;
     assert((await stateOf(mirror, proposal.id)) === "Voting", "the strategy proposal entered voting (A self-sponsored)");
+    const predicted = await predictInstance(mirror.actors.A, mirror.dao, { template: "Strategy", params }, A, proposal.instance.salt);
+    assert(predicted === s1, `CREATE2: factory.predict(template, params, A, salt) == the deployed instance ${s1}`);
+    const again = await mirror.chain.publicClient.simulateContract({ address: mirror.dao.templateFactory, abi: mirror.abi.factory, functionName: "deploy", args: [TEMPLATE_IDS.Strategy, encodeParams({ template: "Strategy", params }), A, proposal.instance.salt], account: mirror.actors.W.account } as never);
+    const [sameInstance, sameCodeHash] = again.result as unknown as [`0x${string}`, `0x${string}`];
+    assert(getAddress(sameInstance) === s1 && sameCodeHash === proposal.instance.codeHash, "factory.deploy with the same (template, params, member, salt) is idempotent: same address, same code hash, no redeploy");
+    const otherMember = await predictInstance(mirror.actors.A, mirror.dao, { template: "Strategy", params }, mirror.actors.B.account.address, proposal.instance.salt);
+    assert(otherMember !== s1, "a different member (operator) yields a different instance address for the same params and salt");
     assert(proposal.details.includes(`"template":"Strategy"`) && proposal.details.includes(proposal.instance.codeHash) && proposal.details.includes(proposal.instance.paramsHash), "details carry template name, params hash and code hash");
     assert(proposal.calls.length === 2, "the voted multicall is exactly [Safe: USDC.transfer(instance, budget), instance.start()]");
     const pending = await describeAt(mirror, s1, "before vote");

@@ -3,13 +3,16 @@ pragma solidity ^0.8.24;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IBaalV3, IDepositShaman, IERC20Minimal, IWorkManager} from "./Interfaces.sol";
+import {TemplateFactory} from "./TemplateFactory.sol";
 
 /// @notice EIP-7702 account code for Zero One members. Each EOA verifies its own EIP-712 intent, so a
 /// relay can sponsor gas without gaining any authority over the account.
 /// @dev Derived from agent-only-wallet/exit AowIntentAccount, retargeted to Baal-native verbs.
 /// No admin, no arbitrary call, no delegation opcode, no sponsor authority. Ops:
-/// 0 propose | 1 sponsor | 2 vote | 3 execute (processProposal) | 4 ragequit | 5 deposit |
-/// 6 task (submitTask) | 7 claim | 8 deliver | 9 confirm.
+/// 0 propose (template id + params + salt -> TemplateFactory.deploy if absent -> Baal.submitProposal
+/// of the factory-built fund+start multicall; decision.md phase 2b ruling 2) | 2 vote | 3 execute
+/// (processProposal) | 4 ragequit | 5 deposit | 6 work (submitTask, then sponsorProposal in the same
+/// transaction; ruling 4) | 7 claim | 8 deliver | 9 confirm. Op 1 (sponsor) no longer exists.
 contract ZeroOneIntentAccount {
     struct Intent {
         address member;
@@ -39,16 +42,19 @@ contract ZeroOneIntentAccount {
     IERC20Minimal public immutable settlementToken;
     IDepositShaman public immutable depositShaman;
     IWorkManager public immutable workManager;
+    TemplateFactory public immutable factory;
 
     event IntentExecuted(address indexed member, uint256 indexed nonce, uint8 op, bytes32 result);
 
-    constructor(IBaalV3 baal_, IDepositShaman depositShaman_, IWorkManager workManager_) {
+    constructor(IBaalV3 baal_, IDepositShaman depositShaman_, IWorkManager workManager_, TemplateFactory factory_) {
+        require(address(factory_) != address(0), "factory");
         adapter = address(this);
         chainId = block.chainid;
         baal = baal_;
         depositShaman = depositShaman_;
         settlementToken = IERC20Minimal(depositShaman_.settlementToken());
         workManager = workManager_;
+        factory = factory_;
     }
 
     function _state() private pure returns (AccountState storage st) {
@@ -101,9 +107,11 @@ contract ZeroOneIntentAccount {
         st.entered = true;
         st.nonce++;
         if (i.op == 0) {
-            result = bytes32(baal.submitProposal{value: msg.value}(i.data, uint32(i.amount), 0, i.details));
-        } else if (i.op == 1) {
-            baal.sponsorProposal(i.proposalId);
+            // data = abi.encode(uint8 template, bytes params, bytes32 salt); amount = expiration (0 = none).
+            (uint8 template, bytes memory params, bytes32 salt) = abi.decode(i.data, (uint8, bytes, bytes32));
+            (address instance,) = factory.deploy(template, params, address(this), salt);
+            bytes memory proposalData = factory.proposalData(template, params, instance);
+            result = bytes32(baal.submitProposal{value: msg.value}(proposalData, uint32(i.amount), 0, i.details));
         } else if (i.op == 2) {
             baal.submitVote(i.proposalId, i.amount != 0);
         } else if (i.op == 3) {
@@ -117,8 +125,9 @@ contract ZeroOneIntentAccount {
         } else if (i.op == 6) {
             (address[] memory verifiers, uint16 threshold, uint256 rewardShares, uint32 expiration) =
                 abi.decode(i.data, (address[], uint16, uint256, uint32));
-            (uint256 taskId,) =
+            (uint256 taskId, uint256 proposalId) =
                 workManager.submitTask{value: msg.value}(verifiers, threshold, rewardShares, expiration, i.details);
+            baal.sponsorProposal(uint32(proposalId));
             result = bytes32(taskId);
         } else if (i.op == 7) {
             workManager.claim(i.amount);

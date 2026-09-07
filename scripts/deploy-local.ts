@@ -43,6 +43,8 @@ async function main(): Promise<void> {
       loot: dao.loot,
       depositShaman: dao.depositShaman,
       workManager: dao.workManager,
+      templateFactory: dao.templateFactory,
+      templateDeployers: dao.templateDeployers,
       intentAccount: dao.intentAccount,
       constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" },
       singletons: dao.infrastructure,
