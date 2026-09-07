@@ -15,6 +15,7 @@
     "scenario:C": "tsx scenarios/C-deposit-spend-ragequit.ts",
     "scenario:D": "tsx scenarios/D-governance-param-change.ts",
     "scenario:E": "tsx scenarios/E-task-verifier-not-proposer.ts",
+    "scenario:F": "tsx scenarios/F-founder-proportion.ts",
     "scenarios": "tsx scenarios/run-all.ts"
   },
   "dependencies": {

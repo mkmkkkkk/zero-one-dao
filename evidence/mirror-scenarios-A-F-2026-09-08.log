@@ -1,0 +1,501 @@
+
+> zero-one-dao@0.1.0 scenarios
+> tsx scenarios/run-all.ts
+
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x899bfaB630F80D0e97d85da49a86968F14d02682 baal 0x4ff8Bc3826D15C892eE45F2050A2993241C0f79D shares 0xfCB48d003CBbc3dEe7901158e941c8e803530dbE settlement 0x38d0bb2E23455d29562ea4Fe97D63A814d2B652F
+          founderStream 0xcb7a3CBE7e7e9069Cd81eE0880c67C2E39b45Ad5 depositShaman 0x6fdA9Cbb732a4016CDedFe7bbc5D1861BCaf7874 workManager 0xbeC6e6a758E02c1f08CA592eC40997446E514055
+   F = 0xE4af5b3d7306982D91DA0fAFC35b56A584581Ec0  founder (stream + genesis deposit)
+   A = 0xD04e079dc8c1eC7973AF8476C5f522316728508a  member agent A
+   B = 0xB6f788F469dC01C09e9891F7a6C7eFC1252530d9  member agent B
+   C = 0x69869eB28e8eC30f01129c865d22553eD31502bC  member agent C
+   D = 0xAAb29cD53066a9008207eD9F4067A9c197f3B47D  depositor D (joins later)
+   O = 0x440DA37CC205dAe2Cb927ca4e5f6c3D1A4c0C9De  operator O (mandate recipient)
+   W = 0xdFa76F156618e0aCf9e32007aDC20D8eDcDB5FA1  worker W (task deliverer)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xe7d75a912f2f52921c0de84d595adeae0d2179f82d23af9e0cf0d1a52afc356a (block 17, gas 51250)
+   tx fund B with 10000 USDC: 0xdab34ec32bbb050aaa968047ca06934a6b6c72d723093e7ca121b4888f458651 (block 18, gas 51250)
+   tx fund C with 10000 USDC: 0x7c8dc34de0cf123a4d96c610cf6cdf52c9cd6e17ccf1e057e0d1e616224c196c (block 19, gas 51250)
+   tx fund D with 10000 USDC: 0x7bffb625ff3501179527018a70df457a0271c28c774ec883485d1043c757da09 (block 20, gas 51238)
+   tx fund O with 10000 USDC: 0xe544fcf6da84e21155a522f6013a07a6977019c39a48bcc99dbf2244f789d3cc (block 21, gas 51250)
+   tx fund W with 10000 USDC: 0x11e692dceae8ad3f88cc0450d3eb32621b6617834fe506f046153171b0068312 (block 22, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later
+   tx F approve deposit shaman: 0xcd879645a1b420601fda84c71b053001f45b3171c557d2276a5a774c50bb491a (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xa7734a5167837989840f05d745e926529c3bd79ccdaf17f81aae11046027795b (block 24, gas 203247)
+   ok: genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   warp +3600s (1 h after genesis) -> block 25 timestamp 1788819482
+   tx F calls founder stream claim -> 0.000142596801838928 shares to F (claimable read 0.000142596801838928; stream total 0.000142596801838928 = 0.0002% of supply): 0x2e74ed5acec2cce988c28c48bcb4509251dd0e7027ac7288df3967a4b40369e0 (block 26, gas 136033)
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV
+   tx A approve deposit shaman: 0xbeacc6fddcfb3c7cec7d3f7fd6ab77df1b422ba796a026f1f1bfe9f24cbaebb3 (block 27, gas 45889)
+   tx A deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xa4fb49f09b1e0f8eb8211da340a65f62b4b354b8864b400514837eb09cbfcac3 (block 28, gas 169134)
+   tx B approve deposit shaman: 0xcbd38d94546ed5fc392c73f9831ce2052b1bbfee00f131cb3652921a5dc730e7 (block 29, gas 45889)
+   tx B deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xd202022a07aeed4e2d5453bd4d1c7bb5cf364197f00056b7e8f284645c50ed50 (block 30, gas 169134)
+   tx C approve deposit shaman: 0xb95de133d1276dc8df7ba2a81ede9b23d19254aedd9d49e836c782c3761d8566 (block 31, gas 45889)
+   tx C deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0x0c0446ce4707313916056015648ee29059c6b081a6372daff81119e5cf4da163 (block 32, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [seeded] F: USDC = 99939950  shares = 50.000142596801838928
+   [seeded] A: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] B: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] C: USDC = 9000  shares = 1000.00285193603677856
+
+== step 4: A proposes: transfer 100% of the treasury to A (submits and self-sponsors; nothing in code refuses)
+   tx A submitProposal #1 "A: send 100% of treasury to A": 0xbb2d4297e575e9430b6800231c81c5e2d11fa6e733dc8e74fcbfc7c54ae491a8 (block 33, gas 204216)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788819483
+   proposal #1 state = Voting
+   ok: the 100% proposal entered voting; no cap refused it
+
+== step 5: A votes YES on its own proposal; B and C vote NO
+   tx A votes YES on #1 -> yes 1000.00285193603677856 / no 0: 0x572126e9437ddbb25255e6279ae030f2fa4220154730c3b7b95409a7dc5c847b (block 35, gas 117855)
+   tx B votes NO on #1 -> yes 1000.00285193603677856 / no 1000.00285193603677856: 0xc83066b394a78cf3b000e4715ffa01ad15612589cecec5b3d37ebbe30aaa80a7 (block 36, gas 117833)
+   tx C votes NO on #1 -> yes 1000.00285193603677856 / no 2000.00570387207355712: 0x7968bcef68c75e68367ac71c492688f427bc1101103ef8a9c0966c43e7e12909 (block 37, gas 100733)
+
+== step 6: voting ends, grace passes
+   warp +21600s (to grace of #1) -> block 38 timestamp 1788841083
+   proposal #1 state = Grace
+   warp +21600s (past grace of #1) -> block 39 timestamp 1788862683
+   proposal #1 state = Defeated
+
+== step 7: outcome
+   ok: proposal #1 is Defeated (state=Defeated)
+   ok: processProposal on a defeated proposal reverts (reverted with !ready)
+   [after] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [after] A: USDC = 9000  shares = 1000.00285193603677856
+   [after] B: USDC = 9000  shares = 1000.00285193603677856
+   [after] C: USDC = 9000  shares = 1000.00285193603677856
+   ok: treasury unchanged at 3050 USDC
+   ok: A received nothing
+
+=== SCENARIO A: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x69b2F039EC76B44666e3C82eDE110F467848A301 baal 0x08274C2889FE3E9dEE0E7e0e94fBDb5a3bc0BAFA shares 0xe921401BfAB0b28e174F169d643ed5C4329615D3 settlement 0x28278b1648A76201B19fBC57D80400f180a2f664
+          founderStream 0x773Bb61C59f85Ee52757c523d662A956fc6ddc91 depositShaman 0x5Ac465d587DE8766cB5A99CD5276C2a66627EF82 workManager 0x06f55708E76980d45dae14B3ea58D881332C24A2
+   F = 0xE63E68419Baf01B8e174983937b5bBa88BafcD25  founder (stream + genesis deposit)
+   A = 0xEf328070371244C7e9Fce376212D267b26808188  member agent A
+   B = 0x0CD5F4eCcF1e563527dBf9011e5905A6E7525Da1  member agent B
+   C = 0xfe8763464b6969bAf59aA822fD233F81be0D63e4  member agent C
+   D = 0x418f243227bc1f31Cd1263DD405c4790290F2A80  depositor D (joins later)
+   O = 0x02fCBDB5fFbd72441f5B944066406d2A95651e31  operator O (mandate recipient)
+   W = 0x619205b3C9b338a13969EC4932aF921FD0798082  worker W (task deliverer)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xdbc4eb385f731e01749fc9c45231a4792837de4794003e643b2070f4647b05bb (block 17, gas 51250)
+   tx fund B with 10000 USDC: 0x320e282993a81b2b63693b7c0f8fbd387d24885ea71ecead8b63d25f50189057 (block 18, gas 51250)
+   tx fund C with 10000 USDC: 0xc2c8d672884a2612648c761705f6f3223dfaa94d2027feb35f68352460bdca01 (block 19, gas 51250)
+   tx fund D with 10000 USDC: 0x5f5bebb37780879f834422f1267352cf9bf22a62f3800f96306c59585f4ebdf5 (block 20, gas 51250)
+   tx fund O with 10000 USDC: 0xdd198361c2024aae6abc25e9d0202f69ad8d9f3501a787e86f11aea1556e1878 (block 21, gas 51250)
+   tx fund W with 10000 USDC: 0x3b6a6aa53806ffa6c953e274d1ddc193b5ea781c5a66b1c3b15610cd927a82e8 (block 22, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later
+   tx F approve deposit shaman: 0x7363c073a2c0c327aa6e07c7b17e7feccfee14f49b8efe0f1a855e5511ed8008 (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x5f8eed7c7e4da4efad2697cb33db883474c67768199be2acecdc47770f9d5207 (block 24, gas 203247)
+   ok: genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   warp +3600s (1 h after genesis) -> block 25 timestamp 1788819482
+   tx F calls founder stream claim -> 0.000142596801838928 shares to F (claimable read 0.000142596801838928; stream total 0.000142596801838928 = 0.0002% of supply): 0x515af3903ff36bd26a5ff82f232b95bbe3820d7c574b7f5a3058c2521603d816 (block 26, gas 136033)
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV
+   tx A approve deposit shaman: 0x6aad9e8ee83279977ec765a6db66b6dad57014effa1509f467ec3443bfa1d324 (block 27, gas 45889)
+   tx A deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xc13b055ef71c746b4e32a7ec01865175a1e25e822a4c58c8db9b2ea3cc09203d (block 28, gas 169134)
+   tx B approve deposit shaman: 0xa9276b9cb590a4404b43e52e5fa9c3189d4586228f1f04564ac24319d79e945e (block 29, gas 45889)
+   tx B deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xcb5b443b11149d97ebc9a636cb3768c5c1872e2a9340cbef55c64684105739fb (block 30, gas 169134)
+   tx C approve deposit shaman: 0xa2411cc5652e5ff61ad5169ed505add2ab412c2fe9f0d7e8d4032f141ea48013 (block 31, gas 45889)
+   tx C deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xcbc0c86d21d9683322c3d4ecaf4e9de14620dc5d81ba8d935923c01319d20db1 (block 32, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [seeded] F: USDC = 99939950  shares = 50.000142596801838928
+   [seeded] A: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] B: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] C: USDC = 9000  shares = 1000.00285193603677856
+
+== step 4: A proposes: 10% mandate = transfer 305 USDC to operator O
+   tx A submitProposal #1 "A: 10% mandate to operator O (strategy S, rules R in text)": 0x9658c14559a9701f8cbe330c29c6a49263a5484bfae5593ab827ff552124e971 (block 33, gas 204948)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788819483
+   proposal #1 state = Voting
+
+== step 5: A YES, B YES, C NO
+   tx A votes YES on #1 -> yes 1000.00285193603677856 / no 0: 0xfd686911d7e5af4ae0095fb214a09db29e3d5f21d74a8d5db73173edfa5339ad (block 35, gas 117855)
+   tx B votes YES on #1 -> yes 2000.00570387207355712 / no 0: 0x449a375a46c0fb6be20487b357bb5a5a3e1d515b82d00472eb7bf28af0b77fdc (block 36, gas 100755)
+   tx C votes NO on #1 -> yes 2000.00570387207355712 / no 1000.00285193603677856: 0x4bc10733317f512a67f8b0fe019dbd39217148e3fb2d7e2aeb68b97b30453317 (block 37, gas 117833)
+
+== step 6: voting closes; C leaves during grace with its pro-rata share
+   warp +21600s (to grace of #1) -> block 38 timestamp 1788841083
+   proposal #1 state = Grace
+   ok: proposal is in Grace
+   [before C exits] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [before C exits] C: USDC = 9000  shares = 1000.00285193603677856
+   [before C exits] O: USDC = 10000  shares = 0
+   tx C ragequit 1000.00285193603677856 shares -> paid 1000 USDC (pro-rata of 3050 at supply 3050.008698404912174608): 0x6a3e039acdd3f6db0d67bc6d7b6aca4100cf9c503adb54844f17e41f921106c4 (block 39, gas 149710)
+   ok: C paid exactly sharesC * treasury / totalShares = 1000 USDC
+   ok: C's payout used the pre-execution treasury (mandate not yet transferred)
+   [after C exits] treasury(Safe) USDC = 2050  totalShares = 2050.005846468875396048
+   [after C exits] C: USDC = 10000  shares = 0
+   [after C exits] O: USDC = 10000  shares = 0
+   ok: C holds no shares
+   ok: treasury decreased by exactly C's payout
+   minRetention check: totalShares 2050.005846468875396048 vs 66% of high-water 3050.008698404912174608 = 2013.005740947242035241; yes 2000.00570387207355712 > no 1000.00285193603677856
+   ok: C's exit (32.7868% of shares) stays within minRetention 66%, so the proposal survives
+
+== step 7: grace ends; anyone (here O) executes the exact multicall that was voted
+   warp +21600s (past grace of #1) -> block 40 timestamp 1788862683
+   proposal #1 state = Ready
+   ok: proposal is Ready
+   tx O processProposal #1 -> passed=true actionFailed=false state=Processed: 0x2d38325fea056b4f93b1e2f68cd2e65718e413d7cd343728cbc9fda70de8b8d4 (block 41, gas 154418)
+   ok: proposal passed and the action executed
+   [after execution] treasury(Safe) USDC = 1745  totalShares = 2050.005846468875396048
+   [after execution] A: USDC = 9000  shares = 1000.00285193603677856
+   [after execution] B: USDC = 9000  shares = 1000.00285193603677856
+   [after execution] C: USDC = 10000  shares = 0
+   [after execution] O: USDC = 10305  shares = 0
+   ok: O received the mandate 305 USDC
+   ok: treasury = start - C's payout - mandate
+   ok: C's balance is its pro-rata payout, paid before execution
+
+=== SCENARIO B: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x9944020eE57eE72d934DDAe4577e41767b668390 baal 0x54574eCd5AAde9f7c1B430543647C02C4E5b93D3 shares 0xAb14bd133AD65636c4B765E11a6a7d19C0fe9Fcc settlement 0xefa81F3836D8F5889B6820C94Bb80dACaD028Da5
+          founderStream 0xaf35E1138bb9362e4DddB507397FaD687d8C9ec7 depositShaman 0x663514291244Bf7FfA47Da66BDD571F6f7dB3602 workManager 0x28F4acF0811c6F25d84ee27b03Da0632bee3eE57
+   F = 0x49074B18018F7306a649A965c03186d6cFbf5F9A  founder (stream + genesis deposit)
+   A = 0xe4964bd3D399aEf517C399e98fF69aAAeB13C705  member agent A
+   B = 0x4A0A16Ce3D1d8cE85C02B7cCeD2ed222964459A9  member agent B
+   C = 0xE6A27B2069e6EeB75870a3aAD7347376515bd783  member agent C
+   D = 0x89991852fd33B15F530fe7f8ee1055a65e2AFE83  depositor D (joins later)
+   O = 0xEe017B70A68706330e7742E5aE7de35F6377ed61  operator O (mandate recipient)
+   W = 0x72d9f871e37a49CD63194313248fD17d1FABA442  worker W (task deliverer)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xd7beda27f07fb4039aab65541707e93eca8e7123810dedda779a338778e762d2 (block 17, gas 51250)
+   tx fund B with 10000 USDC: 0x98f5edb020f396a32ec603ece29a47724d12e1be3bac8cae3b0cd6ae74309cb2 (block 18, gas 51250)
+   tx fund C with 10000 USDC: 0x339ed8f226a31efa9a79bb680dc58c136f7a3e218e5d1d2989545306f6c3654d (block 19, gas 51250)
+   tx fund D with 10000 USDC: 0x20f40c3825bf74a29315c6a455fe8d790b7ede22fba98f6a3329a29180e76a9e (block 20, gas 51250)
+   tx fund O with 10000 USDC: 0xe9a04463cdc84007b7de5fa0186e555aee6b76b3e309590164dd918151ca0bbe (block 21, gas 51250)
+   tx fund W with 10000 USDC: 0x78e6ba8b143bb5cfbf66b931468239cabd674173cf3b875318e625f6b8325141 (block 22, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later
+   tx F approve deposit shaman: 0xda13b8c672c88d9566d968e477caccc19bad7b9f1d7cab9a2997b734daa43914 (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xebb9015bb9d469854fa1250a1103bd737a82c7535fa8c1b5eba62c3bba967b03 (block 24, gas 203247)
+   ok: genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   warp +3600s (1 h after genesis) -> block 25 timestamp 1788819483
+   tx F calls founder stream claim -> 0.000142636412174658 shares to F (claimable read 0.000142636412174658; stream total 0.000142636412174658 = 0.0002% of supply): 0xeec124deb4f0a15414a2f80ed14afdce568de428c27954e011c622bd4d680ddc (block 26, gas 136033)
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV
+   tx A approve deposit shaman: 0x131a47c7e484e9b9c2555599a63e32d9e84e2db8e679598831fb3aaf8a6950b1 (block 27, gas 45889)
+   tx A deposit 1000 USDC -> 1000.00285272824349316 shares (quoted 1000.00285272824349316): 0x856d3ac150b4667de8fd297634f63a6c8d4206c43eff2d6a62f91b13ed487455 (block 28, gas 169134)
+   tx B approve deposit shaman: 0xd19304c2aeddb2a3d135b41a2598cb0b7bee49cdb378ffd8cf149314efe91697 (block 29, gas 45889)
+   tx B deposit 1000 USDC -> 1000.00285272824349316 shares (quoted 1000.00285272824349316): 0x84f84e4b1e88fd1c939218b2741dee7c5dbe56551fb2c7d06c8306c5ee96c962 (block 30, gas 169134)
+   tx C approve deposit shaman: 0xa7a8f5b95f47a94e8e1c577da5b9d6c365331fc22b3b929a0a8ef383a5a298f4 (block 31, gas 45889)
+   tx C deposit 1000 USDC -> 1000.00285272824349316 shares (quoted 1000.00285272824349316): 0x579af06324a408114b7f508c1813b63e64af3558fa88f6ed20aa98e5f8fa13fa (block 32, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050.008700821142654138
+   [seeded] F: USDC = 99939950  shares = 50.000142636412174658
+   [seeded] A: USDC = 9000  shares = 1000.00285272824349316
+   [seeded] B: USDC = 9000  shares = 1000.00285272824349316
+   [seeded] C: USDC = 9000  shares = 1000.00285272824349316
+
+== step 4: D deposits 1000 USDC at current NAV
+   [before deposit] treasury(Safe) USDC = 3050  totalShares = 3050.008700821142654138
+   [before deposit] D: USDC = 10000  shares = 0
+   tx D approve deposit shaman: 0xd6b5e2b27f4263890e8cdacab432cb46745272c3a4e266f446f0fb2a02386908 (block 33, gas 45889)
+   tx D deposit 1000 USDC -> 1000.00285272824349316 shares (quoted 1000.00285272824349316): 0x526945fcc0e2f972919f464e2ea89f13ca6624b7aad24a2b3432c1dc51915428 (block 34, gas 169134)
+   ok: D received amount * totalShares / treasury = 1000.00285272824349316 shares (NAV per share unchanged)
+   ok: minted shares equal the quote
+   [after deposit] treasury(Safe) USDC = 4050  totalShares = 4050.011553549386147298
+   [after deposit] D: USDC = 9000  shares = 1000.00285272824349316
+   ok: treasury grew by exactly the deposit
+
+== step 5: DAO votes to spend 20% of the treasury (pay operator O); D votes NO and is outvoted
+   tx A submitProposal #1 "A: pay O 810 USDC for services": 0x63c0e21e727f457aee8e06902b70e31789907d1a23c405799a48aa1160a375eb (block 35, gas 204228)
+   warp +1s (let votingStarts become past) -> block 36 timestamp 1788819484
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000.00285272824349316 / no 0: 0x00fdb61935f4e55b3bb312a43c7840c1008d8524f142475d68c20af8eb94fecc (block 37, gas 117855)
+   tx B votes YES on #1 -> yes 2000.00570545648698632 / no 0: 0x23dda71f64b88ca651aa69ebee82f93743394b778ccff1a962acdf65bfef5d1b (block 38, gas 100755)
+   tx D votes NO on #1 -> yes 2000.00570545648698632 / no 1000.00285272824349316: 0x98429a61670b5e9b78e208b622702fb23326da1f4487e344c7d1e80614716712 (block 39, gas 117833)
+   warp +43200s (past grace of #1) -> block 40 timestamp 1788862684
+   proposal #1 state = Ready
+   tx B processProposal #1 -> passed=true actionFailed=false state=Processed: 0xc5331a62e08ba8549bdc59d70096752701aed389ac97b7383091a4b97fe25fdd (block 41, gas 154430)
+   ok: spend executed
+   [after spend] treasury(Safe) USDC = 3240  totalShares = 4050.011553549386147298
+   [after spend] D: USDC = 9000  shares = 1000.00285272824349316
+   [after spend] O: USDC = 10810  shares = 0
+   ok: treasury decreased by the spend
+
+== step 6: D ragequits all shares and receives its pro-rata of the remainder
+   tx D ragequit 1000.00285272824349316 shares -> paid 800 USDC (pro-rata of 3240 at supply 4050.011553549386147298): 0x76a000bcd5c1cd1c750c8ce14173df30cf1e992577a90fbe2dc178d47dd473f9 (block 42, gas 149722)
+   ok: D paid exactly sharesD * remaining treasury / totalShares = 800 USDC
+   ok: payout is D's share of what remains after the DAO spent
+   ok: D bore its pro-rata (20%) of the spend: got back 800 of 1000 USDC
+   [after exit] treasury(Safe) USDC = 2440  totalShares = 3050.008700821142654138
+   [after exit] D: USDC = 9800  shares = 0
+   ok: D holds no shares
+   ok: D's USDC balance = start - deposit + payout
+
+=== SCENARIO C: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x6e9a6859ef23824807c2a62A6a9b2922A93a7573 baal 0x372899E4355A0A98037aEd7E6643A1D370f569a6 shares 0xbc22f2e471FaB8D37Afb7eC82F06c24E9F16A66f settlement 0xCa2C5C724159164dda0721e69E8b3bEcd0F6C3A0
+          founderStream 0xa5A2AA67eEfc3ab440539CABcB509187C0e7964a depositShaman 0xA14C6530dC591Bf6D6cd8359Ae7228241f8AE65C workManager 0x00B5FA11A7cAdad82766eac1660b17EDE80B372E
+   F = 0xac5D879DAEd3A2ab10D2B8D5a552269397eEf38e  founder (stream + genesis deposit)
+   A = 0xB57c7C7089069309Eb42b1Dc624e4E8a794F62aF  member agent A
+   B = 0x26DB07EDf752e494431baA9d21a35D0F4bB0C6e5  member agent B
+   C = 0x86864047f4BFFF8057B1610F1405A5481789D902  member agent C
+   D = 0xB5d409740C2417e7E8Bd5B65b53E9D2f7644bAf6  depositor D (joins later)
+   O = 0x490454D8D8f1B01692A6fbda11B69392153C8E5A  operator O (mandate recipient)
+   W = 0xDE1FbA432219a6bF741E712fE9139139DAb864b9  worker W (task deliverer)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x6304ba7ec523d9c670247ba452d7ed0cd9f503940d733265d5468ac7be5bbc52 (block 17, gas 51250)
+   tx fund B with 10000 USDC: 0xa047e0103ab6744b42819770d9afed8ddac0b0c2de9dabb2a93556e5d13f7ace (block 18, gas 51250)
+   tx fund C with 10000 USDC: 0xb0cb62895b23a87cf084c2301cf5a115940e98dacd301471f6a29e4cd3fc7647 (block 19, gas 51250)
+   tx fund D with 10000 USDC: 0x8da5fdfc2e172c65ee8f17a11f78fb17be6918a2843f49f2fef723e0c54149b5 (block 20, gas 51250)
+   tx fund O with 10000 USDC: 0x4e4d5ac5e60dd8d6f9af01c3ced58114e96fee91dd42ba6e5d284698b5051d18 (block 21, gas 51250)
+   tx fund W with 10000 USDC: 0x35540e80891d486ad0799080768b04963cb7a8a5885f323d523fdfd889728748 (block 22, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later
+   tx F approve deposit shaman: 0x171c4a1c1d91c7caeb01804f0f624663f4d90019715c198d2730da68e1cdf33c (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xcc71218cc94cc3ea8214ec8807103261bf5eb6327bc9f4d1c54c0cd63189edd5 (block 24, gas 203247)
+   ok: genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   warp +3600s (1 h after genesis) -> block 25 timestamp 1788819483
+   tx F calls founder stream claim -> 0.000142596801838928 shares to F (claimable read 0.000142596801838928; stream total 0.000142596801838928 = 0.0002% of supply): 0xfbfc73858cebb8ee1a775464a268a8827330497bd1ccad0ff463058cf1fb2862 (block 26, gas 136033)
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV
+   tx A approve deposit shaman: 0xb301865b2b9083fca993800b2cac782ba53ea6ab4cc7d7df888ecba038bdb44f (block 27, gas 45889)
+   tx A deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0x2c9adb3cdfdb570d59d33a9aa024ab739039be3897af3ee3858c56cbe1cf3487 (block 28, gas 169134)
+   tx B approve deposit shaman: 0xa399a44d1c3b41669c889cb02e52a847717f3a668691efe78139e1fece2d973f (block 29, gas 45889)
+   tx B deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0x02ea422feb736b2b9f5c1332384aa29a07dcc3ad1ef1f0442c702efe83d9ec0a (block 30, gas 169134)
+   tx C approve deposit shaman: 0xb7a0c1b91d06a43151529c4e2fc871e2e240e4c151d72dedba59dbea7d7d2911 (block 31, gas 45889)
+   tx C deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xa48994ee38c993a46da7cd411c89cc6941d816f1694e3877b6f99a187893f611 (block 32, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [seeded] F: USDC = 99939950  shares = 50.000142596801838928
+   [seeded] A: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] B: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] C: USDC = 9000  shares = 1000.00285193603677856
+   ok: initial votingPeriod is 6 h
+
+== step 4: A proposes setGovernanceConfig(votingPeriod = 1 h, everything else unchanged)
+   tx A submitProposal #1 "A: votingPeriod 6h -> 1h": 0x53086a476067602fd8590fae91a3a7ed29566cf9c7b96d225cec4c51d213bdba (block 33, gas 206933)
+   warp +1s (let votingStarts become past) -> block 34 timestamp 1788819484
+   proposal #1 state = Voting
+   ok: the change proposal itself runs under the old 6 h voting period
+   tx A votes YES on #1 -> yes 1000.00285193603677856 / no 0: 0x06d8769aa066684fdd3115101e005fb5c2bbbf4d498031299a06a2312d60df5a (block 35, gas 117855)
+   tx B votes YES on #1 -> yes 2000.00570387207355712 / no 0: 0x38766bf412bf758918761936caf5e5f8faaca6d7218e39f324d0a700860918d9 (block 36, gas 100755)
+   warp +43200s (past grace of #1) -> block 37 timestamp 1788862684
+   proposal #1 state = Ready
+   tx C processProposal #1 -> passed=true actionFailed=false state=Processed: 0x9dcf0cd2d8ed926ad2fa3f366d4710e6fd03184da9599cf148795e094db88abb (block 38, gas 158495)
+   ok: parameter change executed
+   ok: votingPeriod is now 1 h
+   ok: gracePeriod still 6 h
+   ok: minRetention still 66%
+   ok: sponsorThreshold still 1 share
+
+== step 5: next proposal (B, text-only, empty multicall) honors the 1 h voting period
+   tx B submitProposal #2 "B: text-only proposal after the change": 0xf88ed4d1e0b9edbc3b918e435d73ec5c33153f17fd28ea353b0996b5b371afc2 (block 39, gas 201715)
+   warp +1s (let votingStarts become past) -> block 40 timestamp 1788862685
+   proposal #2 state = Voting
+   ok: votingEnds - votingStarts == 3600
+   ok: grace still 6 h
+   tx A votes YES on #2 -> yes 1000.00285193603677856 / no 0: 0x44cc9bca086dfd30c1fa2a95b12aa0ffca04fde582d8f560b6e37dae8b0fb3fa (block 41, gas 117855)
+   warp +3598s (to 1 s before voting ends) -> block 42 timestamp 1788866283
+   ok: still Voting 1 s before the 1 h mark
+   warp +2s (past the 1 h mark) -> block 43 timestamp 1788866285
+   ok: in Grace right after 1 h (would still be Voting under 6 h)
+   warp +21600s (past grace of #2) -> block 44 timestamp 1788887885
+   proposal #2 state = Ready
+   tx A processProposal #2 -> passed=true actionFailed=false state=Processed: 0x871ca18a1ea5aa1abd8cb737ed6ec52f1f05a4008a2ca7e99adc049a4f52b3b7 (block 45, gas 136991)
+   ok: the 1 h proposal processed
+
+=== SCENARIO D: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xD828Cdf24f845A2D078286c9F432c56884111BF7 baal 0xF4b1F59adE6f25E30cF1776e5d269361BD2Fc5fA shares 0x886D818694D5fa1fe23e5c401061152700158067 settlement 0xe344c06fF85988d8976ebe08FEf7C4d2EBb8e1E3
+          founderStream 0x196A343bDF54c87Fb13b7D91E0A1dcCd374051d6 depositShaman 0x5c3678e9AA46416e82E3E2630758c09048FA94CC workManager 0x87F3307AA7880830f8042F08A4c4dbaBC0da552a
+   F = 0x7e6bf384d8D26550011B61Ef4Bbea60E027C5a92  founder (stream + genesis deposit)
+   A = 0x147feFcDDE03689bbCC2Eb62eA5e0c55263af087  member agent A
+   B = 0x4AdD0bBF1eb9450Df43eed6338e23b3aB488b986  member agent B
+   C = 0x4EDcc4A9a4f7E3248CbfD561481F6A844d5ee8D7  member agent C
+   D = 0x17B6bF90e5668fC186aD1D6Bf6e1Ae21F63d98a3  depositor D (joins later)
+   O = 0xCcEB88016463F54AC05a78433D4C12dE443CD39E  operator O (mandate recipient)
+   W = 0x50344A03eB3Dc9de21d39022bb8893a4A26CDe5a  worker W (task deliverer)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xa16647f49ab94a7ef0ba7562936d9c3e0ba0a3601bc47fb6591635e5de1f329c (block 17, gas 51250)
+   tx fund B with 10000 USDC: 0x5aa89614dd4d4113108eb11fd339c343e2b81df5c184c0fdd0a2063181c58759 (block 18, gas 51250)
+   tx fund C with 10000 USDC: 0x9f6573b1bf9a8b1cefb9feb42a1a78fbb23428122e45ba4098f10c3ee0cab0dc (block 19, gas 51250)
+   tx fund D with 10000 USDC: 0x066c3b63a2b4779cc0fb8edfdb9339878392cf3e22125585211b3ca738960560 (block 20, gas 51250)
+   tx fund O with 10000 USDC: 0x2f1f3595ae1f5d7fda9a27b2a96dee4cd714c40eebfe30139c8e5faf20a27456 (block 21, gas 51250)
+   tx fund W with 10000 USDC: 0xf8737934026bbabf6218dcfde47811377f09fe725ac9ce25e81273ef0404f37e (block 22, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later
+   tx F approve deposit shaman: 0x031f3f370c3e080769e19e9ef22cb86acdf9e8b9761b4c5b0be6cf09601154f5 (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x2ca83b503d9a73d04f11fb420a2b98a2b1862257cfb4a08d3373cf049c7cff19 (block 24, gas 203247)
+   ok: genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   warp +3600s (1 h after genesis) -> block 25 timestamp 1788819483
+   tx F calls founder stream claim -> 0.000142596801838928 shares to F (claimable read 0.000142596801838928; stream total 0.000142596801838928 = 0.0002% of supply): 0xbec637448e18ba8e0dba1006faead06ad810634e4a9e7553e822138d4f095d98 (block 26, gas 136033)
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV
+   tx A approve deposit shaman: 0x97c51872fbfc7f8f3404f23197e67734b59b9f6167f4a8e4f3dfb3b563bbcaa0 (block 27, gas 45889)
+   tx A deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0x1206dab33a1d2362784e30e91de9b1239f4383ed6d3ca93f5a1d58f7c6e35de9 (block 28, gas 169134)
+   tx B approve deposit shaman: 0x88eff36a02dd604bee3fb9a246300ceb6d5de23bee53e9cea518bf25a6a5de22 (block 29, gas 45889)
+   tx B deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0xa9c8d6b5ff1d525cfdb7c8f709cee5617b397ee5b89f8e9a9ac74cc6e0843137 (block 30, gas 169134)
+   tx C approve deposit shaman: 0xf74253dc67cd4d40f6fe369fc21c72ce19451ff6289808bd45332b804e6a7c68 (block 31, gas 45889)
+   tx C deposit 1000 USDC -> 1000.00285193603677856 shares (quoted 1000.00285193603677856): 0x9af401e5e52aaf05711b032e538fad9c20f66850656160a88dee4a826367d7bc (block 32, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [seeded] F: USDC = 99939950  shares = 50.000142596801838928
+   [seeded] A: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] B: USDC = 9000  shares = 1000.00285193603677856
+   [seeded] C: USDC = 9000  shares = 1000.00285193603677856
+
+== step 4: A submits task #1: verifiers [B, C], threshold 2, reward 500 shares (denominated in shares, voted as such)
+   tx A submitTask -> Baal proposal: 0x85c34246beed0b9411c09ccbe1b274bfdeb89135096444ba8587b87a735a9852 (block 33, gas 362855)
+   ok: task #1 recorded as Proposed
+   ok: proposer recorded as A (msg.sender)
+   ok: reward recorded as 500 shares at submitTask
+   warp +1s -> block 34 timestamp 1788819484
+   ok: Baal proposal #1 is Submitted (WorkManager holds no shares, needs a member sponsor)
+
+== step 5: A (member) sponsors; A and B vote YES; grace passes; C executes the activation
+   tx A sponsorProposal #1: 0x4727e95b2f82827a89632cec10c4b016b1ef3da9bc5f44614f9c18bb586424f8 (block 35, gas 142451)
+   warp +1s (let votingStarts become past) -> block 36 timestamp 1788819485
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000.00285193603677856 / no 0: 0xa283e134bcb00f0c5cfef891ce708015cd4f17d0e9e9ee960c8ebd7142c4bff2 (block 37, gas 117855)
+   tx B votes YES on #1 -> yes 2000.00570387207355712 / no 0: 0x99d49432cc65d6c0136f7cd00a7e91d7193b3b17788caaa6d3a0519a36f8de13 (block 38, gas 100755)
+   warp +43200s (past grace of #1) -> block 39 timestamp 1788862685
+   proposal #1 state = Ready
+   tx C processProposal #1 -> passed=true actionFailed=false state=Processed: 0xdb0f9f5e9692b340f83d1a36b40e0ddc2b7d1879691d32c2208e037b22ee85d2 (block 40, gas 148066)
+   ok: activation multicall executed by the Safe
+   ok: task #1 is Active
+
+== step 6: verifier B cannot claim; worker W claims
+   ok: verifier B is refused as worker (reverted with VerifierCannotClaim)
+   tx W claims task #1: 0x5bef78ae650265ad259d33cc05ce8c25a7c3ded2ecee7bc770be1c15f71b7d28 (block 41, gas 52324)
+
+== step 7: W delivers an evidence hash; B and C confirm; exactly the voted 500 shares mint to W
+   tx W deliver evidence hash: 0xda3d4a4e6688b89783abb2b9df884fcb3814942ca5df782fa18bc27367bc3cc0 (block 42, gas 56675)
+   tx B confirms (1/2): 0x7a5208ce5b265c80a6a07062bc84559a6af893111972b9c844c474ea894cffbd (block 43, gas 60333)
+   ok: still Active after 1 of 2 confirmations; nothing minted yet
+   ok: W has no shares before threshold
+   [before final confirmation] treasury(Safe) USDC = 3050  totalShares = 3050.008698404912174608
+   [before final confirmation] W: USDC = 10000  shares = 0
+   NAV per share = 0.999997 USDC; the reward ignores it: 500 shares regardless
+   tx C confirms (2/2) -> mint: 0x93b5eb0f1db97ccc165323f4f85b0f47298540e81c41140c693069a7c14b672c (block 44, gas 184901)
+   ok: task #1 Complete
+   [after verification] treasury(Safe) USDC = 3050  totalShares = 3550.008698404912174608
+   [after verification] W: USDC = 10000  shares = 500
+   ok: W received exactly rewardShares = 500 shares
+   ok: total supply grew by exactly the reward
+   ok: verification moved no USDC; W's reward is shares, exitable at NAV
+   ok: no further confirmation or mint after completion (reverted with WrongStatus)
+
+== step 8: negative: a task whose verifier == proposer is rejected at submission
+   ok: A naming A as verifier is rejected (reverted with VerifierIsProposer)
+   ok: B naming B as verifier is rejected (reverted with VerifierIsProposer)
+   ok: duplicate verifiers are rejected (reverted with DuplicateVerifier)
+   ok: no second task exists
+
+=== SCENARIO E: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xAFb3dB785Fb5D6e912245a9FdBa8eFc4B4eF3f30 baal 0x8b7078fDba06E8C93A7447B532d8DAfD7bc9091E shares 0xbf13Eb0bcB30146B75a74341b8b0d3Eae3035aa8 settlement 0xFb9E4E62bD1338eF4183CA447FF7dd3BcE980825
+          founderStream 0x77Dc6f962768E4d1A972D4A15ff400C62074A02e depositShaman 0xB718f16002A5B83E17c7BB521c6Dd05c019d4DC7 workManager 0x298c44626Ae36bc4eF44f6135a4d9234473B5C96
+   F = 0x5541Fe2936A78E5641F847217bc46C9B06eb10a8  founder (stream + genesis deposit)
+   A = 0x3B145598b3424829Db5D1aaaCBc912d50c673159  member agent A
+   B = 0xE7BB3dBd82407e8Ed85efd703cd6858A30bb1700  member agent B
+   C = 0x5315ad1e45c048acFc70154c691e2F5B1e3a8f3e  member agent C
+   D = 0x77619cD4Ab4f2DD74b83D811193ab2d72B6162C5  depositor D (joins later)
+   O = 0xE2c83aB17Be3E5000e292f8A10074f026A749E33  operator O (mandate recipient)
+   W = 0x8b43Ed171b214F683C070993A85F073904ba13f7  worker W (task deliverer)
+
+== step 1: genesis state: founder fixed, no shares, stream entitled to nothing while nobody else holds shares
+   ok: FounderStream.founder == F
+   ok: the only state-changing function is claim() (no setter for founder or duration): [claim]
+   ok: duration = 126230400 s (1461 days)
+   ok: target = 10% of total supply at full vest
+   ok: totalSupply == 0 at genesis
+   ok: claimable == 0 before the genesis deposit (10% of nothing)
+   ok: claim() reverts before the genesis deposit (reverted with NothingToClaim)
+
+== step 2: genesis deposit: the founder deposits 50 USDC before any claim -> exactly 50 shares (100% of supply)
+   tx fund D with 10000 USDC: 0xde92edb6df4a95cfb13d94baa057008af43e805103c425cdb33c517b87856afb (block 17, gas 51250)
+   tx F approve deposit shaman: 0xd8d1f8380f46d602e493e51efd01fa187479c1045c9c11c7b8d0d52d9d698bed (block 18, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x8ebfd8202b7469b6597966a1cfb53e35c5a922b44f50ee4ebefe2dc17c8b1226 (block 19, gas 203247)
+   ok: 50 USDC (50e6) -> 50e18 shares while the treasury is empty
+   [after genesis deposit] treasury(Safe) USDC = 50  totalShares = 50
+   [after genesis deposit] F: USDC = 99989950  shares = 50
+   ok: F holds 100% of a 50-share supply; Safe holds 50 USDC
+   ok: no stream shares minted yet
+
+== step 3: 1 year later (= 1/4 of the stream): anyone (here D) claims; the founder's stream shares are exactly 2.5% of supply
+   warpTo 1820373484 (genesis + 1/4 duration) -> block 20 timestamp 1820373484
+   ok: vestedFraction == 0.25 (WAD)
+   ok: others' shares == 50 (the genesis deposit)
+   ok: entitlement == others x 10% x 1/4 / (1 - 10% x 1/4) = others / 39
+   tx D calls founder stream claim -> 1.282051282051282051 shares to F (claimable read 1.282051282051282051; stream total 1.282051282051282051 = 2.4999% of supply): 0xb8e682938d7f61941326ede0dec9d65d692a12d788bccdd51b6f722ba2573961 (block 21, gas 136033)
+   ok: claim minted the whole entitlement to F
+   [after 1-year claim] treasury(Safe) USDC = 50  totalShares = 51.282051282051282051
+   [after 1-year claim] F: USDC = 99989950  shares = 51.282051282051282051
+   [after 1-year claim] D: USDC = 10000  shares = 0
+   ok: F's balance = 50 genesis shares + stream shares
+   ok: D (the caller) received nothing
+   stream shares 1.282051282051282051 of supply 51.282051282051282051 = 2.4999% (expected floor(10% x 1/4 x supply) = 1.282051282051282051)
+   ok: 1 year: stream shares == floor(supply x 10% x 1/4)
+   ok: 1 year: nothing left to claim right after the claim
+   ok: everyone else still holds 50 shares = 97.5% of supply
+
+== step 4: second depositor D deposits 50 USDC at NAV; the founder's percentage entitlement is unchanged by the deposit
+   [before D's deposit] treasury(Safe) USDC = 50  totalShares = 51.282051282051282051
+   [before D's deposit] F: USDC = 99989950  shares = 51.282051282051282051
+   [before D's deposit] D: USDC = 10000  shares = 0
+   tx D approve deposit shaman: 0x04fd5e01bf98aacf100b74b5b454c41e81b186f8d866db74525690bd47145028 (block 22, gas 45901)
+   tx D deposit 50 USDC -> 51.282051282051282051 shares (quoted 51.282051282051282051): 0x61d631a3e588021349e688e2a585aaaa30fd38d68530ed85225f971671890ef1 (block 23, gas 169146)
+   ok: D received amount x totalShares / treasury = 51.282051282051282051 shares (more than 50: the stream diluted the genesis shares before D came)
+   ok: D's shares are worth exactly 50 USDC at NAV right after the deposit
+   [after D's deposit] treasury(Safe) USDC = 100  totalShares = 102.564102564102564102
+   [after D's deposit] F: USDC = 99989950  shares = 51.282051282051282051
+   [after D's deposit] D: USDC = 9950  shares = 51.282051282051282051
+   ok: the deposit minted nothing to the stream
+   ok: the founder's vested percentage (10% x 1/4 = 2.5% of supply) is unchanged by the deposit
+   momentarily, before a claim, the already-minted stream shares are 1.2499% of the enlarged supply; the entitlement grew with the supply:
+   ok: claimable rose to 1.31492439184746877 shares because others' shares grew
+   tx F calls founder stream claim -> 1.31492439184746877 shares to F (claimable read 1.31492439184746877; stream total 2.596975673898750821 = 2.4999% of supply): 0xe6448352fb132c0e4c2ca2d5c9eab91bd8af5fde87a795493ea338ca1baca48c (block 24, gas 76654)
+   ok: F claimed the top-up
+   stream shares 2.596975673898750821 of supply 103.879026955950032872 = 2.4999% (expected floor(10% x 1/4 x supply) = 2.596975673898750821)
+   ok: 1 year, after D's deposit: stream shares == floor(supply x 10% x 1/4)
+   ok: 1 year, after D's deposit: nothing left to claim right after the claim
+   [after top-up claim] treasury(Safe) USDC = 100  totalShares = 103.879026955950032872
+   [after top-up claim] F: USDC = 99989950  shares = 52.596975673898750821
+   [after top-up claim] D: USDC = 9950  shares = 51.282051282051282051
+   ok: D's shares untouched
+   ok: Safe holds 100 USDC
+
+== step 5: 4 years: claim -> the stream is exactly 10% of supply; afterwards nothing more ever streams
+   warpTo 1915046284 (genesis + full duration) -> block 25 timestamp 1915046284
+   ok: vestedFraction == 1.0
+   tx D calls founder stream claim -> 8.65658557966250274 shares to F (claimable read 8.65658557966250274; stream total 11.253561253561253561 = 9.9999% of supply): 0xead4d5c8412be2e612e2f96fa76afdee792ba05ea15903e0bab7bd1c024cf455 (block 26, gas 118951)
+   stream shares 11.253561253561253561 of supply 112.535612535612535612 = 9.9999% (expected floor(10% x 1/1 x supply) = 11.253561253561253561)
+   ok: 4 years: stream shares == floor(supply x 10% x 1/1)
+   ok: 4 years: nothing left to claim right after the claim
+   [at 4 years] treasury(Safe) USDC = 100  totalShares = 112.535612535612535612
+   [at 4 years] F: USDC = 99989950  shares = 61.253561253561253561
+   [at 4 years] D: USDC = 9950  shares = 51.282051282051282051
+   ok: everyone else holds >= 90% of supply
+   warp +31557600s (1 more year past the end) -> block 27 timestamp 1946603884
+   ok: vestedFraction stays 1.0
+   ok: claimable == 0 after full vest
+   ok: claim() reverts: the stream is exhausted (reverted with NothingToClaim)
+
+=== SCENARIO F: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
+
+===== SUMMARY =====
+A: PASS
+B: PASS
+C: PASS
+D: PASS
+E: PASS
+F: PASS

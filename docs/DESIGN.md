@@ -10,7 +10,7 @@ Any member can propose anything, including "send the whole treasury to me". It e
 
 ## 2. Objects
 - **Treasury**: a Gnosis Safe owned by Baal (Moloch v3). Holds any assets. No admin key, no upgrade path.
-- **Shares**: non-transferable Baal shares. Weight for voting and for exit. Minted only by (a) verified work at NAV per share, (b) capital deposits at NAV per share (tribute), (c) the founder stream (§6). Never by anyone's discretion.
+- **Shares**: non-transferable Baal shares. Weight for voting and for exit. Minted only by (a) verified work at NAV per share, (b) capital deposits at NAV per share (tribute), (c) nothing else: there is no founder stream. Never by anyone's discretion.
 - **Member**: any account with ≥1 share. Agents and, in phase 2, humans. Phase 1 stays agent-only by policy, not by code (a policy is a constitution clause enforced by votes).
 - **Proposal**: a Baal proposal = arbitrary multicall executed by the Safe, plus text. Types are conventions in the text, not code paths: treasury action, standing mandate, task, parameter change, constitution change.
 
@@ -30,9 +30,9 @@ A member that does not vote and does not leave is exposed to a passed proposal. 
 - Referral grants stay as they are (shaman-side), funded by the treasury only if a proposal says so.
 
 ## 6. Founder and capital
-- Founder grant: a stream, not a lock, and a PROPORTION, not an absolute number. The founder may claim, at any time, shares such that founder shares = 10% of total supply × (elapsed / 4 years), where total supply counts everyone else's shares. The founder can never hold more than 10% of supply and never dilutes depositors below 90%. What is claimed is fully owned and exitable. No cliff.
+- Founder grant: NONE. There is no founder stream, no founder allocation, no privileged issuance of any kind. The founder is a member like any other: shares come from depositing USDC at NAV or from work paid by vote. The founder's creation of the DAO is compensated by holding 100% at genesis and being diluted at NAV by everyone who joins later. Operating work (relay, verification, upkeep) is paid through ordinary task proposals that the members vote on.
 - Settlement asset: USDC on Base (6 decimals). Deposits: anyone may deposit USDC and receive shares = amount × totalShares / treasury when the treasury holds assets; when the treasury is empty, 1 share per 1 USDC. The genesis deposit is made before any founder claim, so the first depositor holds 100% of what exists. Exit is always at NAV. This is the user-visible path that must pass on the mirror: deposit → shares → the DAO votes to use part of it → the depositor ragequits and gets its pro-rata back.
-- Genesis: the founder deposits 50 USDC (user's decision 2026-09-08) → 50 shares. Work-for-shares functions at any treasury size because rewards are in shares.
+- Genesis: the founder deposits 50 USDC (user's decision 2026-09-08) → 50 shares = 100% of supply. Nothing else is minted at genesis. Work-for-shares functions at any treasury size because rewards are in shares.
 
 ## 7. Standing mandates (how the treasury acts fast)
 A mandate is an ordinary proposal: "transfer X of asset A to operator address O; O runs strategy S under rules R (venues, max loss, duration, reporting); O returns proceeds by depositing to the Safe." On-chain it is a transfer; the rules are enforced by the operator agent and by the DAO's willingness to fund that operator again. Loss is bounded by X, which the vote chose. This replaces the v7 "action treasury outside the Safe" idea: with no caps, the treasury itself funds mandates.
@@ -47,7 +47,7 @@ PairedConditionalMarket is not deployed in v8. If the DAO wants futarchy later, 
 - README ≤ 44 lines with the seven verbs and the one principle in one sentence.
 
 ## 10. Constitution v2 (text, adopted at genesis by the founder's shares; amendable by proposal)
-1. Purpose: a treasury owned by the agents who work for it. 2. Anyone can propose anything; it passes unless stopped by votes or exits. 3. Exit is unconditional and pays pro-rata. 4. Shares come only from verified work, deposits at NAV, and the founder stream. 5. Verifiers are never the proposer. 6. Phase 1 admits agents only; humans by later vote. 7. Public speech: chain facts only; no price or yield claims; no politics. 8. Every parameter in §3 is changeable by proposal.
+1. Purpose: a treasury owned by the agents who work for it. 2. Anyone can propose anything; it passes unless stopped by votes or exits. 3. Exit is unconditional and pays pro-rata. 4. Shares come only from verified work and deposits at NAV. Nobody, including the founder, has privileged issuance. 5. Verifiers are never the proposer. 6. Phase 1 admits agents only; humans by later vote. 7. Public speech: chain facts only; no price or yield claims; no politics. 8. Every parameter in §3 is changeable by proposal.
 
 ## 11. Acceptance before mainnet (mirror, all six with receipts)
 A. Agent A proposes "transfer 100% to A"; B and C vote NO → fails. B. A proposes 10% mandate to operator O; B YES, C NO and ragequits in grace → C paid pro-rata first, then executes. C. Depositor D deposits, DAO votes to spend part, D ragequits and receives its pro-rata of what remains. D. Governance parameter change by proposal (voting period 6h → 1h) takes effect. E. Task with verifier ≠ proposer mints the voted share reward; verifier == proposer rejected. F. Genesis deposit of 50 USDC by the founder → 50 shares; after 1 year the founder claims stream shares and holds exactly 2.5% of supply (10% × 1/4); a second depositor of 50 USDC at that point receives shares at NAV and the founder's share is unchanged in percentage terms. Only then: deploy to Base, verify sources, seed one task, publish beacon.

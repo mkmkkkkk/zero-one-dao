@@ -16,9 +16,11 @@ import {
 import { encodeProposalData, loadBaalArtifact, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, type LocalChain } from "../src/onchain.js";
-import { DEFAULT_PARAMS, deployZeroOne, HOUR, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
+import { DEFAULT_PARAMS, deployZeroOne, FOUR_YEARS, HOUR, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
-export { HOUR, UNIT };
+export { FOUR_YEARS, HOUR, SETTLEMENT_UNIT, UNIT };
+/** Genesis deposit by the founder: 50 USDC -> 50 shares (DESIGN.md §6). */
+export const GENESIS_DEPOSIT = 50n * SETTLEMENT_UNIT;
 
 export const PROPOSAL_STATES = ["Unborn", "Submitted", "Voting", "Cancelled", "Grace", "Ready", "Processed", "Defeated"] as const;
 export type ProposalStateName = (typeof PROPOSAL_STATES)[number];
@@ -61,9 +63,20 @@ export function printReceipt(label: string, receipt: Receipt): void {
   console.log(`   tx ${label}: ${receipt.hash} (block ${receipt.blockNumber}, gas ${receipt.gasUsed})`);
 }
 
-/** Format an 18-decimal amount for humans. */
+/** Format an 18-decimal share amount for humans. */
 export function fmt(value: bigint): string {
   return formatUnits(value, 18);
+}
+
+/** Format a 6-decimal settlement (USDC) amount for humans. */
+export function fmtS(value: bigint): string {
+  return formatUnits(value, 6);
+}
+
+/** Percentage of `part` in `whole`, 4 decimals, for logs. */
+export function pct(part: bigint, whole: bigint): string {
+  if (whole === 0n) return "n/a";
+  return `${(Number((part * 1_000_000n) / whole) / 10_000).toFixed(4)}%`;
 }
 
 /** Hard assertion: prints the check and throws on failure. */
@@ -175,6 +188,17 @@ export async function warp(mirror: Mirror, seconds: number, label?: string): Pro
   console.log(`   warp +${seconds}s${label ? ` (${label})` : ""} -> block ${block.number} timestamp ${block.timestamp}`);
 }
 
+/** Set the next block's timestamp exactly and mine it (for stream-fraction assertions). */
+export async function warpTo(mirror: Mirror, timestamp: bigint, label?: string): Promise<void> {
+  const current = await now(mirror);
+  if (timestamp <= current) throw new RangeError(`warpTo ${timestamp} is not after the current timestamp ${current}`);
+  await mirror.chain.publicClient.request({ method: "evm_setNextBlockTimestamp" as never, params: [Number(timestamp)] as never });
+  await mirror.chain.publicClient.request({ method: "evm_mine" as never, params: [] as never });
+  const block = await mirror.chain.publicClient.getBlock();
+  if (block.timestamp !== timestamp) throw new Error(`warpTo: block timestamp ${block.timestamp} != ${timestamp}`);
+  console.log(`   warpTo ${timestamp}${label ? ` (${label})` : ""} -> block ${block.number} timestamp ${block.timestamp}`);
+}
+
 /** Current block timestamp. */
 export async function now(mirror: Mirror): Promise<bigint> {
   return (await mirror.chain.publicClient.getBlock()).timestamp;
@@ -195,12 +219,12 @@ export async function snapshot(mirror: Mirror, label: string, actors: ActorName[
     settlement: {},
     shares: {},
   };
-  console.log(`   [${label}] treasury(Safe) settlement = ${fmt(result.safeSettlement)}  totalShares = ${fmt(result.totalShares)}`);
+  console.log(`   [${label}] treasury(Safe) USDC = ${fmtS(result.safeSettlement)}  totalShares = ${fmt(result.totalShares)}`);
   for (const actor of actors) {
     const address = mirror.actors[actor].account.address;
     result.settlement[actor] = await read<bigint>(mirror, "settlement", "balanceOf", [address]);
     result.shares[actor] = await read<bigint>(mirror, "shares", "balanceOf", [address]);
-    console.log(`   [${label}] ${actor}: settlement = ${fmt(result.settlement[actor])}  shares = ${fmt(result.shares[actor])}`);
+    console.log(`   [${label}] ${actor}: USDC = ${fmtS(result.settlement[actor])}  shares = ${fmt(result.shares[actor])}`);
   }
   return result;
 }
@@ -213,7 +237,7 @@ export async function fund(mirror: Mirror, actor: ActorName, amount: bigint): Pr
     functionName: "transfer",
     args: [mirror.actors[actor].account.address, amount],
   });
-  printReceipt(`fund ${actor} with ${fmt(amount)} settlement`, receipt);
+  printReceipt(`fund ${actor} with ${fmtS(amount)} USDC`, receipt);
   return receipt;
 }
 
@@ -227,31 +251,40 @@ export async function deposit(mirror: Mirror, actor: ActorName, amount: bigint):
   const receipt = await write(context, { address: mirror.dao.depositShaman, abi: mirror.abi.deposit, functionName: "deposit", args: [amount] });
   const after = await read<bigint>(mirror, "shares", "balanceOf", [context.account.address]);
   const sharesMinted = after - before;
-  printReceipt(`${actor} deposit ${fmt(amount)} -> ${fmt(sharesMinted)} shares (quoted ${fmt(quoted)})`, receipt);
+  printReceipt(`${actor} deposit ${fmtS(amount)} USDC -> ${fmt(sharesMinted)} shares (quoted ${fmt(quoted)})`, receipt);
   return { receipt, sharesMinted, quoted };
 }
 
-/** Claim the founder stream (anyone may call; mints to the founder). */
-export async function claimFounderStream(mirror: Mirror): Promise<{ receipt: Receipt; minted: bigint }> {
+/** Claim the founder stream (anyone may call, default the founder; mints only to the founder). */
+export async function claimFounderStream(mirror: Mirror, caller: ActorName = "F"): Promise<{ receipt: Receipt; minted: bigint; cumulative: bigint }> {
+  const founder = mirror.actors.F.account.address;
   const claimable = await read<bigint>(mirror, "founderStream", "claimable");
-  const receipt = await write(mirror.actors.F, { address: mirror.dao.founderStream, abi: mirror.abi.founderStream, functionName: "claim" });
-  printReceipt(`founder stream claim ${fmt(claimable)} shares`, receipt);
-  return { receipt, minted: claimable };
+  const before = await read<bigint>(mirror, "shares", "balanceOf", [founder]);
+  const receipt = await write(mirror.actors[caller], { address: mirror.dao.founderStream, abi: mirror.abi.founderStream, functionName: "claim" });
+  const after = await read<bigint>(mirror, "shares", "balanceOf", [founder]);
+  const minted = after - before;
+  const cumulative = await read<bigint>(mirror, "founderStream", "minted");
+  const supply = await read<bigint>(mirror, "shares", "totalSupply");
+  printReceipt(`${caller} calls founder stream claim -> ${fmt(minted)} shares to F (claimable read ${fmt(claimable)}; stream total ${fmt(cumulative)} = ${pct(cumulative, supply)} of supply)`, receipt);
+  if (minted !== claimable) throw new Error(`stream claim minted ${minted} but claimable read ${claimable}`);
+  return { receipt, minted, cumulative };
 }
 
 /**
- * Standard seed used by every scenario: 1 h after genesis the founder claims the stream and makes
- * the genesis deposit; A, B, C each deposit 1000 at NAV. Result: F, A, B, C hold ~equal shares.
+ * Standard seed used by scenarios A-E: the founder makes the genesis deposit (50 USDC -> 50 shares)
+ * before any stream claim; 1 h later the stream is claimed (a sliver of 10% x 1h/4y of others'
+ * shares); A, B, C each deposit 1000 USDC at NAV. Result: A, B, C hold ~1000 shares each, F ~50.
  */
 export async function seedMembers(mirror: Mirror): Promise<Snapshot> {
-  step("seed: fund actors with test settlement");
-  for (const actor of ["A", "B", "C", "D", "O", "W"] as ActorName[]) await fund(mirror, actor, 10_000n * UNIT);
-  step("seed: founder stream claim after 1 h, then genesis deposit by the founder");
+  step("seed: fund actors with USDC-mock");
+  for (const actor of ["A", "B", "C", "D", "O", "W"] as ActorName[]) await fund(mirror, actor, 10_000n * SETTLEMENT_UNIT);
+  step("seed: genesis deposit 50 USDC by the founder (before any stream claim), stream claim 1 h later");
+  const genesis = await deposit(mirror, "F", GENESIS_DEPOSIT);
+  assert(genesis.sharesMinted === 50n * UNIT, "genesis: 50 USDC -> exactly 50 shares (1 USDC -> 1e18 shares while the treasury is empty)");
   await warp(mirror, HOUR, "1 h after genesis");
   await claimFounderStream(mirror);
-  await deposit(mirror, "F", 1_000n * UNIT);
-  step("seed: A, B, C deposit 1000 each at NAV");
-  for (const actor of ["A", "B", "C"] as ActorName[]) await deposit(mirror, actor, 1_000n * UNIT);
+  step("seed: A, B, C deposit 1000 USDC each at NAV");
+  for (const actor of ["A", "B", "C"] as ActorName[]) await deposit(mirror, actor, 1_000n * SETTLEMENT_UNIT);
   return snapshot(mirror, "seeded", ["F", "A", "B", "C"]);
 }
 
@@ -355,7 +388,7 @@ export async function ragequit(mirror: Mirror, actor: ActorName, sharesToBurn?: 
   const receipt = await write(context, { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "ragequit", args: [context.account.address, burned, 0n, [mirror.dao.settlement]] });
   const after = await read<bigint>(mirror, "settlement", "balanceOf", [context.account.address]);
   const paid = after - before;
-  printReceipt(`${actor} ragequit ${fmt(burned)} shares -> paid ${fmt(paid)} settlement (pro-rata of ${fmt(treasury)} at supply ${fmt(supply)})`, receipt);
+  printReceipt(`${actor} ragequit ${fmt(burned)} shares -> paid ${fmtS(paid)} USDC (pro-rata of ${fmtS(treasury)} at supply ${fmt(supply)})`, receipt);
   return { receipt, burned, paid, expected };
 }
 

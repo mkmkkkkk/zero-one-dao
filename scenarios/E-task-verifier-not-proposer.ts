@@ -1,25 +1,24 @@
 /**
  * DESIGN.md §11 E: a task with verifier != proposer passes, is claimed, delivered and confirmed, and
- * mints shares to the deliverer at the NAV of verification; a task whose verifier == proposer is
- * rejected by the WorkManager.
+ * mints exactly the voted share reward to the deliverer (no NAV involved); a task whose verifier ==
+ * proposer is rejected by the WorkManager.
  */
 import { keccak256, stringToHex, type Hex } from "viem";
 
-import { assert, boot, expectRevert, fmt, processProposal, read, runIfMain, seedMembers, send, shutdown, simulate, snapshot, sponsor, stateOf, step, UNIT, verdict, vote, warp, warpPastGrace } from "./lib.js";
+import { assert, boot, expectRevert, fmt, fmtS, processProposal, read, runIfMain, seedMembers, send, shutdown, simulate, snapshot, sponsor, stateOf, step, UNIT, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 const STATUS = ["None", "Proposed", "Active", "Complete", "Cancelled"] as const;
 
 interface Task {
   proposer: string;
   worker: string;
-  rewardValue: bigint;
+  rewardShares: bigint;
   verifierThreshold: number;
   confirmations: number;
   round: number;
   proposalId: number;
   status: number;
   evidenceHash: Hex;
-  sharesMinted: bigint;
 }
 
 export async function main(): Promise<void> {
@@ -33,12 +32,13 @@ export async function main(): Promise<void> {
     const W = mirror.actors.W.account.address;
     const reward = 500n * UNIT;
 
-    step("A submits task #1: verifiers [B, C], threshold 2, reward 500 settlement-worth of shares");
+    step("A submits task #1: verifiers [B, C], threshold 2, reward 500 shares (denominated in shares, voted as such)");
     await send(mirror, "A", "work", "submitTask", [[B, C], 2, reward, 0, "task: write the beacon README (verifiers B, C)"], "A submitTask -> Baal proposal");
     const taskId = await read<bigint>(mirror, "work", "taskCount");
     const task = await read<Task>(mirror, "work", "getTask", [taskId]);
     assert(taskId === 1n && STATUS[task.status] === "Proposed", "task #1 recorded as Proposed");
     assert(task.proposer.toLowerCase() === A.toLowerCase(), "proposer recorded as A (msg.sender)");
+    assert(task.rewardShares === reward, "reward recorded as 500 shares at submitTask");
     const proposalId = task.proposalId;
     await warp(mirror, 1);
     assert((await stateOf(mirror, proposalId)) === "Submitted", `Baal proposal #${proposalId} is Submitted (WorkManager holds no shares, needs a member sponsor)`);
@@ -57,22 +57,21 @@ export async function main(): Promise<void> {
     await expectRevert(simulate(mirror, "B", "work", "claim", [taskId]), "VerifierCannotClaim", "verifier B is refused as worker");
     await send(mirror, "W", "work", "claim", [taskId], "W claims task #1");
 
-    step("W delivers an evidence hash; B and C confirm; shares mint to W at the NAV of verification");
+    step("W delivers an evidence hash; B and C confirm; exactly the voted 500 shares mint to W");
     const evidence = stringToHex("evidence: README v1 sha256=...");
     await send(mirror, "W", "work", "deliver", [taskId, keccak256(evidence)], "W deliver evidence hash");
     await send(mirror, "B", "work", "confirm", [taskId, evidence], "B confirms (1/2)");
     assert(STATUS[(await read<Task>(mirror, "work", "getTask", [taskId])).status] === "Active", "still Active after 1 of 2 confirmations; nothing minted yet");
     assert((await read<bigint>(mirror, "shares", "balanceOf", [W])) === 0n, "W has no shares before threshold");
     const before = await snapshot(mirror, "before final confirmation", ["W"]);
-    const expectedShares = (reward * before.totalShares) / before.safeSettlement;
-    console.log(`   NAV per share = ${fmt((before.safeSettlement * UNIT) / before.totalShares)} settlement; 500 settlement-worth = ${fmt(expectedShares)} shares`);
+    console.log(`   NAV per share = ${fmtS((before.safeSettlement * UNIT) / before.totalShares)} USDC; the reward ignores it: ${fmt(reward)} shares regardless`);
     await send(mirror, "C", "work", "confirm", [taskId, evidence], "C confirms (2/2) -> mint");
     const done = await read<Task>(mirror, "work", "getTask", [taskId]);
     assert(STATUS[done.status] === "Complete", "task #1 Complete");
     const after = await snapshot(mirror, "after verification", ["W"]);
-    assert(after.shares.W === expectedShares, `W received reward * totalShares / treasury = ${fmt(expectedShares)} shares`);
-    assert(done.sharesMinted === expectedShares, "task records the minted amount");
-    assert(after.safeSettlement === before.safeSettlement, "verification moved no settlement; W's claim is shares at NAV");
+    assert(after.shares.W === reward, `W received exactly rewardShares = ${fmt(reward)} shares`);
+    assert(after.totalShares === before.totalShares + reward, "total supply grew by exactly the reward");
+    assert(after.safeSettlement === before.safeSettlement, "verification moved no USDC; W's reward is shares, exitable at NAV");
     await expectRevert(simulate(mirror, "B", "work", "confirm", [taskId, evidence]), "WrongStatus", "no further confirmation or mint after completion");
 
     step("negative: a task whose verifier == proposer is rejected at submission");
