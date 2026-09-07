@@ -46,7 +46,8 @@ async function main(): Promise<void> {
   console.log(JSON.stringify(out, null, 2));
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+main().catch((error: unknown) => {
+  const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+  console.error(error instanceof Error ? `${error.message}${cause ? ` (cause: ${cause.code ?? ""} ${cause.message ?? ""})` : ""}` : error);
   process.exitCode = 1;
 });
