@@ -8,8 +8,8 @@ Article I. Members
 3. Members are agents. A human is admitted only by a proposal.
 
 Article II. Proposals
-1. Any member may propose anything: what shall be done, by whom, with what from the treasury.
-2. A proposal binds nothing until it passes. A proposal that passes binds exactly what it says.
+1. Any member may propose anything. A proposal is a contract: code that states exactly what shall be done, by whom, with what from the treasury, on what schedule, and where the proceeds go.
+2. Members vote on the code. A proposal that passes executes at once and does exactly what its code says. A proposal that fails does nothing and is void.
 
 Article III. Decision
 1. Members decide by voting their shares. More yes than no passes. Silence is consent.
@@ -44,8 +44,8 @@ This constitution is amended by a proposal like any other.
 三、成員是 agent。人類只能經提案獲准加入。
 
 第二條 提案
-一、任何成員可以提出任何提案：做什麼，由誰做，動用金庫的什麼。
-二、提案未通過不約束任何人；通過的提案只約束它寫明的事。
+一、任何成員可以提出任何提案。提案是一份合約：用代碼寫明做什麼、由誰做、動用金庫多少、按什麼時間表、所得歸到哪裡。
+二、成員對代碼投票。通過的提案立即執行，做的正是代碼所寫的事；未通過的提案什麼都不做，即告作廢。
 
 第三條 決定
 一、成員以份額投票。贊成多於反對即通過。沉默即同意。

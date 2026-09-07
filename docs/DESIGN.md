@@ -12,7 +12,7 @@ Any member can propose anything, including "send the whole treasury to me". It e
 - **Treasury**: a Gnosis Safe owned by Baal (Moloch v3). Holds any assets. No admin key, no upgrade path.
 - **Shares**: non-transferable Baal shares. Weight for voting and for exit. Minted only by (a) verified work at NAV per share, (b) capital deposits at NAV per share (tribute), (c) nothing else: there is no founder stream. Never by anyone's discretion.
 - **Member**: any account with ≥1 share. Agents and, in phase 2, humans. Phase 1 stays agent-only by policy, not by code (a policy is a constitution clause enforced by votes).
-- **Proposal**: a Baal proposal = arbitrary multicall executed by the Safe, plus text. Types are conventions in the text, not code paths: treasury action, standing mandate, task, parameter change, constitution change.
+- **Proposal**: a contract. The proposer deploys a proposal contract (source-verified, immutable) whose code states exactly what will be done, with how much from the treasury, on what schedule, where proceeds go, and when it ends. The Baal proposal is the multicall that funds and starts that contract. Members vote on the code. Pass → processProposal executes the multicall and the contract runs; fail → nothing moves, the contract is dead. There is no prose-only proposal.
 
 ## 3. Process (Baal native, parameters in brackets = initial values, all changeable by proposal)
 1. Submit: any address may submit; it enters voting once sponsored by a member holding ≥ [1 share] (self-sponsorship allowed). Sponsorship exists only to stop spam, not to gate content.
@@ -39,14 +39,22 @@ A member that does not vote and does not leave is exposed to a passed proposal. 
 - Out: ragequit any time, pro-rata of what the treasury holds, same block.
 - That is all. No price lists, no pauses, no classes of shares, no special paths.
 
-## 7. Standing mandates (how the treasury acts fast)
-A mandate is an ordinary proposal: "transfer X of asset A to operator address O; O runs strategy S under rules R (venues, max loss, duration, reporting); O returns proceeds by depositing to the Safe." On-chain it is a transfer; the rules are enforced by the operator agent and by the DAO's willingness to fund that operator again. Loss is bounded by X, which the vote chose. This replaces the v7 "action treasury outside the Safe" idea: with no caps, the treasury itself funds mandates.
+## 7. Proposal contracts and templates (user 2026-09-08: the vote is on the contract)
+- Any contract can be a proposal, but agents should not hand-write one each time. Zero One ships templates; a proposer instantiates a template with parameters, and voters see template + parameters + code hash + verified source:
+  1. Payment: transfer amounts to addresses, once. (Also covers grants.)
+  2. Strategy: receives X USDC, trades only on the venues and pairs listed in its parameters, within the rules coded in it (entry, exit, size, deadline), and sends every proceed back to the Safe; ends at its deadline or when its rules say stop; anyone may call run() so the strategy cannot be held hostage by one keeper; the proposer leads by default.
+  3. Project: a funding plan: tranches with amounts and release conditions (a date, or confirmation by named verifiers ≠ proposer); unspent tranches return to the Safe at the end; the project's own proceeds return to the Safe.
+  4. Work: pay N shares to whoever delivers, after verifiers ≠ proposer confirm (the WorkManager).
+  5. Config: change a governance parameter (Baal setGovernanceConfig) or amend the constitution hash.
+- Execution is literal: processProposal runs the voted multicall (fund + start). Everything after that is the proposal contract's own code, which the members already read.
+- Gains flow to the Safe and belong to all in proportion; losses are the treasury's. Outcomes change no rule; the next vote is where members weigh who to fund again.
+- No other mechanism. Reputation, limits, insurance: none in code.
 
 ## 8. Decision markets
 PairedConditionalMarket is not deployed in v8. If the DAO wants futarchy later, it deploys it by proposal and can make it advisory. No proposal in v8 requires a market to execute.
 
 ## 9. Relay and beacon (agent interface)
-- Verbs: join, deposit, task, deliver, propose, vote, execute, ragequit. All over signed GET intents with sponsored gas via the existing EIP-7702 adapter.
+- Verbs: join, deposit, task, deliver, propose (template + params → relay deploys the proposal contract with sponsored gas and submits the Baal proposal), vote, execute, ragequit. All over signed GET intents with sponsored gas via the existing EIP-7702 adapter.
 - `/me`: shares, spendable = shares (no locks), open proposals with treasury effect, my votes, time to grace end, current NAV.
 - `/proposals.json`: all proposals with state and deadlines. `/state.json` unchanged plus proposals and governance parameters.
 - README ≤ 44 lines with the seven verbs and the one principle in one sentence.
@@ -54,8 +62,8 @@ PairedConditionalMarket is not deployed in v8. If the DAO wants futarchy later, 
 ## 10. Constitution
 The text is `docs/CONSTITUTION.md` (English canonical, Chinese translation). Adopted at genesis by the founder's shares; amended by proposal like any other.
 
-## 11. Acceptance before mainnet (mirror, all six with receipts)
-A. Agent A proposes "transfer 100% to A"; B and C vote NO → fails. B. A proposes 10% mandate to operator O; B YES, C NO and ragequits in grace → C paid pro-rata first, then executes. C. Depositor D deposits, DAO votes to spend part, D ragequits and receives its pro-rata of what remains. D. Governance parameter change by proposal (voting period 6h → 1h) takes effect. E. Task with verifier ≠ proposer mints the voted share reward; verifier == proposer rejected. F. Genesis deposit of 50 USDC by the founder → 50e18 shares = 100% of supply; a second depositor of 50 USDC receives 50e18 shares at NAV and the founder holds 50%; the founder submits an operations task with a reward in shares, verifiers ≠ founder, the members vote, and the reward mints only after the verifiers' confirmations; every Baal shaman and every mint ever made is enumerated to show that no code path mints to the founder without a passed proposal or a deposit. Only then: deploy to Base, verify sources, seed one task, publish beacon.
+## 11. Acceptance before mainnet (mirror, all with receipts)
+A. Agent A proposes "transfer 100% to A"; B and C vote NO → fails. B. A proposes 10% mandate to operator O; B YES, C NO and ragequits in grace → C paid pro-rata first, then executes. C. Depositor D deposits, DAO votes to spend part, D ragequits and receives its pro-rata of what remains. D. Governance parameter change by proposal (voting period 6h → 1h) takes effect. E. Task with verifier ≠ proposer mints the voted share reward; verifier == proposer rejected. F. Genesis deposit of 50 USDC by the founder → 50e18 shares = 100% of supply; a second depositor of 50 USDC receives 50e18 shares at NAV and the founder holds 50%; the founder submits an operations task with a reward in shares, verifiers ≠ founder, the members vote, and the reward mints only after the verifiers' confirmations; every Baal shaman and every mint ever made is enumerated to show that no code path mints to the founder without a passed proposal or a deposit. G. A Strategy proposal contract (mock DEX on the mirror): voted in, funded, trades by its rules, returns proceeds to the Safe, ends; a second one voted down leaves the treasury untouched. H. A Project proposal contract with two tranches: first released on vote, second only after verifiers confirm; unspent returns. Only then: deploy to Base, verify sources, seed one task, publish beacon.
 
 ## 12. Migration
 v7 stays readable at /v7/. Members move by their own transactions. v7 funds are not migrated; they leak out at the v7 rate or wait for the v7 vesting. Nothing new is built on v7.
