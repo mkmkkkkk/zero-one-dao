@@ -29,7 +29,7 @@ export const INITIAL_GOVERNANCE: GovernanceConfig = {
 
 export interface ZeroOneParams {
   founder: Address;
-  founderStreamShares: bigint;
+  /** Stream length in seconds; the founder's stream target is 10% of total supply at full vest. */
   founderStreamDuration: number;
   shareName: string;
   shareSymbol: string;
@@ -41,7 +41,6 @@ export interface ZeroOneParams {
 }
 
 export const DEFAULT_PARAMS: Omit<ZeroOneParams, "founder"> = {
-  founderStreamShares: 1_000_000n * UNIT,
   founderStreamDuration: FOUR_YEARS,
   shareName: "Zero One Shares",
   shareSymbol: "ZERO1",
@@ -95,12 +94,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
 
   const shares = await deployLocal(deployer, "NavShareToken", [params.shareName, params.shareSymbol, baal, safe, settlement]);
   const loot = await deployLocal(deployer, "LootToken", [`${params.shareName} Loot`, `${params.shareSymbol}-LOOT`, baal]);
-  const founderStream = await deployLocal(deployer, "FounderStream", [
-    baal,
-    params.founder,
-    params.founderStreamShares,
-    params.founderStreamDuration,
-  ]);
+  const founderStream = await deployLocal(deployer, "FounderStream", [baal, params.founder, params.founderStreamDuration]);
   const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address]);
   const workManager = await deployLocal(deployer, "WorkManager", [baal, shares.address]);
   const intentAccount = await deployLocal(deployer, "ZeroOneIntentAccount", [baal, depositShaman.address, workManager.address]);

@@ -43,7 +43,7 @@ async function main(): Promise<void> {
         sponsorThreshold: dao.params.governance.sponsorThreshold.toString(),
         minRetentionPercent: dao.params.governance.minRetentionPercent.toString(),
       },
-      founderStreamShares: dao.params.founderStreamShares.toString(),
+      founderStreamTargetBps: 1000,
       founderStreamDuration: dao.params.founderStreamDuration,
       txHashes: dao.txHashes,
     };
