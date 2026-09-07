@@ -99,6 +99,16 @@ export function loadLocalArtifact(contractName: string): ContractArtifact {
   return parseArtifact(path.join(ROOT, "contracts", "artifacts", `${contractName}.json`));
 }
 
+/** Load only the ABI of a local artifact (works for interfaces, which have no bytecode). */
+export function loadLocalAbi(contractName: string): Abi {
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/u.test(contractName)) {
+    throw new TypeError("Invalid local artifact name");
+  }
+  const parsed = JSON.parse(readFileSync(path.join(ROOT, "contracts", "artifacts", `${contractName}.json`), "utf8")) as { abi?: unknown };
+  if (!Array.isArray(parsed.abi) || parsed.abi.length === 0) throw new Error(`Artifact has no ABI: ${contractName}`);
+  return parsed.abi as Abi;
+}
+
 /** Load a vendored @daohaus/baal-contracts 1.2.18 artifact (Baal, Safe, factories, MultiSend). */
 export function loadBaalArtifact(name: keyof typeof PACKAGE_ARTIFACTS): ContractArtifact {
   return parseArtifact(path.join(BAAL_PACKAGE_ROOT, PACKAGE_ARTIFACTS[name]));

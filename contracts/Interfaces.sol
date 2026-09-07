@@ -37,6 +37,9 @@ interface IBaalV3 {
     function votingPeriod() external view returns (uint32);
     function gracePeriod() external view returns (uint32);
     function sponsorThreshold() external view returns (uint256);
+    function proposalOffering() external view returns (uint256);
+    function quorumPercent() external view returns (uint256);
+    function minRetentionPercent() external view returns (uint256);
     function totalShares() external view returns (uint256);
 
     function mintShares(address[] calldata to, uint256[] calldata amount) external;
