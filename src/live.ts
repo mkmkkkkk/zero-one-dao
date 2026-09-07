@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 
 import { createPublicClient, createWalletClient, http, type Chain, type Hex, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { nonceManager } from "viem/nonce";
 import { base, baseSepolia } from "viem/chains";
 
 import type { WriteContext } from "./baal.js";
@@ -58,7 +59,8 @@ export function liveContexts(chain: Chain, keys: readonly Hex[]): { publicClient
   const transport = http(url, { retryCount: 6, retryDelay: 1_500, timeout: 60_000 });
   const publicClient = createPublicClient({ chain, transport, cacheTime: 0 });
   const contexts = keys.map((key) => {
-    const account = privateKeyToAccount(key);
+    // Local nonce tracking: a load-balanced public RPC can report a stale pending count between two writes.
+    const account = privateKeyToAccount(key, { nonceManager });
     return { chain, publicClient, account, walletClient: createWalletClient({ account, chain, transport }) } as WriteContext;
   });
   return { publicClient, contexts };

@@ -6,7 +6,7 @@
  * deployed at all.
  */
 import type { ProjectParams, Tranche } from "../src/proposals.js";
-import { assert, boot, DAY, describeAt, expectDeployRevert, expectRevert, fmtS, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, simulateAt, snapshot, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
+import { assert, boot, describeAt, expectDeployRevert, expectRevert, fmtS, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, simulateAt, snapshot, step, T, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 interface TrancheView {
   plan: { amount: bigint; releaseType: number; releaseAt: bigint; verifiers: readonly string[]; threshold: number };
@@ -22,7 +22,7 @@ export async function main(): Promise<void> {
     const B = mirror.actors.B.account.address;
     const C = mirror.actors.C.account.address;
     const start = await now(mirror);
-    const deadline = start + BigInt(30 * DAY);
+    const deadline = start + BigInt(30 * T.day);
     const t0: Tranche = { amount: 300n * SETTLEMENT_UNIT, releaseType: "date", releaseAt: 0n, verifiers: [], threshold: 0 };
     const t1: Tranche = { amount: 200n * SETTLEMENT_UNIT, releaseType: "verifiers", releaseAt: 0n, verifiers: [B, C], threshold: 2 };
     const t2: Tranche = { amount: 100n * SETTLEMENT_UNIT, releaseType: "verifiers", releaseAt: 0n, verifiers: [B, C], threshold: 2 };
@@ -74,7 +74,7 @@ export async function main(): Promise<void> {
     await expectRevert(simulateAt(mirror, "W", p, "project", "end", []), "DeadlineNotReached", "end() before the deadline is refused");
     await expectRevert(simulateAt(mirror, "A", p, "project", "stop", []), "OnlySafe", "A cannot stop() its own project");
     const safeBefore = await usdcOf(mirror, mirror.dao.safe);
-    await warp(mirror, 30 * DAY, "to the project deadline");
+    await warp(mirror, Number(deadline + 1n - (await now(mirror))), "to the project deadline");
     await sendAt(mirror, "W", p, "project", "end", [], "W end() after the deadline");
     const ended = await describeAt(mirror, p, "ended");
     assert(ended.status === "Complete" && (await usdcOf(mirror, p)) === 0n, "project Complete, holds nothing");

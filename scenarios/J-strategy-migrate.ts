@@ -7,7 +7,7 @@
  * The proposer alone cannot migrate.
  */
 import { deployTemplate, migrateCalls, proposalDetails, type StrategyParams } from "../src/proposals.js";
-import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, HOUR, now, processProposal, propose, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, stateOf, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
+import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, now, processProposal, propose, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, stateOf, step, T, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 export async function main(): Promise<void> {
   const mirror = await boot("scenario-J");
@@ -21,7 +21,7 @@ export async function main(): Promise<void> {
       venue: market.dex,
       asset: market.asset,
       budget: 1_000n * SETTLEMENT_UNIT,
-      rule: { maxPerRun: 300n * SETTLEMENT_UNIT, minInterval: BigInt(HOUR), deadline: start + BigInt(7 * DAY), takeProfitBps: 5000n, stopLossBps: 5000n },
+      rule: { maxPerRun: 300n * SETTLEMENT_UNIT, minInterval: BigInt(T.hour), deadline: start + BigInt(7 * DAY), takeProfitBps: 5000n, stopLossBps: 5000n },
     };
 
     step("strategy S1 (budget 1000, 300 per run) is voted in and runs once: 700 USDC + 150 MOCK");
@@ -75,7 +75,7 @@ export async function main(): Promise<void> {
     await expectRevert(simulateAt(mirror, "W", s1, "strategy", "run", []), "WrongStatus", "run() on the migrated S1 is refused");
     await sendAt(mirror, "W", s2.address, "strategy", "run", [], "W run() S2 #1");
     assert((await usdcOf(mirror, s2.address)) === 600n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 200n * SETTLEMENT_UNIT, "S2 bought 100 USDC of MOCK (50 MOCK): 600 USDC + 200 MOCK");
-    await warp(mirror, HOUR, "minInterval");
+    await warp(mirror, T.hour, "minInterval");
     await sendAt(mirror, "B", s2.address, "strategy", "run", [], "B run() S2 #2");
     assert((await usdcOf(mirror, s2.address)) === 500n * SETTLEMENT_UNIT && (await mockOf(s2.address)) === 250n * SETTLEMENT_UNIT, "S2 holds 500 USDC + 250 MOCK");
     passed = true;

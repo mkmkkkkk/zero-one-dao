@@ -46,7 +46,7 @@ async function allMints(mirror: Mirror): Promise<Mint[]> {
     address: mirror.dao.shares,
     event: parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 amount)"),
     args: { from: zeroAddress },
-    fromBlock: 0n,
+    fromBlock: mirror.dao.startBlock,
     toBlock: "latest",
   });
   return logs.map((log) => ({ to: getAddress(log.args.to ?? zeroAddress), amount: log.args.amount ?? 0n, txHash: log.transactionHash }));

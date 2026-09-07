@@ -7,7 +7,7 @@
 import { getAddress } from "viem";
 
 import { encodeParams, predictInstance, TEMPLATE_IDS, type StrategyParams } from "../src/proposals.js";
-import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, HOUR, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, snapshot, stateOf, step, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
+import { assert, boot, DAY, deployMockMarket, describeAt, expectRevert, fmtS, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulateAt, snapshot, stateOf, step, T, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
 export async function main(): Promise<void> {
   const mirror = await boot("scenario-G");
@@ -26,7 +26,7 @@ export async function main(): Promise<void> {
       venue: market.dex,
       asset: market.asset,
       budget: 500n * SETTLEMENT_UNIT,
-      rule: { maxPerRun: 200n * SETTLEMENT_UNIT, minInterval: BigInt(HOUR), deadline: start + BigInt(7 * DAY), takeProfitBps: 2000n, stopLossBps: 3000n },
+      rule: { maxPerRun: 200n * SETTLEMENT_UNIT, minInterval: BigInt(T.hour), deadline: start + BigInt(7 * DAY), takeProfitBps: 2000n, stopLossBps: 3000n },
     };
     const proposal = await proposeTemplate(mirror, "A", { template: "Strategy", params }, "A: DCA 500 USDC into MOCK, take profit +20%");
     const s1 = proposal.instance.address;
@@ -68,7 +68,7 @@ export async function main(): Promise<void> {
     await expectRevert(simulateAt(mirror, "W", s1, "strategy", "run", []), "TooSoon", "run() again within minInterval is refused");
 
     step("+1 h: run #2 buys another 200 USDC -> 200 MOCK total; value unchanged at 500");
-    await warp(mirror, HOUR, "minInterval");
+    await warp(mirror, T.hour, "minInterval");
     await sendAt(mirror, "O", s1, "strategy", "run", [], "O run() #2");
     assert((await usdcOf(mirror, s1)) === 100n * SETTLEMENT_UNIT && (await mockOf(s1)) === 200n * SETTLEMENT_UNIT, "instance holds 100 USDC + 200 MOCK");
     assert((await readAt<bigint>(mirror, s1, "strategy", "value")) === 500n * SETTLEMENT_UNIT, "value = 100 + 200 x 2 = 500 USDC");
@@ -76,7 +76,7 @@ export async function main(): Promise<void> {
     step("price moves to 3: value 700 >= 600 (take-profit); run #3 unwinds and returns 700 USDC to the Safe; Complete");
     await setPrice(mirror, market, 3n * SETTLEMENT_UNIT);
     assert((await readAt<bigint>(mirror, s1, "strategy", "value")) === 700n * SETTLEMENT_UNIT, "value = 100 + 200 x 3 = 700 USDC");
-    await warp(mirror, HOUR, "minInterval");
+    await warp(mirror, T.hour, "minInterval");
     const safeBefore = await usdcOf(mirror, mirror.dao.safe);
     await sendAt(mirror, "C", s1, "strategy", "run", [], "C run() #3 -> take-profit");
     const done = await describeAt(mirror, s1, "after take-profit");
