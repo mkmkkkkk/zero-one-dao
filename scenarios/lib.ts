@@ -384,7 +384,22 @@ function bump(mirror: Mirror, block: bigint): void {
 /** True for RPC errors that mean "this node has not seen that block yet". */
 function isLagError(error: unknown): boolean {
   const text = error instanceof Error ? error.message : String(error);
-  return /header not found|block not found|unknown block|missing trie node|not found|cannot query unfinalized|block .* does not exist|BlockNotFound/iu.test(text);
+  return /header not found|block not found|could not be found|unknown block|missing trie node|not found|cannot query unfinalized|block .* does not exist|BlockNotFound/iu.test(text);
+}
+
+/** Retry `fn` while the answering node lags (BlockNotFound and friends); other errors surface at once. */
+async function retryLag<R>(fn: () => Promise<R>): Promise<R> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isLagError(error)) throw error;
+      last = error;
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+    }
+  }
+  throw last;
 }
 
 /**
@@ -531,7 +546,7 @@ export async function warp(mirror: Mirror, seconds: number, label?: string): Pro
     console.log(`   warp +${seconds}s${label ? ` (${label})` : ""} -> block ${block.number} timestamp ${block.timestamp}`);
     return;
   }
-  const start = await mirror.chain.publicClient.getBlock({ blockNumber: mirror.head });
+  const start = await retryLag(() => mirror.chain.publicClient.getBlock({ blockNumber: mirror.head }));
   const target = start.timestamp + BigInt(Math.max(seconds, 0));
   const startedAt = Date.now();
   let lastLog = startedAt;

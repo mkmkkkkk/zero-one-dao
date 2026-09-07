@@ -19,7 +19,9 @@ async function main(): Promise<void> {
       await run();
       results.push([name, true, ""]);
     } catch (error) {
-      results.push([name, false, error instanceof Error ? error.message : String(error)]);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`scenario ${name} failed: ${message}`);
+      results.push([name, false, message]);
     }
   }
   console.log("\n===== SUMMARY =====");
