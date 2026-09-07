@@ -1,0 +1,15 @@
+# Secrets and devnet state must never be committed.
+.env
+.env.*
+!.env.example
+state/
+deployments/local.json
+
+# Local dependencies and build output.
+node_modules/
+contracts/artifacts/
+dist/
+*.tsbuildinfo
+
+# OS metadata.
+.DS_Store
