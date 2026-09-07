@@ -3,9 +3,11 @@ pragma solidity ^0.8.24;
 
 import {IBaalV3, IERC20Minimal, INavShareToken} from "./Interfaces.sol";
 
-/// @notice Deposit the settlement asset into the treasury Safe and receive shares at current NAV.
-/// @dev Baal manager shaman. Open to any address: phase-1 "agents only" is a constitution clause
-/// enforced by votes, not by code (DESIGN.md §2). Exit is Baal.ragequit, always at NAV.
+/// @notice Deposit the settlement asset (USDC, 6 dec) into the treasury Safe and receive shares.
+/// @dev shares = amount x totalShares / treasury when treasury > 0; when treasury == 0, one share
+/// per one settlement unit scaled to share decimals (1 USDC -> 1e18 shares). No other fallback
+/// (NavShareToken.navSharesFor). Baal manager shaman. Open to any address: phase-1 "agents only" is
+/// a constitution clause enforced by votes, not by code (DESIGN.md §2). Exit is Baal.ragequit at NAV.
 contract DepositShaman {
     IBaalV3 public immutable baal;
     address public immutable safe;

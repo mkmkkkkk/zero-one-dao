@@ -24,7 +24,7 @@ contract NavShareToken {
     address public immutable baal;
     address public immutable safe;
     IERC20Metadata public immutable settlementToken;
-    /// @notice 10 ** settlement decimals; one settlement unit mints one share while NAV is undefined.
+    /// @notice 10 ** settlement decimals; one settlement unit mints one share while the treasury is empty.
     uint256 public immutable settlementUnit;
 
     uint256 public totalSupply;
@@ -178,11 +178,13 @@ contract NavShareToken {
 
     /// @notice Shares matching a settlement contribution at the current NAV per share.
     /// @dev While NAV is undefined (no shares or no assets) one settlement unit mints one share.
+    /// @notice Shares minted for `contributedValue` settlement units: amount x totalSupply / treasury
+    /// while the treasury holds assets; one share (18 dec) per one settlement unit while the treasury
+    /// is empty (DESIGN.md §6). No other fallback: treasury > 0 with totalSupply == 0 quotes zero.
     function navSharesFor(uint256 contributedValue) external view returns (uint256) {
-        uint256 supply = totalSupply;
         uint256 nav = treasuryValue();
-        if (supply == 0 || nav == 0) return Math.mulDiv(contributedValue, 10 ** decimals, settlementUnit);
-        return Math.mulDiv(contributedValue, supply, nav);
+        if (nav == 0) return Math.mulDiv(contributedValue, 10 ** decimals, settlementUnit);
+        return Math.mulDiv(contributedValue, totalSupply, nav);
     }
 
     /// @notice Settlement-asset claim represented by a share amount, rounded down (zero when NAV is zero).
