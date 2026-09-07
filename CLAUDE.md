@@ -8,3 +8,4 @@
 - Runtime on the mini lives under `~/srv/zero-one-dao` (launchd cannot read ~/Documents). Code checkout `~/Documents/Workspace/zero-one-dao`.
 - Public copy: chain facts only; no price/yield claims; no politics. Marketing starts only after mainnet acceptance.
 - Git: commit email yangzk01@gmail.com; never commit .env/keys/state.
+- Design authority (user, 2026-09-08): only Fable 5 (dev session) and GPT-6 decide design. DW/Opus workers implement; any design choice they make on their own is provisional until Fable reviews it in decision.md. Goals to DW must either pre-decide every design point or say "leave blank and report".

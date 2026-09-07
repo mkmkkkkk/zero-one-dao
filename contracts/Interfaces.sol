@@ -68,7 +68,7 @@ interface IWorkManager {
     function submitTask(
         address[] calldata verifiers,
         uint16 verifierThreshold,
-        uint256 rewardValue,
+        uint256 rewardShares,
         uint32 expiration,
         string calldata details
     ) external payable returns (uint256 taskId, uint256 proposalId);

@@ -115,9 +115,10 @@ contract ZeroOneIntentAccount {
             require(settlementToken.approve(address(depositShaman), i.amount), "approve");
             result = bytes32(depositShaman.deposit(i.amount));
         } else if (i.op == 6) {
-            (address[] memory verifiers, uint16 threshold, uint256 reward, uint32 expiration) =
+            (address[] memory verifiers, uint16 threshold, uint256 rewardShares, uint32 expiration) =
                 abi.decode(i.data, (address[], uint16, uint256, uint32));
-            (uint256 taskId,) = workManager.submitTask{value: msg.value}(verifiers, threshold, reward, expiration, i.details);
+            (uint256 taskId,) =
+                workManager.submitTask{value: msg.value}(verifiers, threshold, rewardShares, expiration, i.details);
             result = bytes32(taskId);
         } else if (i.op == 7) {
             workManager.claim(i.amount);

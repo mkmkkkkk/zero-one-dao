@@ -4,11 +4,13 @@ pragma solidity ^0.8.24;
 import {IBaalV3, INavShareToken} from "./Interfaces.sol";
 
 /// @notice Task lifecycle: propose (Baal proposal) -> activate (executed by the Safe) -> claim ->
-/// deliver -> verifier confirmations -> shares minted to the deliverer at the NAV of verification.
+/// deliver -> verifier confirmations -> exactly `rewardShares` minted to the deliverer.
 /// @dev Derived from agent-only-wallet/exit AowWorkManager, re-based on Baal-native governance.
+/// The reward is denominated in SHARES, fixed at submitTask and voted on as part of the proposal;
+/// NAV and the settlement asset play no role, so tasks work at zero treasury (DESIGN.md §5).
 /// Kept: verifier != proposer (enforced here, the proposer is msg.sender of submitTask), verifiers
 /// cannot claim, evidence-hash commit/confirm, threshold of named verifiers. Dropped: governor hooks,
-/// tranches, timelocks, sortition. Baal manager shaman; mints only after verification.
+/// tranches, timelocks, sortition, NAV conversion. Baal manager shaman; mints only after verification.
 contract WorkManager {
     enum Status {
         None,
@@ -21,14 +23,13 @@ contract WorkManager {
     struct Task {
         address proposer;
         address worker;
-        uint256 rewardValue;
+        uint256 rewardShares;
         uint16 verifierThreshold;
         uint16 confirmations;
         uint32 round;
         uint32 proposalId;
         Status status;
         bytes32 evidenceHash;
-        uint256 sharesMinted;
     }
 
     IBaalV3 public immutable baal;
@@ -68,21 +69,14 @@ contract WorkManager {
         address indexed proposer,
         address[] verifiers,
         uint16 verifierThreshold,
-        uint256 rewardValue
+        uint256 rewardShares
     );
     event TaskActivated(uint256 indexed taskId);
     event TaskCancelled(uint256 indexed taskId);
     event TaskClaimed(uint256 indexed taskId, address indexed worker);
     event DeliveryCommitted(uint256 indexed taskId, uint32 indexed round, address indexed worker, bytes32 evidenceHash);
     event DeliveryConfirmed(uint256 indexed taskId, uint32 indexed round, address indexed verifier, uint16 confirmations);
-    event TaskVerified(
-        uint256 indexed taskId,
-        address indexed worker,
-        uint256 rewardValue,
-        uint256 sharesMinted,
-        uint256 treasuryValueAtVerification,
-        uint256 supplyAtVerification
-    );
+    event TaskVerified(uint256 indexed taskId, address indexed worker, uint256 rewardShares);
 
     modifier nonReentrant() {
         if (_entered != 1) revert Reentrancy();
@@ -109,7 +103,7 @@ contract WorkManager {
     /// entry point, so no task can exist with verifier == proposer. Any proposal offering is forwarded.
     /// @param verifiers Named verifiers (distinct, non-zero, none equal to the proposer).
     /// @param verifierThreshold Confirmations required (1..verifiers.length).
-    /// @param rewardValue Reward in settlement-asset units, converted to shares at the NAV of verification.
+    /// @param rewardShares Reward in shares (18 decimals), minted exactly as stated on final confirmation.
     /// @param expiration Baal proposal expiration (0 = none).
     /// @param details Proposal text.
     /// @return taskId Task identifier in this manager.
@@ -117,7 +111,7 @@ contract WorkManager {
     function submitTask(
         address[] calldata verifiers,
         uint16 verifierThreshold,
-        uint256 rewardValue,
+        uint256 rewardShares,
         uint32 expiration,
         string calldata details
     ) external payable nonReentrant returns (uint256 taskId, uint256 proposalId) {
@@ -125,7 +119,7 @@ contract WorkManager {
         if (verifierThreshold == 0 || verifierThreshold > verifiers.length) {
             revert InvalidThreshold(verifierThreshold, verifiers.length);
         }
-        if (rewardValue == 0) revert ZeroReward();
+        if (rewardShares == 0) revert ZeroReward();
 
         taskId = ++taskCount;
         for (uint256 i; i < verifiers.length; ++i) {
@@ -141,16 +135,15 @@ contract WorkManager {
         _tasks[taskId] = Task({
             proposer: msg.sender,
             worker: address(0),
-            rewardValue: rewardValue,
+            rewardShares: rewardShares,
             verifierThreshold: verifierThreshold,
             confirmations: 0,
             round: 0,
             proposalId: uint32(proposalId),
             status: Status.Proposed,
-            evidenceHash: bytes32(0),
-            sharesMinted: 0
+            evidenceHash: bytes32(0)
         });
-        emit TaskProposed(taskId, proposalId, msg.sender, verifiers, verifierThreshold, rewardValue);
+        emit TaskProposed(taskId, proposalId, msg.sender, verifiers, verifierThreshold, rewardShares);
     }
 
     /// @notice Baal proposal data that activates `taskId`; pass it to Baal.processProposal.
@@ -200,7 +193,7 @@ contract WorkManager {
         emit DeliveryCommitted(taskId, task.round, msg.sender, evidenceHash);
     }
 
-    /// @notice Confirm the current delivery; at threshold, mint reward shares at the NAV of now.
+    /// @notice Confirm the current delivery; at threshold, mint exactly `rewardShares` to the worker.
     function confirm(uint256 taskId, bytes calldata evidence) external nonReentrant {
         Task storage task = _task(taskId);
         _require(taskId, task, Status.Active);
@@ -216,17 +209,13 @@ contract WorkManager {
         emit DeliveryConfirmed(taskId, round, msg.sender, count);
 
         if (count == task.verifierThreshold) {
-            uint256 treasuryValue = shares.treasuryValue();
-            uint256 supply = shares.totalSupply();
-            uint256 sharesToMint = shares.navSharesFor(task.rewardValue);
             task.status = Status.Complete;
-            task.sharesMinted = sharesToMint;
             address[] memory to = new address[](1);
             uint256[] memory amounts = new uint256[](1);
             to[0] = task.worker;
-            amounts[0] = sharesToMint;
+            amounts[0] = task.rewardShares;
             baal.mintShares(to, amounts);
-            emit TaskVerified(taskId, task.worker, task.rewardValue, sharesToMint, treasuryValue, supply);
+            emit TaskVerified(taskId, task.worker, task.rewardShares);
         }
     }
 
