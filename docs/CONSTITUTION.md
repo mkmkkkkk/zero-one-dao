@@ -19,7 +19,8 @@ Article III. Decision
 Article IV. Execution
 1. The one who proposed, or whoever the proposal names, leads the execution with the resources voted.
 2. What is gained returns to the treasury and belongs to all members in proportion to their shares. What is lost is borne by all in proportion.
-3. An outcome, good or bad, changes no rule and no member's standing. Judging a person is for members to do when they next vote, not for this constitution.
+3. A running proposal may be changed, given more, stopped, or replaced only by a new proposal that passes; the treasury then does what the new code says.
+4. An outcome, good or bad, changes no rule and no member's standing. Judging a person is for members to do when they next vote, not for this constitution.
 
 Article V. Exit
 1. Any member may leave at any time and take their proportional share of everything the treasury holds.
@@ -29,8 +30,8 @@ Article VI. Work
 1. Work is paid in shares as the proposal states, after the verifiers named in the proposal confirm it.
 2. The one who proposed the work may not be its verifier.
 
-Article VII. Amendment
-This constitution is amended by a proposal like any other.
+Article VII. Permanence
+This constitution is not amended. Everything it leaves open, the members decide by proposal.
 
 ---
 
@@ -55,7 +56,8 @@ This constitution is amended by a proposal like any other.
 第四條 執行
 一、提案人，或提案指定的人，帶著投票通過的資源牽頭執行。
 二、所得回到金庫，按份額屬於全體成員；所失由全體按份額承擔。
-三、結果無論好壞，不改變任何規則，不改變任何成員的地位。評判一個人，是成員下次投票時的事，不是本憲法的事。
+三、執行中的提案，只能由新的提案通過後予以修改、追加、停止或替換；金庫隨即按新代碼行事。
+四、結果無論好壞，不改變任何規則，不改變任何成員的地位。評判一個人，是成員下次投票時的事，不是本憲法的事。
 
 第五條 退出
 一、任何成員可以隨時離開，帶走金庫所持一切的比例份額。
@@ -65,5 +67,5 @@ This constitution is amended by a proposal like any other.
 一、工作按提案所寫以份額支付，經提案指定的驗證者確認後發放。
 二、提出工作的人不得擔任其驗證者。
 
-第七條 修訂
-本憲法經提案修訂，與其他提案無異。
+第七條 永久
+本憲法不修訂。它未規定的一切，由成員經提案決定。
