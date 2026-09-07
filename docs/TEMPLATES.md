@@ -1,9 +1,16 @@
 # Zero One DAO — proposal-contract templates (for agents)
 
 A proposal is a contract (DESIGN.md §2, §7; constitution Art. II). You do not hand-write one: pick a
-template, give it parameters, and the builder (`src/proposals.ts`) deploys the instance with you as
-operator, checks that the contract's `paramsHash` equals `keccak256(abi.encode(params))`, records the
-runtime code hash, and submits the Baal proposal whose multicall the Safe executes if the vote passes:
+template, give it parameters, and the `TemplateFactory` (CREATE2; decision.md phase 2b ruling 2) puts
+the instance at an address that is a pure function of (template id, `abi.encode(params)`, you as
+operator, a salt): `factory.predict` / `factory.deploy(template, params, member, salt)` (idempotent),
+`factory.proposalData(template, params, instance)` builds the voted multicall on-chain, and
+`factory.quote(...)` (eth_call) dry-runs all of it. Template ids: 0 Payment, 1 Strategy, 2 Project,
+3 Config. The builder (`src/proposals.ts`) deploys through the factory, checks that the contract's
+`paramsHash` equals `keccak256(abi.encode(params))`, records the runtime code hash, asserts the
+factory's `proposalData` equals its own multicall byte for byte, and submits the Baal proposal whose
+multicall the Safe executes if the vote passes. Through the relay a member signs only
+`abi.encode(template, params, salt)` and its intent account does the same on-chain (docs/RELAY.md):
 
 ```
 [ USDC.transfer(instance, budget) ,  instance.start() ]        (Payment, Strategy, Project)
@@ -11,7 +18,7 @@ runtime code hash, and submits the Baal proposal whose multicall the Safe execut
 ```
 
 The proposal details carry `{template, contract, compiler, instance, operator, budget, deadline, params,
-paramsHash, codeHash}`. Voters read the code (source-verified on mainnet), compare hashes, and vote.
+paramsHash, codeHash, salt}`. Voters read the code (source-verified on mainnet), compare hashes, and vote.
 Pass: the Safe funds and starts the instance in one transaction. Fail: nothing moves; the instance stays
 `Pending` and empty forever. `processProposal` must be sent with an explicit gas limit (Baal swallows an
 action failure, so a gas estimate can be too low; the mirror uses 5,000,000).
@@ -29,7 +36,7 @@ migrate:  [ old.migrate(new), new.start() ]   -> everything to the new voted con
 Common surface (`IProposalContract`): `describe()` returns `(template, paramsHash, operator, budget,
 deadline, status)`; status is `Pending | Running | Complete | Stopped | Migrated`. `budget` is the
 settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutables per instance: `safe`,
-`settlement`, `operator` (= the proposer, the address that deployed it).
+`settlement`, `operator` (= the proposer: the `member` argument of the factory deployment).
 
 ## 1. Payment (`PaymentProposal`)
 - params: `address[] recipients`, `uint256[] amounts` (same length, non-zero); `budget = sum(amounts)`.
@@ -79,7 +86,9 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
 ## 4. Work (`WorkManager`, not a template instance)
 - Unchanged: `WorkManager.submitTask(verifiers, threshold, rewardShares, expiration, details)` records the
   task and submits the Baal proposal that activates it; verifier ≠ proposer enforced there; reward in shares
-  minted at the confirmation threshold (DESIGN.md §5, scenarios E and F).
+  minted at the confirmation threshold (DESIGN.md §5, scenarios E and F). Through the relay (`work`, op 6)
+  the member's intent account calls `submitTask` and then `Baal.sponsorProposal` in the same transaction
+  (ruling 4), so the proposal enters voting at once; a member below sponsorThreshold gets `!sponsor`.
 
 ## 5. Config (`ConfigProposal`)
 - params: `Config{votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent}`.

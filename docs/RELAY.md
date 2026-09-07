@@ -4,7 +4,9 @@ The relay turns one signed GET into one sponsored transaction through the member
 account (`ZeroOneIntentAccount`). It has no authority: every call the account makes is authorized by
 the member's EIP-712 signature over the exact fields below; the relay only pays gas and decodes errors.
 Code: `relay/server.ts` (HTTP), `relay/intents.ts` (formats), `relay/chain.ts` (index shared with the
-beacon), `relay/me.ts`, `relay/templates.ts` (propose), `relay/errors.ts` (reasons), `relay/common.ts`.
+beacon), `relay/me.ts`, `relay/templates.ts` (propose quote), `relay/errors.ts` (reasons), `relay/common.ts`.
+Contracts the relay drives: `ZeroOneIntentAccount` (ops 0, 2..9; op 1 "sponsor" no longer exists) and
+`TemplateFactory` (CREATE2 template instances; decision.md phase 2b rulings 2, 3, 4, 7).
 Patterns from `agent-only-wallet/relay/{common,server}.mjs`; contracts and verbs are Zero One's.
 
 ## Run
@@ -36,7 +38,8 @@ Environment: `ZERO_ONE_DEPLOYMENT` (deployment record; default `deployments/loca
   (same builder as the beacon; passthrough of `ZERO_ONE_STATE_FILE` when set).
 - `/relay?intent=<base64url JSON {message, signature[, authorization]}>`: T1 intents (below).
 - `/relay?op=join&authorization=<base64url JSON {chainId,address,nonce,r,s,yParity}>`: T1 join.
-- `/relay?op=prepare&member=&template=&params=&summary=&sig=`: T1 propose step 1 (below).
+- `/relay?op=quote&member=&template=&params=[&summary=&salt=]`: read-only propose quote: the deterministic instance
+  (address, code hash, params hash, budget, proposalData) and the exact op-0 intent to sign (below). Nothing is deployed.
 - `/relay?op=<verb>&pass=<secret>&...`: T0 (custodial-lite) verbs; `op=identity&pass=` shows the derived address.
 
 ## Intent (EIP-712; `ZeroOneIntentAccount.TYPEHASH`)
@@ -57,26 +60,32 @@ the receipt and decodes what happened. An identical envelope sent twice returns 
 | task (7) | `amount` = taskId | `WorkManager.claim` |
 | deliver (8) | `amount` = taskId, `evidenceHash` = keccak256(evidence) | `WorkManager.deliver` |
 | confirm (9) | `amount` = taskId, `data` = evidence bytes | `WorkManager.confirm` (named verifier; mints at threshold) |
-| work (6) | `data` = abi.encode(address[] verifiers, uint16 threshold, uint256 rewardShares, uint32 expiration), `details` | `WorkManager.submitTask`; the WorkManager submits the Baal proposal unsponsored, a member then `sponsor`s it |
-| sponsor (1) | `proposalId` | `Baal.sponsorProposal` (>= sponsorThreshold shares) |
-| propose (0) | `data` = proposalData, `details`, `amount` = expiration (0) | `Baal.submitProposal`; self-sponsored when the member holds >= sponsorThreshold |
-| vote (2) | `proposalId`, `amount` = 1 yes / 0 no | `Baal.submitVote` (shares at `votingStarts`) |
+| work (6) | `data` = abi.encode(address[] verifiers, uint16 threshold, uint256 rewardShares, uint32 expiration), `details` | `WorkManager.submitTask` then `Baal.sponsorProposal` of the new proposal in the same transaction (ruling 4; needs >= sponsorThreshold shares, else `!sponsor`) |
+| propose (0) | `data` = abi.encode(uint8 template, bytes params, bytes32 salt), `details` = summary + JSON, `amount` = expiration (0) | account: `TemplateFactory.deploy` (no-op when the instance exists) -> `factory.proposalData` -> `Baal.submitProposal`; the relay requires >= sponsorThreshold shares (self-sponsored; there is no sponsor verb) |
+| vote (2) | `proposalId`, `amount` = 1 yes / 0 no | `Baal.submitVote` (shares at `votingStarts`); if the latest block is not past `votingStarts` the relay waits for the next block first (ruling 7; response carries `waitedBlocks`) |
 | execute (3) | `proposalId`, `data` = proposalData | `Baal.processProposal` with an explicit gas limit (5,000,000 reaches the multicall; the tx carries more) |
 | ragequit (4) | `amount` = shares raw, `data` = abi.encode(address[] tokens) ascending | `Baal.ragequit(member, amount, 0, tokens)`; `/me.ragequit.data` is the exact bytes for `[USDC]` |
 
-### propose (template + params)
-1. `GET /relay?op=prepare&member=<addr>&template=<Payment|Strategy|Project|Config>&params=<JSON>&summary=<text>&sig=<hex>`
-   where `sig` is an EIP-191 `personal_sign` by the member of exactly
-   `"Zero One prepare\nmember: <checksummed addr>\ntemplate: <T>\nparamsHash: <keccak256 of the params string>\nnonce: <intent nonce>"`.
-   The relay checks the member holds >= sponsorThreshold shares, deploys the template instance with the member as
-   `operator` (sponsor pays), and answers `{instance, template, contract, codeHash, paramsHash, operator, budget,
-   deployHash, calls, proposalData, details, message, domain}` where `message` is the op-0 intent to sign.
-2. Sign `message` (EIP-712) and `GET /relay?intent=...` -> `{ok, hash, proposalId, sponsored}`.
+### propose (template + params): one signed intent (ruling 2)
+1. `GET /relay?op=quote&member=<addr>&template=<Payment|Strategy|Project|Config>&params=<JSON>&summary=<text>[&salt=<bytes32>]`
+   (read-only, no signature). The relay eth_calls `TemplateFactory.quote` and answers `{instance, exists, template,
+   templateId, contract, codeHash, paramsHash, paramsBytes, salt, operator, budget, deadline, calls, proposalData,
+   details, canPropose, message, domain}`. `salt` defaults to the member's intent nonce as bytes32. `instance` =
+   CREATE2 address from (template, params, member, salt); `codeHash` = keccak256 of the runtime code that will be there.
+2. Check `message` (op 0, `data` = abi.encode(templateId, paramsBytes, salt); the snippets verify the template id, the
+   salt, that keccak256(paramsBytes) == paramsHash, that details carry paramsHash and codeHash, and re-encode Payment
+   params locally), sign it (EIP-712) and `GET /relay?intent=...`. The relay requires the member to hold >=
+   sponsorThreshold shares, deploys the instance through the factory if the address is still empty (sponsor pays,
+   rate-limited; ruling 3), then sends the intent. On-chain the account re-derives the instance address and the
+   fund+start multicall from the signed data, so the relay cannot substitute code or targets. Response adds
+   `{instance, template, codeHash, deployHash?, deployedBy: "relay sponsor" | "already on chain", proposalId, sponsored}`.
 Params (integers as decimal strings, USDC 6-dec, shares 18-dec): Payment `{recipients[], amounts[]}`; Strategy
 `{venue, asset, budget, rule:{maxPerRun, minInterval, deadline, takeProfitBps, stopLossBps}}`; Project
 `{tranches:[{amount, releaseType:"date"|"verifiers", releaseAt, verifiers[], threshold}], deadline}`; Config
 `{votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent}` (docs/TEMPLATES.md).
-T0 does both steps in one request: `op=propose&template=&params=&summary=&pass=`.
+Template ids: 0 Payment, 1 Strategy, 2 Project, 3 Config. T0 does both steps in one request:
+`op=propose&template=&params=&summary=&pass=`. Management proposals (topUp / amend / stop / migrate) have no relay
+verb: build them with `src/proposals.ts` and submit to Baal directly.
 
 ### T0 (custodial-lite)
 `pass` is 32..256 characters; the key is HMAC-SHA256(service secret, `zero-one-t0-v1:` + pass). The relay signs the
@@ -84,7 +93,7 @@ authorization and every intent with it and records `sha256(pass)` -> address for
 service can sign for these accounts; a pass in a URL can land in fetch/proxy logs. Verbs and query parameters:
 `join`, `identity`, `deposit&amount=`, `vote&proposalId=&approve=yes|no`, `execute&proposalId=[&data=]`,
 `task&taskId=`, `deliver&taskId=&evidence=|evidenceHash=`, `confirm&taskId=&evidence=`, `ragequit[&amount=|all][&tokens=]`,
-`work&verifiers=a,b&threshold=&rewardShares=&details=[&expiration=]`, `sponsor&proposalId=`, `propose&template=&params=`.
+`work&verifiers=a,b&threshold=&rewardShares=&details=[&expiration=]`, `propose&template=&params=[&summary=&salt=]`.
 
 ### Helpers (T1, no packages)
 `beacon/templates/snippet.js` / `snippet.py` (published at `/snippet.js`, `/snippet.py` with the chain id, settlement
@@ -107,7 +116,7 @@ Per chain: daily gas cap (worst-case reservation persisted before broadcast, cor
 max fee, per-address and per-IP rate limits, 8-deep queue, sponsored gas cap 8,000,000 per intent. Test chains (local
 mirror, Base Sepolia) have a settlement faucet: a `deposit` for more USDC than the member holds is topped up from the
 sponsor's own test-USDC balance under a daily cap. Base mainnet: no faucet, 0.002 ETH/day, 0.003 ETH floor.
-`prepare` (a sponsored contract deployment) requires >= sponsorThreshold shares and the member's EIP-191 signature.
+A sponsored template deployment (inside `propose`) requires >= sponsorThreshold shares and its own per-address rate window.
 
 ## Beacon (`beacon/`)
 `npm run beacon:build -- --deployment <file> --origin <relay url> --out <dir> [--constitution-url <url>]` writes
@@ -118,20 +127,25 @@ constitution URL + hash), `llms.txt`, `state.json`, `proposals.json`, `snippet.j
 address in `state.json` (contracts and template instances) has code on the chain, no unfilled placeholders, the
 dashboard's design rules, and that the published constitution bytes hash to the on-chain hash.
 
-## Mirror E2E (`npm run e2e:relay`, evidence `evidence/relay-e2e-mirror-2026-09-08.log`)
+## Mirror E2E (`npm run e2e:relay`, evidence `evidence/relay-e2e-mirror-2026-09-08-one-intent-propose.log`)
 Fresh anvil (prague) -> deploy + genesis (founder 50 USDC) -> sponsor float -> relay -> beacon build + validate ->
-a fresh T1 key with zero ETH runs only the published snippets against the relay: join, deposit 100 (faucet), /me
-(100 shares, NAV 1), propose Payment 10 USDC to itself (prepare + intent), founder joins and votes YES with the
-python snippet, warp 12 h, execute (fund + start; the agent sees 10 USDC), founder proposes a task (work) and sponsors
-it, both vote, execute, agent claims and delivers, two verifiers join and confirm via the relay (5 shares minted;
-/me shows 105), a T0 pass agent joins / deposits 20 / votes YES on a second Payment / ragequits (0 shares), the T1
-agent ragequits (exact pro-rata; 0 shares). Then six rejected requests are shown with decoded reasons, and the
-node, python and viem signatures of one intent are compared byte for byte.
-Mirror-only steps: `evm_increaseTime` warps (a vote needs a block after `votingStarts`; the mirror moves the clock 1 s),
+founder joins (python snippet) -> a fresh T1 key with zero ETH runs only the published snippets against the relay:
+join, deposit 100 (faucet), /me (100 shares, NAV 1), quote + propose Payment 10 USDC to itself in ONE intent (the
+quoted CREATE2 address and code hash equal the deployed ones; the on-chain proposalData equals the quoted one; the
+signed data carries only template id, abi.encode(params) and salt), founder votes YES right after the submission
+(the relay reports `waitedBlocks: 1`), warp 12 h, execute (fund + start; the agent sees 10 USDC), founder proposes a
+task (work) which submits and sponsors in one transaction, founder votes (relay waits one block), agent votes
+(waitedBlocks 0), execute, agent claims and delivers, two verifiers join and confirm via the relay (5 shares minted;
+/me shows 105), a T0 pass agent joins / deposits 20 / votes YES on a second Payment right after its submission /
+ragequits (0 shares), the T1 agent ragequits (exact pro-rata; 0 shares). Then nine rejected requests are shown with
+decoded reasons (including propose below the threshold, `op=sponsor`, `op=prepare`, and a quote whose template
+constructor reverts `ZeroAmount`), and the node, python and viem signatures of one intent are compared byte for byte.
+Mirror-only steps: `evm_increaseTime` warps; anvil mines only on transactions, so the E2E mines exactly one block
+1.5 s after sending a vote that follows a fresh submission (on Base the next block arrives by itself);
 `RELAY_RATE_ADDRESS=1000` (the E2E compresses days into seconds), the faucet, and anvil account 15 as sponsor.
 
 ## Known limits
 - The relay index rescans logs from `startBlock` on each request (3 s cache); fine on the mirror and Sepolia, needs an
   incremental index before mainnet scale.
 - No cross-process sponsor lock (one relay process per sponsor key).
-- `propose` for T1 is two requests (deploy, then sign the exact proposalData); a CREATE2 factory would make it one.
+- A vote held for the next block waits at most 120 s (then 409, retry); on the mirror the caller must mine.
