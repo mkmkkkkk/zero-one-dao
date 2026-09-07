@@ -42,3 +42,4 @@
 - No founder allocation of any kind. Founder = ordinary member: 50 USDC genesis deposit → 50 shares (100% at day zero), diluted at NAV by later deposits and by work rewards voted by members. Operating work paid via task proposals by vote.
 - Rejected: proportional 10% stream (user: 「不需要 2 的垃圾复杂设计」) and any absolute grant.
 - Phase 1b (proportional stream) stopped; phase 1c implements: remove FounderStream entirely; share-denominated task rewards; USDC 6-dec settlement; scenario F as rewritten.
+- 2026-09-08 capital mechanics completed (DESIGN.md §6b): instant NAV deposits in USDC + tribute proposals for anything else; price list by vote; instant path pauses when unpriced assets or passed-unprocessed proposals exist; ragequit any time; guildKick as the only discipline; nine relay verbs; scenarios G–K queued for phase 1d.
