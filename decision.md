@@ -17,3 +17,8 @@
 - Rejected: locking manager permission at genesis; gating deposits on membership in code; AOW tranche/sortition/governor hooks in the WorkManager; referral rewards in phase 1 (not in the reuse list).
 - Known trap, procedural not code: NAV fallback (1 settlement unit = 1 share when treasury or supply is 0) means a first deposit made after the founder stream has minted shares is shared pro-rata with those founder shares. Make the genesis deposit first (mirror seed does).
 - ZeroOneIntentAccount (EIP-7702 adapter) compiles and deploys but is not exercised by A–E; relay + beacon are work-order step 2.
+
+## 2026-09-08 phase 1 review (dev as designer) — amendments
+- Verified: scenarios A–E pass on a local anvil (re-run by dev, all PASS).
+- Rejected from the phase-1 implementation: FounderStream as an absolute 1,000,000 shares and the NAV 1:1 fallback with founder shares outstanding (a first depositor would own ~0.005% of a treasury it fully funded).
+- Amended design: founder stream = 10% of total supply × elapsed/4y, claimable any time, never above 10%; task rewards denominated in shares (voters decide), no NAV dependence; settlement asset USDC (Base); genesis = founder deposits 50 USDC → 50 shares before any founder claim; new scenario F covers the founder proportion and a later depositor.
