@@ -75,3 +75,14 @@
   7. Payment `amend` (Pending only) resets `budget` to the new list's sum; leftover funding returns to the Safe at `start()`.
   8. MockDex and MOCK use 6 decimals (reusing `TestToken`); `price` = settlement units per whole asset unit.
 - Left for the designer: DESIGN.md §7 says the Config template may "amend the constitution hash" — contradicted by §10 / Art. VII (immutable); the Config template changes governance parameters only. `textUrl` mainnet value. Whether `stop()`/`migrate()` of a Strategy should depend on the venue (point 2).
+
+## 2026-09-08 phase 2a rulings (dev as designer) on the worker's design questions
+1. Strategy demo rule (DCA-in, take-profit, stop-loss, deadline, minInterval): accepted as the mirror template. On mainnet a proposal's code is whatever the proposer deploys; templates are starting points, not limits.
+2. stop()/migrate(): move raw holdings, never depend on the venue (ruled; worker's unwind-first version to be changed). Unwind is run()'s job before the deadline.
+3. Project topUp records money; amend replaces unreleased tranches; a budget raise = topUp + amend in one proposal: accepted.
+4. Project deadline + end() sweep to the Safe: accepted.
+5. Config template applies Baal.setGovernanceConfig from the Safe and verifies in start(): accepted. DESIGN §7.5 corrected: nothing amends the constitution hash.
+6. Constitution.textUrl written once in the constructor, no writer: accepted. Mainnet value = the GitHub raw URL of docs/CONSTITUTION.md at the tagged genesis commit (public repo mkmkkkkk/zero-one-dao); the hash is the binding part.
+7. paramsHash = keccak of the latest voted params: accepted.
+8. MockDex on testnet; a Uniswap v3 adapter implementing IStrategyVenue is required before any mainnet Strategy proposal (phase 3, not blocking genesis).
+9. Explicit processProposal gas (5M) in mirror and relay: accepted, written into DESIGN §7.
