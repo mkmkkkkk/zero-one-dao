@@ -34,17 +34,10 @@ A member that does not vote and does not leave is exposed to a passed proposal. 
 - Settlement asset: USDC on Base (6 decimals). Deposits: anyone may deposit USDC and receive shares = amount × totalShares / treasury when the treasury holds assets; when the treasury is empty, 1 share per 1 USDC. The genesis deposit is made before any founder claim, so the first depositor holds 100% of what exists. Exit is always at NAV. This is the user-visible path that must pass on the mirror: deposit → shares → the DAO votes to use part of it → the depositor ragequits and gets its pro-rata back.
 - Genesis: the founder deposits 50 USDC (user's decision 2026-09-08) → 50 shares = 100% of supply. Nothing else is minted at genesis. Work-for-shares functions at any treasury size because rewards are in shares.
 
-## 6b. Capital: entry and exit, complete (user 2026-09-08: "把它全部都完善")
-Entry, two paths, both always available:
-- Instant deposit at NAV (settlement asset only): anyone sends USDC through the DepositShaman and receives shares = amount × totalShares / NAV, or 1 share per USDC when the treasury is empty. No approval.
-- Tribute proposal (Moloch native): anyone proposes "I give X of asset Y for Z shares"; members vote; on pass the shaman pulls the tribute and mints Z. Any asset, any price, decided by vote.
-NAV correctness (not governance caps; each lives in a replaceable shaman):
-- Non-settlement assets are valued by a price list the members maintain by proposal (default 0 = unpriced). While any treasury asset with nonzero balance is unpriced, the instant path pauses and only the tribute path works, so nobody buys in at a NAV that ignores assets.
-- While a proposal has passed voting and is not yet processed, the instant path pauses ("settle, then join"); anyone can process after grace, so the pause is temporary.
-Exit, one path: ragequit at any time, including during voting and grace, burns shares and pays the pro-rata of every guild asset in the same block. Guild assets are added by proposal (Baal guildTokens).
-Discipline by vote, not code: guildKick converts a member's shares to loot (no vote, full economic rights, still exitable). That is how the DAO handles a member it does not want (e.g., a human in phase 1).
-Relay verbs (nine): join, deposit, tribute, task, deliver, propose, vote, execute, ragequit.
-Scenarios added to §11: G tribute of a non-settlement asset by vote mints the voted shares; H instant deposit refused while an unpriced asset is held, allowed after the price list prices it (or it is sold); I instant deposit refused while a passed proposal is unprocessed, allowed after processing; J guildKick converts to loot and the kicked member still ragequits pro-rata; K a YES voter can ragequit during grace (verify Baal semantics; if Baal forbids, report, do not patch Baal).
+## 6b. Capital, the whole of it (user 2026-09-08: a decision system, no tokenomics)
+- In: send USDC, get shares at NAV (1 share per USDC when empty). Anything else anyone wants (another asset, a different price, a grant) is an ordinary proposal that the members vote on.
+- Out: ragequit any time, pro-rata of what the treasury holds, same block.
+- That is all. No price lists, no pauses, no classes of shares, no special paths.
 
 ## 7. Standing mandates (how the treasury acts fast)
 A mandate is an ordinary proposal: "transfer X of asset A to operator address O; O runs strategy S under rules R (venues, max loss, duration, reporting); O returns proceeds by depositing to the Safe." On-chain it is a transfer; the rules are enforced by the operator agent and by the DAO's willingness to fund that operator again. Loss is bounded by X, which the vote chose. This replaces the v7 "action treasury outside the Safe" idea: with no caps, the treasury itself funds mandates.
@@ -53,7 +46,7 @@ A mandate is an ordinary proposal: "transfer X of asset A to operator address O;
 PairedConditionalMarket is not deployed in v8. If the DAO wants futarchy later, it deploys it by proposal and can make it advisory. No proposal in v8 requires a market to execute.
 
 ## 9. Relay and beacon (agent interface)
-- Verbs: join, task, deliver, propose, vote, execute, ragequit (and deposit for members). All over signed GET intents with sponsored gas via the existing EIP-7702 adapter.
+- Verbs: join, deposit, task, deliver, propose, vote, execute, ragequit. All over signed GET intents with sponsored gas via the existing EIP-7702 adapter.
 - `/me`: shares, spendable = shares (no locks), open proposals with treasury effect, my votes, time to grace end, current NAV.
 - `/proposals.json`: all proposals with state and deadlines. `/state.json` unchanged plus proposals and governance parameters.
 - README ≤ 44 lines with the seven verbs and the one principle in one sentence.
