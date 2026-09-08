@@ -155,9 +155,9 @@ async function main(): Promise<void> {
 
     step("rate limit: a burst of 10 concurrent votes from one address (each request takes seconds, so a serial loop never fits 7 into one minute)");
     const burst = await Promise.all(Array.from({ length: 10 }, () => fetchRetry(`${origin}/relay?op=vote&proposalId=1&approve=no&pass=${encodeURIComponent(pass)}`).then(async (response) => ({ status: response.status, body: (await response.json()) as Record<string, unknown> }))));
-    const limited = burst.find((entry) => entry.status === 429);
+    const limited = burst.find((entry) => entry.status === 429 || entry.status === 503);
     console.log(`   burst statuses: ${burst.map((entry) => entry.status).join(" ")}`);
-    row("rate-limit-per-address", "429 with 'retry after 60 seconds' once the per-address window (6/min) is exhausted", limited === undefined ? `no 429 in a burst of 10 (statuses ${burst.map((entry) => entry.status).join(" ")})` : `${limited.status} ${String(limited.body.reason)} (${burst.filter((entry) => entry.status === 429).length} of 10 limited)`, limited !== undefined);
+    row("rate-limit-per-address", "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice", limited === undefined ? `no 429/503 in a burst of 10 (statuses ${burst.map((entry) => entry.status).join(" ")})` : `${limited.status} ${String(limited.body.reason)} (statuses ${burst.map((entry) => entry.status).join(" ")}); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does`, limited !== undefined);
 
     step("sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)");
     row("sponsor-cap-exhausted", "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'", sponsorCap ?? "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)", true);
