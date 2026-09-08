@@ -1,0 +1,70 @@
+{
+  "scenario": "scenario-F",
+  "chainId": 84532,
+  "startBlock": "46529415",
+  "founder": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "settlement": "0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b",
+  "safe": "0xbb513cb1eDe90b1A217779909128A89c17B982eD",
+  "baal": "0x0910E04Ee6Fc800e2557911005C879f9DDc4FAc8",
+  "shares": "0xCe03d10AC9BB5A063751ff51587df0b21e61a1e1",
+  "loot": "0x53fa9AaC59D50253d25F327A6DcfDc351abFD7FA",
+  "depositShaman": "0x2EB1048eAA5015928130AC92460Ca354668321E5",
+  "workManager": "0x1198864964fBC7048A54C4557da03a5C6D9C71D3",
+  "templateFactory": "0x758eD52eaE9a11eE54Bb850E919b98e391620779",
+  "templateDeployers": [
+    "0x2d00ba2e5A0Db081Ee1B4973ee3cD339380B368a",
+    "0x1aA5F99A277198B486954108F122A570Fa2DEc42",
+    "0x5a0B8a0c29A0a3d88E94a83de08D4C550E5b287C",
+    "0xbeD4D7F8A0c7b43a5aA076d10bfAe428e9437F41"
+  ],
+  "intentAccount": "0xa39f176Aff893d3603C92CE0b05b80e99a5DC3E8",
+  "constitution": "0x08aBEFff4EbcA300A540f3DA5B94eaeff7d63f31",
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "singletons": {
+    "baalSingleton": "0x60616f7748C8f6Aa60980c9cc58A180E62A356B5",
+    "moduleProxyFactory": "0x5BcC36484Ea50C7e347A7f1437eBa6Db6E7F5Cf6",
+    "safeSingleton": "0xB19AF208048f0a47a117B59aF2299c61A86e16D9",
+    "safeProxyFactory": "0x37b3703468aab5cC7d35Df8Da2194e03d5436336",
+    "multiSend": "0x1080A4fCa8f1532850C3CE57dd8FA0f60e78FAb5",
+    "deploymentTransactions": [
+      "0xf0de5bb0c902df2191a65e3a9a0ad62da61b2ba3ac132444ddd06bd8394dc154",
+      "0xdcd8aa50672b19e778dcc02cddc895938cd7cadc8e4b0c125a2ff07d85efb57e",
+      "0x272d972dabf7e2eee7791923244157c877496324dcd7195ad26f4a0b7ebb03d4",
+      "0x03724bb0c3603e6b50f694e9174d70d4bd769eaaf59b0040165b92629c4578eb",
+      "0xab0d5ec863b7900c29fe88e6bfcb35e77b339056e9c1bda45ce195fbf3342838"
+    ]
+  },
+  "txHashes": {
+    "SafeProxy": "0xe01e44274ed8e6b3646b1fa77248afc842deb8d504eb9bd6f0efd732b4807f66",
+    "BaalProxy": "0xee6c2c80179f7da00c8c9764d3bcebecc1a84d94b61480a3faf5fcb379a4cf8b",
+    "NavShareToken": "0x6dd472447e67100f2e351b910c3ee18673041949acce5930e5d4c60eb6cbc726",
+    "LootToken": "0xe36b72691eabe16e8ab28763180508a32a7b57dc11ba2f146af760072b4a1a45",
+    "DepositShaman": "0x9f83bcb88d107e8d1fc98bc041f0b3c17ce5cb557ae9e1d65095ff13379631cc",
+    "WorkManager": "0x76a26b8527fb310a4c2d841eb84ae761924a600bfbc4d6551d77afcb74661f4e",
+    "PaymentDeployer": "0xa27048805466a90875771d083183b9cd96f8320746b88f0ab85a5ed752759dc7",
+    "StrategyDeployer": "0x13183ce67ce7aecb53d1a6224a746757db4d29609e16e2797278c9fc5f1dab66",
+    "ProjectDeployer": "0x04618440f1cb691484e447e725ca62c7a155e74a14712a158118af941555f42b",
+    "ConfigDeployer": "0xe2a0d74967fadbcd3289f857809d0b8bc357a008f5f7ad04527d281b5a496271",
+    "TemplateFactory": "0x2da3ec61a3add5dd131398f27583e9f91dcc3fc57f4d58344f1ac1eb50e56aad",
+    "ZeroOneIntentAccount": "0xab10c4835206f8230ebda035ae5db0fd37a9d564f06324f271b098f93988a595",
+    "Constitution": "0xa7527ec2524b7981aa920a963ec23874e09653773203da18441ab97009ea3240",
+    "Safe.setup": "0xb8b03f821edc8c8b9184517c8e0cb87287e6e063ae4fcb16193b97268395634a",
+    "Baal.setUp": "0x5d0f6ed8a97aae6a994209eab5d7a8e62cf36c982609daa1e93d48086a35defa"
+  },
+  "actors": {
+    "F": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+    "A": "0x43cee2F76abd8b974d4b731A708613e30E663Fbf",
+    "B": "0xB210555d689363F820C6227a5bf1e1D7fc72740a",
+    "C": "0x4526D2bDb080CB3587371AAE492037efa8A32eAb",
+    "D": "0xCB7fF6781EeB02E31145C2e0AE72d3701932C6B6",
+    "O": "0x1916a5b32dDEBc1A7a4155f81304BEA8AA9d80b6",
+    "W": "0x9dE600F59834d4877DfBac2525eE8ECce20E5Bc7"
+  }
+}
