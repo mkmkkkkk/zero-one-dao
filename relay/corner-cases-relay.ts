@@ -120,6 +120,7 @@ async function main(): Promise<void> {
     const started = Date.now();
     let submitted = 0;
     let rateLimited = 0;
+    let sponsorCap: string | undefined;
     const hashes: string[] = [];
     while (submitted < spam) {
       const url = snippet("node", work, ["propose", "--key", keyFile, "--template", "Payment", "--params", dupParams, "--summary", `corner: spam ${submitted + 1}`]);
@@ -130,6 +131,11 @@ async function main(): Promise<void> {
         await sleep(10_000);
         continue;
       }
+      if (response.status === 503 && /sponsor|budget/u.test(String(body.reason))) {
+        sponsorCap = `${response.status} ${String(body.reason)} (after ${submitted} sponsored proposals)`;
+        console.log(`   sponsor cap hit: ${sponsorCap}`);
+        break;
+      }
       if (body.ok !== true) throw new Error(`spam proposal ${submitted + 1} failed: ${response.status} ${String(body.reason)}`);
       submitted += 1;
       hashes.push(String(body.hash));
@@ -138,7 +144,7 @@ async function main(): Promise<void> {
     const all = await getJson(`${origin}/proposals.json`, 200);
     const page = await getJson(`${origin}/proposals.json?limit=10`, 200);
     const openOnly = await getJson(`${origin}/proposals.json?open=1&limit=5`, 200);
-    row("spam-100-proposals", "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open", `${submitted} submitted in ${Math.round((Date.now() - started) / 1000)} s with ${rateLimited} 429 waits; total ${String(all.total)}; ?limit=10 -> ${(page.proposals as unknown[]).length} newest, nextBefore ${String(page.nextBefore)}; ?open=1&limit=5 -> ${(openOnly.proposals as unknown[]).length}`, submitted === spam && (page.proposals as unknown[]).length === 10, hashes[hashes.length - 1]);
+    row("spam-100-proposals", "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open", `${submitted} submitted in ${Math.round((Date.now() - started) / 1000)} s with ${rateLimited} 429 waits${sponsorCap ? `; stopped by the sponsor cap: ${sponsorCap}` : ""}; total ${String(all.total)}; ?limit=10 -> ${(page.proposals as unknown[]).length} newest, nextBefore ${String(page.nextBefore)}; ?open=1&limit=5 -> ${(openOnly.proposals as unknown[]).length}`, submitted === spam && (page.proposals as unknown[]).length === 10, hashes[hashes.length - 1]);
 
     step("rate limit: burst of votes from one address");
     let limited: Record<string, unknown> | undefined;
@@ -148,8 +154,8 @@ async function main(): Promise<void> {
     }
     row("rate-limit-per-address", "429 with 'retry after 60 seconds' once the per-address window is exhausted", limited === undefined ? "no 429 within 12 requests" : `${limited.httpStatus} ${String(limited.reason)}`, limited !== undefined);
 
-    step("sponsor cap: not reproducible on purpose (daily cap 0.03 ETH); the code path answers 503 'daily sponsorship budget reached'; agents can always call the contracts directly");
-    row("sponsor-cap-exhausted", "503 with a clear reason; self-pay path documented in README (addresses)", "not triggered (would need > 0.03 ETH of sponsored gas in one day); documented in docs/RELAY.md", true);
+    step("sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)");
+    row("sponsor-cap-exhausted", "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'", sponsorCap ?? "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)", true);
 
     step("beacon: state.json fields, stale flag, README hash");
     const state = await getJson(`${beacon}/state.json`, 200);

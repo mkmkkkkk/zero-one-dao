@@ -93,7 +93,9 @@ export function policyFor(chainId: number): Policy {
     return { mainnet: true, dailyWei: 2_000_000_000_000_000n, floorWei: 3_000_000_000_000_000n, maxFeePerGas: 100_000_000n, maxPriorityFeePerGas: 1_000_000n, faucet: false, faucetDailyUnits: 0n, explorer: "https://basescan.org", name: "Base" };
   }
   if (chainId === 84532) {
-    return { mainnet: false, dailyWei: 30_000_000_000_000_000n, floorWei: 1_000_000_000_000_000n, maxFeePerGas: 3_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n, faucet: true, faucetDailyUnits: 10_000n * SETTLEMENT_UNIT, explorer: "https://sepolia.basescan.org", name: "Base Sepolia" };
+    // Base Sepolia base fee sits near 0.005 gwei (observed 2026-09-08); a 3 gwei ceiling reserved 500x the
+    // real cost per request and starved a 0.01 ETH sponsor after three proposals (503). 0.05 gwei keeps 10x headroom.
+    return { mainnet: false, dailyWei: 30_000_000_000_000_000n, floorWei: 500_000_000_000_000n, maxFeePerGas: 50_000_000n, maxPriorityFeePerGas: 5_000_000n, faucet: true, faucetDailyUnits: 10_000n * SETTLEMENT_UNIT, explorer: "https://sepolia.basescan.org", name: "Base Sepolia" };
   }
   return { mainnet: false, dailyWei: 10n ** 21n, floorWei: 10n ** 18n, maxFeePerGas: 3_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n, faucet: true, faucetDailyUnits: 100_000n * SETTLEMENT_UNIT, explorer: "", name: "local mirror" };
 }
