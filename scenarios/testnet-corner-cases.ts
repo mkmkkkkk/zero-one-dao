@@ -19,7 +19,7 @@ import { BaseError, encodeFunctionData, getAddress, type Address, type Hex } fro
 import { chooseFreePort } from "../src/devnet.js";
 import { INITIAL_GOVERNANCE } from "../src/zeroOne.js";
 import { stopCalls, topUpCalls, type StrategyParams } from "../src/proposals.js";
-import { assert, boot, DAY, deployMockMarket, deposit, describeAt, expectRevert, fmt, fmtS, fund, GENESIS_DEPOSIT, LIVE, now, processProposal, propose, proposalInfo, proposeTemplate, ragequit, read, readAt, seedMembers, send, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulate, simulateAt, snapshot, stateOf, step, T, transferCall, UNIT, usdcOf, verdict, vote, warp, warpPastGrace, warpPastVoting, type Mirror, type Receipt } from "./lib.js";
+import { assert, boot, DAY, deployMockMarket, deposit, describeAt, expectRevert, fmt, fmtS, fund, GENESIS_DEPOSIT, LIVE, now, observe, processProposal, propose, proposalInfo, proposeTemplate, ragequit, read, readAt, seedMembers, send, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulate, simulateAt, snapshot, stateOf, step, T, transferCall, UNIT, usdcOf, verdict, vote, warp, warpPastGrace, warpPastVoting, type Mirror, type Receipt } from "./lib.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -182,6 +182,8 @@ async function votes(): Promise<void> {
     const submitHash = await A.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [sameBlockData, 0, 0n, "corner: same-block vote"], account: A.account, chain: A.chain, gas: 400_000n } as never);
     const voteHash = await A.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitVote", args: [sameBlockId, true], account: A.account, chain: A.chain, gas: 300_000n } as never);
     const [submitReceipt, voteReceipt] = await Promise.all([mirror.chain.publicClient.waitForTransactionReceipt({ hash: submitHash }), mirror.chain.publicClient.waitForTransactionReceipt({ hash: voteHash })]);
+    observe(mirror, submitReceipt.blockNumber);
+    observe(mirror, voteReceipt.blockNumber);
     const [submitBlock, voteBlock] = await Promise.all([mirror.chain.publicClient.getBlock({ blockNumber: submitReceipt.blockNumber }), mirror.chain.publicClient.getBlock({ blockNumber: voteReceipt.blockNumber })]);
     const sameTime = submitBlock.timestamp === voteBlock.timestamp;
     row("vote-in-submission-block", "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).", `submit block ${submitReceipt.blockNumber} t=${submitBlock.timestamp}, vote block ${voteReceipt.blockNumber} t=${voteBlock.timestamp} (${sameTime ? "same timestamp" : "later timestamp"}), vote status ${voteReceipt.status}`, sameTime ? voteReceipt.status === "reverted" : voteReceipt.status === "success", voteHash);

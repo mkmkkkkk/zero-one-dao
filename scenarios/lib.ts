@@ -382,6 +382,11 @@ function bump(mirror: Mirror, block: bigint): void {
   if (block > mirror.head) mirror.head = block;
 }
 
+/** Record a block a scenario saw through a raw receipt (transactions it sent outside sendAt/write). */
+export function observe(mirror: Mirror, block: bigint): void {
+  bump(mirror, block);
+}
+
 /** True for RPC errors that mean "this node has not seen that block yet". */
 function isLagError(error: unknown): boolean {
   const text = error instanceof Error ? error.message : String(error);
