@@ -394,7 +394,7 @@ function isLagError(error: unknown): boolean {
 }
 
 /** Retry `fn` while the answering node lags (BlockNotFound and friends); other errors surface at once. */
-async function retryLag<R>(fn: () => Promise<R>): Promise<R> {
+export async function retryLag<R>(fn: () => Promise<R>): Promise<R> {
   let last: unknown;
   for (let attempt = 0; attempt < 12; attempt += 1) {
     try {
