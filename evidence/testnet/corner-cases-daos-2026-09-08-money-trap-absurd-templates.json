@@ -1,0 +1,198 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-08T02:46:13.272Z",
+  "parts": [
+    [
+      "money",
+      true,
+      ""
+    ],
+    [
+      "trap",
+      true,
+      ""
+    ],
+    [
+      "votes",
+      false,
+      "The contract function \"submitVote\" reverted with the following signature:\n0x959e4658\n\nUnable to decode signature \"0x959e4658\" as it was not found on the provided ABI.\nMake sure you are using the correct ABI and that the error exists on it.\nYou can look up the decoded signature here: https://4byte.sourcify.dev/?q=0x959e4658.\n \nContract Call:\n  address:   0xf0DaFFB2b7f075Bc7EEE8E6D3e1995a5e3c952b4\n  function:  submitVote(uint32 id, bool approved)\n  args:                (1, true)\n  sender:    0x43cee2F76abd8b974d4b731A708613e30E663Fbf\n\nDocs: https://viem.sh/docs/contract/decodeErrorResult\nDetails: execution reverted\nVersion: viem@2.56.3"
+    ],
+    [
+      "absurd",
+      true,
+      ""
+    ],
+    [
+      "templates",
+      true,
+      ""
+    ]
+  ],
+  "rows": [
+    {
+      "id": "deposit-zero",
+      "expected": "DepositShaman reverts ZeroAmount",
+      "observed": "The contract function \"deposit\" reverted. ZeroAmount",
+      "ok": true
+    },
+    {
+      "id": "deposit-one-unit",
+      "expected": "1 unit x totalShares / treasury = 1e12 wei-shares at NAV 1 (no revert; ZeroShares only when the quote rounds to 0)",
+      "observed": "minted 1000000000000 wei-shares (quote 1000000000000); NAV 1 USDC/share",
+      "ok": true,
+      "receipt": "0xb7cbb2e3acc15fe062934724c104e4b622b63b9e29d9303ec5e4c05cb10c8983"
+    },
+    {
+      "id": "ragequit-zero-shares",
+      "expected": "Baal accepts ragequit(0, 0) as a no-op (burns nothing, pays nothing) or reverts; either way nothing moves",
+      "observed": "NO REVERT; W shares 0",
+      "ok": true
+    },
+    {
+      "id": "ragequit-yes-voter-during-voting",
+      "expected": "ragequit succeeds during Voting; yesVotes unchanged (checkpointed weight)",
+      "observed": "A paid 1000 USDC (expected 1000); yes 2000 -> 2000; state Voting",
+      "ok": true,
+      "receipt": "0x3ba25ff6b5bf9f04b4b75436996f07b650b4a17612b564e54210575b1f97bd89"
+    },
+    {
+      "id": "ragequit-during-grace",
+      "expected": "allowed (scenario B): partial exit pays pro-rata during Grace",
+      "observed": "C burned 10 -> 10 USDC; state Grace",
+      "ok": true,
+      "receipt": "0xab704764b54d28567af84b084bd4b8b788c75e3419a9c307a9232410cf74c577"
+    },
+    {
+      "id": "proposal-survives-exits",
+      "expected": "passes: yes > no and retention >= 66% (A's 1000 + C's 10 of 3050 = 33.1% left)",
+      "observed": "passed=true actionFailed=false",
+      "ok": true,
+      "receipt": "0x06cfc546e4c5796b7f1aaa66857fa583e8c9352876e5082a5057933aeb6a6a07"
+    },
+    {
+      "id": "ragequit-second-asset",
+      "expected": "MOCK paid pro-rata only when named in the token list (Baal has no guildTokens registry; a strategy must return USDC or members name the asset)",
+      "observed": "B received 122.549019 MOCK of 500 at 500/2040.000001 shares",
+      "ok": true,
+      "receipt": "0x22fbc646b474a23ed324abeeb25310439f60f46ffaedabc244003645089d0be7"
+    },
+    {
+      "id": "ragequit-token-order",
+      "expected": "Baal requires ascending token addresses ('!order')",
+      "observed": "!order Error",
+      "ok": true
+    },
+    {
+      "id": "last-member-ragequit",
+      "expected": "supply 0; USDC treasury 0 (dust-free since payouts are exact); DAO alive",
+      "observed": "supply 0; Safe USDC 0; F paid 49.754904",
+      "ok": true,
+      "receipt": "0x415a38fd934ca9cf30733ad47f15a9feb6acf8c69328d24a37fc11e1dcef7beb"
+    },
+    {
+      "id": "deposit-after-empty",
+      "expected": "1 USDC -> 1e18 shares again (empty-treasury price)",
+      "observed": "D deposited 3 USDC -> 3 shares",
+      "ok": true,
+      "receipt": "0x2e57a6bfb159b8edfd6ffd25d94af7c4d66e6b9c2cfe6292e4c329ec84e24dae"
+    },
+    {
+      "id": "trap-quote",
+      "expected": "quote(50 USDC) = 0 while supply == 0 and treasury > 0",
+      "observed": "quote 0",
+      "ok": true,
+      "receipt": "0x190ac291d3d81ffea5ecc23ce1ac673e0dcc44b349c06765172173b3a0cf5c37"
+    },
+    {
+      "id": "trap-deposit",
+      "expected": "DepositShaman reverts ZeroShares(amount)",
+      "observed": "The contract function \"deposit\" reverted. ZeroShares",
+      "ok": true
+    },
+    {
+      "id": "trap-genesis-refused",
+      "expected": "genesisDeposit() refuses: treasury must be empty (deploy + genesis run in one script; never pre-fund the Safe)",
+      "observed": "ASSERTION FAILED: genesis deposit requires an empty treasury (never pre-fund the Safe)",
+      "ok": true
+    },
+    {
+      "id": "trap-relay-refuses",
+      "expected": "relay answers a decoded ZeroShares reason (no transaction)",
+      "observed": "422 reverted: ZeroShares(amount=50000000) error=ZeroShares",
+      "ok": true
+    },
+    {
+      "id": "trap-terminal",
+      "expected": "documented terminal state: with 0 shares nobody can sponsor a proposal; the deployment order (deploy + genesis in one script) is the only guard",
+      "observed": "no path out: sponsorThreshold 1 share, totalShares 0 (docs/PARAMETERS.md deposit-pricing trap)",
+      "ok": true
+    },
+    {
+      "id": "vote-in-submission-block",
+      "expected": "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).",
+      "observed": "submit block 46532762 t=1788833812, vote block 46532762 t=1788833812 (same timestamp), vote status reverted",
+      "ok": true,
+      "receipt": "0x082ea3a25b091f8b5f23197155d4f06652515740f6cc0086c601b1f7b627aeee"
+    },
+    {
+      "id": "absurd-grace-zero-refused",
+      "expected": "Baal.setGovernanceConfig treats 0 as 'unchanged'; ConfigProposal.start() verifies the exact values -> NotApplied -> actionFailed; periods unchanged",
+      "observed": "passed=true actionFailed=true; votingPeriod 120 gracePeriod 120",
+      "ok": true,
+      "receipt": "0x58ac63f3f2bac2866d537ece324aeb4ddac4c7c16817d7908eef3d3d935bff85"
+    },
+    {
+      "id": "absurd-config-applied",
+      "expected": "the Config proposal passes and Baal reports votingPeriod 1, gracePeriod 1",
+      "observed": "passed=true actionFailed=false; votingPeriod 1 gracePeriod 1",
+      "ok": true,
+      "receipt": "0x52e7bd225b8f9116ad7ca1e4f65cefa262c33f5876a5af5b5fc37b590b8be874"
+    },
+    {
+      "id": "absurd-config-consequence",
+      "expected": "with a 1 s voting window no block on a 2 s chain can carry a vote (a vote needs votingStarts < timestamp < votingEnds); 0 yes > 0 no is false, so nothing passes again, a repair included: a terminal state the members chose (mirror anvil mines 1 s blocks and may still fit a vote)",
+      "observed": "state after one block: Defeated; vote -> !voting Error; process reverted: The contract function \"processProposal\" reverted with the fo",
+      "ok": true,
+      "receipt": "0xe2187ad3b528e8d4b44168e393984efe2c18e1ae2b5cbf5d8abdbd680209ca08"
+    },
+    {
+      "id": "strategy-deadline-before-first-run",
+      "expected": "start() succeeds (Running, funded); the first run() sees the deadline and unwinds: Complete, budget back in the Safe, nothing bought",
+      "observed": "start passed=true; status Running -> Complete; Safe 2750 -> 3050; instance MOCK 0",
+      "ok": true,
+      "receipt": "0xabbd8b63a7fffd4846ce5e5a0bbf68922fc92c05b6c30640fd147f902247690e"
+    },
+    {
+      "id": "strategy-run-spam-stranger",
+      "expected": "run() on a Complete strategy reverts WrongStatus (harmless)",
+      "observed": "The contract function \"run\" reverted. WrongStatus",
+      "ok": true
+    },
+    {
+      "id": "strategy-stop-loss",
+      "expected": "value 120 <= 140 (budget - 30%): run() unwinds, Complete, 120 USDC back to the Safe",
+      "observed": "value 120; status Complete; Safe 2850 -> 2970",
+      "ok": true,
+      "receipt": "0x0dbce709d67731563e8d2e85f9af65bcf10ebbbc862ec46abe5d475479439404"
+    },
+    {
+      "id": "project-topup-beyond-treasury",
+      "expected": "multicall reverts (transfer exceeds balance) -> actionFailed=true, treasury untouched",
+      "observed": "passed=true actionFailed=true; Safe 2970 -> 2970",
+      "ok": true,
+      "receipt": "0xacac6a49a3e7903897b86fbdc15f8dd82d04fa46d38f33da9ef69b9bb8608818"
+    },
+    {
+      "id": "payment-reverting-recipient",
+      "expected": "N/A for ERC-20 settlement: USDC.transfer never calls the recipient, so a contract without receive() cannot revert it; the multicall only reverts when the Safe lacks balance (covered above)",
+      "observed": "documented; scenario I covers stop() returning funds and amend mid-tranche; scenario H covers verifiers that never confirm (end() after the deadline)",
+      "ok": true
+    },
+    {
+      "id": "strategy-migrate-non-template",
+      "expected": "migrate(target) moves raw holdings to any address the members vote for (decision.md phase 2a ruling 2); no code check on the target; scenario J covers a template target",
+      "observed": "stop()/migrate() are onlySafe: The contract function \"migrate\" reverted. OnlySafe",
+      "ok": true
+    }
+  ]
+}
