@@ -1,0 +1,74 @@
+{
+  "host": "Michaels-MacBook-Air-652.local",
+  "at": "2026-09-08T02:38:37.453Z",
+  "rows": [
+    {
+      "id": "relay-down-direct-reads",
+      "expected": "the README's Baal address answers eth_call without the relay",
+      "observed": "Baal 0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3 proposalCount = 137 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory)",
+      "ok": true
+    },
+    {
+      "id": "replay-signed-intent",
+      "expected": "the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged",
+      "observed": "replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000",
+      "ok": true
+    },
+    {
+      "id": "intent-other-chain-id",
+      "expected": "401 signature mismatch (EIP-712 domain is chain-bound)",
+      "observed": "401 signature mismatch: the intent was not signed by intent.member for this chain and adapter",
+      "ok": true
+    },
+    {
+      "id": "intent-undelegated-address",
+      "expected": "400 'not delegated: join first (op=join) or attach an EIP-7702 authorization'",
+      "observed": "400 address 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF is not delegated: join first (op=join) or attach an EIP-7702 authoriz",
+      "ok": true
+    },
+    {
+      "id": "work-below-threshold",
+      "expected": "reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged",
+      "observed": "422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0",
+      "ok": true
+    },
+    {
+      "id": "propose-below-threshold",
+      "expected": "quote answers canPropose=false; propose -> 409; the quoted address stays empty",
+      "observed": "quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0xC5DEdDd519c00Ac9F3458a0f628C62bCe63e3BDd: none",
+      "ok": true
+    },
+    {
+      "id": "duplicate-instance-proposal",
+      "expected": "second quote exists=true at the same address; second propose -> 409 naming the prior proposal",
+      "observed": "first #138 (relay sponsor); quote2 exists=true same=true; second 409 instance 0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B is already the subject of proposal #138 (Voting)",
+      "ok": true,
+      "receipt": "0x776740197641697b5bba0bb0d6a377cdd575aedd5bc95842ae2db02fc88ceb75"
+    },
+    {
+      "id": "spam-100-proposals",
+      "expected": "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open",
+      "observed": "5 submitted in 156 s with 0 429 waits; total 142; ?limit=10 -> 10 newest, nextBefore 133; ?open=1&limit=5 -> 5",
+      "ok": true,
+      "receipt": "0xafc4a2d8909783503261581d1d7461c41ee028ada316f57dd49d9a7a1067e086"
+    },
+    {
+      "id": "rate-limit-per-address",
+      "expected": "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice",
+      "observed": "503 relay queue full; retry in a few seconds (statuses 422 422 422 422 422 503 422 422 422 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does",
+      "ok": true
+    },
+    {
+      "id": "sponsor-cap-exhausted",
+      "expected": "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'",
+      "observed": "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)",
+      "ok": true
+    },
+    {
+      "id": "beacon-state-json",
+      "expected": "proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here",
+      "observed": "proposal fields: state=Voting votingEnds=1788845494 graceEnds=1788867094 yesVotes=50000000000000000000; generatedAt 2026-09-08T02:38:34.677Z staleAfter 2026-09-08T03:38:34.677Z; README keccak256 0x013a8a14501ba6166f7baef81efa2abbdaf5064d8fd365528799543caa10534d",
+      "ok": true
+    }
+  ]
+}

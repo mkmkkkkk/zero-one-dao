@@ -1,0 +1,308 @@
+relay corner cases from Michaels-MacBook-Air-652.local at 2026-09-08T02:29:25.190Z; beacon https://zero-one-beacon.vercel.app; work dir /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z
+
+== step 1: beacon: README, snippets, /health.json; the addresses an agent has if the relay is down
+   fetched snippet.js (11034 bytes)
+   fetched snippet.py (10806 bytes)
+   fetched llms.txt (987 bytes)
+   GET https://zero-one-beacon.vercel.app/health.json
+   -> 200 (2703 ms, 1333 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 84532,
+  "chain": "Base Sepolia",
+  "adapter": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce",
+  "baal": "0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3",
+  "safe": "0xDc209324Cc42a1cF9cA57a4250Ed99e4347Ed7F3",
+  "settlement": "0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b",
+  "constitution": {
+    "address": "0x4417B5db71EE291c320e8E1af21dC707946679FB",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/b095b354519ae3afb500b14cb1c
+   CASE relay-down-direct-reads | expected: the README's Baal address answers eth_call without the relay | observed: Baal 0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3 proposalCount = 137 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory) | OK
+
+== step 2: fresh T1 agent: join, deposit 10 USDC (faucet) so it holds >= 1 share; a second fresh key that never joins; two T0 passes
+   $ node snippet.js join --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913
+   GET https://zero-one-beacon.vercel.app/relay?op=join&authorization=eyJjaGFpbklkIjo4NDUzMiwi...
+   -> 200 (5462 ms) {"ok":true,"verb":"join","address":"0xe5F9242fAdf4840073804de10389123cE6504913","delegated":true,"hash":"0x14a4a23bba08f3cfb54d815cfe83aa06f6c64db2868ee12852ee2016c109171b","blockNumber":"46533151","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   $ node snippet.js deposit --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --usdc 10
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (10200 ms) {"ok":true,"verb":"deposit","op":5,"member":"0xe5F9242fAdf4840073804de10389123cE6504913","hash":"0x18dfdcf5b752521be38ffde7aef324508a9f601e9629a3ab8cec26e5b84378ce","blockNumber":"46533163","gasUsed":"207904","nonceUsed":"0","nextNonce":"1","deposit":{"usdc":"10","sharesMinted":"10"},"faucet":{"toppedUpUsdc":"10","hash":"0x379998e86e4a20fd4dd68fafa01093e4796ef25e284b1544c8585519aa268c36"}}
+   ok: relay answered ok ()
+   GET https://zero-one-beacon.vercel.app/relay?op=identity&pass=<redacted>
+   -> 200 (1472 ms) {"ok":true,"address":"0x6493c4ba24B3aaF68414891b63a2B518483A398E","chainId":84532,"adapter":"0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce","delegated":false,"nonce":"0","authorizationNonce":0,"chainTime":1788834614,"domain":{"name":"ZeroOneIntent","version":"1","chainId":84532,"verifyingContract":"0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce"},"custody":"custodial-lite","me":"/me/pass/11919c92aa849c56ea09ff336e5bca47dd818674b079fc82e363b1bd74c9e346.json"}
+   ok: relay answered ok ()
+   GET https://zero-one-beacon.vercel.app/relay?op=join&pass=<redacted>
+   -> 200 (6601 ms) {"ok":true,"verb":"join","address":"0x6493c4ba24B3aaF68414891b63a2B518483A398E","delegated":true,"hash":"0x006000fb05fb89e0e878273d088ecc1406fa679301aa867dd097071b9f871ea8","blockNumber":"46533166","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   agent 0xe5F9242fAdf4840073804de10389123cE6504913 (10 shares), stranger 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF, T0 0x6493c4ba24B3aaF68414891b63a2B518483A398E
+
+== step 3: replay of a signed intent: the deposit URL that just succeeded is sent again
+   GET https://zero-one-beacon.vercel.app/me/0xe5F9242fAdf4840073804de10389123cE6504913.json
+   -> 200 (11389 ms, 597707 bytes) {
+  "address": "0xe5F9242fAdf4840073804de10389123cE6504913",
+  "chainId": 84532,
+  "adapter": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce",
+  "delegated": true,
+  "nonce": "1",
+  "authorizationNonce": 1,
+  "chainTime": 1788834622,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "10000000000000000000",
+
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (567 ms) {"ok":true,"replayed":true,"hash":"0x18dfdcf5b752521be38ffde7aef324508a9f601e9629a3ab8cec26e5b84378ce","status":"success","verb":"deposit"}
+   ok: relay answered ok ()
+   GET https://zero-one-beacon.vercel.app/me/0xe5F9242fAdf4840073804de10389123cE6504913.json
+   -> 200 (11217 ms, 597707 bytes) {
+  "address": "0xe5F9242fAdf4840073804de10389123cE6504913",
+  "chainId": 84532,
+  "adapter": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce",
+  "delegated": true,
+  "nonce": "1",
+  "authorizationNonce": 1,
+  "chainTime": 1788834634,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "10000000000000000000",
+
+   CASE replay-signed-intent | expected: the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged | observed: replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000 | OK
+
+== step 4: intent signed for another chain id (31401) and the same adapter
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 401 (766 ms) {"ok":false,"status":401,"reason":"signature mismatch: the intent was not signed by intent.member for this chain and adapter"}
+   ok: relay answered with a JSON reason: signature mismatch: the intent was not signed by intent.member for this chain and adapter
+   CASE intent-other-chain-id | expected: 401 signature mismatch (EIP-712 domain is chain-bound) | observed: 401 signature mismatch: the intent was not signed by intent.member for this chain and adapter | OK
+
+== step 5: intent from an address with no code (never joined) and no authorization attached (the snippets attach one automatically, so the envelope is built by hand)
+   GET https://zero-one-beacon.vercel.app/me/0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF.json
+   -> 200 (11863 ms, 597649 bytes) {
+  "address": "0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF",
+  "chainId": 84532,
+  "adapter": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce",
+  "delegated": false,
+  "nonce": "0",
+  "authorizationNonce": 0,
+  "chainTime": 1788834646,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "0",
+  "sharesFormatted
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 400 (2845 ms) {"ok":false,"status":400,"reason":"address 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF is not delegated: join first (op=join) or attach an EIP-7702 authorization to this envelope"}
+   ok: relay answered with a JSON reason: address 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF is not delegated: join first (op=join) or attach an EIP-7702 authorization to this envelope
+   CASE intent-undelegated-address | expected: 400 'not delegated: join first (op=join) or attach an EIP-7702 authorization' | observed: 400 address 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF is not delegated: join first (op=join) or attach an EIP-7702 authoriz | OK
+
+== step 6: work below sponsorThreshold: a T0 account with 0 shares submits a task; op 6 (submitTask + sponsorProposal) reverts as a whole, no task recorded
+   GET https://zero-one-beacon.vercel.app/relay?op=work&verifiers=0xe5F9242fAdf4840073804de10389123cE6504913,0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF&threshold=2&rewardShares=1000000000000000000&details=corner%3A%20work%20with%200%20shares&pass=<redacted>
+   -> 422 (11821 ms) {"ok":false,"status":422,"reason":"reverted: sponsoring needs at least sponsorThreshold shares","error":{"name":"Error","args":{"message":"!sponsor"}}}
+   ok: relay answered with a JSON reason: reverted: sponsoring needs at least sponsorThreshold shares
+   CASE work-below-threshold | expected: reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged | observed: 422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0 | OK
+
+== step 7: propose below sponsorThreshold through the relay: 409, no sponsored deployment
+   GET https://zero-one-beacon.vercel.app/relay?op=quote&member=0x6493c4ba24B3aaF68414891b63a2B518483A398E&template=Payment&params=%7B%22recipients%22%3A%5B%220x6493c4ba24B3aaF68414891b63a2B518483A398E%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=x
+   -> 200 (2972 ms) {"ok":true,"verb":"quote","instance":"0xC5DEdDd519c00Ac9F3458a0f628C62bCe63e3BDd","exists":false,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0x5d20c34efac96a32f8f120ab4f47481dca1f042f3d13ba936154c769c2fbe742","paramsHash":"0x9fc7126ce6e0b77c697e3effac11b24b4d85dd6611167342ebda0b120c158bf9","paramsBytes":"0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000006493c4ba24b3aaf68414891b63a2b518483a398e000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x0000000000000000000000000000000000000000000000000000000000000000","operator":"0x6493c4ba24B3aaF68414891b63a2B518483A398E","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b","data":"0xa9059cbb000000000000000000000000c5deddd519c00ac9f3458a0f628c62bce63e3bdd00000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0xC5DEdDd519c00Ac9F3458a0f628C62bCe63e3BDd","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f200eb653d48aafa9d13eadfdc4eb74c40b82344269b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   GET https://zero-one-beacon.vercel.app/relay?op=propose&template=Payment&params=%7B%22recipients%22%3A%5B%220x6493c4ba24B3aaF68414891b63a2B518483A398E%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=x&pass=<redacted>
+   -> 409 (14643 ms) {"ok":false,"status":409,"reason":"propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first"}
+   ok: relay answered with a JSON reason: propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first
+   CASE propose-below-threshold | expected: quote answers canPropose=false; propose -> 409; the quoted address stays empty | observed: quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0xC5DEdDd519c00Ac9F3458a0f628C62bCe63e3BDd: none | OK
+
+== step 8: the same (template, params, member, salt) proposed twice: second quote finds the instance; second propose refused
+   GET https://zero-one-beacon.vercel.app/relay?op=quote&member=0xe5F9242fAdf4840073804de10389123cE6504913&template=Payment&params=%7B%22recipients%22%3A%5B%220xe5F9242fAdf4840073804de10389123cE6504913%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=corner%3A%20dup&salt=0x00000000000000000000000000000000000000000000000000000000000000aa
+   -> 200 (3252 ms) {"ok":true,"verb":"quote","instance":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","exists":false,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","paramsBytes":"0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e5f9242fadf4840073804de10389123ce6504913000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x00000000000000000000000000000000000000000000000000000000000000aa","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b","data":"0xa9059cbb00000000000000000000000032ca2e78eaa23f26c1b18151537a0601e00dbf4b00000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f200eb653d48aafa9d13eadfdc4eb74c40b82344269b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: dup" --salt 0x00000000000000000000000000000000000000000000000000000000000000aa
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (13861 ms) {"ok":true,"verb":"propose","op":0,"member":"0xe5F9242fAdf4840073804de10389123cE6504913","hash":"0x776740197641697b5bba0bb0d6a377cdd575aedd5bc95842ae2db02fc88ceb75","blockNumber":"46533220","gasUsed":"272818","nonceUsed":"1","nextNonce":"2","proposalId":138,"sponsored":true,"instance":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","template":"Payment","codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","deployHash":"0x3e11e78b3abc6ea4e6092bf170578e22909c0510b168947c16e513a53d2f768b","deployedBy":"relay sponsor"}
+   ok: relay answered ok ()
+   GET https://zero-one-beacon.vercel.app/relay?op=quote&member=0xe5F9242fAdf4840073804de10389123cE6504913&template=Payment&params=%7B%22recipients%22%3A%5B%220xe5F9242fAdf4840073804de10389123cE6504913%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=corner%3A%20dup&salt=0x00000000000000000000000000000000000000000000000000000000000000aa
+   -> 200 (3013 ms) {"ok":true,"verb":"quote","instance":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","exists":true,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","paramsBytes":"0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e5f9242fadf4840073804de10389123ce6504913000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x00000000000000000000000000000000000000000000000000000000000000aa","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b","data":"0xa9059cbb00000000000000000000000032ca2e78eaa23f26c1b18151537a0601e00dbf4b00000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f200eb653d48aafa9d13eadfdc4eb74c40b82344269b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: dup again" --salt 0x00000000000000000000000000000000000000000000000000000000000000aa
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B","exists":true,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   GET https://zero-one-beacon.vercel.app/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 409 (12356 ms) {"ok":false,"status":409,"reason":"instance 0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B is already the subject of proposal #138 (Voting); quote again with a new salt (op=quote picks a fresh one when salt is omitted)"}
+   ok: relay answered with a JSON reason: instance 0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B is already the subject of proposal #138 (Voting); quote again with a new salt (op=quote picks a fresh one when salt is omitted)
+   CASE duplicate-instance-proposal | expected: second quote exists=true at the same address; second propose -> 409 naming the prior proposal | observed: first #138 (relay sponsor); quote2 exists=true same=true; second 409 instance 0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B is already the subject of proposal #138 (Voting) | OK | receipt: 0x776740197641697b5bba0bb0d6a377cdd575aedd5bc95842ae2db02fc88ceb75
+
+== step 9: spam: 5 text-only proposals by one member through the relay (sponsor pays gas; the relay rate limit per address applies)
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 1"
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0xe57Af70bAeA5074153e38b6808D54Daf147B993A","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 2"
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x06955c9005c547De9C1c6DF0CB9a79D51ac0C190","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 3"
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x4DA659Ec6f80201e52f629f40Ebcf10177DDc11F","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 4"
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x2E3965C44D2f08f349911f4e0BD8Da55A76D8fD5","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/corner-relay/Michaels-MacBook-Air-652.local-2026-09-08T02-29-25-189Z/agent.key --template Payment --params "{\"recipients\":[\"0xe5F9242fAdf4840073804de10389123cE6504913\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 5"
+   stderr: 0xe5f9242fadf4840073804de10389123ce6504913 | {"instance":"0x36Bc375e2ecF4708cb8A400fBd20931964b9Ef57","exists":false,"codeHash":"0xee5592d8738f72d72e942ae005f61d44e605c350005a38a191d560835371e1d1","paramsHash":"0x7cdddb8a3c0b402e585955cb2b27f40c7c6b800f8a259db367b2a49ea3473108","operator":"0xe5F9242fAdf4840073804de10389123cE6504913","budgetUsdc":"1","canPropose":true}
+   GET https://zero-one-beacon.vercel.app/proposals.json
+   -> 200 (9572 ms, 599718 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46533308",
+    "timestamp": 1788834904,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "
+   GET https://zero-one-beacon.vercel.app/proposals.json?limit=10
+   -> 200 (832 ms, 43670 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46533308",
+    "timestamp": 1788834904,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "
+   GET https://zero-one-beacon.vercel.app/proposals.json?open=1&limit=5
+   -> 200 (705 ms, 22650 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46533308",
+    "timestamp": 1788834904,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "
+   CASE spam-100-proposals | expected: every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open | observed: 5 submitted in 156 s with 0 429 waits; total 142; ?limit=10 -> 10 newest, nextBefore 133; ?open=1&limit=5 -> 5 | OK | receipt: 0xafc4a2d8909783503261581d1d7461c41ee028ada316f57dd49d9a7a1067e086
+
+== step 10: rate limit: a burst of 10 concurrent votes from one address (each request takes seconds, so a serial loop never fits 7 into one minute)
+   transport failure (1/5): fetch failed UND_ERR_SOCKET
+   transport failure (1/5): fetch failed UND_ERR_SOCKET
+   transport failure (1/5): fetch failed UND_ERR_SOCKET
+   transport failure (1/5): fetch failed UND_ERR_SOCKET
+   transport failure (2/5): fetch failed UND_ERR_SOCKET
+   transport failure (2/5): fetch failed UND_ERR_SOCKET
+   transport failure (2/5): fetch failed UND_ERR_SOCKET
+   burst statuses: 422 422 422 422 422 503 422 422 422 503
+   CASE rate-limit-per-address | expected: a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice | observed: 503 relay queue full; retry in a few seconds (statuses 422 422 422 422 422 503 422 422 422 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does | OK
+
+== step 11: sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)
+   CASE sponsor-cap-exhausted | expected: 503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself' | observed: not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei) | OK
+
+== step 12: beacon: state.json fields, stale flag, README hash
+   GET https://zero-one-beacon.vercel.app/state.json
+   -> 200 (13059 ms, 606581 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46533409",
+    "timestamp": 1788835106,
+    "name": "Base Sepolia"
+  },
+  "contracts": {
+    "safe": "0xDc209324Cc42a1cF9cA57a4250Ed99e4347Ed7F3",
+ 
+   CASE beacon-state-json | expected: proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here | observed: proposal fields: state=Voting votingEnds=1788845494 graceEnds=1788867094 yesVotes=50000000000000000000; generatedAt 2026-09-08T02:38:34.677Z staleAfter 2026-09-08T03:38:34.677Z; README keccak256 0x013a8a14501ba6166f7baef81efa2abbdaf5064d8fd365528799543caa10534d | OK
+
+[
+  {
+    "id": "relay-down-direct-reads",
+    "expected": "the README's Baal address answers eth_call without the relay",
+    "observed": "Baal 0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3 proposalCount = 137 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory)",
+    "ok": true
+  },
+  {
+    "id": "replay-signed-intent",
+    "expected": "the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged",
+    "observed": "replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000",
+    "ok": true
+  },
+  {
+    "id": "intent-other-chain-id",
+    "expected": "401 signature mismatch (EIP-712 domain is chain-bound)",
+    "observed": "401 signature mismatch: the intent was not signed by intent.member for this chain and adapter",
+    "ok": true
+  },
+  {
+    "id": "intent-undelegated-address",
+    "expected": "400 'not delegated: join first (op=join) or attach an EIP-7702 authorization'",
+    "observed": "400 address 0xd22CB56bE894312CEa6ff1eb4C2625bBD95328aF is not delegated: join first (op=join) or attach an EIP-7702 authoriz",
+    "ok": true
+  },
+  {
+    "id": "work-below-threshold",
+    "expected": "reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged",
+    "observed": "422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0",
+    "ok": true
+  },
+  {
+    "id": "propose-below-threshold",
+    "expected": "quote answers canPropose=false; propose -> 409; the quoted address stays empty",
+    "observed": "quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0xC5DEdDd519c00Ac9F3458a0f628C62bCe63e3BDd: none",
+    "ok": true
+  },
+  {
+    "id": "duplicate-instance-proposal",
+    "expected": "second quote exists=true at the same address; second propose -> 409 naming the prior proposal",
+    "observed": "first #138 (relay sponsor); quote2 exists=true same=true; second 409 instance 0x32Ca2E78EAA23F26c1b18151537A0601E00DBf4B is already the subject of proposal #138 (Voting)",
+    "ok": true,
+    "receipt": "0x776740197641697b5bba0bb0d6a377cdd575aedd5bc95842ae2db02fc88ceb75"
+  },
+  {
+    "id": "spam-100-proposals",
+    "expected": "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open",
+    "observed": "5 submitted in 156 s with 0 429 waits; total 142; ?limit=10 -> 10 newest, nextBefore 133; ?open=1&limit=5 -> 5",
+    "ok": true,
+    "receipt": "0xafc4a2d8909783503261581d1d7461c41ee028ada316f57dd49d9a7a1067e086"
+  },
+  {
+    "id": "rate-limit-per-address",
+    "expected": "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice",
+    "observed": "503 relay queue full; retry in a few seconds (statuses 422 422 422 422 422 503 422 422 422 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does",
+    "ok": true
+  },
+  {
+    "id": "sponsor-cap-exhausted",
+    "expected": "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'",
+    "observed": "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)",
+    "ok": true
+  },
+  {
+    "id": "beacon-state-json",
+    "expected": "proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here",
+    "observed": "proposal fields: state=Voting votingEnds=1788845494 graceEnds=1788867094 yesVotes=50000000000000000000; generatedAt 2026-09-08T02:38:34.677Z staleAfter 2026-09-08T03:38:34.677Z; README keccak256 0x013a8a14501ba6166f7baef81efa2abbdaf5064d8fd365528799543caa10534d",
+    "ok": true
+  }
+]
+=== RELAY CORNER CASES: PASS (11/11) -> /Users/michaelyang/Documents/Workspace/zero-one-dao/evidence/testnet/corner-cases-relay-2026-09-08.json ===
+
