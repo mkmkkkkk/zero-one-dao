@@ -40,9 +40,20 @@ All rows above have receipts in evidence/testnet/; a stranger agent (fresh key, 
 | Relay + tunnel + beacon | `https://relay-zero.mkyang.ai` (launchd on the mini), `https://zero-one-beacon.vercel.app` (README 43 lines, validate PASS) | `state/logs/` on the mini; `beacon:validate` output in the commit message |
 | Governance 120 s / 120 s (testnet only) | proposal #1 (Config template) submitted and voted at 2026-09-07T23:31Z under 6 h / 6 h; executable 2026-09-08T11:31:34Z; restored to 21600 / 21600 by the final proposal | `governance-120s-proposal-2026-09-08.log`, `governance-*` logs |
 | Scenarios A-J on Sepolia (a fresh DAO each, 120 s / 120 s) | batch: A, B, C, D, E, F, I, J PASS; G and H failed on a stale `describe()` read from a lagging RPC node (the receipts show `Unwound` + `Completed`); `describe()` pinned to the head and G, H re-run PASS | `scenarios-A-J-base-sepolia-2026-09-08.log`, `scenarios-G-rerun-*.log`, `scenarios-H-rerun-*.log`, DAO records `scenario-daos/*.json` (failed attempts under `scenario-daos/failed/`) |
-| Corner cases on fresh DAOs | see the table below | `corner-cases-daos-base-sepolia-2026-09-08.log`, `corner-cases-daos-2026-09-08.json` |
-| Corner cases through the relay | see the table below | `corner-cases-relay-main-2026-09-08.log`, `corner-cases-relay-2026-09-08.json` |
+| Corner cases on fresh DAOs (money, trap, votes, absurd governance, templates) | 34 rows, all as expected, every row with a receipt; the votes part was re-run after two harness fixes (stale head, lagging getBlock) | `corner-cases-daos-base-sepolia-2026-09-08.log` + `corner-cases-daos-2026-09-08-money-trap-absurd-templates.json`, `corner-cases-daos-votes-rerun-base-sepolia-2026-09-08.log` + `corner-cases-daos-2026-09-08-votes.json`, DAO records `scenario-daos/corner-*.json` |
+| Corner cases through the relay (replay, other chain id, undelegated, work/propose below threshold, duplicate instance, spam 100, burst, sponsor cap, beacon) | 11 rows PASS; the 100-proposal run is `*-spam100` (100 accepted in 2,608 s, 0 rate-limit waits; its paging check ran before the beacon stopped shadowing `/proposals.json`), the final run re-checks paging with 5 proposals (total 136, `?limit=10` -> 10, `nextBefore`) | `corner-cases-relay-main-2026-09-08-spam100.log` + `.json`, `corner-cases-relay-main-2026-09-08.log` + `corner-cases-relay-2026-09-08.json` |
 | Cold start (README + relay only), mini and main Mac | T1 + T0 paths | `cold-start-mini-*.log`, `cold-start-main-*.log` |
+
+Findings (details in decision.md phase 2c and docs/PARAMETERS.md): a period of 0 is "unchanged" for Baal and the Config
+template then reverts `NotApplied` (minimum 1 s; 1 s / 1 s is terminal: the first proposal under it was already Defeated
+after one block); `ragequit(0, 0)` is a no-op; a second asset is paid only when named, in ascending address order; a
+vote in the submission block reverts `TimePointNotDetermined` (reproduced twice: submit and vote landed in one block);
+exactly 34% leaving keeps a proposal alive, 37.7% defeats it; a Payment above the treasury ends `actionFailed` with the
+Safe untouched; a strategy whose deadline passed before its first run unwinds on that run; a stop-loss run returns the
+proceeds; the zero-supply trap is terminal and the relay reports `ZeroShares` without a transaction; an ERC-20 Payment
+cannot be reverted by its recipient. Relay: a second proposal for an instance is refused (409), `/proposals.json` pages,
+a burst is bounded by the 8-deep queue (503) before the 6/min window (429) on a ~10 s-per-request public RPC, the
+sponsor cap answers 503 "send the transaction yourself".
 
 Public-RPC facts that changed code (all in decision.md phase 2c): `sepolia.base.org` caps `eth_getLogs` at 10,000 blocks
 (`-32614`), rate-limits bursts (`over rate limit`), and answers from nodes that lag a receipt by seconds. The relay index
