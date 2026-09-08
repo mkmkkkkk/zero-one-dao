@@ -181,3 +181,5 @@ Threats found and the one-contract answer, kept deliberately small:
 - Ragequit stays pro-rata of the Safe only (funds out on open instances are forfeited to stayers). Exit price ≤ deposit price,
   so there is no round-trip arbitrage; documented in PARAMETERS and the README, not softened.
 - Not done (rejected as complexity): pricing non-USDC assets for deposits with TWAPs; deposit cooldowns; per-address caps.
+
+User 2026-09-09: PARAMETERS.md lines 1-7 confirmed ("lgtm"); phase 4 rulings (ledger + TWAP) confirmed ("lgtm"). Mainnet proceeds after phase 4 is merged and proven; the 50 USDC genesis is the only user action.
