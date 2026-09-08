@@ -71,3 +71,13 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 ## Genesis actions (not code, but hard to undo)
 - genesis deposit by the founder = 50 USDC → 50e18 shares = 100% of supply (user's decision 2026-09-08, DESIGN.md §6), made in the same script as the deployment (`scripts/deploy-local.ts`, see the deposit-pricing trap above). Nothing else is minted at genesis; there is no founder allocation of any kind.
 - constitution v2 text is adopted by the founder's first proposal (self-sponsored with the 50 genesis shares).
+
+## Phase 3 Uniswap v3 venue inputs
+- SwapRouter02 on Base = `0x2626664c2603336E57B271c5C0b26F421741e481`. **DECIDE** — immutable adapter constructor dependency, no owner/admin. Published by [Uniswap](https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments); scenario K checks code and `factory()` / `WETH9()` before swaps.
+- QuoterV2 on Base = `0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a`. **DECIDE** — immutable constructor dependency; K checks code and selectors, and real swaps exercise `quoteExactInputSingle`.
+- UniswapV3Factory on Base = `0x33128a8fC17869897dcE68Ed026d694621f6FDfD`. **DECIDE** — immutable constructor dependency; K checks code, `feeAmountTickSpacing(500)` and the existing pair pool.
+- Asset for the fork proof = WETH `0x4200000000000000000000000000000000000006` (18 decimals), settlement = Base USDC proxy (6 decimals, read through proxy). **DECIDE** — pair immutable per adapter; Strategy valuation divides by `venue.assetUnit()`, not a hard-coded six-decimal unit.
+- Pool fee = 500 (0.05%) for K. **DECIDE** — immutable per adapter instance, no setter; another fee requires another voted venue/Strategy. This is a demonstration input, not a protocol trading cap.
+- `StrategyProposal.Rule.slippageBps` = 50 in K. **DECIDE / BY PROPOSAL** — tolerance from a same-transaction QuoterV2 quote to execution, valid range 0–10000 bps. `amend` by Safe changes it; 0 is exact quote output. It does not protect a prior off-chain quote, and slot0 valuation is spot, not an independent oracle.
+- Adapter `safe` = DAO treasury. **DECIDE** — immutable recovery sink; permissionless `sweep()` returns unsolicited pair-token dust only to this Safe. Each swap requires no preexisting pair balances, asserts exact transfer deltas, clears router approval, and finishes empty. A failed swap reverts atomically; `stop`/`migrate` remain venue-free.
+- Phase 3 Strategy ABI adds `slippageBps` and venue `assetUnit` / two-argument `buy` / `sell`. Existing deployed Sepolia factory and Strategy contracts retain their old ABI; this code's new factory must be deployed for the new template. The TypeScript builder encodes omitted mirror tolerance as zero; it is not an upgrade of the old deployment.

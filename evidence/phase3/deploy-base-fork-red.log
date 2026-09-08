@@ -1,0 +1,14 @@
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 loopback=http://127.0.0.1:11547
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x567B8e05217b6cb183eB8274787A8573b27f50AE tx=0x14716f167f2bdd7d8239f6c98546ba4055296a1cbdb520bef3cd873868a15587
+TimeoutError: The operation was aborted due to timeout
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 loopback=http://127.0.0.1:11546
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x8Ca75b332B3Cd4fAd7e7c4cB64e6311509993238 tx=0x4e2ec89ba54090c9122cf129aed752f3d4a0642cc0409498082c9fc9a7b7ef98
+Error: spawnSync git ETIMEDOUT
+    at Object.spawnSync (node:internal/child_process:1144:20)
+    at spawnSync (node:child_process:928:24)
+    at execFileSync (node:child_process:971:15)
+    at deployNetwork (/Users/michaelmacmini/srv/zero-one-dao/scripts/deploy-network.ts:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (/Users/michaelmacmini/srv/zero-one-dao/scripts/e2e-base-fork.ts:31:20)

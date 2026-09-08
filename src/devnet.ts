@@ -83,7 +83,7 @@ async function waitForConfig(file: string, child: ChildProcess): Promise<void> {
  */
 export async function startDevnet(
   runId: string,
-  options: { chainId?: number; hardfork?: "cancun" | "prague" } = {},
+  options: { chainId?: number; hardfork?: "cancun" | "prague"; forkUrl?: string } = {},
 ): Promise<Devnet> {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/u.test(runId)) {
     throw new TypeError("runId must be a short filesystem-safe label");
@@ -124,9 +124,12 @@ export async function startDevnet(
       "--hardfork",
       options.hardfork ?? "cancun",
       "--quiet",
+      ...(options.forkUrl ? ["--fork-url", options.forkUrl] : []),
     ],
-    { cwd: ROOT, stdio: "ignore" },
+    { cwd: ROOT, stdio: ["ignore", "ignore", "pipe"] },
   );
+  let stderr = "";
+  child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
   const rpcUrl = `http://127.0.0.1:${port}`;
 
   try {
@@ -159,6 +162,7 @@ export async function startDevnet(
     };
   } catch (error) {
     child.kill("SIGTERM");
+    if (stderr) console.error(`anvil stderr (${options.forkUrl ?? "local"}): ${stderr.trim()}`);
     throw error;
   }
 }

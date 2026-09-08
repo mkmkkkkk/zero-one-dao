@@ -69,6 +69,8 @@ export interface ZeroOneParams {
   constitutionTextUrl?: string;
   /** Already-deployed Baal/Safe singletons to reuse (testnet scenario DAOs share the canonical ones); when absent all five are deployed. */
   infrastructure?: BaalInfrastructure;
+  /** Pre-broadcast check at the Safe CREATE2 prediction (deployment preflight). */
+  beforeSafeCreate?: (predicted: Address) => Promise<void>;
 }
 
 export const DEFAULT_PARAMS: Omit<ZeroOneParams, "founder"> = {
@@ -134,7 +136,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     txHashes["TestToken"] = token.hash;
   }
 
-  const safeProxy = await createSafeProxy(deployer, infrastructure, params.salt * 2n);
+  const safeProxy = await createSafeProxy(deployer, infrastructure, params.salt * 2n, params.beforeSafeCreate);
   const baalProxy = await createBaalProxy(deployer, infrastructure, params.salt * 2n + 1n);
   txHashes["SafeProxy"] = safeProxy.hash;
   txHashes["BaalProxy"] = baalProxy.hash;

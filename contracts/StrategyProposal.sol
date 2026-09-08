@@ -7,8 +7,9 @@ import {ProposalBase} from "./ProposalBase.sol";
 /// @notice Minimal venue surface a Strategy trades on (the mirror's MockDex implements it).
 interface IStrategyVenue {
     function price() external view returns (uint256);
-    function buy(uint256 settlementIn) external returns (uint256 assetOut);
-    function sell(uint256 assetIn) external returns (uint256 settlementOut);
+    function assetUnit() external view returns (uint256);
+    function buy(uint256 settlementIn, uint256 slippageBps) external returns (uint256 assetOut);
+    function sell(uint256 assetIn, uint256 slippageBps) external returns (uint256 settlementOut);
 }
 
 /// @notice Strategy template (DESIGN.md §7.2): holds a settlement budget and trades it against one
@@ -32,6 +33,7 @@ contract StrategyProposal is ProposalBase {
         uint256 deadline;
         uint256 takeProfitBps;
         uint256 stopLossBps;
+        uint256 slippageBps;
     }
 
     uint256 public constant PRICE_UNIT = 1e6;
@@ -88,7 +90,7 @@ contract StrategyProposal is ProposalBase {
 
     /// @notice Settlement held + asset held valued at the venue price.
     function value() public view returns (uint256) {
-        return held() + (asset.balanceOf(address(this)) * venue.price()) / PRICE_UNIT;
+        return held() + (asset.balanceOf(address(this)) * venue.price()) / venue.assetUnit();
     }
 
     /// @notice Execute one step of the coded rule; anyone may call.
@@ -120,7 +122,7 @@ contract StrategyProposal is ProposalBase {
         uint256 size = balance < rule.maxPerRun ? balance : rule.maxPerRun;
         if (size == 0) revert NothingToDo();
         if (!settlement.approve(address(venue), size)) revert ApproveFailed();
-        uint256 assetOut = venue.buy(size);
+        uint256 assetOut = venue.buy(size, rule.slippageBps);
         emit Ran(runs, valueBefore, size, assetOut);
     }
 
@@ -162,6 +164,7 @@ contract StrategyProposal is ProposalBase {
         if (next.maxPerRun == 0) revert ZeroMaxPerRun();
         if (next.deadline <= block.timestamp) revert DeadlinePassed(next.deadline, block.timestamp);
         if (next.takeProfitBps > BPS * 100) revert BadBps(next.takeProfitBps);
+        if (next.slippageBps > BPS) revert BadBps(next.slippageBps);
         if (next.stopLossBps >= BPS) revert BadBps(next.stopLossBps);
         rule = next;
         deadline = next.deadline;
@@ -172,7 +175,7 @@ contract StrategyProposal is ProposalBase {
         uint256 assetBalance = asset.balanceOf(address(this));
         if (assetBalance == 0) return;
         if (!asset.approve(address(venue), assetBalance)) revert ApproveFailed();
-        uint256 settlementOut = venue.sell(assetBalance);
+        uint256 settlementOut = venue.sell(assetBalance, rule.slippageBps);
         emit Unwound(assetBalance, settlementOut, reason);
     }
 }

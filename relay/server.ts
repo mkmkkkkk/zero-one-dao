@@ -31,6 +31,7 @@ import { decodeRevert, explain, fail, RelayError } from "./errors.js";
 import { buildIntent, INTENT_TYPES, intentDomain, normalize, normalizeAuthorization, OP_NAMES, OPS, toWire, VERBS, type Envelope, type Intent, type Verb } from "./intents.js";
 import { identity, me, type Me } from "./me.js";
 import { decodeProposeIntentData, TEMPLATE_IDS } from "../src/proposals.js";
+import { assertStateLockHeld, withStateLock } from "./lock.js";
 import { parseSpec, quoteProposal } from "./templates.js";
 
 const env: Env = connect();
@@ -43,6 +44,7 @@ const stateFile = process.env.ZERO_ONE_STATE_FILE;
 
 /** Persistent relay database (accounts, T0 pass hashes, request dedupe, budgets, rate windows). */
 interface Db {
+  nextSponsorNonce?: number;
   accounts: Record<string, { custodial: boolean; joinedAt?: string; transactions: Array<{ hash: Hex; op: number; verb: string; nonce: string; at: string; status?: string }> }>;
   passes: Record<string, string>;
   requests: Record<string, { hash: Hex; member: Address; op: number; status: string }>;
@@ -50,10 +52,19 @@ interface Db {
   rates: Record<string, { at: number; n: number }>;
 }
 const dbFile = path.join(env.stateDir, "db.json");
-const db: Db = existsSync(dbFile) ? (JSON.parse(readFileSync(dbFile, "utf8")) as Db) : { accounts: {}, passes: {}, requests: {}, budgets: {}, rates: {} };
-const persist = (): void => atomic(dbFile, db);
+let db: Db = existsSync(dbFile) ? (JSON.parse(readFileSync(dbFile, "utf8")) as Db) : { accounts: {}, passes: {}, requests: {}, budgets: {}, rates: {} };
+const persist = (): void => { assertStateLockHeld("sponsor"); atomic(dbFile, db); };
+const reload = (): void => { if (existsSync(dbFile)) db = JSON.parse(readFileSync(dbFile, "utf8")) as Db; };
+await withStateLock(env.stateDir, "sponsor", async () => {
+  const file = path.join(env.stateDir, "identity.json");
+  const identity = { chainId: D.chainId, baal: D.baal, sponsor: sponsor.address };
+  if (existsSync(file) && JSON.stringify(JSON.parse(readFileSync(file, "utf8"))) !== JSON.stringify(identity)) throw new Error("RELAY_STATE_DIR belongs to another chain, DAO or sponsor; use separate state dirs");
+  atomic(file, identity);
+});
 const secretFile = path.join(env.stateDir, "secret");
-if (!existsSync(secretFile)) writeFileSync(secretFile, randomBytes(32).toString("hex"), { mode: 0o600, flag: "wx" });
+await withStateLock(env.stateDir, "sponsor", async () => {
+  if (!existsSync(secretFile)) writeFileSync(secretFile, randomBytes(32).toString("hex"), { mode: 0o600, flag: "wx" });
+});
 const secret = Buffer.from(readFileSync(secretFile, "utf8").trim(), "hex");
 const startedAt = new Date().toISOString();
 /** Rate limits per minute (env overrides for mirrors that compress hours into seconds). */
@@ -206,26 +217,57 @@ async function settledIdentity(member: Address): Promise<Awaited<ReturnType<type
   return id;
 }
 
-/** Sponsor a transaction under the daily budget and floor; returns the receipt. */
-async function sponsored(tx: { to: Address; data: Hex; gas: bigint; authorizationList?: unknown[] }): Promise<TransactionReceipt> {
-  const { budget } = budgetRow();
+/** Journal signed bytes before the first broadcast. Recovery can only resend this exact transaction. */
+interface Pending { raw: Hex; hash: Hex; nonce: number; day: string; reserve: string; digest?: string }
+const pendingFile = path.join(env.stateDir, "sponsor-pending.json");
+let currentDigest: string | undefined;
+async function recoverPending(): Promise<TransactionReceipt | undefined> {
+  const pending = existsSync(pendingFile) ? JSON.parse(readFileSync(pendingFile, "utf8")) as Pending | null : null;
+  if (!pending) return;
+  let receipt = await client.getTransactionReceipt({ hash: pending.hash }).catch(() => undefined);
+  if (!receipt) {
+    // An RPC timeout may mean it accepted the transaction. Never select another nonce here.
+    assertStateLockHeld("sponsor");
+    await client.sendRawTransaction({ serializedTransaction: pending.raw }).catch(() => undefined);
+    receipt = await client.waitForTransactionReceipt({ hash: pending.hash, timeout: 180_000 });
+  }
+  db.nextSponsorNonce = Math.max(db.nextSponsorNonce ?? 0, pending.nonce + 1);
+  const budget = db.budgets[pending.day];
+  if (budget) budget.wei = (BigInt(budget.wei) - BigInt(pending.reserve) + receipt.gasUsed * receipt.effectiveGasPrice).toString();
+  if (pending.digest && db.requests[pending.digest]) db.requests[pending.digest] = { ...db.requests[pending.digest], hash: pending.hash, status: receipt.status };
+  // Persist settlement with a hash marker; recovery after a crash must not debit the budget twice.
+  (db as Db & { settled?: Hex }).settled = pending.hash;
+  persist();
+  atomic(pendingFile, null);
+  lastWriteAt = Date.now();
+  invalidateState();
+  return receipt;
+}
+async function recoverJournal(): Promise<void> {
+  const pending = existsSync(pendingFile) ? JSON.parse(readFileSync(pendingFile, "utf8")) as Pending | null : null;
+  if (pending && (db as Db & { settled?: Hex }).settled === pending.hash) { atomic(pendingFile, null); return; }
+  await recoverPending();
+  // A pending request without a journal never reached the RPC write (crash before signing).
+  for (const [digest, row] of Object.entries(db.requests)) if (row.status === "pending" && row.hash === "0x") delete db.requests[digest];
+  persist();
+}
+/** Called only while the entire request holds the cross-process sponsor lock. */
+async function sponsored(tx: { to: Address; data: Hex; gas: bigint; authorizationList?: unknown[]; intent?: boolean }): Promise<TransactionReceipt> {
+  const { day, budget } = budgetRow();
   const reserve = tx.gas * policy.maxFeePerGas;
   if (BigInt(budget.wei) + reserve > policy.dailyWei) fail(503, "daily gas sponsorship budget reached; retry tomorrow or send the transaction yourself");
   const balance = await client.getBalance({ address: sponsor.address });
   if (balance < reserve + policy.floorWei) fail(503, "sponsor balance below reserve; send the transaction yourself");
+  const nonce = Math.max(db.nextSponsorNonce ?? 0, await client.getTransactionCount({ address: sponsor.address, blockTag: "pending" }));
+  const request = await sponsorCtx.walletClient.prepareTransactionRequest({ account: sponsor, chain: env.chain, nonce, to: tx.to, data: tx.data, gas: tx.gas, maxFeePerGas: policy.maxFeePerGas, maxPriorityFeePerGas: policy.maxPriorityFeePerGas, ...(tx.authorizationList ? { authorizationList: tx.authorizationList } : {}) } as never);
+  const raw = await sponsorCtx.walletClient.signTransaction({ ...request, account: sponsor } as never);
+  const hash = keccak256(raw);
   budget.wei = (BigInt(budget.wei) + reserve).toString();
   persist();
-  const hash = await sponsorCtx.walletClient.sendTransaction({ account: sponsor, chain: env.chain, to: tx.to, data: tx.data, gas: tx.gas, maxFeePerGas: policy.maxFeePerGas, maxPriorityFeePerGas: policy.maxPriorityFeePerGas, ...(tx.authorizationList ? { authorizationList: tx.authorizationList } : {}) } as never);
-  lastWriteAt = Date.now();
-  invalidateState();
-  try {
-    return await confirmReceipt(hash, { to: tx.to, data: tx.data, account: sponsor.address });
-  } finally {
-    const receipt = await client.getTransactionReceipt({ hash }).catch(() => undefined);
-    const spent = receipt ? receipt.gasUsed * receipt.effectiveGasPrice : reserve;
-    budget.wei = (BigInt(budget.wei) - reserve + spent).toString();
-    persist();
-  }
+  atomic(pendingFile, { raw, hash, nonce, day, reserve: reserve.toString(), ...(tx.intent && currentDigest ? { digest: currentDigest } : {}) });
+  const receipt = await recoverPending();
+  if (receipt!.status !== "success") return confirmReceipt(hash, { to: tx.to, data: tx.data, account: sponsor.address });
+  return receipt!;
 }
 
 /** Test chains: top the member's settlement up to `amount` from the sponsor's own balance. */
@@ -240,10 +282,9 @@ async function faucet(member: Address, amount: bigint): Promise<{ topped: bigint
   if (sponsorUsdc < needed) fail(503, `faucet empty: the sponsor holds ${fmtUsdc(sponsorUsdc)} test USDC, ${fmtUsdc(needed)} needed`);
   budget.usdc = (BigInt(budget.usdc) + needed).toString();
   persist();
-  const hash = await sponsorCtx.walletClient.writeContract({ account: sponsor, chain: env.chain, address: D.settlement, abi: env.abi.settlement, functionName: "transfer", args: [member, needed], maxFeePerGas: policy.maxFeePerGas, maxPriorityFeePerGas: policy.maxPriorityFeePerGas } as never);
-  const receipt = await client.waitForTransactionReceipt({ hash });
-  lastWriteAt = Date.now();
-  if (receipt.status !== "success") fail(503, `faucet transfer reverted (tx ${hash})`);
+  const data = encodeFunctionData({ abi: env.abi.settlement, functionName: "transfer", args: [member, needed] });
+  const receipt = await sponsored({ to: D.settlement, data, gas: 100_000n });
+  const hash = receipt.transactionHash;
   return { topped: needed, hash };
 }
 
@@ -339,7 +380,12 @@ function record(member: Address, custodial: boolean, entry: { hash: Hex; op: num
  */
 async function join(member: Address, authorization: ReturnType<typeof normalizeAuthorization> | undefined, custodial: boolean, passHash?: string): Promise<Record<string, unknown>> {
   const id = await identity(env, member);
-  if (id.delegated) return { ok: true, verb: "join", address: member, delegated: true, alreadyJoined: true, nonce: id.nonce, note: "mints nothing; deposit at NAV or earn shares by verified work" };
+  if (id.delegated) {
+    db.accounts[member.toLowerCase()] ??= { custodial, joinedAt: new Date().toISOString(), transactions: [] };
+    if (passHash) db.passes[passHash] = member;
+    persist();
+    return { ok: true, verb: "join", address: member, delegated: true, alreadyJoined: true, nonce: id.nonce, note: "mints nothing; deposit at NAV or earn shares by verified work" };
+  }
   if (authorization === undefined) fail(400, "authorization (signed EIP-7702 delegation to the adapter) is required to join");
   if (authorization.nonce !== id.authorizationNonce) fail(409, `authorization.nonce must be ${id.authorizationNonce} (read /me/${member}.json)`);
   const signer = await recovering("authorization", () => recoverAuthorizationAddress({ authorization: { address: authorization.address, chainId: authorization.chainId, nonce: authorization.nonce, r: authorization.r, s: authorization.s, yParity: authorization.yParity } }));
@@ -417,13 +463,15 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
   db.requests[digest] = { hash: "0x" as Hex, member: m.member, op: m.op, status: "pending" };
   let receipt: TransactionReceipt;
   try {
-    receipt = await sponsored({ to: m.member, data, gas, authorizationList });
+    currentDigest = digest;
+    persist();
+    receipt = await sponsored({ to: m.member, data, gas, authorizationList, intent: true });
   } catch (error) {
     const hash = error instanceof RelayError ? ((error.details as { hash?: Hex } | undefined)?.hash ?? ("0x" as Hex)) : ("0x" as Hex);
     if (hash !== "0x") {
       db.requests[digest] = { hash, member: m.member, op: m.op, status: "reverted" };
       record(m.member, custodial, { hash, op: m.op, verb, nonce: m.nonce.toString(), status: "reverted" }, passHash);
-    } else delete db.requests[digest];
+    } else if (!existsSync(pendingFile) || JSON.parse(readFileSync(pendingFile, "utf8")) === null) delete db.requests[digest];
     persist();
     throw error;
   }
@@ -568,10 +616,13 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
       return send(200, json(await me(env, getAddress(address), custody, undefined, await settledIdentity(getAddress(address)))));
     }
     if (u.pathname !== "/relay") fail(404, "not found; see /health.json, /me/<address>.json, /proposals.json, /state.json, /relay");
-    rate(`ip:${String(req.headers["cf-connecting-ip"] ?? req.socket.remoteAddress)}`, RATE_IP);
     if (queued >= 8) fail(503, "relay queue full; retry in a few seconds");
     queued += 1;
-    const task = queue.then(async () => {
+    const task = queue.then(() => withStateLock(env.stateDir, "sponsor", async () => {
+      reload();
+      await recoverJournal();
+      currentDigest = undefined;
+      rate(`ip:${String(req.headers["cf-connecting-ip"] ?? req.socket.remoteAddress)}`, RATE_IP);
       const q = u.searchParams;
       if (q.has("intent")) {
         const envelope = decodeParam(q.get("intent"), "intent") as Envelope;
@@ -587,7 +638,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
       }
       if (op === "quote") return quote(q);
       return fail(400, "expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=quote&member=..&template=..&params=..[&summary=&salt=], or op=<verb>&pass=<secret>");
-    });
+    }));
     queue = task.catch(() => undefined);
     let result: Record<string, unknown>;
     try {

@@ -73,6 +73,7 @@ const PACKAGE_ARTIFACTS = {
     "export/artifacts/@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol/ModuleProxyFactory.json",
   GnosisSafe:
     "export/artifacts/@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol/GnosisSafe.json",
+  GnosisSafeProxy: "export/artifacts/@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxy.sol/GnosisSafeProxy.json",
   GnosisSafeProxyFactory:
     "export/artifacts/@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol/GnosisSafeProxyFactory.json",
   MultiSend:
@@ -178,6 +179,7 @@ export async function createSafeProxy(
   context: WriteContext,
   infrastructure: BaalInfrastructure,
   saltNonce: bigint,
+  beforeCreate?: (predicted: Address) => Promise<void>,
 ): Promise<{ safe: Address; hash: Hex }> {
   const factory = loadBaalArtifact("GnosisSafeProxyFactory");
   const simulation = await context.publicClient.simulateContract({
@@ -188,6 +190,7 @@ export async function createSafeProxy(
     account: context.account,
   });
   const safe = getAddress(simulation.result as Address);
+  await beforeCreate?.(safe);
   const hash = await context.walletClient.writeContract({
     ...simulation.request,
     account: context.account,

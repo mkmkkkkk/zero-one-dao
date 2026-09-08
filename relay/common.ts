@@ -3,6 +3,7 @@
  * deployment record, chain and RPC client, sponsor key and policy, ABIs, JSON and atomic writes.
  * Every chain-specific constant derives from the deployment file (`ZERO_ONE_DEPLOYMENT`).
  */
+import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -115,7 +116,8 @@ export const RPC_ALTERNATES: Record<number, string[]> = {
  */
 export function transportFor(chain: Chain): Transport {
   const primary = chain.rpcUrls.default.http[0]!;
-  const alternates = (RPC_ALTERNATES[chain.id] ?? []).filter((url) => url !== primary);
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(new URL(primary).hostname);
+  const alternates = (local ? [] : RPC_ALTERNATES[chain.id] ?? []).filter((url) => url !== primary);
   const options = { retryCount: 3, retryDelay: 1_200, timeout: 60_000 };
   if (alternates.length === 0) return http(primary, options);
   return fallback([http(primary, options), ...alternates.map((url) => http(url, options))], { rank: false, retryCount: 1 });
@@ -244,8 +246,9 @@ export function json(value: unknown): string {
 /** Write `data` as JSON to `file` atomically (write .new, rename), mode 0600. */
 export function atomic(file: string, data: unknown): void {
   mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-  writeFileSync(`${file}.new`, json(data), { mode: 0o600 });
-  renameSync(`${file}.new`, file);
+  const temporary = `${file}.${process.pid}.${randomUUID()}.new`;
+  writeFileSync(temporary, json(data), { mode: 0o600 });
+  renameSync(temporary, file);
 }
 
 /** Zero bytes32 and zero address. */

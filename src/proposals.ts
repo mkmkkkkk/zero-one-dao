@@ -58,6 +58,8 @@ export interface StrategyRule {
   deadline: bigint;
   takeProfitBps: bigint;
   stopLossBps: bigint;
+  /** Quote-to-execution tolerance; omitted mirror rules use exact output (0 bps). */
+  slippageBps?: bigint;
 }
 
 export interface StrategyParams {
@@ -128,6 +130,7 @@ const RULE_TUPLE = {
     { name: "deadline", type: "uint256" },
     { name: "takeProfitBps", type: "uint256" },
     { name: "stopLossBps", type: "uint256" },
+    { name: "slippageBps", type: "uint256" },
   ],
 } as const;
 
@@ -184,7 +187,7 @@ export function encodeParams(spec: TemplateSpec): Hex {
     case "Strategy":
       return encodeAbiParameters(
         [{ type: "address" }, { type: "address" }, { type: "uint256" }, RULE_TUPLE],
-        [spec.params.venue, spec.params.asset, spec.params.budget, spec.params.rule],
+        [spec.params.venue, spec.params.asset, spec.params.budget, { ...spec.params.rule, slippageBps: spec.params.rule.slippageBps ?? 0n }],
       );
     case "Project":
       return encodeAbiParameters([TRANCHE_ARRAY, { type: "uint256" }], [trancheTuples(spec.params.tranches), spec.params.deadline]);
@@ -201,7 +204,7 @@ export function encodeParams(spec: TemplateSpec): Hex {
  * @returns ABI-encoded amend payload.
  */
 export function encodeAmendParams(spec: TemplateSpec): Hex {
-  if (spec.template === "Strategy") return encodeAbiParameters([RULE_TUPLE], [spec.params.rule]);
+  if (spec.template === "Strategy") return encodeAbiParameters([RULE_TUPLE], [{ ...spec.params.rule, slippageBps: spec.params.rule.slippageBps ?? 0n }]);
   return encodeParams(spec);
 }
 

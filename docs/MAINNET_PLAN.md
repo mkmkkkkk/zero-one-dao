@@ -11,12 +11,12 @@ same relay and beacon build; only the inputs below differ.
 | Settlement | `MockUSDC` 0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b (6 dec, deployer-mintable, testnet only) | Circle USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` (`BASE_USDC`, docs/PARAMETERS.md). `deployZeroOne` takes it as `settlement`; nothing is deployed for it. No mint, no faucet: the founder brings 50 real USDC for genesis and every member brings its own. |
 | Governance at genesis | 6 h / 6 h, quorum 0, sponsor 1 share, retention 66 (then a testnet-only Config proposal to 120 s / 120 s for the run, restored to 6 h / 6 h by a final proposal) | 6 h / 6 h, quorum 0, sponsor 1 share, retention 66 from `setUp`; no testnet shortening. Any later change is an ordinary Config proposal (scenario D). Baal treats a period of 0 as "unchanged" and the Config template then reverts `NotApplied`: the minimum settable period is 1 s (corner case `absurd-grace-zero-refused`). |
 | Constitution URL | `https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/<genesis commit>/docs/CONSTITUTION.md`, fetched and hashed before deploying | Same scheme with the mainnet genesis commit sha (the hash `0xebc7c39c...2d9a` is the authority; the URL is a pointer). The commit must be pushed before `deploy` runs; the script refuses otherwise. |
-| Deploy + genesis | `scripts/deploy-base-sepolia.ts` from the mini (`ANCHOR_PRIVATE_KEY` in `~/srv/aow-exit/.env.sepolia`): singletons, proxies, tokens, shamans, factory, adapter, constitution, then the 50 USDC genesis deposit in the same run; verification inputs written next to the record | A `deploy-base.ts` that is the same script with chain 8453, `settlement = BASE_USDC`, no MockUSDC and no `--sponsor` mint; the deployer key is a fresh mainnet key funded with ~0.01 ETH (the whole Sepolia deployment cost 0.00014 ETH at 0.006 gwei; mainnet Base fees are of the same order, budget 10x). Never pre-fund the Safe: the zero-supply trap (`corner-trap`) is terminal. |
+| Deploy + genesis | `scripts/deploy-base-sepolia.ts` from the mini (`ANCHOR_PRIVATE_KEY` in `~/srv/aow-exit/.env.sepolia`): singletons, proxies, tokens, shamans, factory, adapter, constitution, then the 50 USDC genesis deposit in the same run; verification inputs written next to the record | `scripts/deploy-base.ts` is a thin entry point to `scripts/deploy-network.ts` (shared with Sepolia), with chain 8453, `settlement = BASE_USDC`, no MockUSDC and no `--sponsor` mint; the deployer key is a fresh mainnet key funded with ~0.01 ETH (the whole Sepolia deployment cost 0.00014 ETH at 0.006 gwei; mainnet Base fees are of the same order, budget 10x). Never pre-fund the Safe: the zero-supply trap (`corner-trap`) is terminal. |
 | Verification | Etherscan V2 API, chainid 84532, 12 local + 6 upstream contracts verified | Same `scripts/verify-etherscan-v2.py` with `--chain 8453 --dir deployments/verification-base` (the upstream inputs are reused verbatim: same vendored package 1.2.18). |
 | Relay sponsor policy (`relay/common.ts: policyFor`) | faucet on (10,000 USDC/day), 0.03 ETH/day, floor 0.0005 ETH, fee reserve 0.05 gwei + 0.005 gwei priority, rate 6/min/address, 30/min/IP | no faucet, 0.002 ETH/day, floor 0.003 ETH, fee reserve 0.1 gwei + 0.001 gwei priority (re-check the live base fee the day of launch; the reserve must stay within ~10x of it or the sponsor starves, as the 3 gwei reserve did on Sepolia), same rate limits. The relay refuses `propose` below sponsorThreshold, a second proposal for an instance that already has one (409), and answers 503 with "send the transaction yourself" when the cap or the floor is reached: agents keep the README's addresses and can always self-pay. |
 | Relay host | `ai.mkyang.zero-one-relay` (launchd, KeepAlive) on the mini, port 18761, state `~/srv/zero-one-dao/state/relay-base-sepolia`, sponsor key `state/relay.env` (0600); cloudflared named tunnel `zero-one-relay` (`ai.mkyang.zero-one-tunnel`) -> `https://relay-zero.mkyang.ai` | A second launchd pair (`ai.mkyang.zero-one-relay-base`, its own port, `RELAY_STATE_DIR=state/relay-base`, `ZERO_ONE_DEPLOYMENT=deployments/base.json`, a fresh sponsor key funded with 0.01 ETH) and a second ingress hostname on the same tunnel or a new tunnel; the Sepolia relay keeps running. Never point the mainnet relay at a state dir that held test T0 passes. |
 | Beacon | Vercel project `zero-one-beacon` -> `https://zero-one-beacon.vercel.app`, `beacon/vercel.json` rewrites `/relay`, `/me/*`, `/health.json`, `/state.json`, `/proposals.json` to the relay | A separate project (e.g. `zero-one`) whose README names the mainnet relay, built with `--deployment deployments/base.json`; the Sepolia beacon stays up and its README says "Base Sepolia (84532)" on line 2 so no agent confuses the two. Public copy stays chain facts only (CLAUDE.md). |
-| Index | The relay rescans Baal / WorkManager / share logs from `startBlock` on every request (3 s cache); `/proposals.json` pages with `?limit`, `?before`, `?open=1` | The same until the log range costs more than a few hundred ms per request; then an incremental index (persist the last scanned block and the decoded rows in the relay state dir, scan only new blocks). Decide from the Sepolia spam corner case timings (100 proposals). |
+| Index | The relay rescans Baal / WorkManager / share logs from `startBlock` on every request (3 s cache); `/proposals.json` pages with `?limit`, `?before`, `?open=1` | Decoded event rows, last scanned block and checkpoint hash persist in RELAY_STATE_DIR. Restart resumes at the cursor; a changed checkpoint hash triggers a full rescan. The state directory is bound to chain, DAO and sponsor; see docs/RELAY.md. |
 | Public RPC | `https://sepolia.base.org` (load-balanced; nodes lag receipts by a few seconds: every script pins reads to a block it has seen, retries simulations after a broadcast, and takes the proposal id from the receipt event) | `https://mainnet.base.org` behaves the same way; keep the same helpers (`simulateSettled`, `awaitRead`, `settledIdentity`, head-pinned reads) and consider a dedicated RPC key for the relay. |
 | Time in scenarios | Live harness: fresh DAO per scenario with 120 s / 120 s, `T.hour` 60 s, `T.day` 30 s | Not run on mainnet. Mainnet acceptance = Sepolia A-J + corner cases + two cold starts green (this plan's inputs), then the genesis run and one real cold start (join, deposit, /me) by the user's own agent. |
 
@@ -30,3 +30,43 @@ same relay and beacon build; only the inputs below differ.
 
 ## Testnet-only artifacts that never reach mainnet
 MockUSDC and its `mint`; the relay faucet; the 120 s / 120 s Config proposals (#1 and the final restore on Sepolia); the per-scenario DAOs under `evidence/testnet/scenario-daos/`; the actor keys in `state/testnet/actors.json`.
+
+
+## Phase 3 implementation and local rehearsal
+
+`npm run deploy:base -- --help` lists five mandatory gates: pushed HEAD, fetched constitution bytes
+matching the immutable text hash, deployer >=50 USDC and >=0.005 ETH, CREATE2-predicted Safe USDC=0,
+and `--i-confirmed-parameters`. Confirmation is checked before reading a key or making an RPC call.
+The public deployment also requires a clean working tree. Supply `--key-file` explicitly; Base never
+uses the Sepolia key-file default, deploys MockUSDC, or accepts sponsor mint arguments.
+The USDC decimals read goes through the proxy. Safe prediction uses the pending deployer nonce,
+vendored singleton deployment order and CREATE2 proxy creation code; its balance is checked before
+the first deployment and again immediately before creating the Safe. Genesis independently requires
+zero supply and treasury and verifies 50e18 shares belonging entirely to the depositor. Concurrent
+use of the deployer key or an unsolicited transfer to the predicted Safe can still abort the run.
+
+Production outputs are `deployments/base.json` and `deployments/verification-base/`; the shared
+module only generates verification inputs and never invokes Etherscan itself. Do not run a public
+mainnet deployment as part of phase 3. The task uses `npm run e2e:base-fork`: an owned loopback Anvil
+fork with chain ID 8453, an impersonated USDC-rich holder funding 50 USDC by exact transfer, the
+same deployment module and genesis, one voted Payment, then scenario K on the same fork. Fork
+metadata must name Base and local transports have no public fallback. Outputs are explicitly
+fork-labelled under `evidence/phase3/`, including verification inputs, and all owned processes stop
+in finally blocks. The constitution still pins pushed HEAD even on a fork; there is no bypass for
+an unpushed branch. The current task's no-push instruction therefore blocks a deployment rerun
+from the final local commit until publication is separately authorized.
+
+`FORK_RPC=https://mainnet.base.org npm run scenario:K` is an independent real-Uniswap rehearsal.
+`npm run scenarios` keeps A-J on the mirror and adds K only when FORK_RPC is set. Startup tries the
+selected upstream and Base/publicnode/drpc alternatives, retaining exact Anvil failures if all fail.
+K verifies the published router/quoter/factory code and selectors, executes two buys, voted raw
+stop/migrate, and take-profit/stop-loss sells with voted slippage assertions. The new Strategy rule
+ABI includes slippageBps; deploy fresh template dependencies rather than pointing phase 3 code at
+an old factory. Venue price is a current pool spot value, not an independent oracle; the execution
+bound is relative to the quote in the same transaction. Raw strategy holdings never live in the
+adapter between runs. See decision.md phase 3 and PARAMETERS.md for provisional choices.
+
+The relay uses an OS file lock across processes and persists the exact signed sponsor transaction
+before broadcast. Recovery reconciles the same hash before advancing the nonce, so a restart cannot
+create a second spend from uncertainty. Keep Base and Sepolia in separate state directories and
+ports; no live relay, launchd service, tunnel or sponsor account is changed by these local tests.
