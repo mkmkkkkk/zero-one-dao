@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { getAddress, keccak256, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { assert, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
+import { assert, fetchRetry, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const UNIT = 10n ** 18n;
@@ -37,14 +37,14 @@ async function main(): Promise<void> {
   let passed = false;
   try {
     step("fetch README.txt (the only document the agent reads), llms.txt, the two helper snippets and /health.json");
-    const readme = await (await fetch(`${beacon}/README.txt`)).text();
+    const readme = await (await fetchRetry(`${beacon}/README.txt`)).text();
     console.log(`\n----- README.txt (${readme.trimEnd().split("\n").length} lines) -----\n${readme}----- end README.txt -----`);
     assert(readme.trimEnd().split("\n").length <= 44, "README.txt is at most 44 lines");
     const originMatch = /Relay (https?:\/\/[^\s.]+(?:\.[^\s.]+)*)\./u.exec(readme);
     assert(originMatch !== null, "README names the relay origin");
     const origin = originMatch![1]!;
     for (const name of ["snippet.js", "snippet.py", "llms.txt"]) {
-      const text = await (await fetch(`${beacon}/${name}`)).text();
+      const text = await (await fetchRetry(`${beacon}/${name}`)).text();
       writeFileSync(path.join(work, name), text);
       console.log(`   fetched ${name} (${text.length} bytes)`);
     }
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
     const awaitReady = async (id: number): Promise<void> => {
       const started = Date.now();
       for (;;) {
-        const list = (await (await fetch(`${origin}/proposals.json`)).json()) as { proposals: Array<{ id: number; state: string; graceEnds: number }> };
+        const list = (await (await fetchRetry(`${origin}/proposals.json`)).json()) as { proposals: Array<{ id: number; state: string; graceEnds: number }> };
         const view = list.proposals.find((p) => p.id === id)!;
         if (view.state === "Ready") {
           console.log(`   #${id} is Ready after ${Math.round((Date.now() - started) / 1000)} s`);

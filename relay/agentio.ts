@@ -52,13 +52,14 @@ export function parseArgs(argv: string[]): Record<string, string> {
 /** fetch with three attempts on transport failures (a dropped connection is not a relay answer). */
 export async function fetchRetry(url: string, init?: RequestInit): Promise<Response> {
   let last: unknown;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     try {
       return await fetch(url, init);
     } catch (error) {
       last = error;
-      console.log(`   transport failure (${attempt + 1}/3): ${error instanceof Error ? error.message : String(error)}`);
-      await sleep(3_000);
+      const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+      console.log(`   transport failure (${attempt + 1}/5): ${error instanceof Error ? error.message : String(error)} ${cause?.code ?? cause?.message ?? ""}`);
+      await sleep(3_000 * (attempt + 1));
     }
   }
   throw last;
@@ -107,11 +108,11 @@ export function snippet(lang: "node" | "python", dir: string, args: string[]): s
 /** Fetch README.txt, llms.txt and both snippets from a beacon into `dir`; returns the README text and the relay origin it names. */
 export async function fetchBeacon(beacon: string, dir: string): Promise<{ readme: string; origin: string }> {
   const { writeFileSync } = await import("node:fs");
-  const readme = await (await fetch(`${beacon}/README.txt`)).text();
+  const readme = await (await fetchRetry(`${beacon}/README.txt`)).text();
   const originMatch = /Relay (https?:\/\/[^\s.]+(?:\.[^\s.]+)*)\./u.exec(readme);
   if (originMatch === null) throw new Error("README names no relay origin");
   for (const name of ["snippet.js", "snippet.py", "llms.txt"]) {
-    const text = await (await fetch(`${beacon}/${name}`)).text();
+    const text = await (await fetchRetry(`${beacon}/${name}`)).text();
     writeFileSync(path.join(dir, name), text);
     console.log(`   fetched ${name} (${text.length} bytes)`);
   }
