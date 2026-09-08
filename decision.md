@@ -191,3 +191,4 @@ revenue accounts owned by the DAO (Stripe crypto payout to the Safe / DAO-held k
 tranches with verifier release (Project template); executor bond written into the proposal contract; repeat game (one hidden
 payout ends every future proposal, shares exit only at NAV). Only real technical route: TEE-attested executors holding the
 revenue keys inside the enclave. Later, not now.
+User ruling 2026-09-09: not a hard problem. Revenue accounts belong to the DAO (DAO-held keys, payouts to the Safe); an executor never owns the account. Closed.
