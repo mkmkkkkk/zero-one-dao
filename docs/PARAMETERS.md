@@ -30,11 +30,12 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - proposalOffering = 0 — no ETH tribute to submit.
 - quorumPercent = 0 — silence is consent; abuse is stopped by exit, not turnout.
 - sponsorThreshold = 1 share (1e18 wei-shares) — anti-spam only. Baal will not accept a threshold above totalShares, and at genesis totalShares = 0: the founder can sponsor as soon as the genesis deposit (50 USDC → 50e18 shares) is made.
-- minRetentionPercent = 66 — a proposal fails automatically if > 34% of shares exit during vote + grace.
+- minRetentionPercent = 66 — a proposal fails automatically if > 34% of shares exit during vote + grace (Base Sepolia corner case: exactly 34% leaving keeps the proposal alive, 37.7% defeats it).
+- Baal treats a votingPeriod or gracePeriod of 0 in `setGovernanceConfig` as "unchanged"; the Config template's `start()` then reverts `NotApplied` and the whole action fails (`actionFailed`, nothing applied). The minimum settable period is therefore 1 s, and a 1 s / 1 s DAO is terminal on a 2 s-block chain: no block can carry a vote and `0 yes > 0 no` is false, so nothing passes again, a repair included. Allowed by design; documented consequence (Base Sepolia corner cases `absurd-*`).
 
 ## Share token (NavShareToken)
 - name = "Zero One Shares", symbol = "ZERO1", decimals = 18. **IMMUTABLE**.
-- non-transferable: transfer / approve / transferFrom always revert. **IMMUTABLE** — shares are weight, not an asset; the only way out is ragequit at NAV.
+- non-transferable: transfer / approve / transferFrom always revert. **IMMUTABLE** — shares are weight, not an asset; the only way out is ragequit at NAV. Baal accepts `ragequit(0, 0)` as a no-op (nothing burned, nothing paid) and requires the token list in ascending address order (`!order`); an asset other than the settlement is paid only when the member names it (no guildTokens registry in Baal v3).
 - votes = balance, self-delegated, timestamp checkpoints; no delegation. **IMMUTABLE**.
 - mint / burn callable only by Baal. **IMMUTABLE**.
 - no pause, no lock, no cliff, no unvested gate: every share is exitable the moment it exists. **IMMUTABLE** (the design's "owned means exitable").
@@ -62,6 +63,7 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - Config: applies nothing itself; the Safe calls `Baal.setGovernanceConfig` in the same multicall and `start()` verifies the six values (`NotApplied` reverts the whole action). No governor shaman is installed (governorLock false, see above).
 - MockDex: mirror only, constant price settable by anyone; never deployed to mainnet. Strategy venues on mainnet are named in the proposal parameters and must implement `IStrategyVenue`.
 - Execution gas: `Baal.processProposal` marks `actionFailed` instead of reverting when the voted multicall runs out of gas, and `eth_estimateGas` can therefore return a limit that is too small for the action. The mirror sends `processProposal` with an explicit 5,000,000 gas limit (`PROCESS_GAS` in `scenarios/lib.ts`); the relay's `execute` verb must do the same. **PROCEDURAL**.
+- Testnet settlement: `MockUSDC` (6 decimals, `mint` restricted to the deployer) on Base Sepolia only; the relay faucet draws from the sponsor's minted balance. Never on mainnet (docs/MAINNET_PLAN.md).
 
 ## EIP-7702 adapter (ZeroOneIntentAccount)
 - EIP-712 domain name "ZeroOneIntent", version "1", chain-bound; ops 0, 2..9 map to Baal/shaman verbs (op 1 "sponsor" removed: op 6 `work` calls `submitTask` then `sponsorProposal` in one transaction; op 0 `propose` signs `abi.encode(template, params, salt)` and the account deploys through the TemplateFactory if needed and submits the factory-built fund+start multicall). **IMMUTABLE** — exercised end to end by `npm run e2e:relay`.
