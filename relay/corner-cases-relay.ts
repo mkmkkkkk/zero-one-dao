@@ -153,13 +153,11 @@ async function main(): Promise<void> {
     const openOnly = await getJson(`${origin}/proposals.json?open=1&limit=5`, 200);
     row("spam-100-proposals", "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open", `${submitted} submitted in ${Math.round((Date.now() - started) / 1000)} s with ${rateLimited} 429 waits${sponsorCap ? `; stopped by the sponsor cap: ${sponsorCap}` : ""}; total ${String(all.total)}; ?limit=10 -> ${(page.proposals as unknown[]).length} newest, nextBefore ${String(page.nextBefore)}; ?open=1&limit=5 -> ${(openOnly.proposals as unknown[]).length}`, submitted === spam && (page.proposals as unknown[]).length === 10, hashes[hashes.length - 1]);
 
-    step("rate limit: burst of votes from one address");
-    let limited: Record<string, unknown> | undefined;
-    for (let i = 0; i < 12 && limited === undefined; i += 1) {
-      const body = await get(`${origin}/relay?op=vote&proposalId=1&approve=no&pass=${encodeURIComponent(pass)}`, false);
-      if (body.httpStatus === 429) limited = body;
-    }
-    row("rate-limit-per-address", "429 with 'retry after 60 seconds' once the per-address window is exhausted", limited === undefined ? "no 429 within 12 requests" : `${limited.httpStatus} ${String(limited.reason)}`, limited !== undefined);
+    step("rate limit: a burst of 10 concurrent votes from one address (each request takes seconds, so a serial loop never fits 7 into one minute)");
+    const burst = await Promise.all(Array.from({ length: 10 }, () => fetchRetry(`${origin}/relay?op=vote&proposalId=1&approve=no&pass=${encodeURIComponent(pass)}`).then(async (response) => ({ status: response.status, body: (await response.json()) as Record<string, unknown> }))));
+    const limited = burst.find((entry) => entry.status === 429);
+    console.log(`   burst statuses: ${burst.map((entry) => entry.status).join(" ")}`);
+    row("rate-limit-per-address", "429 with 'retry after 60 seconds' once the per-address window (6/min) is exhausted", limited === undefined ? `no 429 in a burst of 10 (statuses ${burst.map((entry) => entry.status).join(" ")})` : `${limited.status} ${String(limited.body.reason)} (${burst.filter((entry) => entry.status === 429).length} of 10 limited)`, limited !== undefined);
 
     step("sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)");
     row("sponsor-cap-exhausted", "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'", sponsorCap ?? "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)", true);

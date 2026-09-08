@@ -1,0 +1,77 @@
+{
+  "scenario": "corner-trap",
+  "chainId": 84532,
+  "rpcUrl": "https://sepolia.base.org",
+  "startBlock": 46532615,
+  "deployer": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "founder": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "settlement": "0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b",
+  "safe": "0x7a2863403Ab460c8F353d468BF16450FF684ce0B",
+  "baal": "0x898376E91000EE1080267587d275D245E6c766ad",
+  "shares": "0x820F43C4c4A7c246a16d411630b67798b8f3c908",
+  "loot": "0x8776BC3C4D4C1938c705cB2f0D1aca7287B35329",
+  "depositShaman": "0x16a4CC29eEaafbb46393360f392b98e9F70Bb0e4",
+  "workManager": "0x6F18430f45dFA22f8499e1df6861c8617DE81DAC",
+  "templateFactory": "0x293A6297683d41a9d113b05D43FA6e0BcCA61D48",
+  "templateDeployers": [
+    "0x244740E0713651981fd554276fE3e688Fc3bfbCc",
+    "0x32cc4069307CF57b7375bBB720B8Bf037404A104",
+    "0x560c78bD246c4BBEbB09AE2b5732EF1a8DE57B0A",
+    "0xa42b8A7A662dBEbc3F04d2Ff4a7635FB99C2e3a1"
+  ],
+  "intentAccount": "0x1B9f6DC5B91Aae4C49bb3646028d074603c051B9",
+  "constitution": {
+    "address": "0x21cB1E08C4bF31BD3c19e02D0459c93BdBDc28dB",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/b095b354519ae3afb500b14cb1ca350f0bf5e315/docs/CONSTITUTION.md",
+    "text": "docs/CONSTITUTION.md"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "singletons": {
+    "baalSingleton": "0x60616f7748C8f6Aa60980c9cc58A180E62A356B5",
+    "moduleProxyFactory": "0x5BcC36484Ea50C7e347A7f1437eBa6Db6E7F5Cf6",
+    "safeSingleton": "0xB19AF208048f0a47a117B59aF2299c61A86e16D9",
+    "safeProxyFactory": "0x37b3703468aab5cC7d35Df8Da2194e03d5436336",
+    "multiSend": "0x1080A4fCa8f1532850C3CE57dd8FA0f60e78FAb5",
+    "deploymentTransactions": [
+      "0xf0de5bb0c902df2191a65e3a9a0ad62da61b2ba3ac132444ddd06bd8394dc154",
+      "0xdcd8aa50672b19e778dcc02cddc895938cd7cadc8e4b0c125a2ff07d85efb57e",
+      "0x272d972dabf7e2eee7791923244157c877496324dcd7195ad26f4a0b7ebb03d4",
+      "0x03724bb0c3603e6b50f694e9174d70d4bd769eaaf59b0040165b92629c4578eb",
+      "0xab0d5ec863b7900c29fe88e6bfcb35e77b339056e9c1bda45ce195fbf3342838"
+    ]
+  },
+  "txHashes": {
+    "SafeProxy": "0x6645006a812f27a01c60dd438ff7b1932ac0c79a9ae913d6ded2d4fc2d05a80e",
+    "BaalProxy": "0xd3358d206455957f76fb58181d64685a4cacf529da3727fa6a0f4717bc611f4e",
+    "NavShareToken": "0xfb89f213944cb10a9892d409ddc19b0de9dd5a765ac1c5c660a7baea4d55f593",
+    "LootToken": "0x71bb42b5d89286459d31c014c86905b5447c08ad472d6385b104f1274e7f243e",
+    "DepositShaman": "0xd00a0e2726ae2460ce663b08384f305447035ef59550ab0fd0290e6c3e3c6209",
+    "WorkManager": "0x85fbf2bc2c384aba9769cf53253299585e70887d75be66f00f46515312798e7d",
+    "PaymentDeployer": "0xbf3e517674757f104a5619e8a7168a64cf4a98d2be7469744d39c3b1c041dcb8",
+    "StrategyDeployer": "0x51b267f470481f41a494eb0e20f92cc21756779902382b04fa13f125156c1352",
+    "ProjectDeployer": "0xba946177f6fa14e2bdaa14b8f5f50c602cf59966f73f67edab84f8c5dbae3c91",
+    "ConfigDeployer": "0x7cb235e90057211115b524062321622716d576822d2549a95cfb29458c59860e",
+    "TemplateFactory": "0xf5cb63ce0623d97ceade9c6373a6a946896948abe0a9eb333387a882a1d0eb03",
+    "ZeroOneIntentAccount": "0x4b7791d72b13040c6174280be8072ce426720631ecd662742884d4275b476a9c",
+    "Constitution": "0x50b8ba8681c4057053bc5def41b7871427fd874765b1178b603155dba0d3f50f",
+    "Safe.setup": "0x729540faf3556dd4a82839b5388e7b3e8b569b412f9e7d6b2fb6d4350b41eeba",
+    "Baal.setUp": "0x2bb5aa352696492ba5b7246217f41baf5cd3fba646239b988ce0d316cf88f5e9"
+  },
+  "actors": {
+    "F": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+    "A": "0x43cee2F76abd8b974d4b731A708613e30E663Fbf",
+    "B": "0xB210555d689363F820C6227a5bf1e1D7fc72740a",
+    "C": "0x4526D2bDb080CB3587371AAE492037efa8A32eAb",
+    "D": "0xCB7fF6781EeB02E31145C2e0AE72d3701932C6B6",
+    "O": "0x1916a5b32dDEBc1A7a4155f81304BEA8AA9d80b6",
+    "W": "0x9dE600F59834d4877DfBac2525eE8ECce20E5Bc7"
+  }
+}

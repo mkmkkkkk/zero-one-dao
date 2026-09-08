@@ -77,9 +77,13 @@ export async function deploy(options: { project: string; outDir: string }): Prom
     files.push({ file, sha, size: bytes.length });
     blobs.set(sha, bytes);
   };
+  // Vercel serves a static file before applying rewrites, so the build-time snapshots of the two documents the
+  // relay serves live (state.json, proposals.json) are not uploaded; the rewrites in beacon/vercel.json take over.
+  const rewritten = new Set(["public/state.json", "public/proposals.json"]);
   const walk = (dir: string, prefix = "public"): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (/\.(new|pyc)$/u.test(entry.name) || entry.name === "__pycache__") continue;
+      if (rewritten.has(`${prefix}/${entry.name}`)) continue;
       if (entry.isDirectory()) walk(path.join(dir, entry.name), `${prefix}/${entry.name}`);
       else if (entry.isFile()) add(`${prefix}/${entry.name}`, path.join(dir, entry.name));
     }
