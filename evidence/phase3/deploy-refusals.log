@@ -1,0 +1,13 @@
+Usage: tsx scripts/deploy-base.ts --constitution-url <raw GitHub URL> --key-file <file> [--rpc <url>] [--out <file>] --i-confirmed-parameters
+Base mainnet refuses unless all five preconditions hold:
+1. HEAD is pushed to origin (constitution URL pins that genesis commit).
+2. Constitution URL bytes hash to Constitution.textHash.
+3. Deployer holds >= 50 USDC and >= 0.005 ETH; proxy decimals must be 6.
+4. CREATE2-predicted Safe holds exactly 0 USDC before deployment.
+5. --i-confirmed-parameters is passed (checked before key access or RPC).
+Fork rehearsal only: --fork; requires loopback Anvil fork of Base, no public fallback, output under evidence/phase3.
+Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.
+REFUSED: --i-confirmed-parameters is required before any RPC write
+ASSERT missing confirmation exits nonzero before key read; RPC requests=0 writes=0
+fork writes require loopback HTTP Anvil
+ASSERT fork mode rejects public RPC before any request

@@ -80,7 +80,7 @@ the receipt and decodes what happened. An identical envelope sent twice returns 
    fund+start multicall from the signed data, so the relay cannot substitute code or targets. Response adds
    `{instance, template, codeHash, deployHash?, deployedBy: "relay sponsor" | "already on chain", proposalId, sponsored}`.
 Params (integers as decimal strings, USDC 6-dec, shares 18-dec): Payment `{recipients[], amounts[]}`; Strategy
-`{venue, asset, budget, rule:{maxPerRun, minInterval, deadline, takeProfitBps, stopLossBps}}`; Project
+`{venue, asset, budget, rule:{maxPerRun, minInterval, deadline, takeProfitBps, stopLossBps, slippageBps}}`; Project
 `{tranches:[{amount, releaseType:"date"|"verifiers", releaseAt, verifiers[], threshold}], deadline}`; Config
 `{votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent}` (docs/TEMPLATES.md).
 Template ids: 0 Payment, 1 Strategy, 2 Project, 3 Config. T0 does both steps in one request:
@@ -115,7 +115,7 @@ after broadcast is replayed with `eth_call` at the previous block to recover the
 Per chain: daily gas cap (worst-case reservation persisted before broadcast, corrected from the receipt), balance floor,
 max fee, per-address and per-IP rate limits, 8-deep queue, sponsored gas cap 8,000,000 per intent. Test chains (local
 mirror, Base Sepolia) have a settlement faucet: a `deposit` for more USDC than the member holds is topped up from the
-sponsor's own test-USDC balance under a daily cap. Base mainnet: no faucet, 0.002 ETH/day, 0.003 ETH floor.
+sponsor's own test-USDC balance under a daily cap. Base mainnet (chainId 8453): no faucet, 0.002 ETH/day, 0.003 ETH floor, 0.1 gwei max fee and 0.001 gwei priority reserve.
 A sponsored template deployment (inside `propose`) requires >= sponsorThreshold shares and its own per-address rate window.
 
 ## Beacon (`beacon/`)
@@ -172,10 +172,36 @@ Mirror-only steps: `evm_increaseTime` warps; anvil mines only on transactions, s
   Relay corner cases: `tsx relay/corner-cases-relay.ts` (evidence `evidence/testnet/corner-cases-relay-*`).
 
 ## Known limits
-- The relay index rescans logs from `startBlock` on each request (3 s cache); fine on the mirror and Sepolia, needs an
-  incremental index before mainnet scale.
-- No cross-process sponsor lock (one relay process per sponsor key).
+- All processes using one sponsor on one chain must use the same state directory; different chains require separate directories.
+- Python 3 is required for the OS file-lock helper (macOS/Linux `fcntl.flock`).
 - A vote held for the next block waits at most 120 s (then 409, retry); on the mirror the caller must mine.
 - The sponsor cap is a relay policy, not a DAO rule: when it answers 503 the agent sends the same call itself (every
   address is in the README; the adapter's `executeIntent` and Baal's verbs are public).
 - The beacon's static `state.json` is a build-time snapshot; on Vercel the path is rewritten to the relay's live one.
+
+
+## Phase 3: durable index and sponsor coordination
+`RELAY_STATE_DIR/identity.json` binds the directory to chainId, Baal and sponsor; startup refuses a mismatch.
+Never reuse the Base Sepolia directory for Base. No secret, journal or runtime state is committed.
+
+The decoded event rows and last scanned block/hash are atomically stored in `index-<chainId>-<baal>.json`.
+A restart checks the saved block hash then scans only newer blocks (9,000-block chunks). A changed checkpoint
+hash or a rewound chain discards the cached rows and rebuilds from deployment startBlock. Live contract
+reads still refresh status/balances; the persisted index is not a stale response snapshot.
+
+Every mutating request holds an OS advisory file lock on `sponsor.lock`, reloads `db.json`, reconciles an
+unfinished broadcast, validates/deduplicates, reserves the shared daily budget, broadcasts and records the
+receipt before releasing. The lock helper holds one inode; its stdin closes on relay death and the OS releases
+the descriptor even after SIGKILL. The file stays in place, recording pid, acquisition age and release metadata;
+an abandoned dead-pid record waits until age one second before recovery. A living holder is never stolen.
+The index uses its own lock so concurrent readers cannot overwrite the incremental checkpoint.
+
+Before the first RPC write, `sponsor-pending.json` stores exact signed transaction bytes, hash, nonce and budget
+reservation (0600). Recovery rebroadcasts only those same bytes and waits for their receipt before allocating
+another nonce. A timeout leaves the journal pending; a receipt settles the budget once using a persisted hash
+marker. The faucet uses the same broadcast path. Intent hashes are deduplicated under the same process lock.
+
+`npm run e2e:relay` also starts two real relay processes on distinct free ports sharing one directory. It asserts
+concurrent sponsored deposits have distinct sponsor nonces and exact treasury deltas, identical signed intents
+spend once, a restart resumes decoded rows without rescanning history, and a relay killed with a pending signed
+transaction recovers the same hash without a second nonce. All test writes target a fresh local anvil.

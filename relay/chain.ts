@@ -4,6 +4,10 @@
  * every member with shares; treasury, NAV, governance parameters and the constitution hash. Read
  * from logs since the deployment's start block plus live contract reads; cached for a few seconds.
  */
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { withStateLock } from "./lock.js";
+import { atomic } from "./common.js";
 import { decodeFunctionData, getAddress, hexToBigInt, size, slice, type Address, type Hex } from "viem";
 
 import { PROPOSAL_STATUS, type ProposalStatusName } from "../src/proposals.js";
@@ -111,7 +115,7 @@ export interface DaoState {
   staleAfter: string;
 }
 
-let cache: { at: number; value: DaoState } | undefined;
+let cache: { key: string; at: number; value: DaoState } | undefined;
 
 /**
  * Unpack Gnosis MultiSend bytes (operation|to|value|dataLength|data) into calls.
@@ -213,9 +217,10 @@ export function navPerShare(treasuryUsdc: bigint, totalShares: bigint): string {
  * @returns The state.
  */
 export async function readDaoState(env: Env, ttlMs = 3_000): Promise<DaoState> {
-  if (cache !== undefined && Date.now() - cache.at < ttlMs) return cache.value;
+  const key = `${env.stateDir}:${env.deployment.chainId}:${env.deployment.baal}`;
+  if (cache !== undefined && cache.key === key && Date.now() - cache.at < ttlMs) return cache.value;
   const value = await buildDaoState(env);
-  cache = { at: Date.now(), value };
+  cache = { key, at: Date.now(), value };
   return value;
 }
 
@@ -229,13 +234,14 @@ const LOG_CHUNK = 9_000n;
 /** Log scans are incremental: every log seen so far, with the last block covered; only newer blocks are fetched. */
 interface LogCache {
   toBlock: bigint;
+  blockHash: Hex;
   baal: unknown[];
   work: unknown[];
   shares: unknown[];
 }
-let logCache: LogCache | undefined;
+
 /** Submitter (tx.from) per SubmitProposal transaction hash; immutable once known. */
-const submitterCache = new Map<Hex, Address>();
+const submitterCache = new Map<string, Address>();
 /** Immutable part of a template instance (code hash and constructor facts) per address. */
 const instanceCache = new Map<Address, { codeHash: Hex; template: string; paramsHash: Hex; operator: Address }>();
 
@@ -299,6 +305,7 @@ async function pMap<T, R>(items: readonly T[], limit: number, fn: (item: T) => P
 }
 
 async function buildDaoState(env: Env): Promise<DaoState> {
+  let logCache: LogCache | undefined;
   const { publicClient: client, deployment: d, abi } = env;
   const fromBlock = BigInt(d.startBlock ?? 0);
   const block = await client.getBlock();
@@ -322,16 +329,28 @@ async function buildDaoState(env: Env): Promise<DaoState> {
   const baalEvents = abi.baal.filter((item) => item.type === "event" && ["SubmitProposal", "SponsorProposal", "SubmitVote", "ProcessProposal", "CancelProposal"].includes(item.name));
   const workEvents = abi.work.filter((item) => item.type === "event");
   const transferEvent = abi.shares.filter((item) => item.type === "event" && item.name === "Transfer");
-  // Incremental scan: only blocks after the last covered one, in chunks the public RPC accepts.
-  const scanFrom = logCache !== undefined && logCache.toBlock < toBlock ? logCache.toBlock + 1n : logCache === undefined ? fromBlock : undefined;
-  if (scanFrom !== undefined) {
-    const [newBaal, newWork, newShares] = await Promise.all([
-      scanLogs(client, d.baal, baalEvents, scanFrom, toBlock),
-      scanLogs(client, d.workManager, workEvents, scanFrom, toBlock),
-      scanLogs(client, d.shares, transferEvent, scanFrom, toBlock),
-    ]);
-    logCache = { toBlock, baal: [...(logCache?.baal ?? []), ...newBaal], work: [...(logCache?.work ?? []), ...newWork], shares: [...(logCache?.shares ?? []), ...newShares] };
-  }
+  await withStateLock(env.stateDir, "index", async () => {
+    const file = path.join(env.stateDir, `index-${d.chainId}-${d.baal.toLowerCase()}.json`);
+    if (existsSync(file)) {
+      logCache = JSON.parse(readFileSync(file, "utf8"), (_key, value) => value && typeof value === "object" && Object.keys(value).length === 1 && typeof value.$bigint === "string" ? BigInt(value.$bigint) : value) as LogCache;
+    } else logCache = undefined;
+    if (logCache) {
+      const checkpoint = await client.getBlock({ blockNumber: logCache.toBlock }).catch(() => undefined);
+      if (logCache.toBlock > toBlock || checkpoint?.hash !== logCache.blockHash) logCache = undefined;
+    }
+    const scanFrom = logCache ? logCache.toBlock + 1n : fromBlock;
+    if (scanFrom <= toBlock) {
+      const [newBaal, newWork, newShares] = await Promise.all([
+        scanLogs(client, d.baal, baalEvents, scanFrom, toBlock),
+        scanLogs(client, d.workManager, workEvents, scanFrom, toBlock),
+        scanLogs(client, d.shares, transferEvent, scanFrom, toBlock),
+      ]);
+      logCache = { toBlock, blockHash: block.hash, baal: [...(logCache?.baal ?? []), ...newBaal], work: [...(logCache?.work ?? []), ...newWork], shares: [...(logCache?.shares ?? []), ...newShares] };
+      const encoded = JSON.parse(JSON.stringify(logCache, (_key, value) => typeof value === "bigint" ? { $bigint: value.toString() } : value));
+      atomic(file, encoded);
+      console.log(`[index] scan ${scanFrom}..${toBlock} rows=${logCache.baal.length + logCache.work.length + logCache.shares.length}`);
+    } else console.log(`[index] resume ${logCache!.toBlock} scanned=0`);
+  });
   const baalLogs = logCache!.baal;
   const workLogs = logCache!.work;
   const shareLogs = logCache!.shares;

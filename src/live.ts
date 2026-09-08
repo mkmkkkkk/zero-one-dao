@@ -62,7 +62,8 @@ export function keyFromEnvFile(file: string, name = "ANCHOR_PRIVATE_KEY"): Hex {
 export function liveContexts(chain: Chain, keys: readonly Hex[]): { publicClient: PublicClient; contexts: WriteContext[] } {
   const url = chain.rpcUrls.default.http[0]!;
   const options = { retryCount: 4, retryDelay: 1_500, timeout: 60_000 };
-  const alternates = (RPC_ALTERNATES[chain.id] ?? []).filter((candidate) => candidate !== url);
+  const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname);
+  const alternates = (loopback ? [] : RPC_ALTERNATES[chain.id] ?? []).filter((candidate) => candidate !== url);
   const transport = alternates.length === 0 ? http(url, options) : fallback([http(url, options), ...alternates.map((candidate) => http(candidate, options))], { rank: false, retryCount: 1 });
   const publicClient = createPublicClient({ chain, transport, cacheTime: 0 });
   const contexts = keys.map((key) => {

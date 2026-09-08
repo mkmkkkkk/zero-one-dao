@@ -26,6 +26,7 @@ import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, S
 import { buildBeacon } from "../beacon/scripts/build.js";
 import { validateBeacon } from "../beacon/scripts/validate.js";
 import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
+import { hardening } from "./e2e-hardening.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -159,7 +160,7 @@ async function main(): Promise<void> {
     step("start the relay against the mirror (sponsor = anvil account 15)");
     const port = chooseFreePort(18_751);
     const origin = `http://127.0.0.1:${port}`;
-    relay = spawn(path.join(ROOT, "node_modules", ".bin", "tsx"), [path.join(ROOT, "relay", "server.ts")], {
+    relay = spawn(process.execPath, ["--import", "tsx", path.join(ROOT, "relay", "server.ts")], {
       cwd: ROOT,
       env: { ...NO_PROXY, ZERO_ONE_DEPLOYMENT: deploymentFile, RELAY_SPONSOR_KEY: sponsorKey, RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(devnet.stateDir, "relay"), RELAY_LOG: "1", RELAY_RATE_ADDRESS: "1000", RELAY_RATE_IP: "10000" },
       stdio: ["ignore", "inherit", "inherit"],
@@ -361,10 +362,12 @@ async function main(): Promise<void> {
     const viemSignature = await F.account.signTypedData({ domain: intentDomain(dao.intentAccount, devnet.chainId), types: INTENT_TYPES, primaryType: "Intent", message: { member: F.account.address, op: 2, proposalId: 3, amount: 0n, evidenceHash: `0x${"0".repeat(64)}`, data: "0x", details: "", nonce: BigInt(founderMe.nonce), deadline: BigInt(deadline) } });
     assert(viemSignature === jsEnvelope.signature, "viem's EIP-712 signature equals the snippets' (same digest, same key)");
 
+    step("phase 3 two-process concurrency, duplicate intents, restart cursor and killed broadcaster recovery");
+    await hardening({ deploymentFile, stateDir: path.join(devnet.stateDir, "relay"), sponsorKey, origin, client: chain.publicClient, adapter: dao.intentAccount, settlement: dao.settlement, safe: dao.safe, shares: dao.shares, chainId: devnet.chainId });
     passed = true;
   } finally {
     console.log(`\n=== RELAY E2E: ${passed ? "PASS" : "FAIL"} ===\n`);
-    if (relay !== undefined && relay.exitCode === null) relay.kill("SIGTERM");
+    if (relay !== undefined && relay.exitCode === null) await new Promise<void>((resolve) => { relay!.once("exit", () => resolve()); relay!.kill("SIGTERM"); });
     await stopDevnet(devnet);
   }
 }

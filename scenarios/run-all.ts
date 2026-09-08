@@ -9,10 +9,12 @@ import { main as G } from "./G-strategy-contract.js";
 import { main as H } from "./H-project-tranches.js";
 import { main as I } from "./I-project-topup-stop.js";
 import { main as J } from "./J-strategy-migrate.js";
+import { main as K } from "./K-uniswap-v3-fork.js";
 
 const SCENARIOS: Array<[string, () => Promise<void>]> = [["A", A], ["B", B], ["C", C], ["D", D], ["E", E], ["F", F], ["G", G], ["H", H], ["I", I], ["J", J]];
 
 async function main(): Promise<void> {
+  if (process.env.FORK_RPC) SCENARIOS.push(["K", K]);
   const results: Array<[string, boolean, string]> = [];
   for (const [name, run] of SCENARIOS) {
     try {

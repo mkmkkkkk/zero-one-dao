@@ -25,7 +25,10 @@
     "relay": "tsx relay/server.ts",
     "beacon:build": "tsx beacon/scripts/build.ts",
     "beacon:validate": "tsx beacon/scripts/validate.ts",
-    "e2e:relay": "tsx relay/e2e-local.ts"
+    "e2e:relay": "tsx relay/e2e-local.ts",
+    "deploy:base": "tsx scripts/deploy-base.ts",
+    "scenario:K": "tsx scenarios/K-uniswap-v3-fork.ts",
+    "e2e:base-fork": "tsx scripts/e2e-base-fork.ts"
   },
   "dependencies": {
     "@daohaus/baal-contracts": "1.2.18",

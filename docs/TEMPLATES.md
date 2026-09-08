@@ -107,3 +107,30 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
 
 `paramsHash` after an amend is `keccak256` of the amend payload (the latest voted parameters), except for
 the Strategy where it is `keccak256(abi.encode(venue, asset, budget, rule))` with the new rule.
+
+## Phase 3: Uniswap v3 Strategy venue
+`UniswapV3Venue` implements `IStrategyVenue` using an immutable pair and fee, SwapRouter02 and
+QuoterV2. The dependency has no owner, admin or mutable configuration. The Strategy remains Safe-owned;
+its amended `Rule` includes `slippageBps`, and holdings stay in the Strategy. `run()` quotes the exact
+input, passes a minimum output to the router, verifies exact input/output token deltas, clears approval,
+and leaves the adapter empty. A revert rolls the entire step back. `price()` reads pool slot0 and
+normalizes per whole asset token; it is a spot rule, not an oracle or guarantee against manipulation.
+The tolerance bounds only quote-to-execution drift in the same transaction. Someone sending dust to
+the adapter cannot redirect it: anyone can `sweep()` the two pair tokens to the immutable Safe.
+
+`stop()` and `migrate()` still move raw USDC + WETH without any venue call. Scenario J continues to
+use MockDex; `FORK_RPC=https://mainnet.base.org npm run scenario:K` exclusively broadcasts to a local
+Anvil fork and exercises two buys, voted raw stop, voted migration, successor execution, take-profit
+and stop-loss sells against published Base Uniswap contracts. No Etherscan verification runs on forks.
+The helper checks the router/quoter/factory bytecode and expected read selectors first. K uses 500 fee,
+50 bps slippage and 18-decimal WETH; none is a governance cap. The fork logs are the proof of on-chain
+checks; the published deployment table alone is not proof that the local fork ran successfully.
+
+This changes Strategy constructor/parameter ABI and factory creation code. Old Sepolia deployments
+remain immutable and require their original ABI. Phase 3 builders target freshly deployed factories;
+omitting slippage in existing mirror specifications encodes zero. Raw stop/migrate remain compatible
+with the common proposal-management surface.
+K supplies 2,000,000 gas for `run()` after simulation; this is test transaction gas, not a contract
+cap. The first attempt simulated successfully but its automatic-gas stop-loss transaction reverted
+(`evidence/phase3/uniswap-v3-fork-red.log`). The explicit-gas rerun records actual gas used; the first
+failure's precise EVM trace is unavailable after that owned Anvil was shut down.

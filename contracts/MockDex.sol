@@ -11,6 +11,7 @@ import {IERC20Minimal} from "./Interfaces.sol";
 /// Strategy parameters on mainnet.
 contract MockDex {
     uint256 public constant PRICE_UNIT = 1e6;
+    uint256 public constant assetUnit = 1e6;
 
     IERC20Minimal public immutable settlement;
     IERC20Minimal public immutable asset;
@@ -68,7 +69,7 @@ contract MockDex {
     }
 
     /// @notice Pull `settlementIn` (pre-approved) and send the asset at the current price.
-    function buy(uint256 settlementIn) external returns (uint256 assetOut) {
+    function buy(uint256 settlementIn, uint256) external returns (uint256 assetOut) {
         if (settlementIn == 0) revert ZeroAmount();
         assetOut = quoteBuy(settlementIn);
         if (assetOut == 0) revert ZeroAmount();
@@ -78,7 +79,7 @@ contract MockDex {
     }
 
     /// @notice Pull `assetIn` (pre-approved) and send settlement at the current price.
-    function sell(uint256 assetIn) external returns (uint256 settlementOut) {
+    function sell(uint256 assetIn, uint256) external returns (uint256 settlementOut) {
         if (assetIn == 0) revert ZeroAmount();
         settlementOut = quoteSell(assetIn);
         if (settlementOut == 0) revert ZeroAmount();

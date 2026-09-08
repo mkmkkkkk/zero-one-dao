@@ -59,7 +59,7 @@ export function parseSpec(template: string, raw: unknown): TemplateSpec {
         venue: address(p.venue, "venue"),
         asset: address(p.asset, "asset"),
         budget: big(p.budget, "budget"),
-        rule: { maxPerRun: big(rule.maxPerRun, "rule.maxPerRun"), minInterval: big(rule.minInterval ?? 0, "rule.minInterval"), deadline: big(rule.deadline, "rule.deadline"), takeProfitBps: big(rule.takeProfitBps ?? 0, "rule.takeProfitBps"), stopLossBps: big(rule.stopLossBps ?? 0, "rule.stopLossBps") },
+        rule: { maxPerRun: big(rule.maxPerRun, "rule.maxPerRun"), minInterval: big(rule.minInterval ?? 0, "rule.minInterval"), deadline: big(rule.deadline, "rule.deadline"), takeProfitBps: big(rule.takeProfitBps ?? 0, "rule.takeProfitBps"), stopLossBps: big(rule.stopLossBps ?? 0, "rule.stopLossBps"), slippageBps: big(rule.slippageBps ?? 0, "rule.slippageBps") },
       };
       return { template: "Strategy", params };
     }
