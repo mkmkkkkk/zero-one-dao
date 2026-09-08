@@ -49,10 +49,25 @@ export function parseArgs(argv: string[]): Record<string, string> {
  * @param expectOk true: body.ok must be true; false: body.ok must be false with a string reason.
  * @returns The parsed body (status added as `httpStatus`).
  */
+/** fetch with three attempts on transport failures (a dropped connection is not a relay answer). */
+export async function fetchRetry(url: string, init?: RequestInit): Promise<Response> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await fetch(url, init);
+    } catch (error) {
+      last = error;
+      console.log(`   transport failure (${attempt + 1}/3): ${error instanceof Error ? error.message : String(error)}`);
+      await sleep(3_000);
+    }
+  }
+  throw last;
+}
+
 export async function get(url: string, expectOk = true): Promise<Record<string, unknown>> {
   console.log(`   GET ${shortUrl(url)}`);
   const started = Date.now();
-  const response = await fetch(url, { headers: { "user-agent": "zero-one-agent-script" } });
+  const response = await fetchRetry(url, { headers: { "user-agent": "zero-one-agent-script" } });
   const text = await response.text();
   let body: Record<string, unknown>;
   try {
@@ -70,7 +85,7 @@ export async function get(url: string, expectOk = true): Promise<Record<string, 
 export async function getJson(url: string, printChars = 600): Promise<Record<string, unknown>> {
   console.log(`   GET ${url}`);
   const started = Date.now();
-  const response = await fetch(url, { headers: { "user-agent": "zero-one-agent-script" } });
+  const response = await fetchRetry(url, { headers: { "user-agent": "zero-one-agent-script" } });
   const text = await response.text();
   const body = JSON.parse(text) as Record<string, unknown>;
   console.log(`   -> ${response.status} (${Date.now() - started} ms, ${text.length} bytes) ${text.slice(0, printChars)}`);

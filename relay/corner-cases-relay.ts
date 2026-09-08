@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { createPublicClient, getAddress, http, keccak256, parseAbi, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { assert, fetchBeacon, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
+import { assert, fetchBeacon, fetchRetry, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -123,8 +123,15 @@ async function main(): Promise<void> {
     let sponsorCap: string | undefined;
     const hashes: string[] = [];
     while (submitted < spam) {
-      const url = snippet("node", work, ["propose", "--key", keyFile, "--template", "Payment", "--params", dupParams, "--summary", `corner: spam ${submitted + 1}`]);
-      const response = await fetch(url);
+      let url: string;
+      try {
+        url = snippet("node", work, ["propose", "--key", keyFile, "--template", "Payment", "--params", dupParams, "--summary", `corner: spam ${submitted + 1}`]);
+      } catch (error) {
+        console.log(`   snippet failed (transient?): ${error instanceof Error ? error.message.slice(0, 120) : String(error)}`);
+        await sleep(5_000);
+        continue;
+      }
+      const response = await fetchRetry(url);
       const body = (await response.json()) as Record<string, unknown>;
       if (response.status === 429) {
         rateLimited += 1;
