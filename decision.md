@@ -160,3 +160,24 @@ Strategy proposals stay on MockDex; mainnet deploys the new factory from the sta
 Ruling 6 (permissionless sweep of venue dust to the Safe) is recovery, not a rule: it moves nothing a vote could not.
 Fork rehearsal after the push: evidence/phase3/deploy-base-fork-pushed.log (deploy + genesis + Payment PASS).
 Mainnet remains gated on the user's line-by-line confirmation of docs/PARAMETERS.md.
+
+## 2026-09-09 phase 4 rulings (Fable; user raised NAV-after-gains, flash loans, liquidity valuation)
+Threats found and the one-contract answer, kept deliberately small:
+- Hole 1 (deposit mispricing): deposit NAV counted only Safe USDC; assets returned raw by stop/migrate (WETH) and USDC out
+  on running instances (Strategy/Project budgets) were invisible, so a depositor (flash-loaned or not) could buy shares cheap
+  and ragequit dear. Fix: `TreasuryLedger` (Safe-owned, no admin). Instances `open()` in `start()` and `close()` in
+  end/stop/migrate (both onlySafe paths, so the active set = passed, running proposals; spam instances never enter).
+  Deposit NAV = Safe USDC + Σ USDC held by open instances. Deposits are refused (`TreasuryNotSettled`) while any open
+  instance holds its asset or the Safe holds any asset the ledger has ever registered (Strategy assets, append-only). No
+  oracle, nothing is valued; the DAO settles to USDC by vote and deposits reopen by themselves.
+- Hole 2 (spot price): the venue's price() and slippage bound referenced the pool's current quote, so a flash swap could move
+  slot0, trigger a stop-loss/take-profit on the permissionless run() and sandwich the sale. Fix: UniswapV3Venue prices and
+  bounds execution against the pool's own 30-minute TWAP (`observe`); execution reverts when output < TWAP-implied output
+  × (1 − slippageBps). Thin pools then revert large runs instead of dumping; chunking is `maxPerRun`, voted per strategy.
+  Constructor refuses pools whose observation cardinality cannot serve the window.
+- Voting: no change. Shares are non-transferable, vote weight is the checkpoint at submission and a vote in the submission
+  block reverts, so a flash loan cannot vote. A multi-block capital attack (deposit big, propose "pay me", vote) hands exiting
+  members a pro-rata slice of the attacker's own deposit during grace; it only wins against members who never poll.
+- Ragequit stays pro-rata of the Safe only (funds out on open instances are forfeited to stayers). Exit price ≤ deposit price,
+  so there is no round-trip arbitrage; documented in PARAMETERS and the README, not softened.
+- Not done (rejected as complexity): pricing non-USDC assets for deposits with TWAPs; deposit cooldowns; per-address caps.
