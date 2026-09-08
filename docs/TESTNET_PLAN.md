@@ -31,3 +31,20 @@ Beacon
 
 ## Exit criteria
 All rows above have receipts in evidence/testnet/; a stranger agent (fresh key, no repo access) completes the cold-start path twice; PARAMETERS.md reviewed by the user line by line.
+
+## Status on Base Sepolia (2026-09-08; deployment `deployments/base-sepolia.json`, evidence `evidence/testnet/`)
+| Step | Result | Evidence |
+| --- | --- | --- |
+| Deploy + genesis (50 mock USDC -> 50e18 shares) | done from the mini; cost 0.00014 ETH; a first attempt died at `Baal.setUp` (`GS104`) because the public RPC answered from a node behind `Safe.setup` (fixed: settled simulations and reads) | `deploy-base-sepolia-2026-09-08.log`, record `deployments/base-sepolia.json` |
+| Source verification (Etherscan V2, chainid 84532) | 12 local + 6 upstream (Baal/Safe singletons, Safe proxy) verified | `verify-base-sepolia-2026-09-08.log`, `deployments/verification-base-sepolia/evidence/` |
+| Relay + tunnel + beacon | `https://relay-zero.mkyang.ai` (launchd on the mini), `https://zero-one-beacon.vercel.app` (README 43 lines, validate PASS) | `state/logs/` on the mini; `beacon:validate` output in the commit message |
+| Governance 120 s / 120 s (testnet only) | proposal #1 (Config template) submitted and voted at 2026-09-07T23:31Z under 6 h / 6 h; executable 2026-09-08T11:31:34Z; restored to 21600 / 21600 by the final proposal | `governance-120s-proposal-2026-09-08.log`, `governance-*` logs |
+| Scenarios A-J on Sepolia (a fresh DAO each, 120 s / 120 s) | batch: A, B, C, D, E, F, I, J PASS; G and H failed on a stale `describe()` read from a lagging RPC node (the receipts show `Unwound` + `Completed`); `describe()` pinned to the head and G, H re-run PASS | `scenarios-A-J-base-sepolia-2026-09-08.log`, `scenarios-G-rerun-*.log`, `scenarios-H-rerun-*.log`, DAO records `scenario-daos/*.json` (failed attempts under `scenario-daos/failed/`) |
+| Corner cases on fresh DAOs | see the table below | `corner-cases-daos-base-sepolia-2026-09-08.log`, `corner-cases-daos-2026-09-08.json` |
+| Corner cases through the relay | see the table below | `corner-cases-relay-main-2026-09-08.log`, `corner-cases-relay-2026-09-08.json` |
+| Cold start (README + relay only), mini and main Mac | T1 + T0 paths | `cold-start-mini-*.log`, `cold-start-main-*.log` |
+
+Public-RPC facts that changed code (all in decision.md phase 2c): `sepolia.base.org` caps `eth_getLogs` at 10,000 blocks
+(`-32614`), rate-limits bursts (`over rate limit`), and answers from nodes that lag a receipt by seconds. The relay index
+now scans logs incrementally in 9,000-block chunks, batches reads through Multicall3, falls back to publicnode / drpc /
+tenderly, and every script pins reads to a block it has seen.
