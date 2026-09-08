@@ -63,7 +63,8 @@ async function main(): Promise<void> {
     const keyFile = path.join(work, "agent.key");
     writeFileSync(keyFile, `${agentKey.slice(2)}\n`, { mode: 0o600 });
     await get(snippet("node", work, ["join", "--key", keyFile]));
-    const deposited = await get(snippet("node", work, ["deposit", "--key", keyFile, "--usdc", "10"]));
+    const depositUrl = snippet("node", work, ["deposit", "--key", keyFile, "--usdc", "10"]);
+    const deposited = await get(depositUrl);
     const strangerKey = generatePrivateKey();
     const stranger = privateKeyToAccount(strangerKey);
     const strangerFile = path.join(work, "stranger.key");
@@ -73,12 +74,11 @@ async function main(): Promise<void> {
     await get(`${origin}/relay?op=join&pass=${encodeURIComponent(pass)}`);
     console.log(`   agent ${agent.address} (${String((deposited.deposit as { sharesMinted: string }).sharesMinted)} shares), stranger ${stranger.address}, T0 ${String(t0.address)}`);
 
-    step("replay of a signed intent: the same URL sent twice");
+    step("replay of a signed intent: the deposit URL that just succeeded is sent again");
     const me = await getJson(`${origin}/me/${agent.address}.json`);
-    const voteUrl = snippet("node", work, ["vote", "--key", keyFile, "--proposal", "1", "--approve", "no", "--deadline", String(Number(me.chainTime) + 900)]);
-    const first = await get(voteUrl, false);
-    const replay = await get(voteUrl, false);
-    row("replay-signed-intent", "second send refused with a nonce reason (or the same on-chain reason, never a duplicate transaction)", `first: ${first.httpStatus} ${String(first.reason).slice(0, 80)}; replay: ${replay.httpStatus} ${String(replay.reason).slice(0, 80)}`, replay.ok === false);
+    const replay = await get(depositUrl);
+    const meAfter = await getJson(`${origin}/me/${agent.address}.json`);
+    row("replay-signed-intent", "the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged", `replayed=${String(replay.replayed)} hash=${String(replay.hash) === String(deposited.hash) ? "same" : "DIFFERENT"}; nonce ${String(me.nonce)} -> ${String(meAfter.nonce)}; shares ${String(me.shares)} -> ${String(meAfter.shares)}`, replay.replayed === true && String(replay.hash) === String(deposited.hash) && meAfter.nonce === me.nonce);
 
     step("intent signed for another chain id (31401) and the same adapter");
     const nonce = BigInt(String(me.nonce));
@@ -87,9 +87,12 @@ async function main(): Promise<void> {
     const chainMismatch = await get(`${origin}/relay?intent=${Buffer.from(JSON.stringify(envelope)).toString("base64url")}`, false);
     row("intent-other-chain-id", "401 signature mismatch (EIP-712 domain is chain-bound)", `${chainMismatch.httpStatus} ${String(chainMismatch.reason).slice(0, 100)}`, chainMismatch.httpStatus === 401);
 
-    step("intent from an address with no code (never joined, no authorization attached)");
-    const noCode = await get(snippet("node", work, ["vote", "--key", strangerFile, "--proposal", "1", "--approve", "no"]), false);
-    row("intent-undelegated-address", "400 'not delegated: join first' (T1) or an authorization requirement", `${noCode.httpStatus} ${String(noCode.reason).slice(0, 120)}`, noCode.ok === false && /delegated|join/u.test(String(noCode.reason)));
+    step("intent from an address with no code (never joined) and no authorization attached (the snippets attach one automatically, so the envelope is built by hand)");
+    const strangerMe = await getJson(`${origin}/me/${stranger.address}.json`);
+    const strangerSig = await stranger.signTypedData({ domain: intentDomain(adapter, chainId), types: INTENT_TYPES, primaryType: "Intent", message: { member: stranger.address, op: 2, proposalId: 1, amount: 0n, evidenceHash: `0x${"0".repeat(64)}`, data: "0x", details: "", nonce: 0n, deadline: BigInt(Number(strangerMe.chainTime) + 900) } });
+    const bare = { message: { member: stranger.address, op: 2, proposalId: 1, amount: "0", evidenceHash: `0x${"0".repeat(64)}`, data: "0x", details: "", nonce: "0", deadline: String(Number(strangerMe.chainTime) + 900) }, signature: strangerSig };
+    const noCode = await get(`${origin}/relay?intent=${Buffer.from(JSON.stringify(bare)).toString("base64url")}`, false);
+    row("intent-undelegated-address", "400 'not delegated: join first (op=join) or attach an EIP-7702 authorization'", `${noCode.httpStatus} ${String(noCode.reason).slice(0, 120)}`, noCode.httpStatus === 400 && /not delegated/u.test(String(noCode.reason)));
 
     step("work below sponsorThreshold: a T0 account with 0 shares submits a task; op 6 (submitTask + sponsorProposal) reverts as a whole, no task recorded");
     const taskCountBefore = (await rpc.readContract({ address: workManager, abi: parseAbi(["function taskCount() view returns (uint256)"]), functionName: "taskCount" })) as bigint;
