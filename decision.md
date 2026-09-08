@@ -183,3 +183,11 @@ Threats found and the one-contract answer, kept deliberately small:
 - Not done (rejected as complexity): pricing non-USDC assets for deposits with TWAPs; deposit cooldowns; per-address caps.
 
 User 2026-09-09: PARAMETERS.md lines 1-7 confirmed ("lgtm"); phase 4 rulings (ledger + TWAP) confirmed ("lgtm"). Mainnet proceeds after phase 4 is merged and proven; the 50 USDC genesis is the only user action.
+
+## 2026-09-09 known unsolvable: off-chain revenue is an oracle problem (user + Fable, not scheduled)
+An executor funded by proposal can hide revenue that arrives off-chain (Stripe). No contract can see it; not built for.
+Mitigations that cost nothing in code: prefer Work (verifiable deliverable, verifier ≠ proposer) over funding ventures;
+revenue accounts owned by the DAO (Stripe crypto payout to the Safe / DAO-held key), never by the executor; small budgets in
+tranches with verifier release (Project template); executor bond written into the proposal contract; repeat game (one hidden
+payout ends every future proposal, shares exit only at NAV). Only real technical route: TEE-attested executors holding the
+revenue keys inside the enclave. Later, not now.
