@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 
-import { createPublicClient, createWalletClient, http, type Chain, type Hex, type PublicClient } from "viem";
+import { createPublicClient, createWalletClient, fallback, http, type Chain, type Hex, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { nonceManager } from "viem/nonce";
 import { base, baseSepolia } from "viem/chains";
@@ -14,6 +14,11 @@ import type { WriteContext } from "./baal.js";
 
 /** Public RPC per supported chain id (override with ZERO_ONE_RPC_URL). */
 export const PUBLIC_RPC: Record<number, string> = { 84532: "https://sepolia.base.org", 8453: "https://mainnet.base.org" };
+/** Alternates the transport falls back to when the primary rate-limits ("over rate limit") or fails. */
+export const RPC_ALTERNATES: Record<number, string[]> = {
+  84532: ["https://base-sepolia-rpc.publicnode.com", "https://base-sepolia.drpc.org", "https://base-sepolia.gateway.tenderly.co"],
+  8453: ["https://base-rpc.publicnode.com", "https://base.drpc.org"],
+};
 
 /**
  * viem chain for a chain id with the RPC bound.
@@ -56,7 +61,9 @@ export function keyFromEnvFile(file: string, name = "ANCHOR_PRIVATE_KEY"): Hex {
  */
 export function liveContexts(chain: Chain, keys: readonly Hex[]): { publicClient: PublicClient; contexts: WriteContext[] } {
   const url = chain.rpcUrls.default.http[0]!;
-  const transport = http(url, { retryCount: 6, retryDelay: 1_500, timeout: 60_000 });
+  const options = { retryCount: 4, retryDelay: 1_500, timeout: 60_000 };
+  const alternates = (RPC_ALTERNATES[chain.id] ?? []).filter((candidate) => candidate !== url);
+  const transport = alternates.length === 0 ? http(url, options) : fallback([http(url, options), ...alternates.map((candidate) => http(candidate, options))], { rank: false, retryCount: 1 });
   const publicClient = createPublicClient({ chain, transport, cacheTime: 0 });
   const contexts = keys.map((key) => {
     // Local nonce tracking: a load-balanced public RPC can report a stale pending count between two writes.

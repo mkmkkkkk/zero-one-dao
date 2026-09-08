@@ -205,19 +205,6 @@ export function navPerShare(treasuryUsdc: bigint, totalShares: bigint): string {
   return fmtUsdc((treasuryUsdc * UNIT) / totalShares);
 }
 
-/** Read one template instance's describe() and code hash; undefined if the address has no code. */
-async function readInstance(env: Env, address: Address, submitted?: Record<string, unknown>): Promise<TemplateInstanceView | undefined> {
-  const code = await env.publicClient.getCode({ address });
-  if (code === undefined || code === "0x") return undefined;
-  try {
-    const result = (await env.publicClient.readContract({ address, abi: env.abi.proposal, functionName: "describe" })) as readonly [string, Hex, Address, bigint, bigint, number];
-    const { keccak256 } = await import("viem");
-    return { address, template: result[0], paramsHash: result[1], operator: getAddress(result[2]), budget: result[3].toString(), budgetUsdc: fmtUsdc(result[3]), deadline: Number(result[4]), status: PROPOSAL_STATUS[result[5]] ?? "Pending", codeHash: keccak256(code), submitted };
-  } catch {
-    return undefined;
-  }
-}
-
 /**
  * Build the full DAO state (cached for `ttlMs`).
  *
@@ -237,30 +224,117 @@ export function invalidateState(): void {
   cache = undefined;
 }
 
+/** Public RPCs cap eth_getLogs at 10,000 blocks (sepolia.base.org: -32614); scan in chunks below that. */
+const LOG_CHUNK = 9_000n;
+/** Log scans are incremental: every log seen so far, with the last block covered; only newer blocks are fetched. */
+interface LogCache {
+  toBlock: bigint;
+  baal: unknown[];
+  work: unknown[];
+  shares: unknown[];
+}
+let logCache: LogCache | undefined;
+/** Submitter (tx.from) per SubmitProposal transaction hash; immutable once known. */
+const submitterCache = new Map<Hex, Address>();
+/** Immutable part of a template instance (code hash and constructor facts) per address. */
+const instanceCache = new Map<Address, { codeHash: Hex; template: string; paramsHash: Hex; operator: Address }>();
+
+/** getLogs over [from, to] in chunks the public RPC accepts. */
+async function scanLogs(client: Env["publicClient"], address: Address, events: unknown[], from: bigint, to: bigint): Promise<unknown[]> {
+  const out: unknown[] = [];
+  for (let start = from; start <= to; start += LOG_CHUNK) {
+    const end = start + LOG_CHUNK - 1n < to ? start + LOG_CHUNK - 1n : to;
+    out.push(...(await client.getLogs({ address, events: events as never, fromBlock: start, toBlock: end })));
+  }
+  return out;
+}
+
+/** One contract read for readMany. */
+interface ReadCall {
+  address: Address;
+  abi: unknown;
+  functionName: string;
+  args?: readonly unknown[];
+}
+
+/**
+ * Many reads at one block: a single Multicall3 `aggregate3` when the chain has one (Base, Base Sepolia),
+ * else individual eth_calls with bounded concurrency (local anvil). Failed calls yield `undefined`.
+ */
+async function readMany(client: Env["publicClient"], calls: ReadCall[], blockNumber: bigint): Promise<unknown[]> {
+  if (calls.length === 0) return [];
+  const multicall3 = (client.chain as { contracts?: { multicall3?: { address: Address } } } | undefined)?.contracts?.multicall3;
+  if (multicall3 !== undefined) {
+    const out: unknown[] = [];
+    for (let start = 0; start < calls.length; start += 120) {
+      const chunk = calls.slice(start, start + 120);
+      const results = (await client.multicall({ contracts: chunk as never, blockNumber, allowFailure: true, multicallAddress: multicall3.address })) as unknown as Array<{ status: string; result?: unknown }>;
+      out.push(...results.map((result) => (result.status === "success" ? result.result : undefined)));
+    }
+    return out;
+  }
+  return pMap(calls, 4, async (call) => {
+    try {
+      return await client.readContract({ ...call, blockNumber } as never);
+    } catch {
+      return undefined;
+    }
+  });
+}
+
+/** Run `fn` over `items` with at most `limit` in flight (the public RPC rate-limits bursts). */
+async function pMap<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    for (;;) {
+      const index = next;
+      next += 1;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index]!);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
 async function buildDaoState(env: Env): Promise<DaoState> {
   const { publicClient: client, deployment: d, abi } = env;
   const fromBlock = BigInt(d.startBlock ?? 0);
   const block = await client.getBlock();
   const toBlock = block.number;
-  const read = <T,>(address: Address, contractAbi: typeof abi.baal, functionName: string, args: readonly unknown[] = []) =>
-    client.readContract({ address, abi: contractAbi, functionName, args, blockNumber: toBlock } as never) as Promise<T>;
-
-  const [treasuryUsdc, totalShares, votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent, textHash, textUrl, proposalCount] = await Promise.all([
-    read<bigint>(d.settlement, abi.settlement, "balanceOf", [d.safe]),
-    read<bigint>(d.shares, abi.shares, "totalSupply"),
-    read<number>(d.baal, abi.baal, "votingPeriod"),
-    read<number>(d.baal, abi.baal, "gracePeriod"),
-    read<bigint>(d.baal, abi.baal, "proposalOffering"),
-    read<bigint>(d.baal, abi.baal, "quorumPercent"),
-    read<bigint>(d.baal, abi.baal, "sponsorThreshold"),
-    read<bigint>(d.baal, abi.baal, "minRetentionPercent"),
-    read<Hex>(d.constitution.address, abi.constitution, "textHash"),
-    read<string>(d.constitution.address, abi.constitution, "textUrl"),
-    read<number>(d.baal, abi.baal, "proposalCount"),
-  ]);
+  const base = await readMany(client, [
+    { address: d.settlement, abi: abi.settlement, functionName: "balanceOf", args: [d.safe] },
+    { address: d.shares, abi: abi.shares, functionName: "totalSupply" },
+    { address: d.baal, abi: abi.baal, functionName: "votingPeriod" },
+    { address: d.baal, abi: abi.baal, functionName: "gracePeriod" },
+    { address: d.baal, abi: abi.baal, functionName: "proposalOffering" },
+    { address: d.baal, abi: abi.baal, functionName: "quorumPercent" },
+    { address: d.baal, abi: abi.baal, functionName: "sponsorThreshold" },
+    { address: d.baal, abi: abi.baal, functionName: "minRetentionPercent" },
+    { address: d.constitution.address, abi: abi.constitution, functionName: "textHash" },
+    { address: d.constitution.address, abi: abi.constitution, functionName: "textUrl" },
+    { address: d.baal, abi: abi.baal, functionName: "proposalCount" },
+  ], toBlock);
+  if (base.some((value) => value === undefined)) throw new Error(`base reads failed at block ${toBlock}`);
+  const [treasuryUsdc, totalShares, votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent, textHash, textUrl, proposalCount] = base as [bigint, bigint, number, number, bigint, bigint, bigint, bigint, Hex, string, number];
 
   const baalEvents = abi.baal.filter((item) => item.type === "event" && ["SubmitProposal", "SponsorProposal", "SubmitVote", "ProcessProposal", "CancelProposal"].includes(item.name));
-  const baalLogs = await client.getLogs({ address: d.baal, events: baalEvents as never, fromBlock, toBlock });
+  const workEvents = abi.work.filter((item) => item.type === "event");
+  const transferEvent = abi.shares.filter((item) => item.type === "event" && item.name === "Transfer");
+  // Incremental scan: only blocks after the last covered one, in chunks the public RPC accepts.
+  const scanFrom = logCache !== undefined && logCache.toBlock < toBlock ? logCache.toBlock + 1n : logCache === undefined ? fromBlock : undefined;
+  if (scanFrom !== undefined) {
+    const [newBaal, newWork, newShares] = await Promise.all([
+      scanLogs(client, d.baal, baalEvents, scanFrom, toBlock),
+      scanLogs(client, d.workManager, workEvents, scanFrom, toBlock),
+      scanLogs(client, d.shares, transferEvent, scanFrom, toBlock),
+    ]);
+    logCache = { toBlock, baal: [...(logCache?.baal ?? []), ...newBaal], work: [...(logCache?.work ?? []), ...newWork], shares: [...(logCache?.shares ?? []), ...newShares] };
+  }
+  const baalLogs = logCache!.baal;
+  const workLogs = logCache!.work;
+  const shareLogs = logCache!.shares;
   const submitted = new Map<number, { data: Hex; details: string; selfSponsor: boolean; timestamp: number; from?: Address }>();
   const votes = new Map<number, Array<{ member: Address; approved: boolean; balance: string }>>();
   for (const log of baalLogs) {
@@ -277,20 +351,19 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     }
   }
   // Who submitted: the transaction sender (the member's own address under EIP-7702, or the WorkManager for tasks).
-  const submitters = new Map<Hex, Address>();
-  for (const log of baalLogs) {
-    if ((log as { eventName: string }).eventName !== "SubmitProposal") continue;
+  const submitLogs = baalLogs.filter((log) => (log as { eventName: string }).eventName === "SubmitProposal");
+  await pMap(submitLogs, 4, async (log) => {
     const hash = (log as { transactionHash: Hex | null }).transactionHash;
-    if (hash === null || submitters.has(hash)) continue;
-    const tx = await client.getTransaction({ hash });
-    submitters.set(hash, getAddress(tx.from));
-    const id = Number((log as { args: Record<string, unknown> }).args.proposal);
-    const entry = submitted.get(id);
-    if (entry) entry.from = getAddress(tx.from);
-  }
+    if (hash === null) return;
+    let from = submitterCache.get(hash);
+    if (from === undefined) {
+      from = getAddress((await client.getTransaction({ hash })).from);
+      submitterCache.set(hash, from);
+    }
+    const entry = submitted.get(Number((log as { args: Record<string, unknown> }).args.proposal));
+    if (entry) entry.from = from;
+  });
 
-  const workEvents = abi.work.filter((item) => item.type === "event");
-  const workLogs = await client.getLogs({ address: d.workManager, events: workEvents as never, fromBlock, toBlock });
   const taskIds = new Set<number>();
   const taskDetails = new Map<number, string>();
   const taskProposal = new Map<number, number>();
@@ -309,13 +382,48 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     }
   }
 
-  const proposals: ProposalView[] = [];
-  for (let id = 1; id <= Number(proposalCount); id += 1) {
-    const [stateIndex, raw, status] = await Promise.all([
-      read<number>(d.baal, abi.baal, "state", [id]),
-      read<readonly unknown[]>(d.baal, abi.baal, "proposals", [id]),
-      read<readonly boolean[]>(d.baal, abi.baal, "getProposalStatus", [id]),
-    ]);
+  const ids = Array.from({ length: Number(proposalCount) }, (_, index) => index + 1);
+  const proposalReads = await readMany(client, ids.flatMap((id) => [
+    { address: d.baal, abi: abi.baal, functionName: "state", args: [id] },
+    { address: d.baal, abi: abi.baal, functionName: "proposals", args: [id] },
+    { address: d.baal, abi: abi.baal, functionName: "getProposalStatus", args: [id] },
+  ]), toBlock);
+  // Instances named in the details: code hash once (cached), describe() at this block for every one.
+  const instanceOf = new Map<number, Address>();
+  for (const id of ids) {
+    const details = submitted.get(id)?.details ?? "";
+    const jsonStart = details.indexOf("{");
+    if (jsonStart < 0) continue;
+    try {
+      const candidate = (JSON.parse(details.slice(jsonStart)) as { instance?: unknown }).instance;
+      if (typeof candidate === "string" && /^0x[0-9a-fA-F]{40}$/u.test(candidate)) instanceOf.set(id, getAddress(candidate));
+    } catch {
+      // details without JSON
+    }
+  }
+  const instanceAddresses = [...new Set(instanceOf.values())];
+  await pMap(instanceAddresses.filter((address) => !instanceCache.has(address)), 4, async (address) => {
+    const code = await client.getCode({ address, blockNumber: toBlock });
+    if (code === undefined || code === "0x") return;
+    const { keccak256 } = await import("viem");
+    instanceCache.set(address, { codeHash: keccak256(code), template: "", paramsHash: "0x" as Hex, operator: address });
+  });
+  const describable = instanceAddresses.filter((address) => instanceCache.has(address));
+  const describes = await readMany(client, describable.map((address) => ({ address, abi: abi.proposal, functionName: "describe" })), toBlock);
+  const instanceViews = new Map<Address, TemplateInstanceView>();
+  for (const [index, address] of describable.entries()) {
+    const result = describes[index] as readonly [string, Hex, Address, bigint, bigint, number] | undefined;
+    const fixed = instanceCache.get(address)!;
+    if (result === undefined) continue;
+    const updated = { ...fixed, template: result[0], paramsHash: result[1], operator: getAddress(result[2]) };
+    instanceCache.set(address, updated);
+    instanceViews.set(address, { address, template: updated.template, paramsHash: updated.paramsHash, operator: updated.operator, budget: result[3].toString(), budgetUsdc: fmtUsdc(result[3]), deadline: Number(result[4]), status: PROPOSAL_STATUS[result[5]] ?? "Pending", codeHash: updated.codeHash });
+  }
+  const proposals: ProposalView[] = ids.map((id, index) => {
+    const stateIndex = proposalReads[index * 3] as number;
+    const raw = proposalReads[index * 3 + 1] as readonly unknown[];
+    const status = proposalReads[index * 3 + 2] as readonly boolean[];
+    if (stateIndex === undefined || raw === undefined || status === undefined) throw new Error(`proposal ${id}: read failed at block ${toBlock}`);
     const sub = submitted.get(id);
     const proposalData = sub?.data ?? "0x";
     const decoded = decodeProposalData(env, proposalData);
@@ -330,8 +438,11 @@ async function buildDaoState(env: Env): Promise<DaoState> {
       }
     }
     let instance: TemplateInstanceView | undefined;
-    const instanceAddress = submittedJson?.instance;
-    if (typeof instanceAddress === "string" && /^0x[0-9a-fA-F]{40}$/u.test(instanceAddress)) instance = await readInstance(env, getAddress(instanceAddress), submittedJson);
+    const instanceAddress = instanceOf.get(id);
+    if (instanceAddress !== undefined) {
+      const view = instanceViews.get(instanceAddress);
+      if (view !== undefined) instance = { ...view, submitted: submittedJson };
+    }
     const yes = raw[7] as bigint;
     const no = raw[8] as bigint;
     const taskId = taskProposal.get(id);
@@ -342,7 +453,7 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     if (taskId !== undefined) summaryParts.push(`activates task ${taskId} (reward in shares, minted on verification)`);
     if (decoded.calls.some((call) => call.label.startsWith("Baal.setGovernanceConfig"))) summaryParts.push("changes governance parameters");
     if (summaryParts.length === 0) summaryParts.push(decoded.calls.map((call) => call.label).join("; ") || "no calls");
-    proposals.push({
+    return {
       id,
       state: PROPOSAL_STATES[stateIndex] ?? "Unborn",
       sponsor: getAddress(raw[11] as Address),
@@ -369,15 +480,21 @@ async function buildDaoState(env: Env): Promise<DaoState> {
       ...(taskId !== undefined ? { taskId } : {}),
       votes: votes.get(id) ?? [],
       submittedAt: sub?.timestamp ?? 0,
-    });
-  }
+    } satisfies ProposalView;
+  });
 
-  const tasks: TaskView[] = [];
-  for (const taskId of [...taskIds].sort((a, b) => a - b)) {
-    const task = await read<{ proposer: Address; worker: Address; rewardShares: bigint; verifierThreshold: number; confirmations: number; round: number; proposalId: number; status: number; evidenceHash: Hex }>(d.workManager, abi.work, "getTask", [taskId]);
-    const verifiers = (await read<Address[]>(d.workManager, abi.work, "verifiersOf", [taskId])).map((v) => getAddress(v));
+  const sortedTaskIds = [...taskIds].sort((a, b) => a - b);
+  const taskReads = await readMany(client, sortedTaskIds.flatMap((taskId) => [
+    { address: d.workManager, abi: abi.work, functionName: "getTask", args: [taskId] },
+    { address: d.workManager, abi: abi.work, functionName: "verifiersOf", args: [taskId] },
+  ]), toBlock);
+  const tasks: TaskView[] = sortedTaskIds.map((taskId, index) => {
+    const task = taskReads[index * 2] as { proposer: Address; worker: Address; rewardShares: bigint; verifierThreshold: number; confirmations: number; round: number; proposalId: number; status: number; evidenceHash: Hex } | undefined;
+    const verifierList = taskReads[index * 2 + 1] as Address[] | undefined;
+    if (task === undefined || verifierList === undefined) throw new Error(`task ${taskId}: read failed at block ${toBlock}`);
+    const verifiers = verifierList.map((v) => getAddress(v));
     const status = TASK_STATES[task.status] ?? "None";
-    tasks.push({
+    return {
       taskId,
       proposalId: Number(task.proposalId),
       proposer: getAddress(task.proposer),
@@ -393,21 +510,17 @@ async function buildDaoState(env: Env): Promise<DaoState> {
       details: taskDetails.get(taskId) ?? "",
       openForClaim: status === "Active" && BigInt(task.worker) === 0n,
       confirmedBy: confirmedBy.get(`${taskId}:${Number(task.round)}`) ?? [],
-    });
-  }
+    } satisfies TaskView;
+  });
 
-  const transferEvent = abi.shares.filter((item) => item.type === "event" && item.name === "Transfer");
-  const shareLogs = await client.getLogs({ address: d.shares, events: transferEvent as never, fromBlock, toBlock });
   const holders = new Set<Address>();
   for (const log of shareLogs) {
     const to = (log as unknown as { args: { to?: Address } }).args.to;
     if (to !== undefined && BigInt(to) !== 0n) holders.add(getAddress(to));
   }
-  const members: MemberView[] = [];
-  for (const address of holders) {
-    const shares = await read<bigint>(d.shares, abi.shares, "balanceOf", [address]);
-    if (shares > 0n) members.push({ address, shares: shares.toString(), sharesFormatted: fmtShares(shares), percent: percent(shares, totalShares) });
-  }
+  const holderList = [...holders];
+  const balanceReads = await readMany(client, holderList.map((address) => ({ address: d.shares, abi: abi.shares, functionName: "balanceOf", args: [address] })), toBlock);
+  const members: MemberView[] = holderList.map((address, index) => ({ address, shares: (balanceReads[index] as bigint | undefined) ?? 0n })).filter(({ shares }) => shares > 0n).map(({ address, shares }) => ({ address, shares: shares.toString(), sharesFormatted: fmtShares(shares), percent: percent(shares, totalShares) }));
   members.sort((a, b) => (BigInt(a.shares) > BigInt(b.shares) ? -1 : 1));
 
   const now = new Date();

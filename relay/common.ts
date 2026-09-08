@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createPublicClient, createWalletClient, defineChain, getAddress, http, isAddress, type Abi, type Address, type Chain, type Hex, type PublicClient, type WalletClient } from "viem";
+import { createPublicClient, createWalletClient, defineChain, fallback, getAddress, http, isAddress, type Abi, type Address, type Chain, type Hex, type PublicClient, type Transport, type WalletClient } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import { base, baseSepolia } from "viem/chains";
 
@@ -100,6 +100,27 @@ export function policyFor(chainId: number): Policy {
   return { mainnet: false, dailyWei: 10n ** 21n, floorWei: 10n ** 18n, maxFeePerGas: 3_000_000_000n, maxPriorityFeePerGas: 1_000_000_000n, faucet: true, faucetDailyUnits: 100_000n * SETTLEMENT_UNIT, explorer: "", name: "local mirror" };
 }
 
+/** Public RPC alternates per chain: the load-balanced primary rate-limits bursts ("over rate limit"), so reads and sends fall back. */
+export const RPC_ALTERNATES: Record<number, string[]> = {
+  84532: ["https://base-sepolia-rpc.publicnode.com", "https://base-sepolia.drpc.org", "https://base-sepolia.gateway.tenderly.co"],
+  8453: ["https://base-rpc.publicnode.com", "https://base.drpc.org"],
+};
+
+/**
+ * Transport for a chain: the chain's default RPC first, then the public alternates (viem `fallback`),
+ * each retried with a short delay; a local mirror has a single endpoint.
+ *
+ * @param chain The chain definition (default RPC bound).
+ * @returns The transport.
+ */
+export function transportFor(chain: Chain): Transport {
+  const primary = chain.rpcUrls.default.http[0]!;
+  const alternates = (RPC_ALTERNATES[chain.id] ?? []).filter((url) => url !== primary);
+  const options = { retryCount: 3, retryDelay: 1_200, timeout: 60_000 };
+  if (alternates.length === 0) return http(primary, options);
+  return fallback([http(primary, options), ...alternates.map((url) => http(url, options))], { rank: false, retryCount: 1 });
+}
+
 /**
  * viem chain for a deployment: Base, Base Sepolia, or a local anvil chain defined from the record.
  *
@@ -154,7 +175,7 @@ export interface Env {
  */
 export function connect(deployment: Deployment = loadDeployment()): Env {
   const chain = chainFor(deployment);
-  const publicClient = createPublicClient({ chain, transport: http(chain.rpcUrls.default.http[0], { retryCount: 3 }), cacheTime: 0 });
+  const publicClient = createPublicClient({ chain, transport: transportFor(chain), cacheTime: 0 });
   const stateDir = path.resolve(ROOT, process.env.RELAY_STATE_DIR ?? path.join("state", "relay"));
   mkdirSync(stateDir, { recursive: true, mode: 0o700 });
   return {
@@ -211,7 +232,7 @@ export function sponsorAccount(): PrivateKeyAccount {
  * @returns Public + wallet clients bound to the sponsor.
  */
 export function sponsorContext(env: Env, account: PrivateKeyAccount = sponsorAccount()): WriteContext {
-  const walletClient: WalletClient = createWalletClient({ account, chain: env.chain, transport: http(env.chain.rpcUrls.default.http[0], { retryCount: 3 }) });
+  const walletClient: WalletClient = createWalletClient({ account, chain: env.chain, transport: transportFor(env.chain) });
   return { publicClient: env.publicClient, walletClient, account, chain: env.chain };
 }
 
