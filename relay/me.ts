@@ -70,10 +70,11 @@ export async function identity(env: Env, address: Address): Promise<Identity> {
  * @param address The member address.
  * @param custody Custody label (T1 self-custody or T0 custodial-lite).
  * @param state A DAO state to reuse (default: fresh readDaoState).
+ * @param id An identity already read (the relay passes a lag-settled one).
  * @returns The /me document.
  */
-export async function me(env: Env, address: Address, custody: Me["custody"] = "self-custody", state?: DaoState): Promise<Me> {
-  const id = await identity(env, address);
+export async function me(env: Env, address: Address, custody: Me["custody"] = "self-custody", state?: DaoState, id?: Identity): Promise<Me> {
+  id = id ?? (await identity(env, address));
   const dao = state ?? (await readDaoState(env));
   const d = env.deployment;
   const [shares, usdc] = await Promise.all([

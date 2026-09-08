@@ -164,12 +164,46 @@ function summarizeReceipt(receipt: TransactionReceipt, member: Address): Record<
   return result;
 }
 
-/** Simulate a sponsored call (with the delegation injected when the account is not yet delegated) and estimate gas. */
+/** Wall-clock time of the relay's most recent broadcast; reads within 30 s of it tolerate a lagging RPC node. */
+let lastWriteAt = 0;
+const LAG_WINDOW_MS = 30_000;
+const sleepMs = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Simulate a sponsored call (with the delegation injected when the account is not yet delegated) and
+ * estimate gas. A load-balanced public RPC may answer from a node that has not yet seen a block the
+ * relay just confirmed (faucet, instance deployment, join); within LAG_WINDOW_MS of a broadcast a failing
+ * simulation is retried a few times before its reason is reported.
+ */
 async function simulate(member: Address, data: Hex, delegated: boolean): Promise<bigint> {
   const stateOverride = delegated ? undefined : [{ address: member, code: delegationCode }];
-  await client.call({ account: sponsor.address, to: member, data, stateOverride } as never);
-  const estimate = (await client.estimateGas({ account: sponsor.address, to: member, data, stateOverride } as never)) as bigint;
-  return estimate;
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await client.call({ account: sponsor.address, to: member, data, stateOverride } as never);
+      return (await client.estimateGas({ account: sponsor.address, to: member, data, stateOverride } as never)) as bigint;
+    } catch (error) {
+      if (attempt >= 7 || Date.now() - lastWriteAt > LAG_WINDOW_MS) throw error;
+      await sleepMs(1_500);
+    }
+  }
+}
+
+/**
+ * identity() that tolerates a lagging node right after this relay changed the account: when the db
+ * knows the account joined but the node reports no code, or knows a successful intent with a nonce the
+ * node has not reflected, re-read for up to ~12 s before answering.
+ */
+async function settledIdentity(member: Address): Promise<Awaited<ReturnType<typeof identity>>> {
+  const local = db.accounts[member.toLowerCase()];
+  const highest = local?.transactions.filter((tx) => tx.status === "success" && /^\d+$/u.test(tx.nonce)).reduce((max, tx) => (BigInt(tx.nonce) > max ? BigInt(tx.nonce) : max), -1n) ?? -1n;
+  let id = await identity(env, member);
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const stale = (local?.joinedAt !== undefined && !id.delegated) || (id.delegated && BigInt(id.nonce) <= highest);
+    if (!stale) break;
+    await sleepMs(1_500);
+    id = await identity(env, member);
+  }
+  return id;
 }
 
 /** Sponsor a transaction under the daily budget and floor; returns the receipt. */
@@ -182,6 +216,7 @@ async function sponsored(tx: { to: Address; data: Hex; gas: bigint; authorizatio
   budget.wei = (BigInt(budget.wei) + reserve).toString();
   persist();
   const hash = await sponsorCtx.walletClient.sendTransaction({ account: sponsor, chain: env.chain, to: tx.to, data: tx.data, gas: tx.gas, maxFeePerGas: policy.maxFeePerGas, maxPriorityFeePerGas: policy.maxPriorityFeePerGas, ...(tx.authorizationList ? { authorizationList: tx.authorizationList } : {}) } as never);
+  lastWriteAt = Date.now();
   invalidateState();
   try {
     return await confirmReceipt(hash, { to: tx.to, data: tx.data, account: sponsor.address });
@@ -207,6 +242,7 @@ async function faucet(member: Address, amount: bigint): Promise<{ topped: bigint
   persist();
   const hash = await sponsorCtx.walletClient.writeContract({ account: sponsor, chain: env.chain, address: D.settlement, abi: env.abi.settlement, functionName: "transfer", args: [member, needed], maxFeePerGas: policy.maxFeePerGas, maxPriorityFeePerGas: policy.maxPriorityFeePerGas } as never);
   const receipt = await client.waitForTransactionReceipt({ hash });
+  lastWriteAt = Date.now();
   if (receipt.status !== "success") fail(503, `faucet transfer reverted (tx ${hash})`);
   return { topped: needed, hash };
 }
@@ -312,7 +348,11 @@ async function join(member: Address, authorization: ReturnType<typeof normalizeA
   persist();
   // The delegation rides on a no-op transaction to the sponsor itself (a call to the fresh account would revert: the adapter has no fallback).
   const receipt = await sponsored({ to: sponsor.address, data: "0x", gas: 100_000n, authorizationList: [authorization] });
-  const code = await client.getCode({ address: member });
+  let code = await client.getCode({ address: member });
+  for (let attempt = 0; attempt < 10 && (code ?? "0x").toLowerCase() !== delegationCode; attempt += 1) {
+    await sleepMs(1_500);
+    code = await client.getCode({ address: member });
+  }
   if ((code ?? "0x").toLowerCase() !== delegationCode) fail(422, `delegation did not take effect (tx ${receipt.transactionHash})`, { hash: receipt.transactionHash });
   record(member, custodial, { hash: receipt.transactionHash, op: -1, verb: "join", nonce: "-", status: "success" }, passHash);
   db.accounts[member.toLowerCase()]!.joinedAt = new Date().toISOString();
@@ -340,7 +380,7 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
   if (prior) return { ok: prior.status === "success", replayed: true, hash: prior.hash, status: prior.status, verb: OP_NAMES[prior.op] };
   rate(`address:${m.member.toLowerCase()}`, RATE_ADDRESS);
   persist();
-  const id = await identity(env, m.member);
+  const id = await settledIdentity(m.member);
   const now = BigInt(id.chainTime);
   if (m.deadline < now) fail(400, `intent expired: deadline ${m.deadline} is before chain time ${now}`);
   if (m.deadline > now + 3600n) fail(400, `intent deadline must be within one hour of chain time ${now}`);
@@ -417,7 +457,7 @@ async function quote(q: URLSearchParams, memberOverride?: PrivateKeyAccount): Pr
     fail(400, "params must be JSON");
   }
   const spec = parseSpec(template, parsedParams);
-  const id = await identity(env, getAddress(member));
+  const id = await settledIdentity(getAddress(member));
   const saltParam = q.get("salt");
   if (saltParam !== null && !/^0x[0-9a-fA-F]{64}$/u.test(saltParam)) fail(400, "salt must be bytes32 hex");
   const salt = (saltParam?.toLowerCase() as Hex | undefined) ?? numberToHex(BigInt(id.nonce), { size: 32 });
@@ -458,7 +498,7 @@ async function custodial(q: URLSearchParams): Promise<Record<string, unknown>> {
   const key = passAccount(pass);
   const ph = hashPass(pass as string);
   const op = q.get("op") ?? "";
-  const id = await identity(env, key.address);
+  const id = await settledIdentity(key.address);
   if (op === "identity") return { ok: true, ...id, custody: "custodial-lite", me: `/me/pass/${ph}.json` };
   const authorization = id.delegated ? undefined : await key.signAuthorization({ contractAddress: adapter, chainId: D.chainId, nonce: id.authorizationNonce });
   const auth = authorization ? { chainId: D.chainId, address: adapter, nonce: authorization.nonce, r: authorization.r, s: authorization.s, yParity: authorization.yParity as 0 | 1 } : undefined;
@@ -525,7 +565,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
         custody = "custodial-lite";
       }
       if (address === undefined || !isAddress(address)) fail(404, "unknown address or pass hash");
-      return send(200, json(await me(env, getAddress(address), custody)));
+      return send(200, json(await me(env, getAddress(address), custody, undefined, await settledIdentity(getAddress(address)))));
     }
     if (u.pathname !== "/relay") fail(404, "not found; see /health.json, /me/<address>.json, /proposals.json, /state.json, /relay");
     rate(`ip:${String(req.headers["cf-connecting-ip"] ?? req.socket.remoteAddress)}`, RATE_IP);
