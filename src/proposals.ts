@@ -246,8 +246,8 @@ export function proposalAbi(): Abi {
  * @param address Instance address.
  * @returns Template name, params hash, operator, budget, deadline and status.
  */
-export async function describe(context: WriteContext, address: Address): Promise<Description> {
-  const result = (await context.publicClient.readContract({ address, abi: proposalAbi(), functionName: "describe" })) as readonly [string, Hex, Address, bigint, bigint, number];
+export async function describe(context: WriteContext, address: Address, blockNumber?: bigint): Promise<Description> {
+  const result = (await context.publicClient.readContract({ address, abi: proposalAbi(), functionName: "describe", ...(blockNumber === undefined ? {} : { blockNumber }) })) as readonly [string, Hex, Address, bigint, bigint, number];
   const status = PROPOSAL_STATUS[result[5]];
   if (status === undefined) throw new Error(`unknown proposal status ${result[5]} at ${address}`);
   return { template: result[0], paramsHash: result[1], operator: getAddress(result[2]), budget: result[3], deadline: result[4], status };

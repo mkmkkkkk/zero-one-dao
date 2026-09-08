@@ -487,7 +487,8 @@ export async function usdcOf(mirror: Mirror, address: Address): Promise<bigint> 
 
 /** describe() of a proposal contract, printed. */
 export async function describeAt(mirror: Mirror, address: Address, label: string): Promise<Description> {
-  const d = await describe(mirror.actors.F, address);
+  // Pinned to the head like every other read: a lagging node reported a Completed strategy as Running (live G).
+  const d = await atHead(mirror, (blockNumber) => describe(mirror.actors.F, address, blockNumber));
   console.log(`   [${label}] ${d.template} @ ${address}: status ${d.status} budget ${fmtS(d.budget)} deadline ${d.deadline} operator ${d.operator} params ${d.paramsHash} held ${fmtS(await usdcOf(mirror, address))} USDC`);
   return d;
 }
