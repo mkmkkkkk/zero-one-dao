@@ -1,0 +1,72 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-08T03:20:33.665Z",
+  "parts": [
+    [
+      "votes",
+      true,
+      ""
+    ]
+  ],
+  "rows": [
+    {
+      "id": "vote-in-submission-block",
+      "expected": "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).",
+      "observed": "submit block 46534139 t=1788836566, vote block 46534139 t=1788836566 (same timestamp), vote status reverted",
+      "ok": true,
+      "receipt": "0x23a27890b25b646881af49da36a9789cda18c820dfea41b13f7589b78d287a6e"
+    },
+    {
+      "id": "vote-twice",
+      "expected": "Baal reverts 'voted'",
+      "observed": "voted Error",
+      "ok": true
+    },
+    {
+      "id": "process-before-grace",
+      "expected": "Baal reverts '!ready' while Voting",
+      "observed": "!ready Error",
+      "ok": true
+    },
+    {
+      "id": "vote-after-voting-ends",
+      "expected": "Baal reverts 'ended'",
+      "observed": "!voting Error",
+      "ok": true
+    },
+    {
+      "id": "process-during-grace",
+      "expected": "Baal reverts '!ready' while in Grace",
+      "observed": "!ready Error",
+      "ok": true
+    },
+    {
+      "id": "process-twice",
+      "expected": "second processProposal reverts (already processed)",
+      "observed": "!ready Error",
+      "ok": true,
+      "receipt": "0x1aa574f299eb12e511831b4c9964e41935978340d7faac0b3940f13cfa44db2e"
+    },
+    {
+      "id": "multicall-reverts-actionFailed",
+      "expected": "passed=true, actionFailed=true, USDC untouched",
+      "observed": "passed=true actionFailed=true; treasury 3050 -> 3050",
+      "ok": true,
+      "receipt": "0x32094bb07ecbdee964bad5878604a51e0e137b9fb158faa34a8b032b6c13c6fd"
+    },
+    {
+      "id": "minRetention-exactly-34pct",
+      "expected": "remaining 66 of 100 = 66% >= 66% -> passes",
+      "observed": "B exited 34 (34%); passed=true",
+      "ok": true,
+      "receipt": "0x04a01ffac6dcb8fc626698e9632dc02e5b7906d969f99e7804618dbe87ae0d11"
+    },
+    {
+      "id": "minRetention-over-34pct",
+      "expected": "remaining 66 of 106 = 62.26% < 66% -> fails",
+      "observed": "C exited 40 (37.73%); passed=false",
+      "ok": true,
+      "receipt": "0xa75e2f5fb27880967a4b8ed199f6816f9e16307a03a05f77655229d17f43f45c"
+    }
+  ]
+}
