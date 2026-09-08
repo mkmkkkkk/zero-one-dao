@@ -1,0 +1,201 @@
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 loopback=http://127.0.0.1:11545
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x5ee1D1B48426Dd25F89ceD9B3B7B70cA4bC1c670 tx=0x45bfe57b4278dccd0953adf4afb63bad7af7207f1c8d9da560891f6a7583039c
+ASSERT HEAD 7d3a95d2759dff87b7210c85950ac1e35f8e03ff advertised by public origin
+constitution https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/7d3a95d2759dff87b7210c85950ac1e35f8e03ff/docs/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (matches local bytes)
+deployer 0x5ee1D1B48426Dd25F89ceD9B3B7B70cA4bC1c670 balance 1000 ETH on Base (http://127.0.0.1:11545)
+ASSERT CREATE2-predicted Safe 0xF8626682CACFd71C05198b0d15CDd1B36387d6ff USDC=0 before deployment
+ASSERT CREATE2-predicted Safe 0xF8626682CACFd71C05198b0d15CDd1B36387d6ff USDC=0 before deployment
+safe 0xF8626682CACFd71C05198b0d15CDd1B36387d6ff baal 0xB8908C1d7fdDD5972E1073803A9207ad42d104a7 shares 0xEd96ef6f884D07B8D061aDa006D88cF915111227 factory 0xE6058DAe8bB5469FD5BdED12769a6D2238AA6106 adapter 0x7127Bf11ba3E1f5573D12028C8E252c2398aB084 constitution 0xc55c9951689e8a3295370A6A842D44F665be1231
+genesis: 50000000000000000000 shares to the founder (approve 0x44691a870ad641ba9426e84057802ea8bce4a35c76daefa9d3e52f115d870d9a, deposit 0xa36ed7c6384561ef49517e526fb333c4c5d160217e9440ab9129ca80ab966067)
+verification inputs: /Users/michaelmacmini/srv/zero-one-dao/evidence/phase3/verification-base (23 source units, compiler v0.8.36+commit.8a079791)
+{
+  "chain": "Base",
+  "fork": true,
+  "sourceCommit": "7d3a95d2759dff87b7210c85950ac1e35f8e03ff",
+  "workingTreeDirty": true,
+  "genesisCommit": "7d3a95d2759dff87b7210c85950ac1e35f8e03ff",
+  "chainId": 8453,
+  "rpcUrl": "http://127.0.0.1:11545",
+  "explorer": "https://basescan.org",
+  "deployedAt": "2026-09-08T18:40:13.048Z",
+  "startBlock": 51051723,
+  "deployer": "0x5ee1D1B48426Dd25F89ceD9B3B7B70cA4bC1c670",
+  "founder": "0x5ee1D1B48426Dd25F89ceD9B3B7B70cA4bC1c670",
+  "settlement": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  "settlementNote": "Circle USDC on Base; no mint or faucet",
+  "safe": "0xF8626682CACFd71C05198b0d15CDd1B36387d6ff",
+  "baal": "0xB8908C1d7fdDD5972E1073803A9207ad42d104a7",
+  "shares": "0xEd96ef6f884D07B8D061aDa006D88cF915111227",
+  "loot": "0xcc2AcAD96c66d89ed15753244cCD747E8aB06711",
+  "depositShaman": "0x8490731Cd26E328cf211DEBa26648e00E392F4Ab",
+  "workManager": "0xa96f4B99e91130113f0d128f01682657fe308587",
+  "templateFactory": "0xE6058DAe8bB5469FD5BdED12769a6D2238AA6106",
+  "templateDeployers": [
+    "0x10A83cDe63a46b5be89F90aB19CBF9E5686eEF8b",
+    "0xF03A2f8f04591e98a1056cDe5C267c12904F3bCd",
+    "0xE34fC19EC99356A7046b938b3F7bC86D58B7B000",
+    "0x87c9FA9e8091DF5346576e4ed4bD18a85b147917"
+  ],
+  "intentAccount": "0x7127Bf11ba3E1f5573D12028C8E252c2398aB084",
+  "constitution": {
+    "address": "0xc55c9951689e8a3295370A6A842D44F665be1231",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/7d3a95d2759dff87b7210c85950ac1e35f8e03ff/docs/CONSTITUTION.md",
+    "text": "docs/CONSTITUTION.md"
+  },
+  "singletons": {
+    "baalSingleton": "0xB9cA7F417DE5A3590b868E687a341cadB7457faA",
+    "moduleProxyFactory": "0x22b1fd724dB500D80BFe4BC141Ba7a39Fa6dB3c1",
+    "safeSingleton": "0x6eb8c87c15486CE477b7C5f6EDcf7AE725DB8779",
+    "safeProxyFactory": "0x1D89bF58A63de7c8b46D327b5fcdA018F8E39958",
+    "multiSend": "0x7F95D78a50e5C8D7B1F1E759C632cB71bF5CD072",
+    "deploymentTransactions": [
+      "0xbb30c6b271740a08c10126dc5ea28f0b59f9e1d12480a6e2abc46dcb41eead94",
+      "0x09a965e6008711e184873d2687ba3f189d4d31e55091a2d1de68a2e7ddc54c9d",
+      "0xc739b57a1fefaf68268f7c672423896ca49e1037ddb92b2df37284eaecb3d208",
+      "0x9e9b030515693989ff65a5a3eb1a14ae370900af964a5337e6fd609c2557e84d",
+      "0x266f28617e22e088b5a7402dc9e95a9ec3fb76e9e3ab15f3e96bb34c7d22aeab"
+    ]
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "shamans": [
+    {
+      "shaman": "0x8490731Cd26E328cf211DEBa26648e00E392F4Ab",
+      "permission": "2"
+    },
+    {
+      "shaman": "0xa96f4B99e91130113f0d128f01682657fe308587",
+      "permission": "2"
+    }
+  ],
+  "genesis": {
+    "depositUsdc6": "50000000",
+    "sharesMinted": "50000000000000000000",
+    "approveHash": "0x44691a870ad641ba9426e84057802ea8bce4a35c76daefa9d3e52f115d870d9a",
+    "depositHash": "0xa36ed7c6384561ef49517e526fb333c4c5d160217e9440ab9129ca80ab966067"
+  },
+  "txHashes": {
+    "singleton:Baal": "0xbb30c6b271740a08c10126dc5ea28f0b59f9e1d12480a6e2abc46dcb41eead94",
+    "singleton:ModuleProxyFactory": "0x09a965e6008711e184873d2687ba3f189d4d31e55091a2d1de68a2e7ddc54c9d",
+    "singleton:GnosisSafe": "0xc739b57a1fefaf68268f7c672423896ca49e1037ddb92b2df37284eaecb3d208",
+    "singleton:GnosisSafeProxyFactory": "0x9e9b030515693989ff65a5a3eb1a14ae370900af964a5337e6fd609c2557e84d",
+    "singleton:MultiSend": "0x266f28617e22e088b5a7402dc9e95a9ec3fb76e9e3ab15f3e96bb34c7d22aeab",
+    "SafeProxy": "0xbb0a778c877b185273e1c902fd20e97042a2c591f5b40f27cd49533b682feccc",
+    "BaalProxy": "0x9d44a36d76605b7ce9f7a909540131f5d072c87bde7a48176a3ed239c1fa1bbc",
+    "NavShareToken": "0xc3224d71f8b71afe27dba2f15a015053283192e2c3118b4dcf31e714d1cb24cd",
+    "LootToken": "0x1a2fae04b2cf555943d2f2fda8c0d3d72f9d66ba4bd56994dc47c31ebfdb8373",
+    "DepositShaman": "0xbb54cc86578ed5541239ca550404363042bc832c77d7adadb16b32af47c62870",
+    "WorkManager": "0xe31ffeeb098440364dc8499e0c62d3cf9355ecd999510eb43c048f766f7002d9",
+    "PaymentDeployer": "0xd18d842ff62a495821b1df3a9065761392c1b5499f7031c32e3a88cbd0973701",
+    "StrategyDeployer": "0x6bb4cd90641f8d3924e1c33f4bd64c29aeecf24b66e1c6ad7fe48e95d6612409",
+    "ProjectDeployer": "0x085937f0dbcc7eff868417e620598d0c64a15e7f1d41511e65a77aa7101dd5ec",
+    "ConfigDeployer": "0x53bd0f4dd0a78df48b05ee512d9b5e8e43eadb3ddeb2dc863c550e853c9330d1",
+    "TemplateFactory": "0x256a5218ec10d758d9cb90815a57fe9a0430becca57b92bb186fd86fe4cd7144",
+    "ZeroOneIntentAccount": "0xa788b415047f8fade4cdaffe2970f2baff6bd11bc46293b4c05d39bcdb1a6fb8",
+    "Constitution": "0x1c8ba38be39af54694bcf4c4039e2877d2d38c23e214ef421ad8bf80c59593af",
+    "Safe.setup": "0x80f9106a5e57a7151d35e56ecc154eddf73a7cf9961d988ac6edadf2ae8ad71f",
+    "Baal.setUp": "0xcbe0c5d28516505a14e80a04dcb8f297fec9c9a229ceea9c46cdd56326dc23e7"
+  },
+  "compiler": "v0.8.36+commit.8a079791"
+}
+tx Payment deploy=0xf1450c2e205481f3772cccc9f5f2ffa7034e2e1c966cef4fae721e62f91814b3 submit=0xef882d55892f018af93bdef40a2c3e3c5b05ffed34e86c49238a6360f8327774
+tx Payment vote=0xa12fb72e76696dc2af2a36981c8b6185fb69d05f91c6a04a3b36a2dcd5945903
+ASSERT Payment processed passed=true actionFailed=false exactTransfer=1000000 tx=0xcd22da3de398c403a9ffd19e3271f264a7a3ebc58bf59030167a6084247c01ea
+ASSERT Base deployment + 50 USDC genesis + Payment PASS; no Etherscan verification invoked
+   ok: K settlement is real Base USDC proxy
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Base router 0x2626664c2603336E57B271c5C0b26F421741e481 code bytes=24497
+   ok: published Base quoter 0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a code bytes=8273
+   ok: published Base factory 0x33128a8fC17869897dcE68Ed026d694621f6FDfD code bytes=24535
+   ok: router.factory selector responds with published factory
+   ok: router.WETH9 selector responds with Base WETH
+   ok: quoter.factory selector responds with published factory
+   ok: quoter.WETH9 selector responds with Base WETH
+   ok: factory feeAmountTickSpacing(500)=10
+   ok: USDC decimals read through proxy = 6
+tx UniswapV3Venue deploy 0xa0f63314ef51c373d24fff3aa37bf1d7e5587083d4bf18a65bcec06a80952d9e address=0xF45971409092D893Bb587382030BBEa9Fe36CFA6
+   ok: venue ABI has no owner/admin or mutable fee setter
+   ok: WETH accounting uses 18 decimals
+tx Strategy deploy 0x5b288c1eb083ceb5db073b64ea6c09f77151936fcac568e06e52527447c8c3a4 address=0x6bfd8ECbD570BF0A2832ECD40606939181Db79B2
+tx proposal #2 submit 0x8ff232f46b2ffdf1b02a3d6a0d70cfa3009ff683f329d43c3f3ae288e8ac6a30
+tx vote #2 0x7c44f2ffe7fb63af765d5805064f059e94d482690ba61c0dafdeb18bd02ec729 block=51051756 gas=117855
+tx execute #2 0x2382db061238d469a0de1f713cc3108cf729d74f970957bf8c6ba9298da7a4a2 block=51051758
+   ok: proposal #2 processed passed=true actionFailed=false
+tx stranger run #1 0x29918e798ed54aa48c61a8cf783346f3e23ca24f821a0eb409a4e4861c00b33b block=51051759 gas=344032
+   ok: swap bounded amountIn=2000000 quoted=800986917203362 minimum=796981982617345 actual=800986917203362
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx stranger run #2 0x4fb9c5845e5ab56a8663252b86b0d6c547483dfa4b9ab5396a0796db939923b3 block=51051760 gas=292754
+   ok: swap bounded amountIn=2000000 quoted=800986852612335 minimum=796981918349273 actual=800986852612335
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: two exact 2 USDC swaps acquired WETH; raw holdings remain in Strategy
+tx proposal #3 submit 0x51b51b5f5376b68c359cfb2d4c2f4a1f3e39dd7bd577a8aebb2eff172a8fe2e1
+tx vote #3 0x3f1065fd60dc129f9697ecf2c455436605e0cde43bce4e7801dfed4cfdb30ccd block=51051763 gas=117855
+tx execute #3 0xfed4c75eef7fee69f6c3d31be3b3f9aacde65a4ed79e529f4bee62ac24e1166b block=51051765
+   ok: proposal #3 processed passed=true actionFailed=false
+   ok: stopped instance empty
+   ok: stop returned exact raw USDC + WETH to Safe
+tx Strategy deploy 0x1c2fdbc843dd8e9f7533c892e4fb0155fa04093d8729c6c1e092788c8ade5908 address=0x8C77c945A8D18F3b3FDAc92ef0d71C4CcDdCd85e
+tx proposal #4 submit 0x571aecda0500e52d30a2fe2af9719a42f6c70a8ff4da90ff969202138f6dac03
+tx vote #4 0x84dfe6435372cfb8c7159843a809aa5e672788f984d2f836a4307c47bd0686d2 block=51051769 gas=117855
+tx execute #4 0x93933e8827d0bd76c2493549e1aec464dccf32d5f56ef26fff908b33caa90c8a block=51051771
+   ok: proposal #4 processed passed=true actionFailed=false
+tx old Strategy run before migration 0xe9a1a5708549bc9f0de4d711698d872e33637ddd4a4eda5557e63ed4444ad7ab block=51051772 gas=344032
+   ok: swap bounded amountIn=2000000 quoted=800986788021316 minimum=796981854081209 actual=800986788021316
+tx successor deploy 0xdb6a09f327a35843eb8e17f565d196c8633e8f72e9eb86394c99f832420be4d2 address=0x36572F229870Bebfa6038B6BbA4F457BA0193361
+tx proposal #5 submit 0x6f112257bf8065b61ef5305c6ff5cb9460d866a21dc89e312c5d5cfa48348b71
+tx vote #5 0x4c9bf1b9f146f191841666af98723e0d0d0573e1ad1b8d70afaabf56d347c554 block=51051776 gas=117855
+tx execute #5 0x9918657740543f3354f77e64bb6b6777e2b0c94e693646c01ccf7f3dd22dacb3 block=51051778
+   ok: proposal #5 processed passed=true actionFailed=false
+   ok: old Migrated; successor Running
+   ok: migrated instance empty
+   ok: migration preserved both raw token quantities
+tx successor runs on migrated holdings 0x80810514400b2eefb298aa972ae6cb797d9af4b0a2f686f7392e79e3013923db block=51051779 gas=326932
+   ok: swap bounded amountIn=2000000 quoted=800986723430305 minimum=796981789813153 actual=800986723430305
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx proposal #6 submit 0x26dd5151d8184c6b4a8d9c2821083af0aafe5a55c1f7ab0de4669126af17c49e
+tx vote #6 0x1009b3e6c6958c876c7cd6044b372c887c85e1dacaacf1190afda2fa9347e911 block=51051782 gas=117855
+tx execute #6 0xc434f929b38e7cb8d224e623195a18c7c1c967bd86caaf839289de7d0afb7e68 block=51051784
+   ok: proposal #6 processed passed=true actionFailed=false
+tx take-profit unwinds WETH through real router 0xe37d6b7dadafbc7e26be8366662274bbcddba03b66b4b70fa1002390f6a64ef6 block=51051785 gas=277233
+   ok: swap bounded amountIn=1601973511451621 quoted=3996001 minimum=3976020 actual=3996001
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: take-profit sold WETH and returned all proceeds to Safe
+tx Strategy deploy 0x04be8a680808b41fd27151b4d385b788b764533ec8134866390e861ab378f258 address=0x37A808d072224e69D2bd41dAD4d09BC0B41469eC
+tx proposal #7 submit 0xf1dbf861e1916abe656d31a6a363be782058f7bbb8a4bd46e48bf8b84b48b27c
+tx vote #7 0xf5668dfdbccef96541efe84175e755cce0bd1996f8df41cf20fb54168c8ae3e0 block=51051789 gas=117855
+tx execute #7 0x4777468077d17ce5405110314b67e90ea2ee0943a5d3da5c93cb2bf68baf3155 block=51051791
+   ok: proposal #7 processed passed=true actionFailed=false
+tx stop-loss fixture entry 0x186aaaf3a120f561030d238862de7b727855103da94039effdedb000224e0c92 block=51051792 gas=339232
+   ok: swap bounded amountIn=5000000 quoted=2002466848783670 minimum=1992454514539751 actual=2002466848783670
+tx stop-loss unwinds through real router 0xa83bddad80a848d452444b09a53cdb42b998d4bad6340b9de892654b348ebd37 block=51051793 gas=292838
+   ok: swap bounded amountIn=2002466848783670 quoted=4995001 minimum=4970025 actual=4995001
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: 1 bp stop-loss fired after 5 bp pool-fee entry; instance empty
+tx proposal #8 submit 0x7ee83379333eb301f869a06bbdd3edc97d59450c191d4024dbf830dbc5762a12
+tx vote #8 0xc348bf575c384766e7fe45fc1fdc29379868fa73f6a400bf7c7508bbd3121c56 block=51051796 gas=117855
+tx execute #8 0x3b139f357c447b0c6ce7a1f57e1729379aba66011d7c5f3b4981963fff93136e block=51051798
+   ok: proposal #8 processed passed=true actionFailed=false
+tx stranger sweeps dust only to immutable Safe 0xb178a1d93a3fd1a7806cd615d006fca5d244ad49821c9f91bf2544366b1e2ce8 block=51051799 gas=52392
+   ok: permissionless sweep returns exact dust to Safe
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+=== SCENARIO K: PASS ===
