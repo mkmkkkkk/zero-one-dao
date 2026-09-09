@@ -1,0 +1,16 @@
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+   #1: yes 1000 no 0; high-water mark 4050 shares; 66% = 2673
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   one tx 0xa479bf87122a37f547bdc01b728afce3813756d465e4a548a4473999a9bce2ee: passed=true actionFailed=false; Safe 2050 -> 673.000001 USDC; M USDC 1000 -> 2376.999999 (net 1376.999999 plus 1623.000001 shares)
+   sleeping F: 50 shares worth 50 -> 12.588851 USDC (74.82% lost)
+   sleeping A: 1000 shares worth 1000 -> 251.777029 USDC (74.82% lost)
+   attacker cost: gas + 623.000001 USDC inside one transaction (flash-loanable); the payment repays it
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+   #1: yes 1000 no 0; high-water mark 4050 shares; 66% = 2673
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   one tx 0xe995352a8a3b544b5e96db1fc515722ac85ebe933fcb3e57fd257e9af8bfbfd3: passed=true actionFailed=false; Safe 2050 -> 673.000001 USDC; M USDC 1000 -> 2376.999999 (net 1376.999999 plus 1623.000001 shares)
+   sleeping F: 50 shares worth 50 -> 12.588851 USDC (74.82% lost)
+   sleeping A: 1000 shares worth 1000 -> 251.777029 USDC (74.82% lost)
+   attacker cost: gas + 623.000001 USDC inside one transaction (flash-loanable); the payment repays it

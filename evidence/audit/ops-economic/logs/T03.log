@@ -1,0 +1,21 @@
+
+== (a) zero-supply trap: 1 USDC unit lands in the Safe inside the deploy window
+   deployment transactions after SafeProxy creation and before the genesis deposit: 14 (+2 for approve/deposit) = 16 transactions ~ 32 s of Base blocks at 2 s each, before any RPC latency
+   order: singleton:Baal > singleton:ModuleProxyFactory > singleton:GnosisSafe > singleton:GnosisSafeProxyFactory > singleton:MultiSend > TestToken > SafeProxy > BaalProxy > NavShareToken > LootToken > DepositShaman > WorkManager > PaymentDeployer > StrategyDeployer > ProjectDeployer > ConfigDeployer > TemplateFactory > ZeroOneIntentAccount > Constitution > Safe.setup > Baal.setUp
+   attacker sent 1 unit (0.000001 USDC) to the predicted Safe 0xfea75025B4275053977852e4Fb13C372aEe6Be7C: tx 0x26845771690b451e629f279020b214cb416f691f7ce7d21450f2c3f602414634 gas 51214
+   revert ok [genesisDeposit refuses (treasury != 0)]: ASSERTION FAILED: genesis deposit requires an empty treasury (never pre-fund the Safe)
+   ok: DepositShaman.quote(50 USDC) = 0 shares (supply 0, treasury 1 unit)
+   revert ok [deposit of 1,000,000 USDC reverts ZeroShares]: The contract function "deposit" reverted. | Error: ZeroShares(uint256 amount) |                  (1000000000000)
+   ok: totalSupply = 0: nobody can sponsor (threshold 1e18 > 0 shares)
+   revert ok [sponsorProposal by the founder (!sponsor)]: The contract function "sponsorProposal" reverted with the following reason: | !sponsor | Contract Call:
+   verdict: DAO dead; attacker cost = 1 unit + 51214 gas; our loss = the deployment gas (21 tx) and the address set; repeatable for every redeploy since the Safe address is public 16 tx before genesis
+
+== (b) proxy squatting: Safe/Baal proxy addresses are (singleton, salt)-only; the uninitialized proxies accept anyone's setup
+   ok: attacker created the Safe proxy at OUR predicted address 0xdeF31aAb0b1479D078d6cFfEE24C9DE882BE8885 (gas 104980)
+   ok: attacker is the sole owner of the Safe at our predicted address
+   revert ok [our createSafeProxy at the same salt reverts (Create2 call failed)]: The contract function "createProxyWithNonce" reverted with the following reason: | Create2 call failed | Contract Call:
+   revert ok [our createBaalProxy at the same salt reverts (TakenAddress)]: The contract function "deployModule" reverted. | Error: TakenAddress(address address_) |                    (0x0000000000000000000000000000000000000000)
+   ok: attacker initialized OUR Baal proxy 0xC30dbc2a64a39Ceb2cB908f9902fCCAB16128640 with avatar = the attacker FakeAvatar 0xDB1Ad7Abf265E2E07df53C7C4f9812f9Df026368 (tx 0xb017857a7f648fffea33f6b65614347e54421df731430173efab46969d81109d)
+   consequence: deployZeroOne's initializeSafeAndBaal would revert ('Initializable: contract is already initialized' / GS200) and abort before genesis: griefing only, no USDC moved; but the DAO's published/predicted addresses are burned each time
+
+=== OPS-03/04 pre-genesis-window: PASS (findings demonstrated) ===

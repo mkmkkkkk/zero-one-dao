@@ -1,0 +1,110 @@
+   BlacklistToken (audit USDC with blacklist) 0xfE697EfC48521cBB881b856550eD74d134750Bb5; blacklister = founder 0x67E1a58056fB7B3AD8138eF90860a1471b1ED957
+anvil http://127.0.0.1:11546 chainId 31401
+deployed: safe 0xb32671A42846742895a1F0676dB1f07C309529f9 baal 0xe00237AAA32a9cfA2077ac465942B559bE6963B0 shares 0x394DB13dC766952228A8d915e302832f33830A67 settlement 0xfE697EfC48521cBB881b856550eD74d134750Bb5
+   F = 0x67E1a58056fB7B3AD8138eF90860a1471b1ED957
+   A = 0x71BdE3567C86c63bf23BB3C3D5B275CFde55dB59
+   B = 0x30383B04A22A21D1131b3a949d9fEBef96c9AFbC
+   C = 0x56DCff936C63491Fcd25FeA7d27f64D06b3A1155
+   D = 0x09aEc75566F7eD65190200B8382d939815057529
+   O = 0xb053fCC1582cCA6F99ba0e7DDa667D6a337C6fEC
+   W = 0x34ef97E0440cc9ad4183fbf15946c7d44ae5ae7A
+   shaman 0x8C3EcC518a09168D4b1A0B182B1D34f5bbc464c6 permission 2 (DepositShaman)
+   shaman 0xA8E60013539F9E654037a8916d2F570975294287 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x837E7776ea3Ee4cd31C04E6A5F6a2929F9384F54
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x4F7B9df7fD470BB3e50FB276fE164fd614F97Ce6
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x74188a1Ea52863D2ECe47e1ecfe3aFB154Ef58C3
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x0F65d7ab9DeFD9d8b8447E8ce3C9830Cd9939dEE
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: genesis 50, A/B/C 1000 each
+   tx fund A with 10000 USDC: 0x4155c63f5ee9fb29e9e5b469b30f6d5c6533c3baf27ee4930e0d940375c1ef32 (block 22, gas 55835)
+   tx fund B with 10000 USDC: 0xc93a3b5c62bb661a9cbe94f07ce6a1b972f85ec1e092a86d850cb51781310dfc (block 23, gas 55835)
+   tx fund C with 10000 USDC: 0x279bc7ff815b6542206ac9605a07ea675013163399e9a18065cde474acae210a (block 24, gas 55835)
+   tx fund O with 10000 USDC: 0x1791f828e2bcf4704a92943aa3d674aabb0b0da59fcb1e539989f2014822a572 (block 25, gas 55835)
+   tx F approve deposit shaman: 0xbd361cadb2438398b887e5784345d5294eb4325a4c0ada0130b18fc208360cc8 (block 26, gas 50313)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xe4342573c536d8378da8898292c4e9559d87d12e49d923501afd68f8c0ce442c (block 27, gas 208311)
+   tx A approve deposit shaman: 0x2f5c04b4479cc39c54ca204af2613a1c1863a9c2a095c7e3ac84a5878729a619 (block 28, gas 50301)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0xc83c47676c7ec9059cd770658a29ca7a895df5d7ffb6d68e7b0db0791260b01a (block 29, gas 174198)
+   tx B approve deposit shaman: 0x819c7c351e84bc0431f6579ffd6c213d94f8ef20cf87306a8276ec88f45095ac (block 30, gas 50301)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x4c880b55c0b849404ff0d049ee568e500d62967268a83169d81387997ebe71a8 (block 31, gas 174198)
+   tx C approve deposit shaman: 0x0819f7fbf6a222e5648fb37253977d519b3f2d8548eb6b4a45e4d72caac7e60d (block 32, gas 50301)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xd71f6f60762029072d135fe4d7aeb205c0d52e8c347f5223b664577117282c99 (block 33, gas 174198)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99959950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 2: (c) Payment to a blacklisted recipient O: multicall fails, nothing moves
+   tx noop: 0x446291a3ae9b53abaeb0ddd0d34ca7d0b1c2d03a731f344cb5d03547ffec869f (block 34, gas 33087)
+   Circle-role: blacklist(recipient O 0xb053fCC1582cCA6F99ba0e7DDa667D6a337C6fEC) tx 0x70cdd9844adcd92c851fcbaf9b2c8a2a8bbb7881da715e9a349db7224084312e
+   tx A submitProposal #1 "A: pay O 100": 0xeb92d378f7246195d0c2a5cbe1d2464ffe1f2b5b711ae07c97a2a3bd31d3b57f (block 36, gas 204000)
+   warp +1s (let votingStarts become past) -> block 37 timestamp 1788955718
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x06fa55843f67916fe3039327bfc949281ca49ce635a39feebf9da1885a50c7f5 (block 38, gas 117855)
+   warp +43200s (past grace of #1) -> block 39 timestamp 1788998918
+   proposal #1 state = Ready
+   tx A processProposal #1 -> passed=true actionFailed=true state=Processed: 0x88ef82f51e2cd0a4b80c633c9ec7fafd73d2c55ef84ae47bc95dcf29310febe0 (block 40, gas 146946)
+   ok: passed=true actionFailed=true
+   ok: Safe still holds 3050 USDC
+
+== step 3: (b) member C blacklisted: C's USDC is frozen at Circle's level, but C's shares can still exit to another address via Baal directly
+   tx noop: 0x9e8ed2b2d96a045cfac432815a24090cfb89249c747d0dfaf86afa1ef1e5510a (block 41, gas 33087)
+   Circle-role: blacklist(member C 0x56DCff936C63491Fcd25FeA7d27f64D06b3A1155) tx 0x9d0e59abca58bcb10a47bcdb1a8e8de9b179d5dbc65bf370ff7f41a0b9480042
+   revert ok [ragequit(to = C) reverts: blacklisted destination]: The contract function "ragequit" reverted with the following reason: | transfer failed | Contract Call:
+   revert ok [deposit by blacklisted C reverts]: The contract function "deposit" reverted with the following reason: | Blacklistable: account is blacklisted | Contract Call:
+   tx C ragequit(to = D): 0x9a33fbbeae970cfc52532d81dc36f539f1a326817b4d7d592852166c8843417e (block 43, gas 171393)
+   ok: C's pro-rata 1000 USDC paid to D (tx 0x9a33fbbeae970cfc52532d81dc36f539f1a326817b4d7d592852166c8843417e)
+   the relay/intent path cannot do this: ZeroOneIntentAccount op 4 calls baal.ragequit(address(this), ...) (contracts/ZeroOneIntentAccount.sol) so a blacklisted T1/T0 member must call Baal itself
+
+== step 4: (a) the Safe itself is blacklisted: every USDC exit, deposit and payment is frozen
+   [before Safe blacklist] treasury(Safe) USDC = 2050  totalShares = 2050
+   [before Safe blacklist] F: USDC = 99959950  shares = 50
+   [before Safe blacklist] A: USDC = 9000  shares = 1000
+   [before Safe blacklist] B: USDC = 9000  shares = 1000
+   tx noop: 0x788a5f3def3f2c3a312e2bdd03a1692038fc22fc6a6add79546219f77aabfbe1 (block 45, gas 33087)
+   Circle-role: blacklist(Safe 0xb32671A42846742895a1F0676dB1f07C309529f9) tx 0xdac246392349b85c8c765e4c2127cfb763e50a8d763521b7bc219ffddd6c0e15
+   revert ok [A ragequit for USDC reverts]: The contract function "ragequit" reverted with the following reason: | transfer failed | Contract Call:
+   revert ok [B ragequit to a third address reverts too (source = Safe)]: The contract function "ragequit" reverted with the following reason: | transfer failed | Contract Call:
+   revert ok [deposit reverts (destination = Safe)]: The contract function "deposit" reverted with the following reason: | Blacklistable: account is blacklisted | Contract Call:
+   tx A submitProposal #2 "A: pay A 100 while the Safe is blacklisted": 0x1bb7545f6e9c226944b4464449ca7e156022aa8e7927347367914fb2ac8a919e (block 47, gas 204756)
+   warp +1s (let votingStarts become past) -> block 48 timestamp 1788998919
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xec6f8d88d23c7bf329d4eaac2fa5f553e54b78dc3915447bcbcf6ce32091d8f7 (block 49, gas 117855)
+   warp +43200s (past grace of #2) -> block 50 timestamp 1789042119
+   proposal #2 state = Ready
+   tx A processProposal #2 -> passed=true actionFailed=true state=Processed: 0x8634577c2e2133d0aada7147b1343ee8baf6b343a786063f05f539f5f1c5cc47 (block 51, gas 144811)
+   ok: Payment passes the vote but actionFailed: nothing moves
+   tx A submitProposal #3 "A: Safe approves A (escape attempt)": 0x5591aaeeb2d8c52379877a3be8b56882fa49e70a4a18c7af09c63be18f29b6fe (block 52, gas 204684)
+   warp +1s (let votingStarts become past) -> block 53 timestamp 1789042120
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x5c0665b2ff3f55281fdd5c20fdcc6d9a1d378113474abd0cc6a4442d59dc9e6a (block 54, gas 117855)
+   warp +43200s (past grace of #3) -> block 55 timestamp 1789085320
+   proposal #3 state = Ready
+   tx A processProposal #3 -> passed=true actionFailed=true state=Processed: 0xc377db0138a60acbbc949446c2d977685c45b24e4bae4fc5c614a1b3d8b310fe (block 56, gas 144675)
+   ok: approve from a blacklisted Safe also fails: no escape by vote
+   tx B ragequit(tokens = []) burns shares, receives 0: 0xbd208ff04ff830aae0318a0f380c3e0c1e60dea2318757bda2f1a4e101e41bd0 (block 57, gas 95519)
+   [after Safe blacklist] treasury(Safe) USDC = 2050  totalShares = 1050
+   [after Safe blacklist] A: USDC = 9000  shares = 1000
+   [after Safe blacklist] B: USDC = 9000  shares = 0
+   ok: B burned 1000 shares and received 0 USDC (tx 0xbd208ff04ff830aae0318a0f380c3e0c1e60dea2318757bda2f1a4e101e41bd0)
+   frozen value: 2050 USDC for 1050 shares; remedy: none on chain (no vote can move USDC out of a blacklisted Safe); only Circle's unBlacklist
+   A still cannot exit while blacklisted
+
+=== SCENARIO OPS-05/06 usdc-blacklist: PASS ===
+
+anvil stopped (http://127.0.0.1:11546)
