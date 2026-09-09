@@ -1,0 +1,183 @@
+{
+  "chain": "Base fork (8453)",
+  "fork": true,
+  "loopbackRpc": "http://127.0.0.1:11545",
+  "forkBlock": 51000002,
+  "sourceCommit": "7cec900f464ff8aed7242f96cfab93706702d232",
+  "genesisCommit": "dcb3e83d209fc4c1cd4eab5f20434eeb632b5678",
+  "deployment": {
+    "totalGas": "24778549",
+    "transactions": 22,
+    "breakdown": [
+      {
+        "step": "singleton:Baal",
+        "gasUsed": "4295260"
+      },
+      {
+        "step": "singleton:ModuleProxyFactory",
+        "gasUsed": "268875"
+      },
+      {
+        "step": "singleton:GnosisSafe",
+        "gasUsed": "2738930"
+      },
+      {
+        "step": "singleton:GnosisSafeProxyFactory",
+        "gasUsed": "610833"
+      },
+      {
+        "step": "singleton:MultiSendCallOnly",
+        "gasUsed": "131115"
+      },
+      {
+        "step": "SafeProxy",
+        "gasUsed": "105352"
+      },
+      {
+        "step": "BaalProxy",
+        "gasUsed": "72265"
+      },
+      {
+        "step": "NavShareToken",
+        "gasUsed": "1311898"
+      },
+      {
+        "step": "LootToken",
+        "gasUsed": "575817"
+      },
+      {
+        "step": "DepositShaman",
+        "gasUsed": "697889"
+      },
+      {
+        "step": "WorkManager",
+        "gasUsed": "1526142"
+      },
+      {
+        "step": "PaymentDeployer",
+        "gasUsed": "1751439"
+      },
+      {
+        "step": "StrategyDeployer",
+        "gasUsed": "2189002"
+      },
+      {
+        "step": "ProjectDeployer",
+        "gasUsed": "2667360"
+      },
+      {
+        "step": "ConfigDeployer",
+        "gasUsed": "1620021"
+      },
+      {
+        "step": "TemplateFactory",
+        "gasUsed": "1545219"
+      },
+      {
+        "step": "ZeroOneIntentAccount",
+        "gasUsed": "1343668"
+      },
+      {
+        "step": "Constitution",
+        "gasUsed": "327872"
+      },
+      {
+        "step": "Safe.setup",
+        "gasUsed": "174426"
+      },
+      {
+        "step": "Baal.setUp",
+        "gasUsed": "502412"
+      },
+      {
+        "step": "genesis:approve",
+        "gasUsed": "55449"
+      },
+      {
+        "step": "genesis:deposit",
+        "gasUsed": "267305"
+      }
+    ]
+  },
+  "baalFork": {
+    "address": "0x9Eb1d1BF8C69F39A8bA7c0f843D89895d530Abd1",
+    "runtimeBytes": 19497,
+    "eip170Limit": 24576,
+    "baalGasCap": "8000000",
+    "multiSendCallOnly": {
+      "address": "0x3C7aCc98f6e6003505b9aF5366e1bE3943d89A28",
+      "runtimeBytes": 360
+    }
+  },
+  "ragequit": [
+    {
+      "label": "ragequit: member with 4 lots (first exit of this DAO, cold retention tree)",
+      "sharesBurned": "61939929057761824010",
+      "lots": "4",
+      "usdcPaid": "43684082",
+      "gasUsed": "796196",
+      "hash": "0x18e765c9a8ba729a520e35b74dbcff69b05efd94f69b7899b6aa5803b4640684"
+    },
+    {
+      "label": "ragequit: worker with 1 lot (warm retention tree)",
+      "sharesBurned": "10000000000000000000",
+      "lots": "1",
+      "usdcPaid": "7052653",
+      "gasUsed": "282420",
+      "hash": "0xe762b5d4559b809b2c016f4f5311f315f8526b0f51fdf943319183f81d713497"
+    },
+    {
+      "label": "ragequit: founder with 1 genesis lot (warm retention tree)",
+      "sharesBurned": "50000000000000000000",
+      "lots": "1",
+      "usdcPaid": "35263265",
+      "gasUsed": "317590",
+      "hash": "0x95f50917919cff08e77c3b7226b418a9a14e7042fdd994dc5729e622859f6625"
+    },
+    {
+      "label": "ragequit: 1 genesis lot, fresh DAO (cold retention tree)",
+      "sharesBurned": "50000000000000000000",
+      "lots": "1",
+      "usdcPaid": "50000000",
+      "gasUsed": "683699",
+      "hash": "0xad5bb0c662a4c2a86ae50e4bc46231b8e37a6d057caa7cb560bc8d66ee3bbebc"
+    }
+  ],
+  "deposits": [
+    {
+      "sharesMinted": "30612244897959183673",
+      "ledgerNav": "49000000",
+      "supplyBefore": "50000000000000000000",
+      "shareLiability": "10000000000000000000",
+      "lotsAfter": "1"
+    },
+    {
+      "sharesMinted": "12412636287391668996",
+      "ledgerNav": "73000000",
+      "supplyBefore": "90612244897959183673",
+      "shareLiability": "0",
+      "lotsAfter": "2"
+    },
+    {
+      "sharesMinted": "12564009900652543008",
+      "ledgerNav": "82000000",
+      "supplyBefore": "103024881185350852669",
+      "shareLiability": "0",
+      "lotsAfter": "3"
+    },
+    {
+      "sharesMinted": "6351037971758428333",
+      "ledgerNav": "91000000",
+      "supplyBefore": "115588891086003395677",
+      "shareLiability": "0",
+      "lotsAfter": "4"
+    }
+  ],
+  "retention": {
+    "proposalId": 7,
+    "exited": "61939929057761824010",
+    "supplyAtVotingStarts": "121939929057761824010",
+    "minRetentionPercent": "66",
+    "passed": false
+  }
+}

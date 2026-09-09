@@ -30,8 +30,33 @@ function resolveSource(importPath: string): string {
 }
 
 /**
- * Solc standard JSON input with every `contracts/*.sol` source and each transitive import inlined
- * under the same unit names solc saw at compile time (`contracts/X.sol`, `@openzeppelin/...`).
+ * Every Solidity file under `contracts/` except the artifact output, as repo-relative unit names.
+ *
+ * Walks subdirectories exactly as scripts/compile.ts does, so `contracts/vendor/Baal.sol` (the Zero One
+ * Baal fork) and `contracts/vendor/MultiSendCallOnly.sol` are part of the verification input: since
+ * phase 5 both are locally compiled deployments, not vendored-package artifacts.
+ *
+ * @param directory Directory to walk.
+ * @returns Unit name and absolute path of each source, sorted by unit name.
+ */
+function solidityUnits(directory: string): { unit: string; file: string }[] {
+  const found: { unit: string; file: string }[] = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "artifacts") continue;
+      found.push(...solidityUnits(file));
+    } else if (entry.isFile() && entry.name.endsWith(".sol")) {
+      found.push({ unit: path.relative(ROOT, file).split(path.sep).join("/"), file });
+    }
+  }
+  return found.sort((a, b) => a.unit.localeCompare(b.unit));
+}
+
+/**
+ * Solc standard JSON input with every Solidity source under `contracts/` (subdirectories included) and
+ * each transitive import inlined under the same unit names solc saw at compile time
+ * (`contracts/X.sol`, `contracts/vendor/Baal.sol`, `@openzeppelin/...`).
  *
  * @returns The standard JSON input object.
  */
@@ -51,8 +76,7 @@ export function standardInput(): { language: "Solidity"; sources: Record<string,
       }
     }
   };
-  const dir = path.join(ROOT, "contracts");
-  for (const name of readdirSync(dir).filter((entry) => entry.endsWith(".sol")).sort()) add(`contracts/${name}`, path.join(dir, name));
+  for (const { unit, file } of solidityUnits(path.join(ROOT, "contracts"))) add(unit, file);
   return { language: "Solidity", sources, settings: COMPILER_SETTINGS };
 }
 
