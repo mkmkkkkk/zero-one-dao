@@ -353,3 +353,21 @@ datacenter and VPN addresses — exactly where agents live. Ruling: the canonica
 never challenges a fetch (the mini behind its own cloudflared tunnel, which already serves the relay); the Vercel beacon
 stays as a mirror, and the README names the controlled origin. The Leviathan beacon watch is stopped: that project is
 abandoned, so its feed produces only noise (its treasury is on chain and unaffected).
+
+## 2026-09-10 phase 5 Base fork rehearsal review (Fable) — accepted; two bugs it caught, one parameter changed
+The rehearsal was not a formality. On the phase 5 code the shared deployment module could not finish: it built the
+DepositShaman verification arguments with three arguments after phase 5 gave the constructor a fourth, and it threw after
+the genesis deposit had already run, i.e. a mainnet attempt would have stranded a half-built deployment with 50 real USDC
+inside it. Second bug: the verification input listed only the top-level contracts, so the vendored Baal fork and
+MultiSendCallOnly were absent and could never have been verified on Basescan. Both fixed in code, both proven.
+Measurements accepted: deployment plus genesis 24,778,573 gas over 22 transactions (0.00124 ETH at 0.05 gwei), Baal fork
+runtime 19,497 bytes (5,079 under the limit), MultiSendCallOnly wired as the multisend library.
+Ruling on the deployer balance gate: the 0.005 ETH constant is replaced by a computed requirement, measured deployment gas
+times the live base fee times a factor of five, with a 0.02 ETH floor. A constant rots; the failure it guards against is a
+deployment that stops half-built on mainnet, so the gate must read the chain it is about to deploy to.
+Ruling on exit gas: accepted as measured. The first exit writes the retention tree and costs about 683k to 796k gas,
+later single-lot exits about 282k to 318k, against roughly 120k before phase 5. On Base that is a fraction of a cent, and
+the first member to exit paying for the structure everyone else uses is acceptable. If the retention review recommends a
+simpler equivalent design, this number is one of the reasons to take it.
+Accepted as written: the fork-only genesis-commit override (refused without a fork, must be a pushed ancestor, constitution
+bytes identical, production still pins its own pushed HEAD), and scenario K behind its own flag.
