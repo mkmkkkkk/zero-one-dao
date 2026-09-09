@@ -1,0 +1,16 @@
+$ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin http://127.0.0.1:19751
+exit 1
+   fetching every URL the README advertises on http://127.0.0.1:19751 (6 advertised paths, 13 probes)
+AssertionError [ERR_ASSERTION]: origin did not answer 200 for http://127.0.0.1:19751/README.txt -> 403 text/html; charset=utf-8 [x-vercel-mitigated: challenge] body: <!DOCTYPE html><html><head><title>Vercel Security Checkpoint</title></head><body><p>Verifying your browser...</p></body></html>
+
+403 !== 200
+
+    at runProbe (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:166:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async validateBeacon (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:274:44) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 403,
+  expected: 200,
+  operator: 'strictEqual'
+}

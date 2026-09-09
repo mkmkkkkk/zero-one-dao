@@ -6,7 +6,7 @@
  * salt) proposed twice (second refused), 100 proposals by one member (cost = gas, /proposals.json
  * pages), direct contract reads with only the README's addresses (relay-down path), and the beacon's
  * state.json fields. Every row prints expected vs observed and is summarized as JSON at the end.
- * Usage: tsx relay/corner-cases-relay.ts --beacon https://zero-one-beacon.vercel.app [--spam 100] [--work state/corner-relay]
+ * Usage: tsx relay/corner-cases-relay.ts --beacon https://relay-zero.mkyang.ai [--spam 100] [--work state/corner-relay]
  */
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { hostname } from "node:os";
@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { createPublicClient, getAddress, http, keccak256, parseAbi, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
+import { CANONICAL_ORIGIN } from "./common.js";
 import { assert, fetchBeacon, fetchRetry, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
@@ -38,7 +39,7 @@ function row(id: string, expected: string, observed: string, ok: boolean, receip
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const beacon = (args.beacon ?? "https://zero-one-beacon.vercel.app").replace(/\/$/u, "");
+  const beacon = (args.beacon ?? CANONICAL_ORIGIN).replace(/\/+$/u, "");
   const spam = Number(args.spam ?? 100);
   const work = path.resolve(ROOT, args.work ?? path.join("state", "corner-relay"), `${hostname()}-${new Date().toISOString().replace(/[:.]/gu, "-")}`);
   mkdirSync(work, { recursive: true, mode: 0o700 });

@@ -389,3 +389,59 @@ Useful identity for the implementer, so nobody rediscovers it: with A = supply a
 A and S are O(1) reads, so the whole problem reduces to tracking growth, which only accounts that received shares inside the
 window can have. An account whose last mint predates the oldest open window contributes zero growth to every open proposal,
 so a plain exit can stay O(1) behind a single timestamp comparison. Mechanism choice goes to gpt-6-astra with this identity.
+
+## 2026-09-10 entry point designQuestions — the relay serves the beacon (DW worker, branch phase4-ledger-twap)
+These are implementation interpretations of the entry-point ruling above; the ruling remains the authority. No contract
+changed. New: `relay/static.ts`, `relay/e2e-entry-point.ts` (`npm run e2e:entry-point`), receipts in
+`evidence/phase5/entry-point/`.
+1. What the relay serves, and what it deliberately does not. The static table is exactly `/README.txt`, `/llms.txt`,
+   `/robots.txt`, `/snippet.js`, `/snippet.py`, `/CONSTITUTION.md`, `/index.html` and `/`, each with one fixed content
+   type, exact path match, no traversal, no redirect (`/` returns the dashboard body) and no request header read at all.
+   `state.json` and `proposals.json` are NOT in the table even though the build writes them: those two paths are live
+   answers, and a build-time snapshot silently taking them over is the worst failure available here (an agent would price
+   a deposit off an old NAV). The "dynamic first" rule is compiled, not documented: the router matches every dynamic
+   route before the table, and `assertNoDynamicCollision` throws at startup if a static path is ever added that a
+   dynamic route owns. Proved by overwriting the build's `state.json` with a sentinel and reading the live answer back.
+2. Files are read from disk per request rather than cached. They are a few KB, and the alternative (cache with mtime
+   checks) buys nothing at this traffic while making a rebuild require a restart. Consequence recorded in RELAY.md:
+   a rebuild is live immediately, so a published README can change under an agent that cached it.
+3. The dashboard gets a CSP that actually lets it work (`connect-src 'self'`, inline style and script only). The Vercel
+   mirror's `default-src 'none'` header blocks the dashboard's own `state.json` fetch; that is the mirror's existing
+   behaviour and was not touched, because the ruling says the Vercel build stays unchanged.
+4. Which README line paid for the mirror line. The README was exactly 44 lines with one blank separator between the
+   intent-format block and the T1/T0 block; the blank line was spent and the mirror sentence took its place next to the
+   origin line, so no content was dropped to stay at 44. The alternative considered and rejected was deleting the
+   share-checkpoint line (line 40), which is the one line that explains why a vote can be refused right after a
+   submission. The mirror is named in one line of `README.txt` and one line of `llms.txt`, both saying plainly that a
+   mirror can answer a plain GET with a challenge page.
+5. `--origin` now defaults to `CANONICAL_ORIGIN` (`https://relay-zero.mkyang.ai`, `ZERO_ONE_ORIGIN` overrides) instead of
+   `http://127.0.0.1:18751`. The mini therefore builds the canonical beacon with no flag, and the mirror is the same
+   builder with `--origin <mirror>`, which is what keeps the Vercel deployment working unchanged. The cost is that a
+   local build that forgets `--origin` now advertises the production hostname; the new validator catches it immediately,
+   because it fetches from the origin the README names.
+6. What the validator now proves, and the one thing it cannot. It fetches every URL the README advertises on the origin
+   under test (13 probes for this README, including a read-only `/relay?op=quote` and `/me/<a member>.json`) and requires
+   200, the expected content type, a parseable JSON body, no bot-mitigation header and no challenge page; the served
+   `README.txt` must be byte-identical to the build and the served `CONSTITUTION.md` bytes must hash to the on-chain
+   hash. A path the README advertises that the probe table does not cover is itself a failure, so the table cannot fall
+   behind the README. Negative control in the E2E: against a stub that answers Vercel's `403
+   x-vercel-mitigated: challenge` Security Checkpoint page, validate exits 1 naming the header. What it cannot prove is
+   that the origin answers the same way from an address that is not ours: the challenge is IP-reputation based, so a
+   validate run from the mini says nothing about what an agent on a datacenter address sees. That is the argument for
+   owning the origin rather than for a better probe.
+7. The constitution URL is fetched wherever it points, including the pinned GitHub raw URL of a real deployment, and its
+   bytes are hashed against the chain. Consequence accepted: a validate run fails if GitHub is unreachable from the
+   operator's network. The failure is loud and names the host, which is better than not checking the one document whose
+   authority is a hash (A5-14).
+8. Off-origin URLs the README names are listed in the summary (`offOriginUrls`) and not probed, the mirror included.
+   Validating the mirror is `--origin mirror`, and it is EXPECTED to fail from a datacenter or VPN address: that is the
+   finding restated as a test, not a regression. One real gap it exposes in the mirror was fixed in `beacon/vercel.json`:
+   `/pending.json` had no rewrite, so the mirror answered nothing on a path the README advertises. It now forwards to the
+   relay like the other four. Nothing was deployed; the file is ready for the next `vercel.ts` run.
+9. Not done here, because the orchestrator reviews first: nothing was deployed to the mini or to Vercel and no launchd
+   service was restarted. Going live needs `RELAY_BEACON_DIR` added to `ai.mkyang.zero-one-relay` and a canonical build
+   present in that directory; until then `https://relay-zero.mkyang.ai/README.txt` still 404s with the JSON reason,
+   which is the correct answer for a relay with no build.
+10. `npm run e2e:relay` needed one change to stay green: the relay it starts now runs with `RELAY_BEACON_DIR` at the
+   directory that run builds, and the final rebuild refreshes that directory too. Without it the validator correctly
+   refused, because the origin the README named served no README. It found the bug it exists to find on its first run.

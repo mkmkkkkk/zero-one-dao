@@ -1,0 +1,27 @@
+$ tsx beacon/scripts/validate.ts --deployment <mirror> --out <canonical> --no-fetch 1
+{
+  "result": "PASS",
+  "fetched": "SKIPPED",
+  "origin": "https://relay-zero.mkyang.ai",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "advertised": [
+    "/",
+    "/CONSTITUTION.md",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 11,
+  "proposals": 0,
+  "tasks": 0,
+  "members": 1,
+  "block": "24"
+}
+
+   SKIPPED the live fetches against https://relay-zero.mkyang.ai (--no-fetch); a beacon whose origin answers a bot challenge would pass this run

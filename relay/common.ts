@@ -254,6 +254,16 @@ export function atomic(file: string, data: unknown): void {
   renameSync(temporary, file);
 }
 
+/**
+ * Canonical agent entry point (decision.md 2026-09-10 "the agent entry point must not sit behind a bot
+ * challenge"): the host WE control, which serves both the beacon files and the relay endpoints and never
+ * challenges a plain GET. `ZERO_ONE_ORIGIN` overrides it (a second deployment, a staging tunnel, a local
+ * mirror). `MIRROR_ORIGIN` is the Vercel copy, named in the README as a fallback only: it forwards /relay
+ * but its bot mitigation answers a plain GET from some datacenter and VPN addresses with a challenge page.
+ */
+export const CANONICAL_ORIGIN = (process.env.ZERO_ONE_ORIGIN ?? "https://relay-zero.mkyang.ai").replace(/\/+$/u, "");
+export const MIRROR_ORIGIN = (process.env.ZERO_ONE_MIRROR ?? "https://zero-one-beacon.vercel.app").replace(/\/+$/u, "");
+
 /** Zero bytes32 and zero address. */
 export const ZERO_HASH = `0x${"0".repeat(64)}` as Hex;
 export const ZERO_ADDRESS = `0x${"0".repeat(40)}` as Address;

@@ -9,7 +9,12 @@
  * /state.json, /pending.json, /relay?intent=<base64url envelope>, /relay?op=<verb>&pass=<secret>&..., /relay?op=join,
  * /relay?op=quote (read-only: the op-0 intent to sign for a template + params). Usage: tsx
  * relay/server.ts (env: ZERO_ONE_DEPLOYMENT, RELAY_SPONSOR_KEY, RELAY_PORT, RELAY_STATE_DIR,
- * ZERO_ONE_STATE_FILE, ZERO_ONE_RPC_URL).
+ * ZERO_ONE_STATE_FILE, ZERO_ONE_RPC_URL, RELAY_BEACON_DIR).
+ * This process is also the beacon: it serves README.txt, llms.txt, snippet.js, snippet.py,
+ * CONSTITUTION.md, robots.txt and the dashboard (/ and /index.html) out of RELAY_BEACON_DIR
+ * (relay/static.ts), so one plain GET onboarding needs no third-party host that may challenge a bot
+ * (decision.md 2026-09-10). The dynamic routes above are matched FIRST and a static file can never
+ * shadow one; the collision is refused at startup, not documented.
  * Relay behaviors ruled in decision.md phase 2b: a propose intent whose instance address is still
  * empty gets the instance deployed by the sponsor first (members holding >= sponsorThreshold only,
  * rate-limited; ruling 3); a vote that follows a fresh submission waits for the next block before it
@@ -34,6 +39,7 @@ import { passEntropyBits, PASS_ENTROPY_FLOOR } from "./pass.js";
 import { decodeProposeIntentData, TEMPLATE_IDS } from "../src/proposals.js";
 import { assertStateLockHeld, withStateLock } from "./lock.js";
 import { parseSpec, quoteProposal } from "./templates.js";
+import { assertNoDynamicCollision, beaconDirSetting, DASHBOARD_CSP, isStaticPath, missingBuildReason, readStatic, staticPaths } from "./static.js";
 
 const env: Env = connect();
 const sponsor: PrivateKeyAccount = sponsorAccount();
@@ -68,6 +74,14 @@ await withStateLock(env.stateDir, "sponsor", async () => {
 });
 const secret = Buffer.from(readFileSync(secretFile, "utf8").trim(), "hex");
 const startedAt = new Date().toISOString();
+/**
+ * The relay's own routes, in one place so the beacon's static files can be proved not to shadow them.
+ * `assertNoDynamicCollision` throws before the socket is opened if a future edit adds a static path
+ * that is also a dynamic one (decision.md 2026-09-10 entry point).
+ */
+const DYNAMIC_PATHS = ["/health.json", "/pending.json", "/proposals.json", "/state.json", "/relay"] as const;
+const DYNAMIC_PREFIXES = ["/me/"] as const;
+assertNoDynamicCollision(DYNAMIC_PATHS, DYNAMIC_PREFIXES);
 /** Rate limits per minute (env overrides for mirrors that compress hours into seconds). */
 const RATE_ADDRESS = Number(process.env.RELAY_RATE_ADDRESS ?? 6);
 const RATE_IP = Number(process.env.RELAY_RATE_IP ?? 30);
@@ -617,7 +631,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
     const u = new URL(rawUrl, "http://localhost");
     if (u.pathname === "/health.json") {
       const [balance, block] = await Promise.all([client.getBalance({ address: sponsor.address }), client.getBlockNumber()]);
-      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8, passEntropyFloorBits: PASS_ENTROPY_FLOOR }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, startedAt, queued, alive: true }));
+      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8, passEntropyFloorBits: PASS_ENTROPY_FLOOR }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, beacon: { built: readStatic("/README.txt") !== undefined, paths: staticPaths() }, startedAt, queued, alive: true }));
     }
     if (u.pathname === "/pending.json") {
       // Phase 5 ruling 7 (A5-10): what this relay is holding right now. A member whose intent is not
@@ -672,7 +686,26 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
       if (address === undefined || !isAddress(address)) fail(404, "unknown address or pass hash");
       return send(200, json(await me(env, getAddress(address), custody, undefined, await settledIdentity(getAddress(address)))));
     }
-    if (u.pathname !== "/relay") fail(404, "not found; see /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay");
+    // The beacon's static files, matched only AFTER every dynamic route above: /state.json and
+    // /proposals.json exist in the build too, and the live answers must win (decision.md 2026-09-10).
+    // No request header is consulted here: no user-agent sniffing, no cookies, no redirect.
+    if (isStaticPath(u.pathname)) {
+      const file = readStatic(u.pathname);
+      if (file === undefined) fail(404, missingBuildReason(u.pathname));
+      res.writeHead(200, {
+        "Content-Type": file.type,
+        "Content-Length": String(file.body.length),
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Last-Modified": file.modified.toUTCString(),
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
+        "Access-Control-Allow-Origin": "*",
+        ...(file.type.startsWith("text/html") ? { "Content-Security-Policy": DASHBOARD_CSP } : {}),
+      });
+      res.end(file.body);
+      return;
+    }
+    if (u.pathname !== "/relay") fail(404, "not found; see /README.txt (start here), /llms.txt, /snippet.js, /snippet.py, /CONSTITUTION.md, / (dashboard), /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay");
     if (queued >= 8) fail(503, "relay queue full; retry in a few seconds");
     queued += 1;
     const task = queue.then(() => withStateLock(env.stateDir, "sponsor", async () => {
@@ -723,6 +756,6 @@ server.headersTimeout = 10_000;
 const port = Number(process.env.RELAY_PORT ?? 18_751);
 const host = process.env.RELAY_HOST ?? "127.0.0.1";
 server.listen(port, host, () => {
-  console.log(json({ listening: `${host}:${port}`, startedAt, chainId: D.chainId, adapter, sponsor: sponsor.address, deployment: process.env.ZERO_ONE_DEPLOYMENT ?? "deployments/local.json", stateDir: env.stateDir }));
+  console.log(json({ listening: `${host}:${port}`, startedAt, chainId: D.chainId, adapter, sponsor: sponsor.address, deployment: process.env.ZERO_ONE_DEPLOYMENT ?? "deployments/local.json", stateDir: env.stateDir, beaconDir: beaconDirSetting(), beaconPaths: staticPaths(), beaconBuilt: readStatic("/README.txt") !== undefined }));
 });
 export { decodeRevert, ZERO_ADDRESS };

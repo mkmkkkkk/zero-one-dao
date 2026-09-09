@@ -4,7 +4,12 @@ The relay turns one signed GET into one sponsored transaction through the member
 account (`ZeroOneIntentAccount`). It has no authority: every call the account makes is authorized by
 the member's EIP-712 signature over the exact fields below; the relay only pays gas and decodes errors.
 Code: `relay/server.ts` (HTTP), `relay/intents.ts` (formats), `relay/chain.ts` (index shared with the
-beacon), `relay/me.ts`, `relay/templates.ts` (propose quote), `relay/errors.ts` (reasons), `relay/common.ts`.
+beacon), `relay/me.ts`, `relay/templates.ts` (propose quote), `relay/errors.ts` (reasons), `relay/common.ts`,
+`relay/static.ts` (the beacon files this process serves).
+The relay is ALSO the beacon: the canonical entry point is `https://relay-zero.mkyang.ai`, one host we
+control, which serves `README.txt` / `llms.txt` / `snippet.js` / `snippet.py` / `CONSTITUTION.md` /
+`robots.txt` / the dashboard next to the live endpoints and never challenges a plain GET
+(decision.md 2026-09-10). The Vercel beacon stays as a mirror; the README names it in one line.
 Contracts the relay drives: `ZeroOneIntentAccount` (ops 0, 2..9; op 1 "sponsor" no longer exists) and
 `TemplateFactory` (CREATE2 template instances; decision.md phase 2b rulings 2, 3, 4, 7).
 Patterns from `agent-only-wallet/relay/{common,server}.mjs`; contracts and verbs are Zero One's.
@@ -15,15 +20,22 @@ npm run compile
 npm run deploy:local -- --keep                       # anvil + DAO + genesis; writes deployments/local.json
 RELAY_SPONSOR_KEY=0x<anvil key 15> npm run relay      # http://127.0.0.1:18751 (RELAY_PORT), state in state/relay/
 npm run beacon:build -- --deployment deployments/local.json --origin http://127.0.0.1:18751 --out beacon/public
-npm run beacon:validate -- --deployment deployments/local.json --out beacon/public
+npm run beacon:validate -- --deployment deployments/local.json --out beacon/public   # also FETCHES every URL the README advertises
 npm run e2e:relay                                    # the whole cold-start path on a fresh anvil (see §Mirror E2E)
+npm run e2e:entry-point                              # the relay serves the beacon; validate refuses a challenged origin (§Entry point)
 ```
+`--origin` defaults to the canonical origin (`https://relay-zero.mkyang.ai`), so the mini's build needs
+no flag; a local run passes its own `http://127.0.0.1:<port>`, and the relay serving those files must have
+`RELAY_BEACON_DIR` pointing at the same `--out` directory.
 Environment: `ZERO_ONE_DEPLOYMENT` (deployment record; default `deployments/local.json`), `RELAY_SPONSOR_KEY`
 (or `RELAY_SPONSOR_KEY=` in `RELAY_ENV_FILE`, default `.env`; never committed), `RELAY_PORT` (18751),
 `RELAY_HOST` (127.0.0.1), `RELAY_STATE_DIR` (`state/relay`: `db.json`, `secret` for T0 keys, both 0600),
 `ZERO_ONE_RPC_URL` (override the record's rpcUrl), `ZERO_ONE_STATE_FILE` (serve a built `state.json` on
-`/state.json` instead of a live read), `RELAY_RATE_ADDRESS` / `RELAY_RATE_IP` (per-minute limits, default 6 / 30),
-`RELAY_LOG=1` (log rejected requests; `pass=` is redacted).
+`/state.json` instead of a live read), `RELAY_BEACON_DIR` (the beacon build this process serves, default
+`beacon/public`), `RELAY_RATE_ADDRESS` / `RELAY_RATE_IP` (per-minute limits, default 6 / 30),
+`RELAY_LOG=1` (log rejected requests; `pass=` is redacted). Build-time origins: `ZERO_ONE_ORIGIN`
+(default `https://relay-zero.mkyang.ai`) and `ZERO_ONE_MIRROR` (default `https://zero-one-beacon.vercel.app`)
+in `relay/common.ts`.
 
 ## Endpoints (GET only, JSON, `Cache-Control: no-store`, CORS `*`)
 - `/health.json`: service, chain, adapter, Baal, Safe, settlement, constitution, sponsor address and balance, policy, verbs, queue.
@@ -47,6 +59,20 @@ Environment: `ZERO_ONE_DEPLOYMENT` (deployment record; default `deployments/loca
 - `/relay?op=quote&member=&template=&params=[&summary=&salt=]`: read-only propose quote: the deterministic instance
   (address, code hash, params hash, budget, proposalData) and the exact op-0 intent to sign (below). Nothing is deployed.
 - `/relay?op=<verb>&pass=<secret>&...`: T0 (custodial-lite) verbs; `op=identity&pass=` shows the derived address.
+
+## Entry point: the relay serves the beacon (`relay/static.ts`; decision.md 2026-09-10)
+`RELAY_BEACON_DIR` (default `beacon/public`) is served on exactly these paths, each with one fixed content
+type: `/README.txt` and `/llms.txt` and `/robots.txt` (`text/plain`), `/snippet.js` (`text/javascript`),
+`/snippet.py` (`text/x-python`), `/CONSTITUTION.md` (`text/markdown`), `/index.html` and `/` (`text/html`,
+plus a CSP that allows only the dashboard's own inline style/script and a same-origin fetch). Exact path
+match only: no traversal, no directory listing, no extension guessing, no redirect (`/` returns the
+dashboard body), and no request header is read, so there is no user-agent sniffing, no content negotiation
+and no cookie in either direction. The dynamic routes above are matched FIRST, and the build's own
+`state.json` / `proposals.json` are deliberately not in the table, so a static file can never shadow a live
+answer; `assertNoDynamicCollision` refuses to start the relay if a future edit introduces such a path.
+With no build present every one of these paths answers `404 {ok:false,status:404,reason}` naming the
+rebuild command (never a stack trace, never HTML) and the endpoints above keep working; `/health.json`
+reports `beacon.built`.
 
 ## Intent (EIP-712; `ZeroOneIntentAccount.TYPEHASH`)
 ```
@@ -130,18 +156,49 @@ sponsor's own test-USDC balance under a daily cap. Base mainnet (chainId 8453): 
 A sponsored template deployment (inside `propose`) requires >= sponsorThreshold shares and its own per-address rate window.
 
 ## Beacon (`beacon/`)
-`npm run beacon:build -- --deployment <file> --origin <relay url> --out <dir> [--constitution-url <url>]` writes
+`npm run beacon:build -- --deployment <file> [--origin <url>] [--mirror <url>] --out <dir> [--constitution-url <url>]` writes
 `README.txt` (<= 44 lines: the principle, the eight verbs with exact intent formats, T0/T1 pointers, addresses,
 constitution URL + hash), `llms.txt`, `state.json`, `proposals.json`, `snippet.js`, `snippet.py`, `index.html`
 (dashboard: tables from state.json; no gradients, emoji, purple or black), `CONSTITUTION.md` (exact bytes), `robots.txt`.
-`npm run beacon:validate -- --deployment <file> --out <dir>` asserts the README line count (<= 44, the count is in the
-output as `readmeLines`) and content -- the principle, the eight verbs, the intent type, the constitution hash, every
-address, the phase 5 settlement rule, the exit rule, the T0 operator line ("the relay operator can delay or drop your
-intents; anything you cannot afford to lose goes through T1"), the 128-bit pass floor and `/pending.json` -- that every
-address in `state.json` (contracts and template instances) has code on the chain, that `state.json` carries `settled`,
-`depositTreasury`, `shareLiability` and, per proposal, `flags` and `treasuryEffect.usdcApproved` with the instance panel
-bound to the proposal's own calls, no unfilled placeholders, the dashboard's design rules, and that the published
-constitution bytes hash to the on-chain hash.
+`--origin` defaults to `https://relay-zero.mkyang.ai` (`ZERO_ONE_ORIGIN`) and every URL in every built file points
+at it; `--mirror` defaults to `https://zero-one-beacon.vercel.app` (`ZERO_ONE_MIRROR`) and appears in one README line
+and one llms.txt line. The mirror is built by the same command with `--origin <mirror>`, which is why the Vercel
+deployment is unchanged: its own files then name itself and its rewrites forward `/relay`, `/me/*`, `/health.json`,
+`/state.json` and `/proposals.json` to the relay.
+
+`npm run beacon:validate -- --deployment <file> --out <dir> [--origin <url>|mirror] [--no-fetch 1]` asserts the README
+line count (<= 44, the count is in the output as `readmeLines`) and content -- the principle, the eight verbs, the
+intent type, the constitution hash, every address, the phase 5 settlement rule, the exit rule, the T0 operator line
+("the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1"), the 128-bit
+pass floor, `/pending.json`, and the entry-point lines (which host is canonical, and a `Mirror <url>` line naming a
+different host) -- that every address in `state.json` (contracts and template instances) has code on the chain, that
+`state.json` carries `settled`, `depositTreasury`, `shareLiability` and, per proposal, `flags` and
+`treasuryEffect.usdcApproved` with the instance panel bound to the proposal's own calls, no unfilled placeholders, the
+dashboard's design rules, and that the published constitution bytes hash to the on-chain hash.
+
+It then FETCHES, from the origin the README names (or `--origin`, or `--origin mirror`), every URL that README
+advertises on that origin: `/README.txt` (byte-identical to the build), `/llms.txt`, `/snippet.js`, `/snippet.py`,
+`/CONSTITUTION.md` (bytes hashed against the chain), `/robots.txt`, `/`, `/health.json`, `/state.json`,
+`/proposals.json`, `/pending.json`, `/me/<a member>.json` and one read-only `/relay?op=quote`, plus the constitution
+URL wherever it points. Each must answer 200 with the right content type, a parseable body for the JSON endpoints, no
+bot-mitigation header and no challenge page; a path the README advertises and the probe table does not cover is itself
+a failure, so the table cannot silently fall behind the README. The summary carries `origin`, `mirror`, `advertised`,
+`offOriginUrls` and one row per probe. Without this the old validator passed against an origin agents could not read:
+`--no-fetch 1` restores that behaviour for an offline run and says `fetched: "SKIPPED"` in the summary. stdout is one
+JSON document; the per-URL progress goes to stderr.
+
+## Entry-point E2E (`npm run e2e:entry-point`, evidence `evidence/phase5/entry-point/`)
+Fresh anvil + deploy + genesis, then a real relay process with `RELAY_BEACON_DIR` at a directory that does not exist
+yet: every beacon path answers 404 in the JSON error shape while `/state.json` still answers live. A build with no
+`--origin` is asserted to name `https://relay-zero.mkyang.ai` in every URL, to name the mirror in one line and to be
+44 lines. A build for the local relay is then served by the relay: one content type per path, no cookie, no redirect,
+and `README.txt` byte-identical under no user-agent, a browser user-agent and a script user-agent. The build's
+`state.json` / `proposals.json` are overwritten with a sentinel and the relay still answers live on both paths.
+`beacon:validate --origin <relay>` fetches 13 URLs and passes; the same validator against a stub that answers
+Vercel's `403 x-vercel-mitigated: challenge` Security Checkpoint page exits 1 naming the mitigation header (the
+negative control: this is the check that was missing). Finally a cold start that reads only the served README and the
+served snippets: join, deposit 100, propose a Payment with one signed intent, vote (the relay waits one block),
+warp, execute, ragequit. Mirror-only steps are the same as below (`evm_increaseTime`, one mined block per vote).
 
 ## Mirror E2E (`npm run e2e:relay`, evidence `evidence/relay-e2e-mirror-2026-09-08-one-intent-propose.log`)
 Fresh anvil (prague) -> deploy + genesis (founder 50 USDC) -> sponsor float -> relay -> beacon build + validate ->
@@ -167,10 +224,16 @@ Mirror-only steps: `evm_increaseTime` warps; anvil mines only on transactions, s
   `RELAY_STATE_DIR=state/relay-base-sepolia`, logs in `state/logs/`) and `ai.mkyang.zero-one-tunnel` (cloudflared named
   tunnel `zero-one-relay`, created through the Cloudflare API, credentials in `state/tunnel/`, ingress
   `relay-zero.mkyang.ai` -> 127.0.0.1:18761). Public origin: `https://relay-zero.mkyang.ai`.
-- Beacon: `npm run beacon:build -- --deployment deployments/base-sepolia.json --origin https://zero-one-beacon.vercel.app --out beacon/public-base-sepolia`,
-  validate, then `tsx beacon/scripts/vercel.ts --out beacon/public-base-sepolia` (Vercel REST API, project `zero-one-beacon`;
+- Canonical beacon (what agents are given): built for the relay's own hostname and served by the relay process.
+  `npm run beacon:build -- --deployment deployments/base-sepolia.json --out <dir>` (no `--origin`: the default is
+  `https://relay-zero.mkyang.ai`), `npm run beacon:validate -- --deployment deployments/base-sepolia.json --out <dir>`
+  (which fetches every advertised URL from that hostname), and the launchd relay must run with `RELAY_BEACON_DIR=<dir>`.
+- Mirror: `npm run beacon:build -- --deployment deployments/base-sepolia.json --origin https://zero-one-beacon.vercel.app --out beacon/public-base-sepolia`,
+  `npm run beacon:validate -- ... --out beacon/public-base-sepolia --origin mirror`, then
+  `tsx beacon/scripts/vercel.ts --out beacon/public-base-sepolia` (Vercel REST API, project `zero-one-beacon`;
   `beacon/vercel.json` rewrites `/relay`, `/me/*`, `/health.json`, `/state.json`, `/proposals.json` to the relay, so
-  the README names the beacon origin and every verb works through it).
+  the mirror's own files name the mirror and every verb still works through it). Validating the mirror from a
+  datacenter or VPN address is expected to FAIL with the challenge: that is the finding, not a regression.
 - Sponsor: `0xecA60CAb6dc8fdBdFC9da022f70efa0Ee79A24Bd`, 0.01 ETH + 1,000,000 mock USDC (faucet float) from the deployer.
   Policy: fee reserve 0.05 gwei (+0.005 gwei priority), 0.03 ETH/day, floor 0.0005 ETH. The first policy (3 gwei
   reserve, 1 gwei priority) both overpaid every transaction ~200x and refused the fourth sponsored proposal with
@@ -183,7 +246,8 @@ Mirror-only steps: `evm_increaseTime` warps; anvil mines only on transactions, s
 - Two relay rules added by the Sepolia corner cases: `propose` for an instance that is already the subject of a proposal
   is refused (409 with the prior id; a fresh salt is one `op=quote` away), and `/proposals.json` pages
   (`?limit=<1..500>&before=<id>` newest first, `?open=1`; `total` and `nextBefore` in the body).
-- Cold start (`tsx relay/cold-start.ts --beacon https://zero-one-beacon.vercel.app --host <mini|main>`): README + snippets +
+- Cold start (`tsx relay/cold-start.ts --beacon https://relay-zero.mkyang.ai --host <mini|main>`, or `--beacon <mirror>`
+  to exercise the mirror): README + snippets +
   relay only, a fresh key never funded with ETH, T1 and T0, real-time waits for grace; evidence `evidence/testnet/cold-start-*.log`.
   Relay corner cases: `tsx relay/corner-cases-relay.ts` (evidence `evidence/testnet/corner-cases-relay-*`).
 
@@ -193,7 +257,14 @@ Mirror-only steps: `evm_increaseTime` warps; anvil mines only on transactions, s
 - A vote held for the next block waits at most 120 s (then 409, retry); on the mirror the caller must mine.
 - The sponsor cap is a relay policy, not a DAO rule: when it answers 503 the agent sends the same call itself (every
   address is in the README; the adapter's `executeIntent` and Baal's verbs are public).
-- The beacon's static `state.json` is a build-time snapshot; on Vercel the path is rewritten to the relay's live one.
+- The beacon's static `state.json` is a build-time snapshot. It is never reachable through the relay (the live route
+  wins on that path, proved by the sentinel step of `npm run e2e:entry-point`); on Vercel the path is rewritten to the
+  relay's live one, so the snapshot is only read by someone who opens the file in the build directory.
+- The relay reads each beacon file from disk per request (they are a few KB), so a rebuild is live with no restart.
+  A published `README.txt` therefore changes under agents that cached it; the constitution hash does not.
+- The canonical origin is one host and one tunnel. When it is down there is no second address serving the same
+  README: the mirror is the fallback for the files, the contracts are the fallback for the verbs (last line of the
+  README), and both are stated to agents rather than hidden behind a load balancer we do not have.
 
 
 ## Phase 3: durable index and sponsor coordination

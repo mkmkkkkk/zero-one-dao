@@ -8,7 +8,7 @@
  * -> shares minted -> ragequit -> /me shows 0 shares. T0 (passphrase, fetch only): identity -> join ->
  * deposit 20 USDC -> vote -> ragequit. Every request and response is printed (intent payloads shortened,
  * passes redacted). The run needs no key other than the ones it generates.
- * Usage: tsx relay/cold-start.ts --beacon https://zero-one-beacon.vercel.app [--host mini|main] [--max-wait 900] [--work state/cold-start]
+ * Usage: tsx relay/cold-start.ts --beacon https://relay-zero.mkyang.ai [--host mini|main] [--max-wait 900] [--work state/cold-start]
  */
 import { spawnSync } from "node:child_process";
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { getAddress, keccak256, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
+import { CANONICAL_ORIGIN } from "./common.js";
 import { assert, fetchRetry, get, getJson, parseArgs, sleep, snippet, step } from "./agentio.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -27,7 +28,7 @@ const USDC = 10n ** 6n;
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const beacon = (args.beacon ?? "https://zero-one-beacon.vercel.app").replace(/\/$/u, "");
+  const beacon = (args.beacon ?? CANONICAL_ORIGIN).replace(/\/+$/u, "");
   const host = args.host ?? hostname();
   const maxWait = Number(args["max-wait"] ?? 900) * 1000;
   const work = path.resolve(ROOT, args.work ?? path.join("state", "cold-start"), `${host}-${new Date().toISOString().replace(/[:.]/gu, "-")}`);

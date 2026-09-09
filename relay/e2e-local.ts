@@ -165,12 +165,15 @@ async function main(): Promise<void> {
     const refusal = decodeRevert(connectRelay(record), encodeErrorResult({ abi: loadLocalArtifact("DepositShaman").abi, errorName: "TreasuryNotSettled" }));
     assert(refusal?.name === "TreasuryNotSettled" && refusal.text.includes("settles the registered assets to USDC"), "relay decodes TreasuryNotSettled with the settlement-vote recovery reason");
 
-    step("start the relay against the mirror (sponsor = anvil account 15)");
+    step("start the relay against the mirror (sponsor = anvil account 15); the relay also serves the beacon files (RELAY_BEACON_DIR)");
     const port = chooseFreePort(18_751);
     const origin = `http://127.0.0.1:${port}`;
+    // The relay IS the beacon (decision.md 2026-09-10): it must serve the directory this run builds,
+    // because beacon:validate now fetches every URL the README advertises from the origin it names.
+    const beacon = path.join(devnet.stateDir, "beacon");
     relay = spawn(process.execPath, ["--import", "tsx", path.join(ROOT, "relay", "server.ts")], {
       cwd: ROOT,
-      env: { ...NO_PROXY, ZERO_ONE_DEPLOYMENT: deploymentFile, RELAY_SPONSOR_KEY: sponsorKey, RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(devnet.stateDir, "relay"), RELAY_LOG: "1", RELAY_RATE_ADDRESS: "1000", RELAY_RATE_IP: "10000" },
+      env: { ...NO_PROXY, ZERO_ONE_DEPLOYMENT: deploymentFile, RELAY_SPONSOR_KEY: sponsorKey, RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(devnet.stateDir, "relay"), RELAY_BEACON_DIR: beacon, RELAY_LOG: "1", RELAY_RATE_ADDRESS: "1000", RELAY_RATE_IP: "10000" },
       stdio: ["ignore", "inherit", "inherit"],
     });
     await waitForRelay(origin, relay);
@@ -178,8 +181,7 @@ async function main(): Promise<void> {
     console.log(`   health: ${JSON.stringify(healthBody).slice(0, 600)}`);
     assert(healthBody.alive === true && healthBody.adapter === dao.intentAccount, "relay is alive on the mirror with the deployed adapter");
 
-    step("build and validate the beacon (README <= 44 lines, every address has code)");
-    const beacon = path.join(devnet.stateDir, "beacon");
+    step("build and validate the beacon (README <= 44 lines, every address has code, every advertised URL answers 200 from the relay)");
     await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
     const validation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beacon], { encoding: "utf8", env: NO_PROXY });
     const count = spawnSync("wc", ["-l", path.join(beacon, "README.txt")], { encoding: "utf8" });
@@ -469,6 +471,9 @@ async function main(): Promise<void> {
     step("rebuild and revalidate the beacon on the finished DAO: the published state.json carries the ledger, the liability and every proposal flag");
     const beaconFinal = path.join(devnet.stateDir, "beacon-final");
     const finalState = await buildBeacon({ deployment: deploymentFile, origin, out: beaconFinal });
+    // The validator fetches the README from the origin and requires it to be the one just built, so the
+    // directory the relay serves is refreshed from the same state.
+    await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
     const finalValidation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal], { encoding: "utf8", env: NO_PROXY });
     const finalCount = spawnSync("wc", ["-l", path.join(beaconFinal, "README.txt")], { encoding: "utf8" });
     const finalReceipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>\n${finalValidation.stdout}${finalValidation.stderr}$ wc -l README.txt\n${finalCount.stdout}`;
