@@ -371,3 +371,21 @@ the first member to exit paying for the structure everyone else uses is acceptab
 simpler equivalent design, this number is one of the reasons to take it.
 Accepted as written: the fork-only genesis-commit override (refused without a fork, must be a pushed ancestor, constitution
 bytes identical, production still pins its own pushed HEAD), and scenario K behind its own flag.
+
+## 2026-09-10 retention accounting is WRONG in the code (gpt-6-astra confirmed by running it) — ruling and redesign
+Executed counterexample: an account holds 100 shares when voting starts, exits 40, then deposits 40 again; the balance is
+100 and `exitedSince(1)` returns 40, so the proposal is judged failed. The implementation records a permanent cohort
+departure, not the current deficit. Every existing test passes because none of them covers the same account coming back.
+Ruling: the deficit is the rule. A member who left and returned has not voted with its feet, and permanent cohort
+accounting hands any holder of 34% a free veto over every proposal while it keeps its whole stake, which is the GOV-04 hole
+under another name. The quantity to compute for proposal p is exactly
+  deficit(p) = Σ over accounts of max(0, balance at votingStarts(p) − balance now)
+and the proposal fails when deficit(p) × 100 > (100 − minRetention) × supply at votingStarts(p).
+Constraint hierarchy for the mechanism, in this order: (1) exactly that quantity, no approximation; (2) leaving is always
+cheap, because the constitution promises exit at any time and proposal volume is not capped, so nobody may make exits
+expensive by spamming proposals; (3) no cap, cooldown or lock anywhere; (4) simplicity, then gas.
+Useful identity for the implementer, so nobody rediscovers it: with A = supply at votingStarts and S = supply now,
+  deficit(p) = (A − S) + growth(p),  growth(p) = Σ over accounts of max(0, balance now − balance at votingStarts(p)).
+A and S are O(1) reads, so the whole problem reduces to tracking growth, which only accounts that received shares inside the
+window can have. An account whose last mint predates the oldest open window contributes zero growth to every open proposal,
+so a plain exit can stay O(1) behind a single timestamp comparison. Mechanism choice goes to gpt-6-astra with this identity.
