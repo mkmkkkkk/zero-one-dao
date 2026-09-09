@@ -622,9 +622,11 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
     if (u.pathname === "/pending.json") {
       // Phase 5 ruling 7 (A5-10): what this relay is holding right now. A member whose intent is not
       // here and has no hash was never broadcast: send it through another relay or straight to Baal.
-      reload();
+      // Read the file into a local copy: reload() would swap the module-level `db` under a /relay
+      // request that is between two of its own mutations and has not persisted them yet.
+      const onDisk = existsSync(dbFile) ? (JSON.parse(readFileSync(dbFile, "utf8")) as Db) : db;
       const journal = existsSync(pendingFile) ? (JSON.parse(readFileSync(pendingFile, "utf8")) as Pending | null) : null;
-      const inFlight = Object.entries(db.requests)
+      const inFlight = Object.entries(onDisk.requests)
         .filter(([, row]) => row.status === "pending")
         .map(([digest, row]) => ({ digest, member: row.member, op: row.op, verb: OP_NAMES[row.op] ?? String(row.op), status: row.status, hash: row.hash }));
       return send(200, json({

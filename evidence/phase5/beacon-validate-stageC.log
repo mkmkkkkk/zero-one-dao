@@ -11,4 +11,4 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>
 }
 
 $ wc -l README.txt
-      44 /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-relay-1788987172054/beacon-final/README.txt
+      44 /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-relay-1788987345286/beacon-final/README.txt
