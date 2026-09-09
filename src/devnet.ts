@@ -1,11 +1,53 @@
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Address, Hex } from "viem";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+/**
+ * Anvil binaries as `@foundry-rs/anvil@1.7.1` lays them out on disk.
+ *
+ * Both the wrapper package and its platform package declare the bin name `anvil`, so npm sees a bin
+ * collision and links neither: a fresh `npm ci` leaves `node_modules/.bin/anvil` absent even though the
+ * binary is installed (an older `npm install` in the same tree may still have the link, which is why this
+ * only shows up on a clean clone). Resolve the binary itself instead of trusting the shim.
+ */
+const ANVIL_PLATFORM_PACKAGES: Record<string, string | undefined> = {
+  "darwin-arm64": "@foundry-rs/anvil-darwin-arm64",
+  "darwin-x64": "@foundry-rs/anvil-darwin-amd64",
+  "linux-arm64": "@foundry-rs/anvil-linux-arm64",
+  "linux-x64": "@foundry-rs/anvil-linux-amd64",
+  "win32-x64": "@foundry-rs/anvil-win32-amd64",
+};
+
+/**
+ * Locate the anvil executable this checkout must spawn.
+ *
+ * Candidates, in order: `ANVIL_BIN` (explicit override), the npm bin shim, the installed
+ * platform-specific package, and the wrapper package's own download fallback. Nothing is fetched and no
+ * `PATH` lookup happens, so a devnet never silently runs a different anvil than the pinned dependency.
+ *
+ * Returns:
+ *   Absolute path to an existing anvil executable.
+ *
+ * Raises:
+ *   Error: When no candidate exists, listing every path tried.
+ */
+export function anvilBinary(): string {
+  const binary = process.platform === "win32" ? "anvil.exe" : "anvil";
+  const platformPackage = ANVIL_PLATFORM_PACKAGES[`${process.platform}-${process.arch}`];
+  const candidates = [
+    process.env.ANVIL_BIN?.trim() ? path.resolve(process.env.ANVIL_BIN.trim()) : undefined,
+    path.join(ROOT, "node_modules", ".bin", binary),
+    platformPackage ? path.join(ROOT, "node_modules", ...platformPackage.split("/"), "bin", binary) : undefined,
+    path.join(ROOT, "node_modules", "@foundry-rs", "anvil", binary),
+  ].filter((candidate): candidate is string => candidate !== undefined);
+  for (const candidate of candidates) if (existsSync(candidate)) return candidate;
+  throw new Error(`anvil binary not found; tried ${candidates.join(", ")} (run npm ci, or set ANVIL_BIN)`);
+}
+
 const DEFAULT_PORT = 11_545;
 const DEFAULT_CHAIN_ID = 31_401;
 
@@ -103,7 +145,7 @@ export async function startDevnet(
   // Pre-create with exclusive mode so the secrets file is never briefly world-readable.
   writeFileSync(configPath, "", { encoding: "utf8", flag: "wx", mode: 0o600 });
   chmodSync(configPath, 0o600);
-  const anvil = path.join(ROOT, "node_modules", ".bin", "anvil");
+  const anvil = anvilBinary();
   const child = spawn(
     anvil,
     [
