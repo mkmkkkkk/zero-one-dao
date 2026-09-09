@@ -1,0 +1,16 @@
+adapter 0x49239c2084E475366Db28693F77Fa84AbA9afDbb settlement 0x4688D7a2C80550eEd68f5E23f3e958b72c629bC2 chainId 31401
+A 0x1943e6206B03a09bd470251f3B2D7f642c099000 delegated, code 0xef010049239c2084e475366db28693f77fa84aba9afdbb
+CASE1 nonce 0 -> 1; A shares 10000000000000000000 (deposit executed)
+   revert as expected [replay same nonce]: Execution reverted with reason: nonce/expiry.
+CASE2 replay rejected; nonce still 1
+   revert as expected [cross-account (i.member != address(this))]: Execution reverted with reason: account.
+CASE3 A's intent cannot be executed on B's account
+   revert as expected [malleable high-s signature]: Execution reverted with reason: ECDSA: invalid signature 's' value.
+CASE4 high-s twin rejected; canonical low-s accepted
+   revert as expected [expired deadline]: Execution reverted with reason: nonce/expiry.
+CASE5 expired-deadline intent rejected
+   revert as expected [signature by a non-member key]: Execution reverted with reason: signature.
+CASE6 intent signed by a stranger rejected
+CASE7 digest bound to (chainId, adapter): here 0x2d77be55c37f56a5 vs other-adapter 0x231b7d5370551aa6 vs other-chain 0x510ff87735d256fc
+
+INTENT-ACCOUNT PROBES COMPLETE (all defences held)

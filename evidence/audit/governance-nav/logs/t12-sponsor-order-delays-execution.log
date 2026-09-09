@@ -1,0 +1,4 @@
+   votingPeriod 3600 s; #2 state Voting (graceEnds 1789039047)
+   #3 state Ready (graceEnds 1789006647); #2 state Voting (graceEnds 1789039047, 32400 s later)
+   #2 now Ready; still blocking #3 until someone processes it (permissionless, but nobody is obliged)
+   #3 executed 32400 s later than its own grace end; cost to a delayer: one earlier proposal; remedy: anyone processes the earlier one (5 M gas unless GOV-05)

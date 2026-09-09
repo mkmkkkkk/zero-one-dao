@@ -1,0 +1,16 @@
+relay up at http://127.0.0.1:18945; default per-IP rate = 30/min
+
+== F1 the per-IP rate limit (default 30/min) does not fire and is keyed on cf-connecting-ip
+   40 rejected requests from a single IP -> 0 answered 429 (a 30/min limit would block >=10)
+   db.json rates["ip:203.0.113.7"].n = 0 after 40 requests (increments were discarded by reload)
+   the bucket key is the caller's cf-connecting-ip header (spoofable when not truly behind Cloudflare); e.g. 198.51.100.42 -> status 400
+
+== F2 op=identity&pass= reveals the controlled address with no cost or entropy floor
+   pass "correct horse batter..." -> 0xa5c2beFa21e02891b72dA1057F7F15aBFC241835 (deterministic, delegated=false)
+   the oracle needs no join, no signature, no funds, and is per-IP throttled only (see F1)
+
+== F4 the relay's secret fully determines every T0 private key
+   secret (state/relay/secret) + pass reproduces the exact key -> 0xa5c2beFa21e02891b72dA1057F7F15aBFC241835
+   whoever holds this 32-byte secret can sign ANY intent (propose/vote/ragequit) for EVERY T0 account
+
+RELAY ADVERSARIAL PROBES COMPLETE (F1 bypass demonstrated; F2 oracle demonstrated; F4 custody reproduced)

@@ -1,0 +1,146 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x003C3100d95b844bb6B280323Aa799BfAEAa4Edf baal 0x60178c2227f1e793e6A60111dE4F8aC35509450B shares 0xF002DAc058585d8427925c092b442F5944b854cB settlement 0xBD7be84D6F10557e0b1e5A17551966d7195bF6F7
+          depositShaman 0x7A960817eeCA359Aa761eBcC4524893Ef7351402 workManager 0xCf7D01F069eEe308e0070039C15ea966c4E6aB9e constitution 0x9D96F23108ea98B4dcb5Ba3Be37C02aE16d13cFe
+          templateFactory 0x3Fbfbd56329Cd0d368bf6D42B4cedf8d332FC8C3 deployers 0xE47cAdd3FC5c888d7bb7F8E3F9535fb0Fb910931 0xC14600b94fC70dEa635C05EA6893A63bb3c2D572 0xe71bEA2AD67D526757E1BA068CEE3A3BACD22b66 0xdC6FA91bFBf8C1c04250a0caD7a708fD219b2b92 intentAccount 0x72EcA8F2BbE682e02B145F3143dd93a158602555
+   F = 0x6A0507e39D2e1C45d2fFF510be1A19B3812515E9  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA  member agent A
+   B = 0xfFD6a5501386393D08A77eCfFB9D2876C75a89B4  member agent B
+   C = 0x351a56e3bbA24aa76dF533d20bf3646C0463a912  member agent C
+   D = 0x92C5Cb271a5Fe6640c23A70fBBaF01135eaCD321  depositor D (joins later)
+   O = 0xD97DA82eF799095d0d831e9f15926F61ceC863A9  operator O (mandate recipient)
+   W = 0x1c86Cf4E70170FF821713e2C9E59AA3E593Ac759  worker W (task deliverer)
+   shaman 0x7A960817eeCA359Aa761eBcC4524893Ef7351402 permission 2 (DepositShaman)
+   shaman 0xCf7D01F069eEe308e0070039C15ea966c4E6aB9e permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xE47cAdd3FC5c888d7bb7F8E3F9535fb0Fb910931
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xC14600b94fC70dEa635C05EA6893A63bb3c2D572
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xe71bEA2AD67D526757E1BA068CEE3A3BACD22b66
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xdC6FA91bFBf8C1c04250a0caD7a708fD219b2b92
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x2fd49fd84406249b4b56cd0d3f496ddd2aa68d8939a649ad81fe5353a30e32f9 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x8eb060f8e49f2f8383f05fbc0606de39f4466bf043de6fedc317a2663f4ccce3 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xa70589b8221417d78817c918baa58ec63a590ea48faf9e8e5704164c4f3355c5 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x6d963c74f50df135e69950956c826f07de6d09c01791f43631b5183f705eb802 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0x90af0e49fcef2696d736bbffcc75ae98767d72439ae6cbdbd676de2371ac2460 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x0def44dac881822ceae71e9b7317c87e7dcca947f5f22b72931326fc5bfe68b8 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0xef94cf9c99748cc6d604548af89ee3ff887b8a5c15578163ef680bcd76f1e938 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x819e288041bc03c5bef86da12622f26a3ca18e8935cb916c2a753389689daeef (block 29, gas 203247)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xdfe29120ceec6ac0d4caef38f288025fdd2ac285cf51f218a9d4044dafa8564c (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0xcc93f1eb970040f8fecc5efcfce6ddd49f12fddd15591aeb6643fff48b00f4e5 (block 31, gas 169134)
+   tx B approve deposit shaman: 0x55b9c8708af3126b434f0ab09fc2ece317d7ab0e2f1f758be070847e66d230e7 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x3b9c5049887660ebb692f02d5fd1d8fd3487695ea6790cf9d62f314d2ec4dfeb (block 33, gas 169134)
+   tx C approve deposit shaman: 0x3d70f498d5ab8b89b96395f3d2bf118d611633d50bf112c51fd7c94205c84b46 (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xb4a37e3680afbe11a7f38a23aaf752c50d235cc33f261bfa03bdb22ad793a3ba (block 35, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+   MOCK 0x668305086716cF0ec09F77f8573f40e3B02150e9 (tx 0xe094e867801f8143077f3cc1d45b356cd5032ea800e498280e8fd72761e4d92f); MockDex 0x262163ba726996D960e328E4B8449c3D78D97EEA (tx 0xa66be7979f2e4ee282b082b73baff63d2b06db9b022efd82f9135f2d79492da1) price 1 USDC per MOCK
+   tx F seeds MockDex with 1000000 USDC: 0x47b353d2a0449f6a8afdd1271fda370d263c2a3a345794b40b4add86ce689627 (block 38, gas 51250)
+   tx F seeds MockDex with 1000000 MOCK: 0x47d2a560b3e075251ea56da126ea55f253c64f98f8c01e4576e812ec42ca6dd8 (block 39, gas 51250)
+
+== step 4: T-4: S1 (budget 1000 USDC, 1000 per run, stop-loss 30%, slippage 50 bps) is voted and started at price 1.00
+   A deployed StrategyProposal @ 0x77Defb81f320b4698C55bc67C3B88B9368Ef8AFd via TemplateFactory (tx 0x11b194e154fc05e71a87773c663259095a6fe227473754e642e0f4a2330ed306, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0x061298550f1672d1b1ed35b173120c3808153cdd3d50613e012a12e5e7533dd2 codeHash 0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "A: S1 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposa...": 0x68789a5b61bfe7a0fe35c0c115028c7f55753622465ecee07fa0b1a829811792 (block 41, gas 225236)
+   details: A: S1 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x77Defb81f320b4698C55bc67C3B88B9368Ef8AFd","operator":"0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA","budget":"1000000000","deadline":"1789560523","params":{"venue":"0x262163ba726996D960e328E4B8449c3D78D97EEA","asset":"0x668305086716cF0ec09F77f8573f40e3B02150e9","budget":"1000000000","rule":{"maxPerRun":"1000000000","minInterval":"3600","deadline":"1789560523","takeProfitBps":"0","stopLossBps":"3000","slippageBps":"50"}},"paramsHash":"0x061298550f1672d1b1ed35b173120c3808153cdd3d50613e012a12e5e7533dd2","codeHash":"0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5","salt":"0x0000000000000000000000000000000000000000000000000000000000000002"}
+   warp +1s (let votingStarts become past) -> block 42 timestamp 1788955724
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0xcca4ef8b2fbf2505bfbd2f746ad5f2cc757bc190778bd4799bc08252a204367e (block 43, gas 117855)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x3775e463f9b8f0d00f43775b69b294de5215bf406032747dda91fa8c1378d9ca (block 44, gas 100755)
+   warp +43199s (past grace of #1) -> block 45 timestamp 1788998924
+   proposal #1 state = Ready
+   tx D processProposal #1 -> passed=true actionFailed=false state=Processed: 0x9fa06910801c6cddbcc8bd96eafc090a171be60ec3e737884f6ba16516631f6d (block 46, gas 204885)
+   ok: A: S1 DCA 1000 USDC into MOCK: funded and started by the Safe
+   ok: S1 holds 1000 USDC
+
+== step 5: T-4: attacker W moves the venue price to 2.00 right before anyone runs; O calls run(); W moves it back to 1.00
+   tx W setPrice 2.00 (front-run): 0xa937329ab89df8c56e67ac2d0d9ddc93fa5bbcbf9f6505717f09f3dc31650546 (block 47, gas 27534)
+   tx O run() #1 (buys 1000 USDC of MOCK): 0x91610bbdaa1d9d2641d3d66dce792e530880dccdb8eb62e1ce7b70180d25b720 (block 48, gas 149838)
+   tx W setPrice 1.00 (back-run): 0xa3b222af9bff22b8287efa3a97ffee19572db03bdc63174f9227a689ccb49bb3 (block 49, gas 27534)
+   S1 received 500 MOCK for 1000 USDC; at the pre-run price 1.00 it would have received 1000 MOCK (slippageBps 50 allows >= 995); value at the restored price = 500 USDC
+   VIOLATED [T-4]: run() executes within slippageBps of the pre-transaction price (got 500 MOCK, minimum by the voted 50 bps 995 MOCK: shortfall 50.0000% vs 0.50% allowed)
+
+== step 6: T-4: one hour later anyone runs again: value 500 <= 700 = stop-loss -> S1 unwinds at 1.00 and returns 500 USDC to the Safe
+   warp +3600s (minInterval) -> block 50 timestamp 1789002524
+   tx W run() #2 -> stop-loss unwind: 0x8afc988ab1c3102fb9cdd670768b1308c3f420a082b332e99aae010db7df75ec (block 51, gas 123734)
+   [S1 after unwind] Strategy @ 0x77Defb81f320b4698C55bc67C3B88B9368Ef8AFd: status Complete budget 1000 deadline 1789560523 operator 0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA params 0x061298550f1672d1b1ed35b173120c3808153cdd3d50613e012a12e5e7533dd2 held 0 USDC
+   Safe received 500 USDC of the 1000 it funded; treasury loss 500 USDC (50.0000%) with the real price at 1.00 before and after
+   VIOLATED [T-4]: a strategy that traded at an unmoved real price returns its budget minus at most slippage (returned 500 of 1000 USDC)
+
+== step 7: T-5: S2 (same rule) is voted and started; it buys 1000 MOCK at the fair price 1.00
+   A deployed StrategyProposal @ 0xcb2D769D486E22452457043a31e9FBE8e3BfD7e9 via TemplateFactory (tx 0x00203203b7709a14813ce883f1b005c51536aa4a461337aef145161c0d179a1b, salt 0x0000000000000000000000000000000000000000000000000000000000000005) paramsHash 0xec38ed24806025f656cdf8b177175b16cbef76451dcb3ce7e5caf307b8ff3853 codeHash 0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #2 "A: S2 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposa...": 0x21c94eeb9edf83a2792864e287161adbb5e3a1276241a0846fb381265ff5e960 (block 53, gas 225236)
+   details: A: S2 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xcb2D769D486E22452457043a31e9FBE8e3BfD7e9","operator":"0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA","budget":"1000000000","deadline":"1789607324","params":{"venue":"0x262163ba726996D960e328E4B8449c3D78D97EEA","asset":"0x668305086716cF0ec09F77f8573f40e3B02150e9","budget":"1000000000","rule":{"maxPerRun":"1000000000","minInterval":"3600","deadline":"1789607324","takeProfitBps":"0","stopLossBps":"3000","slippageBps":"50"}},"paramsHash":"0xec38ed24806025f656cdf8b177175b16cbef76451dcb3ce7e5caf307b8ff3853","codeHash":"0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5","salt":"0x0000000000000000000000000000000000000000000000000000000000000005"}
+   warp +1s (let votingStarts become past) -> block 54 timestamp 1789002525
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xf8e20b9f3b70f186e9bc324da5451a1c2759f8f6ead709389794d0993e226e96 (block 55, gas 117855)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0x75232fd2df0fe4d7ddeac972f4b6a49d24b51885197b3b601e8aa724144338ab (block 56, gas 100755)
+   warp +43200s (past grace of #2) -> block 57 timestamp 1789045725
+   proposal #2 state = Ready
+   tx D processProposal #2 -> passed=true actionFailed=false state=Processed: 0x66cbb7a8d88b037a3387972df2ccb3c85ea822036be13e53475514d02424144d (block 58, gas 204991)
+   ok: A: S2 DCA 1000 USDC into MOCK: funded and started by the Safe
+   tx O run() #1 at 1.00: 0x84b46bc376850c8eeecadeacdb30bb580bfc317a977f8eaeab4f7b917a63c401 (block 59, gas 149838)
+   ok: S2 holds 1000 MOCK (value 1000)
+   warp +3600s (minInterval) -> block 60 timestamp 1789049325
+
+== step 8: T-5: W prints 0.69 for one block (value 690 <= 700), calls run() itself, then restores 1.00
+   tx W setPrice 0.69: 0x6e474fa68669e20207b847c24948b64d29f7da96cd38ab3e68ab9e86636decbc (block 61, gas 27534)
+   tx W run() -> stop-loss unwind at 0.69: 0x001c98fe767951aa653d1451cc9ef96454d15639f24cced64b76129e7b59a2ab (block 62, gas 123734)
+   tx W setPrice 1.00: 0x5dbec28979ddd68dffb3209118dcfc39004534788f50d6a823e24a7c9a9718cd (block 63, gas 27534)
+   [S2 after forced unwind] Strategy @ 0xcb2D769D486E22452457043a31e9FBE8e3BfD7e9: status Complete budget 1000 deadline 1789607324 operator 0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA params 0xec38ed24806025f656cdf8b177175b16cbef76451dcb3ce7e5caf307b8ff3853 held 0 USDC
+   Safe got back 690 USDC for 1000 MOCK worth 1000 USDC at the unchanged real price; the venue counterparty holds +1000 MOCK for 690 USDC (gain 310 USDC at 1.00); price before 1 after 1
+   VIOLATED [T-5]: a one-block price print cannot trigger the stop-loss unwind of a position whose real price never moved (S2 Complete, treasury loss 310 USDC = 31.0000%)
+
+== step 9: T-6: S3 with take-profit +20% is started; before it trades, W sends 250 MOCK to it; the next run() fires take-profit and ends S3
+   A deployed StrategyProposal @ 0xe760b0153fC68308BB420BCDb0c175b44183E8fd via TemplateFactory (tx 0x84f42ee6a90a61f3faa8c5134a4ad09fa7c326dbff89cda530ac04b2c7b63c2f, salt 0x0000000000000000000000000000000000000000000000000000000000000008) paramsHash 0xd25e8f3365c3a1826f35bfc07508689fcf4cd648679a305f29f83b474437ae14 codeHash 0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #3 "A: S3 DCA 1000 USDC, take-profit +20% {"template":"Strategy","contract":"Strateg...": 0x2e90c3a4173e7eaae746ad1c330bd31e4cb345b96c2e8f21e78195708a598052 (block 65, gas 225332)
+   details: A: S3 DCA 1000 USDC, take-profit +20% {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xe760b0153fC68308BB420BCDb0c175b44183E8fd","operator":"0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA","budget":"1000000000","deadline":"1789654125","params":{"venue":"0x262163ba726996D960e328E4B8449c3D78D97EEA","asset":"0x668305086716cF0ec09F77f8573f40e3B02150e9","budget":"1000000000","rule":{"maxPerRun":"1000000000","minInterval":"3600","deadline":"1789654125","takeProfitBps":"2000","stopLossBps":"0","slippageBps":"50"}},"paramsHash":"0xd25e8f3365c3a1826f35bfc07508689fcf4cd648679a305f29f83b474437ae14","codeHash":"0x9252c18d3b7c513dccb4fb166a282d1a82f6001f9f02661e71788477991064d5","salt":"0x0000000000000000000000000000000000000000000000000000000000000008"}
+   warp +1s (let votingStarts become past) -> block 66 timestamp 1789049326
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x21a61e7c551d8daa15e9be0de897539513a3f05d10a66b066f31f6534a8c0be4 (block 67, gas 117855)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0x704919742468b6c361d3a3ade817fc624b54b066b7f35ba8c7e1be16f72a15dc (block 68, gas 100755)
+   warp +43200s (past grace of #3) -> block 69 timestamp 1789092526
+   proposal #3 state = Ready
+   tx D processProposal #3 -> passed=true actionFailed=false state=Processed: 0x08a0a6667ce1508c33edf2652bed652fde5c3787d1228a2f8a43a6b5fdd22bd4 (block 70, gas 204991)
+   ok: A: S3 DCA 1000 USDC, take-profit +20%: funded and started by the Safe
+   tx F gives W 250 MOCK: 0xcead2e46f1e3bf754bff682b23633d4ab0c54ca09a347573b63cf76c167263ef (block 71, gas 51250)
+   tx W donates 250 MOCK to S3: 0x2f65c4256f52780931f0b81c3bf3d2908755e4734205dd9c852e72eaaeb95c48 (block 72, gas 46450)
+   S3 value = 1250 USDC >= 1200 = budget x 1.20
+   tx W run() -> take-profit before any buy: 0x267c3a969ec4e6833082fba57ddf6fae28b9c7348ed8ca44e3b7f4514fd8ed80 (block 73, gas 137298)
+   [S3] Strategy @ 0xe760b0153fC68308BB420BCDb0c175b44183E8fd: status Complete budget 1000 deadline 1789654125 operator 0xD29647D6b42B9d68ae693864384D5Ab2536C7fEA params 0xd25e8f3365c3a1826f35bfc07508689fcf4cd648679a305f29f83b474437ae14 held 0 USDC
+   S3 Complete after 1 run(s); Safe +1250 USDC (the 1000 budget plus W's 250 donation); cost to W 250 USDC-equivalent, effect: the voted strategy never traded
+   VIOLATED [T-6]: a strategy's exit rule cannot be fired by a third party's transfer (observed: donation of 25% of budget ends the strategy on the first run)
+
+   treasury at start 3050 USDC, at end 2490 USDC
+
+=== AUDIT TEST strategy-price-reference: 4 INVARIANT(S) VIOLATED ===
+   T-4: run() executes within slippageBps of the pre-transaction price (got 500 MOCK, minimum by the voted 50 bps 995 MOCK: shortfall 50.0000% vs 0.50% allowed)
+   T-4: a strategy that traded at an unmoved real price returns its budget minus at most slippage (returned 500 of 1000 USDC)
+   T-5: a one-block price print cannot trigger the stop-loss unwind of a position whose real price never moved (S2 Complete, treasury loss 310 USDC = 31.0000%)
+   T-6: a strategy's exit rule cannot be fired by a third party's transfer (observed: donation of 25% of budget ends the strategy on the first run)
+anvil stopped (http://127.0.0.1:11545)
