@@ -192,3 +192,42 @@ tranches with verifier release (Project template); executor bond written into th
 payout ends every future proposal, shares exit only at NAV). Only real technical route: TEE-attested executors holding the
 revenue keys inside the enclave. Later, not now.
 User ruling 2026-09-09: not a hard problem. Revenue accounts belong to the DAO (DAO-held keys, payouts to the Safe); an executor never owns the account. Closed.
+
+## 2026-09-09 phase 5 rulings (Fable, on docs/SECURITY_AUDIT.md must-fix list; user: "不准失败", finish before mainnet)
+Principle kept: no caps on what may be proposed; fixes below are accounting/liveness correctness, each one small.
+1. GOV-05 (baalGas above the chain tx cap bricks processing forever) + GOV-01 (baalGas 0 lets a low-gas processor kill a
+   passed proposal): fork the vendored Baal by one line: `submitProposal` requires `baalGas <= 8_000_000` (= relay sponsor
+   maximum, under Base's 16,777,216 EIP-7825 cap). Our three submit paths set baalGas = simulated need × 1.5 (≤ 8M). A direct
+   Baal submitter who passes 0 accepts the kill risk on their own proposal.
+2. GOV-03 + GOV-04 (minRetention gamed by same-tx deposits and by vote-time flash deposits raising the high-water mark):
+   replace Baal's HWM check with the rule the constitution states. NavShareToken keeps a timestamp-checkpointed cumulative
+   `burned` counter; Baal.processProposal requires
+   `burned(now) − burned(votingStarts) <= (100 − minRetention)% × pastTotalSupply(votingStarts)`. Deposits no longer move
+   either side. Tests t03/t07 must flip.
+3. GOV-02 (vote weight survives ragequit): accepted by principle after ruling 2 — a YES weight that exits is a burn; above 34%
+   it defeats the proposal by retention, below 34% it only beats members who never voted NO in 6 h (DESIGN §4 sleepers).
+   Documented in PARAMETERS and README, not softened.
+4. NAV-01 + NAV-07 + W-1 + NAV-08 (deposit NAV): TreasuryLedger as ruled in phase 4 with two amendments: (a) the settled gate
+   looks only at open instances' asset holdings, never at Safe balances (1 wei of dust on the Safe must not pause deposits;
+   non-USDC gifts to the Safe are shared by exit only, documented); (b) Strategy stop() returns settlement raw to the Safe and
+   keeps the asset inside the instance, which stays open (deposits paused) until a later vote migrates it or unwinds it
+   through the venue with the TWAP bound (`unwind()` onlySafe, new). (c) depositTreasury also subtracts the share liability
+   of Active tasks: shares = amount × (totalShares + Σ active rewardShares) / depositTreasury; WorkManager.confirm() reverts
+   after the task's expiration so the liability expires with the task. Ready-but-unexecuted Payments are visible in /me
+   (treasury effect) and accepted as a documented pending liability.
+5. T-4 + T-5: the spot venue never ships; phase 4 TWAP venue with scenario K on the fork is the fix (in progress).
+6. ECO-06 + A5-11: deploy MultiSendCallOnly (no delegatecall as the Safe); relay/beacon count approve/increaseAllowance as
+   treasury effect and bind the instance panel to decoded calls, not to the details JSON.
+7. A5-10 (relay can silence a T0 member): README line "T0: the relay operator can delay or drop your intents; anything you
+   cannot afford to lose goes through T1"; relay answers ok only after broadcast, exposes /pending.json.
+8. OPS-03/04 (pre-genesis dust bricks the address set; proxy squatting): remove the zero-supply trap: while totalShares == 0,
+   1 USDC = 1e18 shares regardless of treasury (pre-existing dust is a gift to the first depositor); genesisDeposit keeps its
+   refusal only for supply > 0. Proxy salts bound to the deployer address.
+9. A5-08/09 (rate-limit counter dropped on rejection; T0 passphrase entropy): persist the counter before rejecting; 128-bit
+   entropy floor on pass. Small.
+10. Medium set (T-7 end() vs release() race, W-2 claim timeout, disclosures OPS-05/NAV-05/ECO-08/NAV-02/NAV-06/T-7/W-2/ECO-05/
+    ECO-09/A5-13/A5-14, Config terminal shapes ECO-04/T-9/GOV-07): template fixes for T-7 and W-2; every other item is a
+    README/PARAMETERS disclosure plus a /me flag for Config proposals that cut voting+grace below the hourly poll cadence.
+Rejected: any lock or cooldown on deposits/exits; any on-chain cap on Config values; per-voter vote retraction on exit.
+Sequence: phase 4 (ledger + TWAP) finishes on branch phase4-ledger-twap → phase 5 implements 1-10 on the same branch with the
+audit's tests flipped green → clean-clone acceptance → Base fork rehearsal → mainnet.
