@@ -44,7 +44,10 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 
 ## Deposits (DepositShaman)
 - open to any address, no membership check. **IMMUTABLE** — "phase 1 agents only" is a constitution clause enforced by votes (DESIGN.md §2). Scenario C's depositor D is a non-member at deposit time.
-- shares = amount × totalShares / treasury at the moment of deposit (treasury = 0: 1 USDC → 1e18 shares, see Share token); exact-amount transfer required. **IMMUTABLE**.
+- shares = amount × totalShares / `ledger.depositTreasury()` at deposit time; treasury = Safe USDC + USDC held by open instances (treasury = 0: 1 USDC → 1e18 shares, existing empty-treasury rule unchanged). Exact-amount transfer required. **IMMUTABLE**.
+- TreasuryLedger: immutable Safe, settlement and factory; only instances in the factory deployment record can open/close. Voted starts enter the active set; closed instances leave. Strategy assets register once and remain registered forever. **IMMUTABLE**.
+- Settlement refusal: `TreasuryNotSettled` while any open instance holds its asset or the Safe holds any registered asset, including 1 wei of dust. No asset valuation, configurable switch or privileged bypass; a settlement/sweep vote clears it. **IMMUTABLE**.
+- Ragequit pays pro-rata of the Safe only; USDC deployed on open instances is counted for entry but forfeited to stayers on exit. Exit price is at most deposit price while settled. **IMMUTABLE**.
 - deposits go straight to the Safe; no minimum, no maximum, no cap. **IMMUTABLE** by design (§0).
 
 ## Work (WorkManager)
@@ -78,6 +81,10 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - UniswapV3Factory on Base = `0x33128a8fC17869897dcE68Ed026d694621f6FDfD`. **DECIDE** — immutable constructor dependency; K checks code, `feeAmountTickSpacing(500)` and the existing pair pool.
 - Asset for the fork proof = WETH `0x4200000000000000000000000000000000000006` (18 decimals), settlement = Base USDC proxy (6 decimals, read through proxy). **DECIDE** — pair immutable per adapter; Strategy valuation divides by `venue.assetUnit()`, not a hard-coded six-decimal unit.
 - Pool fee = 500 (0.05%) for K. **DECIDE** — immutable per adapter instance, no setter; another fee requires another voted venue/Strategy. This is a demonstration input, not a protocol trading cap.
-- `StrategyProposal.Rule.slippageBps` = 50 in K. **DECIDE / BY PROPOSAL** — tolerance from a same-transaction QuoterV2 quote to execution, valid range 0–10000 bps. `amend` by Safe changes it; 0 is exact quote output. It does not protect a prior off-chain quote, and slot0 valuation is spot, not an independent oracle.
+- `StrategyProposal.Rule.slippageBps` = 50 in K. **DECIDE / BY PROPOSAL** — tolerance applied to both the pool 30-minute TWAP-implied output and the same-transaction QuoterV2 quote, valid range 0–10000 bps. `amend` by Safe changes it; 0 requires at least both un-discounted bounds. No prior off-chain quote is guaranteed.
 - Adapter `safe` = DAO treasury. **DECIDE** — immutable recovery sink; permissionless `sweep()` returns unsolicited pair-token dust only to this Safe. Each swap requires no preexisting pair balances, asserts exact transfer deltas, clears router approval, and finishes empty. A failed swap reverts atomically; `stop`/`migrate` remain venue-free.
 - Phase 3 Strategy ABI adds `slippageBps` and venue `assetUnit` / two-argument `buy` / `sell`. Existing deployed Sepolia factory and Strategy contracts retain their old ABI; this code's new factory must be deployed for the new template. The TypeScript builder encodes omitted mirror tolerance as zero; it is not an upgrade of the old deployment.
+
+## Phase 4 venue pricing
+- UniswapV3Venue TWAP window = 30 minutes (1,800 seconds), from pool.observe tick accumulation, settlement per assetUnit. Constructor refuses a pool whose observation history cannot serve the window. **IMMUTABLE**.
+- Both buy and sell require output ≥ TWAP-implied output × (10,000 − slippageBps) / 10,000 in addition to existing quote and exact-balance checks. Thin liquidity can refuse a run; maxPerRun and slippageBps remain voted Strategy parameters. **IMMUTABLE** execution rule.

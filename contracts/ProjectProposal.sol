@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TreasuryLedger} from "./TreasuryLedger.sol";
 import {ProposalBase} from "./ProposalBase.sol";
 
 /// @notice Project template (DESIGN.md §7.3): a funding plan in tranches, each released to the
@@ -67,8 +68,8 @@ contract ProjectProposal is ProposalBase {
     /// @param operator_ The proposer (receives tranches; can never verify).
     /// @param tranches The funding plan.
     /// @param deadline_ Unix time after which anyone may end the project (0 = none).
-    constructor(address safe_, address settlement_, address operator_, Tranche[] memory tranches, uint256 deadline_)
-        ProposalBase(safe_, settlement_, operator_)
+    constructor(address safe_, address settlement_, address operator_, TreasuryLedger ledger_, Tranche[] memory tranches, uint256 deadline_)
+        ProposalBase(safe_, settlement_, operator_, ledger_)
     {
         uint256 total = _addTranches(tranches);
         budget = total;

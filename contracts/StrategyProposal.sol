@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IERC20Minimal} from "./Interfaces.sol";
+import {TreasuryLedger} from "./TreasuryLedger.sol";
 import {ProposalBase} from "./ProposalBase.sol";
 
 /// @notice Minimal venue surface a Strategy trades on (the mirror's MockDex implements it).
@@ -68,12 +69,12 @@ contract StrategyProposal is ProposalBase {
     constructor(
         address safe_,
         address settlement_,
-        address operator_,
+        address operator_, TreasuryLedger ledger_,
         address venue_,
         address asset_,
         uint256 budget_,
         Rule memory rule_
-    ) ProposalBase(safe_, settlement_, operator_) {
+    ) ProposalBase(safe_, settlement_, operator_, ledger_) {
         if (venue_ == address(0) || asset_ == address(0)) revert ZeroAddress();
         if (budget_ == 0) revert ZeroBudget();
         venue = IStrategyVenue(venue_);
@@ -82,6 +83,8 @@ contract StrategyProposal is ProposalBase {
         _setRule(rule_);
         paramsHash = keccak256(abi.encode(venue_, asset_, budget_, rule_));
     }
+
+    function ledgerAsset() external view override returns (address) { return address(asset); }
 
     /// @inheritdoc ProposalBase
     function template() public pure override returns (string memory) {

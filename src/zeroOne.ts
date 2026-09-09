@@ -89,6 +89,7 @@ export interface ZeroOneDao {
   shares: Address;
   loot: Address;
   depositShaman: Address;
+  treasuryLedger: Address;
   workManager: Address;
   /** CREATE2 template factory (decision.md phase 2b ruling 2); the intent account's op 0 deploys through it. */
   templateFactory: Address;
@@ -145,7 +146,6 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
 
   const shares = await deployLocal(deployer, "NavShareToken", [params.shareName, params.shareSymbol, baal, safe, settlement]);
   const loot = await deployLocal(deployer, "LootToken", [`${params.shareName} Loot`, `${params.shareSymbol}-LOOT`, baal]);
-  const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address]);
   const workManager = await deployLocal(deployer, "WorkManager", [baal, shares.address]);
   const paymentDeployer = await deployLocal(deployer, "PaymentDeployer", [safe, settlement]);
   const strategyDeployer = await deployLocal(deployer, "StrategyDeployer", [safe, settlement]);
@@ -153,6 +153,9 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   const configDeployer = await deployLocal(deployer, "ConfigDeployer", [safe, settlement, baal]);
   const templateDeployers: [Address, Address, Address, Address] = [paymentDeployer.address, strategyDeployer.address, projectDeployer.address, configDeployer.address];
   const templateFactory = await deployLocal(deployer, "TemplateFactory", [safe, settlement, baal, templateDeployers]);
+  const factoryReceipt = await deployer.publicClient.getTransactionReceipt({ hash: templateFactory.hash });
+  const treasuryLedger = await awaitRead(() => deployer.publicClient.readContract({ address: templateFactory.address, abi: templateFactory.artifact.abi, functionName: "ledger", blockNumber: factoryReceipt.blockNumber }) as Promise<Address>, (value) => value !== zeroAddress);
+  const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address, treasuryLedger]);
   const intentAccount = await deployLocal(deployer, "ZeroOneIntentAccount", [baal, depositShaman.address, workManager.address, templateFactory.address]);
   txHashes["NavShareToken"] = shares.hash;
   txHashes["LootToken"] = loot.hash;
@@ -198,6 +201,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     shares: shares.address,
     loot: loot.address,
     depositShaman: depositShaman.address,
+    treasuryLedger,
     workManager: workManager.address,
     templateFactory: templateFactory.address,
     templateDeployers,

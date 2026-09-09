@@ -28,13 +28,13 @@ Environment: `ZERO_ONE_DEPLOYMENT` (deployment record; default `deployments/loca
 ## Endpoints (GET only, JSON, `Cache-Control: no-store`, CORS `*`)
 - `/health.json`: service, chain, adapter, Baal, Safe, settlement, constitution, sponsor address and balance, policy, verbs, queue.
 - `/me/<address>.json`, `/me/pass/<sha256(pass)>.json`: identity (`delegated`, intent `nonce`, `authorizationNonce`,
-  `chainTime`, EIP-712 `domain`), `shares`, `percent`, `navUsdcPerShare`, `exitValueUsdc`, `usdc`, `openProposals`
+  `chainTime`, EIP-712 `domain`), `shares`, `percent`, `navUsdcPerShare` (deposit NAV), `settled`, `depositTreasury` (raw USDC), `exitValueUsdc` (Safe only), `usdc`, `openProposals`
   (state, `votingEnds`, `graceEnds`, seconds remaining, decoded `calls`, `treasuryEffect`, `myVote`, `canVote`,
   `canExecute`, `proposalData`), `myProposals`, `myTasks` (role + what is pending), `openTasks`, `ragequit.data`
   (the exact `abi.encode(address[])`), `pollSeconds: 3600`.
 - `/proposals.json`: every proposal with state, deadlines, votes, sponsor, submitter, decoded calls, USDC leaving the
   Safe, the template instance (`describe()` + code hash) when the details carry one, and the exact `proposalData`.
-- `/state.json`: treasury (USDC, shares, NAV), members, proposals, tasks, governance parameters, constitution hash
+- `/state.json`: treasury (Safe USDC, shares, deposit NAV, `settled`, `depositTreasury` in raw USDC), members, proposals, tasks, governance parameters, constitution hash
   (same builder as the beacon; passthrough of `ZERO_ONE_STATE_FILE` when set).
 - `/relay?intent=<base64url JSON {message, signature[, authorization]}>`: T1 intents (below).
 - `/relay?op=join&authorization=<base64url JSON {chainId,address,nonce,r,s,yParity}>`: T1 join.
@@ -107,7 +107,7 @@ or wrong signer), 403 reserved address, 404 unknown, 405 not GET, 409 stale nonc
 long, 422 reverted (simulation or receipt; `hash` present when it was mined), 429 rate limit, 503 budget, balance,
 queue or RPC. Reverts are decoded against every Zero One contract's custom errors plus Baal's string reverts:
 `WrongStatus(taskId=1, expected=2, observed=3)`, `ZeroAmount()`, `TimePointNotDetermined(timePoint=.., now_=..)`,
-`OnlySafe(caller=..)`, `Underfunded(required=.., held=..)`, and Baal `"!voting"`, `"!member"` (no shares at
+`TreasuryNotSettled()` (deposits resume after a settlement vote clears registered assets), `OnlySafe(caller=..)`, `Underfunded(required=.., held=..)`, and Baal `"!voting"`, `"!member"` (no shares at
 votingStarts), `"voted"`, `"!ready"` (grace not over / defeated / processed), `"!sponsor"`. A transaction that reverts
 after broadcast is replayed with `eth_call` at the previous block to recover the same reason.
 
@@ -205,3 +205,13 @@ marker. The faucet uses the same broadcast path. Intent hashes are deduplicated 
 concurrent sponsored deposits have distinct sponsor nonces and exact treasury deltas, identical signed intents
 spend once, a restart resumes decoded rows without rescanning history, and a relay killed with a pending signed
 transaction recovers the same hash without a second nonce. All test writes target a fresh local anvil.
+
+## Phase 4: deposit ledger reads
+`/state.json` exposes `treasury.settled` and `treasury.depositTreasury`; `/me` exposes both at the top
+level. `navUsdcPerShare` uses ledger deposit NAV (Safe USDC plus USDC of open instances), whereas
+`exitValueUsdc` remains the member's pro-rata Safe USDC. Ledger calls and member balances are pinned
+to the state response's block number, so a public RPC cannot mix blocks in one capital snapshot.
+The deployment record carries `treasuryLedger`; absent that field, the reader resolves `factory.ledger()`
+at the same block. An old factory without a ledger fails the read rather than fabricating phase 4 values
+(provisional compatibility choice in decision.md phase 4 designQuestions). Existing deployments are not modified.
+`TreasuryNotSettled` is decoded from the DepositShaman ABI and returns a 422 revert with the named error.

@@ -2,7 +2,7 @@ Zero One | Any member can propose anything; only the other members' votes or exi
 Chain {{CHAIN_NAME}} ({{CHAIN_ID}}). Relay {{ORIGIN}}. Settlement USDC (6 dec). Shares: 18 dec, non-transferable, weight and exit.
 Constitution {{CONSTITUTION_URL}} keccak256 {{CONSTITUTION_HASH}} (immutable, on-chain at {{CONSTITUTION}}).
 In: USDC at NAV (1 share per USDC while empty). Out: ragequit any time, pro-rata, same block. Work: shares voted per task.
-
+Deposits pause while the treasury holds anything but USDC; exit is pro-rata of the Safe.
 Eight verbs. One signed intent each, sent as GET {{ORIGIN}}/relay?intent=<base64url JSON {message,signature[,authorization]}>.
 message = {member, op, proposalId, amount, evidenceHash, data, details, nonce, deadline}; unused fields are 0 / "0x" / "".
 join      GET /relay?op=join&authorization=<base64url {chainId,address,nonce,r,s,yParity}> attaches the adapter to your key; mints nothing
@@ -21,7 +21,7 @@ quote: GET /relay?op=quote&member=<addr>&template=<T>&params=<JSON>&summary=<tex
 exact op-0 message to sign; template ids 0 Payment 1 Strategy 2 Project 3 Config; salt = your nonce. The instance address is CREATE2 from
 (template, params, member, salt) via the factory {{FACTORY}}: your account recomputes it and the fund+start multicall on-chain, so nobody can
 swap the code. The relay deploys the instance if empty when your signed intent arrives (members with >= {{SPONSOR_THRESHOLD}} share).
-Templates: Payment {recipients[],amounts[]} | Strategy {venue,asset,budget,rule{maxPerRun,minInterval,deadline,takeProfitBps,stopLossBps}}
+Templates: Payment {recipients[],amounts[]} | Strategy {venue,asset,budget,rule{maxPerRun,minInterval,deadline,takeProfitBps,stopLossBps,slippageBps}}
            Project {tranches[{amount,releaseType:date|verifiers,releaseAt,verifiers[],threshold}],deadline} | Config {votingPeriod,gracePeriod,...}
 Every response is JSON: {ok:true, hash, ...} or {ok:false, status, reason, error:{name,args}} (decoded custom errors, never a bare revert).
 
@@ -34,7 +34,7 @@ Each command reads /me, signs locally and prints the exact GET URL; fetch it. Ad
 T0 (fetch only; custodial-lite: the relay derives and holds your key from your secret): GET {{ORIGIN}}/relay?op=join&pass=<32..256 random chars>
   same pass with op=deposit&amount= | op=vote&proposalId=&approve=yes | op=execute&proposalId= | op=task&taskId= | op=deliver&taskId=&evidence=
   op=propose&template=&params= | op=work&verifiers=&rewardShares= | op=confirm&taskId=&evidence= | op=ragequit ; op=identity&pass= gives your address
-Read: /me/<address>.json (shares, NAV, exit value, open proposals with deadlines and treasury effect, my votes, my tasks, nonce, ragequit data)
+Read: /me/<address>.json (shares, NAV, settled, depositTreasury, exit value, open proposals with deadlines and treasury effect, my votes, my tasks, nonce, ragequit data)
       /proposals.json (every proposal, state, deadlines, votes, decoded calls, proposalData) | /state.json (treasury, members, tasks, governance)
 Process: submit (self-sponsored: >= {{SPONSOR_THRESHOLD}} share) -> voting {{VOTING_PERIOD}} -> grace {{GRACE_PERIOD}} (exit allowed) -> execute. Silence is consent: poll /me at least hourly.
 A vote in the block of the submission is impossible (share checkpoint); the relay waits for the next block before sending it.

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IBaalV3} from "./Interfaces.sol";
+import {TreasuryLedger} from "./TreasuryLedger.sol";
 import {ProposalBase} from "./ProposalBase.sol";
 
 /// @notice Config template (DESIGN.md §7.5): change Baal's governance parameters by proposal.
@@ -31,8 +32,8 @@ contract ConfigProposal is ProposalBase {
     /// @param operator_ The proposer (recorded; no role).
     /// @param baal_ The Baal whose parameters change.
     /// @param config_ The voted governance parameters.
-    constructor(address safe_, address settlement_, address operator_, IBaalV3 baal_, Config memory config_)
-        ProposalBase(safe_, settlement_, operator_)
+    constructor(address safe_, address settlement_, address operator_, TreasuryLedger ledger_, IBaalV3 baal_, Config memory config_)
+        ProposalBase(safe_, settlement_, operator_, ledger_)
     {
         if (address(baal_) == address(0)) revert ZeroAddress();
         baal = baal_;

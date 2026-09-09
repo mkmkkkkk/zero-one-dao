@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TickMath} from "./TickMath.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Minimal, IERC20Metadata} from "./Interfaces.sol";
@@ -10,7 +11,7 @@ interface IV3Factory {
     function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address);
 }
 interface IV3Pool {
-    function slot0() external view returns (uint160, int24, uint16, uint16, uint16, uint8, bool);
+    function observe(uint32[] calldata secondsAgos) external view returns (int56[] memory, uint160[] memory);
 }
 interface IV3Router {
     struct ExactInputSingleParams {
@@ -41,10 +42,12 @@ interface IV3Quoter {
 }
 
 /// @notice Stateless single-pool venue dependency. No owner, administrator or mutable configuration.
-/// @dev Holdings belong to the calling Strategy, not this venue. QuoterV2 and execution occur in
-/// one transaction; the voted tolerance bounds execution against that quote, not against an oracle
-/// or an earlier block. price() is the current slot0 spot price, not a manipulation-resistant oracle.
+/// @dev Holdings belong to the calling Strategy. Both the same-transaction quote and the pool
+/// 30-minute arithmetic-mean tick bound execution; thin liquidity causes refusal rather than
+/// accepting output below the voted tolerance. No asset valuation is used for deposits.
 contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
+    uint32 public constant TWAP_WINDOW = 30 minutes;
+
     address public immutable safe;
     IERC20Minimal public immutable settlement;
     IERC20Minimal public immutable asset;
@@ -62,6 +65,7 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
     error TransferFailed();
     error InexactTransfer();
     error ResidualHoldings();
+    error TwapBoundExceeded(uint256 output, uint256 minimum);
 
     event Swapped(address indexed strategy, address indexed tokenIn, uint256 amountIn, uint256 quoted, uint256 minimum, uint256 amountOut);
 
@@ -82,11 +86,26 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
         // Read metadata through the token address (USDC is a proxy).
         settlementDecimals = IERC20Metadata(settlement_).decimals();
         assetUnit = 10 ** uint256(IERC20Metadata(asset_).decimals());
+        // A pool must already have enough observation history for the fixed window.
+        _meanTick();
     }
 
-    /// @notice Settlement base units per whole asset token, for Strategy's spot-value rule.
-    function price() external view returns (uint256) {
-        (uint160 sqrtPriceX96,,,,,,) = IV3Pool(pool).slot0();
+    function _meanTick() private view returns (int24 tick) {
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = TWAP_WINDOW;
+        (int56[] memory cumulatives,) = IV3Pool(pool).observe(secondsAgos);
+        int56 delta;
+        // V3 tick cumulatives intentionally wrap int56.
+        unchecked { delta = cumulatives[1] - cumulatives[0]; }
+        int56 window = int56(uint56(TWAP_WINDOW));
+        tick = int24(delta / window);
+        // Solidity rounds toward zero; an arithmetic mean tick rounds toward negative infinity.
+        if (delta < 0 && delta % window != 0) tick--;
+    }
+
+    /// @notice 30-minute TWAP in settlement base units per whole asset token.
+    function price() public view returns (uint256) {
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_meanTick());
         if (sqrtPriceX96 <= type(uint128).max) {
             uint256 ratioX192 = uint256(sqrtPriceX96) * sqrtPriceX96;
             return address(asset) < address(settlement)
@@ -123,7 +142,14 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
         if (tokenIn.balanceOf(address(this)) != 0 || tokenOut.balanceOf(address(this)) != 0) revert ResidualHoldings();
         (uint256 quoted,,,) = quoter.quoteExactInputSingle(IV3Quoter.QuoteExactInputSingleParams(address(tokenIn), address(tokenOut), amount, fee, 0));
         if (quoted == 0) revert InvalidAmount();
-        uint256 minimum = Math.mulDiv(quoted, 10_000 - slippageBps, 10_000);
+        uint256 twapPrice = price();
+        if (twapPrice == 0) revert InvalidAmount();
+        uint256 implied = address(tokenIn) == address(settlement)
+            ? Math.mulDiv(amount, assetUnit, twapPrice)
+            : Math.mulDiv(amount, twapPrice, assetUnit);
+        uint256 twapMinimum = Math.mulDiv(implied, 10_000 - slippageBps, 10_000);
+        if (quoted < twapMinimum) revert TwapBoundExceeded(quoted, twapMinimum);
+        uint256 minimum = Math.max(twapMinimum, Math.mulDiv(quoted, 10_000 - slippageBps, 10_000));
         uint256 inputBefore = tokenIn.balanceOf(msg.sender);
         uint256 outputBefore = tokenOut.balanceOf(msg.sender);
         if (!tokenIn.transferFrom(msg.sender, address(this), amount)) revert TransferFailed();

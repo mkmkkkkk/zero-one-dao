@@ -16,7 +16,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAddress, keccak256, type Address, type Hex } from "viem";
+import { encodeErrorResult, getAddress, keccak256, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { loadLocalArtifact } from "../src/baal.js";
@@ -24,9 +24,11 @@ import { chooseFreePort, startDevnet, stopDevnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
 import { buildBeacon } from "../beacon/scripts/build.js";
-import { validateBeacon } from "../beacon/scripts/validate.js";
+
 import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
 import { hardening } from "./e2e-hardening.js";
+import { connect as connectRelay } from "./common.js";
+import { decodeRevert } from "./errors.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -147,6 +149,7 @@ async function main(): Promise<void> {
       depositShaman: dao.depositShaman,
       workManager: dao.workManager,
       templateFactory: dao.templateFactory,
+      treasuryLedger: dao.treasuryLedger,
       templateDeployers: dao.templateDeployers,
       intentAccount: dao.intentAccount,
       constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" },
@@ -156,6 +159,8 @@ async function main(): Promise<void> {
     const deploymentFile = path.join(devnet.stateDir, "deployment.json");
     writeFileSync(deploymentFile, `${JSON.stringify(record, null, 2)}\n`, { mode: 0o600 });
     console.log(`   deployment record ${deploymentFile}`);
+    const refusal = decodeRevert(connectRelay(record), encodeErrorResult({ abi: loadLocalArtifact("DepositShaman").abi, errorName: "TreasuryNotSettled" }));
+    assert(refusal?.name === "TreasuryNotSettled" && refusal.text.includes("settles the registered assets to USDC"), "relay decodes TreasuryNotSettled with the settlement-vote recovery reason");
 
     step("start the relay against the mirror (sponsor = anvil account 15)");
     const port = chooseFreePort(18_751);
@@ -173,8 +178,14 @@ async function main(): Promise<void> {
     step("build and validate the beacon (README <= 44 lines, every address has code)");
     const beacon = path.join(devnet.stateDir, "beacon");
     await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
-    const validation = await validateBeacon({ deployment: deploymentFile, out: beacon });
-    console.log(`   validate: ${JSON.stringify(validation)}`);
+    const validation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beacon], { encoding: "utf8", env: NO_PROXY });
+    const count = spawnSync("wc", ["-l", path.join(beacon, "README.txt")], { encoding: "utf8" });
+    const receipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>\n${validation.stdout}${validation.stderr}$ wc -l README.txt\n${count.stdout}`;
+    mkdirSync(path.join(ROOT, "evidence/phase4"), { recursive: true });
+    writeFileSync(path.join(ROOT, "evidence/phase4/beacon-validate.log"), receipt);
+    console.log(receipt);
+    assert(validation.status === 0 && JSON.parse(validation.stdout).result === "PASS", "beacon validator CLI produced PASS");
+    assert(count.status === 0, "README line count command succeeds");
     const readme = readFileSync(path.join(beacon, "README.txt"), "utf8");
     console.log(`\n----- README.txt (${readme.trimEnd().split("\n").length} lines) -----\n${readme}----- end README.txt -----`);
     assert(readme.trimEnd().split("\n").length <= 44, "README.txt is at most 44 lines");
@@ -214,6 +225,10 @@ async function main(): Promise<void> {
     const me2 = (await (await fetch(`${origin}/me/${agent.address}.json`)).json()) as Record<string, unknown>;
     console.log(`   /me: shares ${me2.sharesFormatted} (${me2.percent}%) nav ${me2.navUsdcPerShare} exitValue ${me2.exitValueUsdc} usdc ${me2.usdcFormatted} nonce ${me2.nonce}`);
     assert(me2.sharesFormatted === "100" && me2.navUsdcPerShare === "1" && me2.exitValueUsdc === "100" && me2.nonce === "1", "/me: 100 shares, NAV 1 USDC/share, exit value 100 USDC, nonce 1");
+
+    const state2 = (await (await fetch(`${origin}/state.json`)).json()) as { treasury: { settled: boolean; depositTreasury: string } };
+    assert(me2.settled === true && me2.depositTreasury === (150n * SETTLEMENT_UNIT).toString(), "/me exposes settled and depositTreasury at the state block");
+    assert(state2.treasury.settled === me2.settled && state2.treasury.depositTreasury === me2.depositTreasury, "/state.json exposes the same ledger deposit NAV as /me");
 
     step("founder: join via the relay (python3 snippet.py) before any proposal exists");
     await get(snippet("python", beacon, ["join", "--key", founderFile]));

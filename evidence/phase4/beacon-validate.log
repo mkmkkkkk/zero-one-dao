@@ -1,0 +1,13 @@
+$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
+{
+  "result": "PASS",
+  "readmeLines": 43,
+  "addressesWithCode": 11,
+  "proposals": 0,
+  "tasks": 0,
+  "members": 1,
+  "block": "24"
+}
+
+$ wc -l README.txt
+      43 /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1788894682719/beacon/README.txt

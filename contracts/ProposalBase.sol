@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TreasuryLedger} from "./TreasuryLedger.sol";
 import {IERC20Minimal} from "./Interfaces.sol";
 import {IProposalContract} from "./IProposalContract.sol";
 
@@ -10,6 +11,7 @@ import {IProposalContract} from "./IProposalContract.sol";
 /// state-changing entry point except the template's own operational functions is `onlySafe`, so
 /// only a passed proposal (executed by the Safe through Baal) can call it (DESIGN.md §7).
 abstract contract ProposalBase is IProposalContract {
+    TreasuryLedger public immutable ledger;
     address public immutable safe;
     IERC20Minimal public immutable settlement;
     address public immutable operator;
@@ -51,12 +53,16 @@ abstract contract ProposalBase is IProposalContract {
     /// @param safe_ The treasury Safe (owner of every proposal contract).
     /// @param settlement_ The settlement ERC-20 (USDC).
     /// @param operator_ The address that leads execution (the proposer by default).
-    constructor(address safe_, address settlement_, address operator_) {
+    constructor(address safe_, address settlement_, address operator_, TreasuryLedger ledger_) {
         if (safe_ == address(0) || settlement_ == address(0) || operator_ == address(0)) revert ZeroAddress();
+        ledger = ledger_;
         safe = safe_;
         settlement = IERC20Minimal(settlement_);
         operator = operator_;
     }
+
+    /// @notice Non-settlement asset registered when voted into the active set.
+    function ledgerAsset() external view virtual returns (address) { return address(0); }
 
     /// @notice Template name; overridden by each template.
     function template() public pure virtual returns (string memory);
@@ -74,6 +80,7 @@ abstract contract ProposalBase is IProposalContract {
     function start() external onlySafe nonReentrant {
         _requireStatus(Status.Pending);
         status = Status.Running;
+        ledger.open();
         _start();
         emit Started(budget);
     }
@@ -97,6 +104,7 @@ abstract contract ProposalBase is IProposalContract {
         _requireLive();
         status = Status.Stopped;
         uint256 returned = _stop();
+        ledger.close();
         emit Stopped(returned);
     }
 
@@ -107,6 +115,7 @@ abstract contract ProposalBase is IProposalContract {
         if (newContract.code.length == 0) revert NotAContract(newContract);
         status = Status.Migrated;
         uint256 moved = _migrate(newContract);
+        ledger.close();
         emit Migrated(newContract, moved);
     }
 
@@ -140,6 +149,7 @@ abstract contract ProposalBase is IProposalContract {
     function _complete() internal {
         status = Status.Complete;
         uint256 returned = _returnSettlement(safe);
+        ledger.close();
         emit Completed(returned);
     }
 

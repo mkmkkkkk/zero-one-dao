@@ -104,7 +104,7 @@ export interface DaoState {
   contracts: Record<string, Address>;
   constitution: { address: Address; textHash: Hex; textUrl: string };
   governance: { votingPeriod: number; gracePeriod: number; proposalOffering: string; quorumPercent: string; sponsorThreshold: string; minRetentionPercent: string };
-  treasury: { safe: Address; usdc: string; usdcFormatted: string; totalShares: string; totalSharesFormatted: string; navUsdcPerShare: string; assets: Array<{ token: Address; symbol: string; balance: string }> };
+  treasury: { settled: boolean; depositTreasury: string; safe: Address; usdc: string; usdcFormatted: string; totalShares: string; totalSharesFormatted: string; navUsdcPerShare: string; assets: Array<{ token: Address; symbol: string; balance: string }> };
   members: MemberView[];
   proposals: ProposalView[];
   openProposals: number[];
@@ -310,6 +310,11 @@ async function buildDaoState(env: Env): Promise<DaoState> {
   const fromBlock = BigInt(d.startBlock ?? 0);
   const block = await client.getBlock();
   const toBlock = block.number;
+  const treasuryLedger = getAddress(d.treasuryLedger ?? await client.readContract({ address: d.templateFactory, abi: abi.factory, functionName: "ledger", blockNumber: toBlock }) as Address);
+  const [settled, depositTreasury] = await Promise.all([
+    client.readContract({ address: treasuryLedger, abi: abi.ledger, functionName: "settled", blockNumber: toBlock }) as Promise<boolean>,
+    client.readContract({ address: treasuryLedger, abi: abi.ledger, functionName: "depositTreasury", blockNumber: toBlock }) as Promise<bigint>,
+  ]);
   const base = await readMany(client, [
     { address: d.settlement, abi: abi.settlement, functionName: "balanceOf", args: [d.safe] },
     { address: d.shares, abi: abi.shares, functionName: "totalSupply" },
@@ -545,10 +550,10 @@ async function buildDaoState(env: Env): Promise<DaoState> {
   const now = new Date();
   return {
     chain: { id: d.chainId, blockNumber: toBlock.toString(), timestamp: Number(block.timestamp), name: env.policy.name },
-    contracts: { safe: d.safe, baal: d.baal, shares: d.shares, loot: d.loot, settlement: d.settlement, depositShaman: d.depositShaman, workManager: d.workManager, templateFactory: d.templateFactory, intentAccount: d.intentAccount, constitution: d.constitution.address },
+    contracts: { treasuryLedger, safe: d.safe, baal: d.baal, shares: d.shares, loot: d.loot, settlement: d.settlement, depositShaman: d.depositShaman, workManager: d.workManager, templateFactory: d.templateFactory, intentAccount: d.intentAccount, constitution: d.constitution.address },
     constitution: { address: d.constitution.address, textHash, textUrl },
     governance: { votingPeriod: Number(votingPeriod), gracePeriod: Number(gracePeriod), proposalOffering: proposalOffering.toString(), quorumPercent: quorumPercent.toString(), sponsorThreshold: sponsorThreshold.toString(), minRetentionPercent: minRetentionPercent.toString() },
-    treasury: { safe: d.safe, usdc: treasuryUsdc.toString(), usdcFormatted: fmtUsdc(treasuryUsdc), totalShares: totalShares.toString(), totalSharesFormatted: fmtShares(totalShares), navUsdcPerShare: navPerShare(treasuryUsdc, totalShares), assets: [{ token: d.settlement, symbol: "USDC", balance: treasuryUsdc.toString() }] },
+    treasury: { settled, depositTreasury: depositTreasury.toString(), safe: d.safe, usdc: treasuryUsdc.toString(), usdcFormatted: fmtUsdc(treasuryUsdc), totalShares: totalShares.toString(), totalSharesFormatted: fmtShares(totalShares), navUsdcPerShare: navPerShare(depositTreasury, totalShares), assets: [{ token: d.settlement, symbol: "USDC", balance: treasuryUsdc.toString() }] },
     members,
     proposals,
     openProposals: proposals.filter((p) => ["Submitted", "Voting", "Grace", "Ready"].includes(p.state)).map((p) => p.id),

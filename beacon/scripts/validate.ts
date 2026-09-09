@@ -28,6 +28,7 @@ export async function validateBeacon(options: { deployment: string; out: string 
   const env = connect(deployment);
   const readme = readFileSync(path.join(options.out, "README.txt"), "utf8");
   const lines = readme.trimEnd().split("\n");
+  assert(readme.includes("Deposits pause while the treasury holds anything but USDC; exit is pro-rata of the Safe."), "README lacks the settlement rule");
   assert(lines.length <= 44, `README.txt has ${lines.length} lines (max 44)`);
   assert(readme.includes("Any member can propose anything; only the other members' votes or exits can stop it."), "README lacks the principle");
   for (const verb of VERBS) assert(new RegExp(`^${verb}\\b`, "mu").test(readme), `README lacks verb ${verb}`);
@@ -38,6 +39,8 @@ export async function validateBeacon(options: { deployment: string; out: string 
   assert(/op=quote/u.test(readme) && /abi\.encode\(uint8 template,bytes params,bytes32 salt\)/u.test(readme), "README lacks the one-intent propose format (op=quote, abi.encode(template, params, salt))");
 
   const state = JSON.parse(readFileSync(path.join(options.out, "state.json"), "utf8")) as DaoState;
+  assert.equal(typeof state.treasury.settled, "boolean", "state.json lacks settled");
+  assert.match(state.treasury.depositTreasury, /^\d+$/u, "state.json lacks raw depositTreasury");
   assert.equal(state.chain.id, deployment.chainId, "state.json chain id differs from the deployment");
   assert.equal(state.constitution.textHash, deployment.constitution.textHash, "constitution hash differs from the deployment");
   assert(readme.includes(state.constitution.textHash), "README lacks the constitution hash");

@@ -31,6 +31,8 @@ export interface Me extends Identity {
   sharesFormatted: string;
   percent: string;
   navUsdcPerShare: string;
+  settled: boolean;
+  depositTreasury: string;
   exitValueUsdc: string;
   usdc: string;
   usdcFormatted: string;
@@ -78,8 +80,8 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
   const dao = state ?? (await readDaoState(env));
   const d = env.deployment;
   const [shares, usdc] = await Promise.all([
-    env.publicClient.readContract({ address: d.shares, abi: env.abi.shares, functionName: "balanceOf", args: [address] }) as Promise<bigint>,
-    env.publicClient.readContract({ address: d.settlement, abi: env.abi.settlement, functionName: "balanceOf", args: [address] }) as Promise<bigint>,
+    env.publicClient.readContract({ address: d.shares, abi: env.abi.shares, functionName: "balanceOf", args: [address], blockNumber: BigInt(dao.chain.blockNumber) }) as Promise<bigint>,
+    env.publicClient.readContract({ address: d.settlement, abi: env.abi.settlement, functionName: "balanceOf", args: [address], blockNumber: BigInt(dao.chain.blockNumber) }) as Promise<bigint>,
   ]);
   const totalShares = BigInt(dao.treasury.totalShares);
   const treasury = BigInt(dao.treasury.usdc);
@@ -124,6 +126,8 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
     sharesFormatted: fmtShares(shares),
     percent: percent(shares, totalShares),
     navUsdcPerShare: dao.treasury.navUsdcPerShare,
+    settled: dao.treasury.settled,
+    depositTreasury: dao.treasury.depositTreasury,
     exitValueUsdc: fmtUsdc(exitValue),
     usdc: usdc.toString(),
     usdcFormatted: fmtUsdc(usdc),

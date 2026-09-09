@@ -38,6 +38,21 @@ deadline, status)`; status is `Pending | Running | Complete | Stopped | Migrated
 settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutables per instance: `safe`,
 `settlement`, `operator` (= the proposer: the `member` argument of the factory deployment).
 
+
+## Ledger lifecycle
+| Lifecycle path | TreasuryLedger effect |
+|---|---|
+| Factory deployment, defeated vote, action-failed start | Never open; no NAV entry or asset registration |
+| Safe `start()` | `open()` checks the factory record; Strategy registers its asset once |
+| Instant Payment/Config completion | Open and `close()` atomically in the voted start |
+| Strategy `run()` completion; Project last release or `end()` | `close()` after return to the Safe; existing permissionless completion retained (phase 4 designQuestions) |
+| Safe `stop()`, including zero holdings | `close()` after returning holdings |
+| Safe `migrate(new)` and `new.start()` | Old instance closes; factory-recorded successor opens on start |
+
+Ledger NAV includes USDC held by every open instance. Deposits require no open instance to hold its
+asset and no registered asset in the Safe, even dust. Raw Strategy stop can therefore refuse deposits
+until a later settlement/sweep vote clears the Safe; exits remain pro-rata of the Safe only.
+
 ## 1. Payment (`PaymentProposal`)
 - params: `address[] recipients`, `uint256[] amounts` (same length, non-zero); `budget = sum(amounts)`.
 - `start()`: transfers each amount once, returns any leftover to the Safe, ends `Complete`.
@@ -47,9 +62,9 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
 ## 2. Strategy (`StrategyProposal`)
 - params: `address venue`, `address asset`, `uint256 budget`, `Rule rule` with
   `maxPerRun` (settlement units bought per run), `minInterval` (seconds between runs), `deadline` (unix, must
-  be in the future), `takeProfitBps` (0 = off), `stopLossBps` (0 = off, < 10000). Mirror venue: `MockDex`
+  be in the future), `takeProfitBps` (0 = off), `stopLossBps` (0 = off, < 10000), `slippageBps` (0..10000). Mirror venue: `MockDex`
   (constant price, anyone may move it); mainnet venues are named here and must expose
-  `price() / buy(settlementIn) / sell(assetIn)` (`IStrategyVenue`).
+  `price() / buy(settlementIn, slippageBps) / sell(assetIn, slippageBps)` (`IStrategyVenue`).
 - `run()` — anyone, any time (no keeper can hold it hostage). Coded rule, in order:
   1. `now >= deadline` → sell all asset, return all settlement to the Safe, `Complete`.
   2. `now < lastRun + minInterval` → `TooSoon`.
@@ -108,15 +123,15 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
 `paramsHash` after an amend is `keccak256` of the amend payload (the latest voted parameters), except for
 the Strategy where it is `keccak256(abi.encode(venue, asset, budget, rule))` with the new rule.
 
-## Phase 3: Uniswap v3 Strategy venue
+## Phase 4: Uniswap v3 Strategy venue
 `UniswapV3Venue` implements `IStrategyVenue` using an immutable pair and fee, SwapRouter02 and
 QuoterV2. The dependency has no owner, admin or mutable configuration. The Strategy remains Safe-owned;
-its amended `Rule` includes `slippageBps`, and holdings stay in the Strategy. `run()` quotes the exact
-input, passes a minimum output to the router, verifies exact input/output token deltas, clears approval,
-and leaves the adapter empty. A revert rolls the entire step back. `price()` reads pool slot0 and
-normalizes per whole asset token; it is a spot rule, not an oracle or guarantee against manipulation.
-The tolerance bounds only quote-to-execution drift in the same transaction. Someone sending dust to
-the adapter cannot redirect it: anyone can `sweep()` the two pair tokens to the immutable Safe.
+its `Rule` includes voted `slippageBps`, and holdings stay in the Strategy. `price()` uses the pool's
+30-minute TWAP ticks, normalized to settlement per whole asset token. The constructor refuses a pool
+whose observation history cannot serve that fixed window. Both buy and sell must meet TWAP-implied
+output × (10,000 − slippageBps) / 10,000, as well as the existing quote and exact input/output checks.
+A revert rolls the step back. Thin pools can refuse large runs; voters choose `maxPerRun` to split trades.
+Approval clears and the adapter stays empty; anyone can sweep its pair-token dust to the immutable Safe.
 
 `stop()` and `migrate()` still move raw USDC + WETH without any venue call. Scenario J continues to
 use MockDex; `FORK_RPC=https://mainnet.base.org npm run scenario:K` exclusively broadcasts to a local

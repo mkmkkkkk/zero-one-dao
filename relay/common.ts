@@ -34,6 +34,7 @@ export interface Deployment {
   workManager: Address;
   /** CREATE2 TemplateFactory (decision.md phase 2b ruling 2). */
   templateFactory: Address;
+  treasuryLedger?: Address;
   templateDeployers?: [Address, Address, Address, Address];
   intentAccount: Address;
   constitution: { address: Address; textHash: Hex; textUrl: string; text?: string };
@@ -159,6 +160,7 @@ export interface Env {
     constitution: Abi;
     account: Abi;
     factory: Abi;
+    ledger: Abi;
     proposal: Abi;
     payment: Abi;
     strategy: Abi;
@@ -196,6 +198,7 @@ export function connect(deployment: Deployment = loadDeployment()): Env {
       constitution: loadLocalArtifact("Constitution").abi,
       account: loadLocalArtifact("ZeroOneIntentAccount").abi,
       factory: loadLocalArtifact("TemplateFactory").abi,
+      ledger: loadLocalArtifact("TreasuryLedger").abi,
       proposal: loadLocalAbi("ProposalBase"),
       payment: loadLocalArtifact("PaymentProposal").abi,
       strategy: loadLocalArtifact("StrategyProposal").abi,

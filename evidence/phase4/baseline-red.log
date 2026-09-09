@@ -1,0 +1,5 @@
+Baseline phase 4 feature checks at 3e3f3de7ba6b5d1b6e3e735d1422b60e6273cd08
+TreasuryLedger source exists: FAIL missing
+scenario L exists: FAIL missing
+venue uses observe: FAIL missing
+DepositShaman TreasuryNotSettled: FAIL missing
