@@ -18,6 +18,9 @@ import {
   type WriteContext,
 } from "./baal.js";
 
+/** Loopback JSON-RPC timeout in milliseconds; generous because a forked Anvil waits on the upstream RPC. */
+export const LOOPBACK_TIMEOUT_MS = 300_000;
+
 export interface LocalChain {
   chain: ReturnType<typeof defineChain>;
   publicClient: ReturnType<typeof createPublicClient>;
@@ -32,7 +35,10 @@ export function connectDevnet(devnet: Devnet): LocalChain {
     nativeCurrency: { name: "Zero-value test ETH", symbol: "TETH", decimals: 18 },
     rpcUrls: { default: { http: [devnet.rpcUrl] } },
   });
-  const publicClient = createPublicClient({ chain, transport: http(devnet.rpcUrl), cacheTime: 0 });
+  // A forked Anvil blocks on upstream archive reads (a 25% pool print crosses hundreds of ticks, each a
+  // separate eth_getStorageAt against the fork RPC), so loopback calls need far more than viem's 10 s default.
+  const transport = http(devnet.rpcUrl, { timeout: LOOPBACK_TIMEOUT_MS });
+  const publicClient = createPublicClient({ chain, transport, cacheTime: 0 });
   const accounts = devnet.privateKeys.map((key, index) => {
     const account = privateKeyToAccount(key);
     if (getAddress(account.address) !== getAddress(devnet.addresses[index]!)) {
@@ -44,7 +50,7 @@ export function connectDevnet(devnet: Devnet): LocalChain {
     chain,
     publicClient,
     account,
-    walletClient: createWalletClient({ account, chain, transport: http(devnet.rpcUrl) }),
+    walletClient: createWalletClient({ account, chain, transport }),
   })) as WriteContext[];
   return { chain, publicClient, contexts, accounts };
 }

@@ -48,7 +48,7 @@ async function main() {
     console.log("ASSERT Base deployment + 50 USDC genesis + Payment PASS; no Etherscan verification invoked");
     log = path.join(dir, "uniswap-v3-fork.log");
     writeFileSync(log, `ASSERT same fork as deployment rpc=${devnet.rpcUrl} safe=${dao.safe} genesisTx=${result.record.genesis.depositHash}\n`);
-    await runUniswapFork(devnet, dao);
+    await runUniswapFork({ devnet, dao, founder, stranger: chain.contexts[1]! });
   } finally { await stopDevnet(devnet); }
 }
 main().catch((error: unknown) => { console.error(error instanceof Error ? error.stack : error); process.exitCode = 1; });

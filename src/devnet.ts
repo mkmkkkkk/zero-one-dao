@@ -83,7 +83,7 @@ async function waitForConfig(file: string, child: ChildProcess): Promise<void> {
  */
 export async function startDevnet(
   runId: string,
-  options: { chainId?: number; hardfork?: "cancun" | "prague"; forkUrl?: string } = {},
+  options: { chainId?: number; hardfork?: "cancun" | "prague"; forkUrl?: string; forkBlockNumber?: bigint } = {},
 ): Promise<Devnet> {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/u.test(runId)) {
     throw new TypeError("runId must be a short filesystem-safe label");
@@ -124,12 +124,22 @@ export async function startDevnet(
       "--hardfork",
       options.hardfork ?? "cancun",
       "--quiet",
-      ...(options.forkUrl ? ["--fork-url", options.forkUrl] : []),
+      // A fork serves every cold storage slot from upstream; anvil's own client-side rate limiter turns a
+      // multi-tick swap simulation into a timeout, so disable it and retry upstream hiccups instead. Pinning
+      // the fork block also switches on anvil's on-disk RPC cache, so a rerun replays from ~/.foundry/cache.
+      ...(options.forkUrl ? ["--fork-url", options.forkUrl, "--no-rate-limit", "--retries", "10", "--timeout", "120000"] : []),
+      ...(options.forkUrl && options.forkBlockNumber !== undefined ? ["--fork-block-number", String(options.forkBlockNumber)] : []),
     ],
     { cwd: ROOT, stdio: ["ignore", "ignore", "pipe"] },
   );
   let stderr = "";
-  child.stderr?.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+  child.stderr?.on("data", (chunk: Buffer) => {
+    const text = chunk.toString();
+    stderr += text;
+    // Upstream fork failures (rate limits, timeouts) arrive here mid-run; hiding them turns a broken fork
+    // into an unexplained hang.
+    for (const line of text.split("\n")) if (line.trim()) console.error(`anvil: ${line.trim()}`);
+  });
   const rpcUrl = `http://127.0.0.1:${port}`;
 
   try {

@@ -11,10 +11,10 @@
  * bound, a stop-loss is not fired by the print, and after the back-run restores the pool the same runs succeed.
  */
 import { decodeErrorResult, decodeEventLog, encodeDeployData, encodeFunctionData, getAddress, parseAbi, type Abi, type Address, type Hex } from "viem";
-import { assertBaseFork, fundForkUsdc, startBaseFork } from "../src/baseFork.js";
-import { loadBaalArtifact, loadLocalArtifact, type PackedCall } from "../src/baal.js";
+import { assertBaseFork, fundForkUsdc, startBaseFork, warmUniswapPool } from "../src/baseFork.js";
+import { loadBaalArtifact, loadLocalArtifact, type PackedCall, type WriteContext } from "../src/baal.js";
 import { stopDevnet, type Devnet } from "../src/devnet.js";
-import { connectDevnet, deployLocal, increaseTime, writeAndWait, type WriteContext } from "../src/onchain.js";
+import { connectDevnet, deployLocal, increaseTime, writeAndWait } from "../src/onchain.js";
 import { deployTemplate, describe, migrateCalls, stopCalls, submitCalls, submitTemplateProposal, unwindCalls, type StrategyParams } from "../src/proposals.js";
 import { BASE_USDC, DEFAULT_PARAMS, deployZeroOne, genesisDeposit, SETTLEMENT_UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 import { assert, expectRevert, runIfMain } from "./lib.js";
@@ -199,7 +199,7 @@ function harness(fork: ForkDao, venueAddress: Address, venueAbi: Abi) {
   const baalAbi = loadBaalArtifact("Baal").abi;
   const ledgerAbi = loadLocalArtifact("TreasuryLedger").abi;
   const shamanAbi = loadLocalArtifact("DepositShaman").abi;
-  const balance = (token: Address, account: Address) => publicClient.readContract({ address: token, abi: erc20, functionName: "balanceOf", args: [account] });
+  const balance = (token: Address, account: Address): Promise<bigint> => publicClient.readContract({ address: token, abi: erc20, functionName: "balanceOf", args: [account] }) as Promise<bigint>;
   const ledgerRead = <T>(functionName: string, args: readonly unknown[] = []) => publicClient.readContract({ address: dao.treasuryLedger, abi: ledgerAbi, functionName, args }) as Promise<T>;
   /** Venue `Swapped` events inside one receipt, each asserted to have filled within its minimum. */
   function swapsIn(receipt: { logs: readonly { address: Address; data: Hex; topics: readonly Hex[] }[] }): VenueSwap[] {
@@ -283,6 +283,9 @@ export async function proveSandwiches(fork: ForkDao, venue: { address: Address; 
   assert(whale !== undefined, `a Base USDC holder with >= ${SANDWICH_USDC} base units exists on the fork`);
   await fundForkUsdc(fork.devnet, probe.address, SANDWICH_USDC, whale);
   const pool = await publicClient.readContract({ address: venue.address, abi: venue.abi, functionName: "pool" }) as Address;
+  // Each print walks a 25% price range, i.e. hundreds of initialized ticks; pull those slots into the fork
+  // concurrently first, or the in-transaction upstream fetches outlast every RPC timeout.
+  await warmUniswapPool(fork.devnet, pool);
   const sqrtNow = async () => (await publicClient.readContract({ address: pool, abi: poolAbi, functionName: "slot0" }))[0];
   const bps = (sqrt: bigint, base: bigint) => (sqrt * sqrt * 10_000n) / (base * base) - 10_000n;
 
