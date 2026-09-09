@@ -144,6 +144,14 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   const genesis = await genesisDeposit(deployer, dao, GENESIS_DEPOSIT);
   console.log(`genesis: ${genesis.sharesMinted} shares to the founder (approve ${genesis.approveHash}, deposit ${genesis.depositHash})`);
   const shamans = await enumerateShamans(deployer, dao.baal, dao.startBlock);
+  // Post-condition, not a precondition: value has already moved by now. It still belongs here, because
+  // the record is the document agents trust, and "DepositShaman and WorkManager are the only mint
+  // paths" (DESIGN.md) is only true if no other address was ever granted a shaman permission.
+  const expectedShamans = [dao.depositShaman, dao.workManager].map((address) => getAddress(address));
+  if (shamans.length !== expectedShamans.length || !shamans.every(({ shaman, permission }) => permission === 2n && expectedShamans.includes(getAddress(shaman)))) {
+    throw new Error(`REFUSED: Baal must have exactly the two manager shamans ${expectedShamans.join(", ")}; the ShamanSet log says ${shamans.map(({ shaman, permission }) => `${shaman}:${permission}`).join(", ") || "none"}`);
+  }
+  console.log(`ASSERT the only shamans Baal ever granted are DepositShaman ${dao.depositShaman} and WorkManager ${dao.workManager}, both permission 2 (manager)`);
 
   let sponsorFloat: { to: Address; usdc: string; hash: Hex } | undefined;
   if (args.sponsor !== undefined && mock) {
