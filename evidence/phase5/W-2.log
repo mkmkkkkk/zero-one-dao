@@ -1,0 +1,64 @@
+# W-2 — phase 5 stage A, key output lines of evidence/phase5/run-work-invariants.log (full run); docs/SECURITY_AUDIT.md row W-2
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: W-1: A proposes task #1 with reward 9150 shares (3x the 3050 supply), expiring in 60 days; A and B vote YES; activated after grace, nothing minted
+   ok: activation executed by the Safe
+   reward value if minted now: 9150 / 12200 of 3050 USDC = 2287.5 USDC
+   task #1: status Active worker 0x0000000000000000000000000000000000000000 reward 9150 round 0 confirmations 0
+   ok: task #1 Active; reward not yet minted
+   WorkManager.activeRewardShares = 9150; DepositShaman.shareLiability = 9150
+   holds [W-1]: the approved-but-unminted reward is a visible liability (9150 shares)
+== step 5: W-1: 30 days pass; the task is still Active; D, who never saw the vote, deposits 10,000 USDC at NAV including the liability
+   deposit quote for 10,000 USDC = 40000 shares; liability-adjusted fair quote = 40000 shares
+   holds [W-1]: the deposit quote prices in approved-but-unminted task rewards (quoted 40000 shares, liability-adjusted 40000 shares)
+   ok: D was minted the liability-adjusted amount
+   D exit value now = 12125.43554 USDC (92.9152% of 13050; the liability is not yet minted so D's pro-rata is temporarily above 10,000)
+== step 6: W-1: W claims, delivers; B and C confirm -> 9150 shares mint to W; W ragequits the same block
+   ok: W holds exactly the voted 9150 shares
+   holds [W-1]: the liability is gone once the reward is minted
+   W was paid 2287.5 USDC for a reward worth 2287.5 USDC when it was voted
+   D deposited 10000 USDC and can now exit for 10000 USDC
+   holds [W-1]: a depositor who joins after a task's vote and grace is not diluted by that task's later mint (D: 10,000 USDC in, exit value 10000 USDC after the mint)
+   holds [W-1]: a task reward pays at most its value at the vote (voted worth 2287.5 USDC, paid 2287.5 USDC)
+== step 7: W-1: an Active task cannot mint after its expiration: task #1b (reward 100, expires 2 days after grace) is activated, delivered, then expires before the second confirmation
+   ok: task #1b activated
+   holds [W-1]: the new task's 100 shares are the liability
+   holds [W-1]: an expired task leaves the liability before anyone touches it
+   ok: the final confirmation reverts after the expiration: nothing can mint (reverted with TaskExpired)
+   task #2: status Expired worker 0x0c067BdeD3d6318a020593D3A74CDcd494892874 reward 100 round 1 confirmations 1
+   holds [W-1]: an Active task cannot mint after a bounded time (task #1b Expired after its expiration)
+   ok: an expired task cannot be claimed (reverted with WrongStatus)
+== step 8: W-2: task #2 (reward 10 shares, verifiers B, C) is activated; stranger D claims it in the first block and never delivers; after CLAIM_TIMEOUT the intended worker W takes it over
+   ok: task #2 activated
+   cost to D: 74652 gas; D never delivers
+   ok: W cannot claim task #2 while D's claim is fresh (reverted with TaskAlreadyClaimed)
+   ok: the proposer cannot cancel; only a passed proposal can (reverted with OnlySafe)
+   WorkManager functions: ACTIVATION_BAAL_GAS, CLAIM_TIMEOUT, activateTask, activationData, activeRewardShares, activeTasks, baal, cancelTask, claim, claimLapsed, confirm, confirmedBy, deliver, expireTask, getTask, isVerifier, safe, shares, submitTask, taskCount, verifiersOf
+   holds [W-2]: a claimed task that is never delivered can be reassigned without a passed proposal (functions matching timeout/lapse/expire: CLAIM_TIMEOUT, claimLapsed, expireTask)
+   holds [W-2]: a claim that never delivers lapses after CLAIM_TIMEOUT (604800 s)
+   task #3: status Active worker 0x0c067BdeD3d6318a020593D3A74CDcd494892874 reward 10 round 0 confirmations 0
+   holds [W-2]: W is the worker of task #2 now (was 0x6c1ee9aaad649bbb249428eec9deab7acc443efd)
+   ok: a claim that delivered does not lapse (reverted with TaskAlreadyClaimed)
+== step 9: W-3 (accepted by principle): A proposes task #3 naming O (a fresh key) as the single verifier; A alone votes YES; A claims and delivers its own task; O confirms
+   ok: task #3 activated with A's 1000 YES against 0 NO (B, C, F silent)
+   A: 1000 -> 1100 shares; the only check was the vote (B, C, F did not vote): accepted by principle, the members' NO or exit is the remedy
+   holds [W-3]: the voted reward minted exactly (documented behaviour, docs/SECURITY_AUDIT.md W-3 accepted-by-principle)
+== step 10: W-4: expiration inside voting + grace is refused; a passed activation processed after its expiration does nothing and the task stays Proposed, never mintable
+   ok: Baal refuses expiration <= now + votingPeriod + gracePeriod (reverted with expired)
+   proposal #5: expiration 1793236838, now 1793237019, state Ready, yes 1100 no 0
+   ok: expired proposal processed as not passed, no action
+   task #5: status Proposed worker 0x0000000000000000000000000000000000000000 reward 1 round 0 confirmations 0
+   ok: task #4 stays Proposed (never Active, never Cancelled)
+   ok: a Proposed task cannot be claimed (reverted with WrongStatus)
+   holds [W-4]: a task whose activation proposal expired is a dead id: never Active (active ids: 3), no liability, nothing mintable (documented)
+== step 11: W-6: activateTask / cancelTask are onlySafe
+   ok: proposer cannot activate (reverted with OnlySafe)
+   ok: stranger cannot activate (reverted with OnlySafe)
+   holds [W-6]: activateTask and cancelTask revert OnlySafe for proposer, stranger and founder; the Safe acts only through Baal.processProposal
+   treasury at start 3050 USDC, at end 10762.5 USDC
+   ok: addresses present
+=== AUDIT TEST work-invariants: ALL INVARIANTS HOLD ===
+EXIT 0

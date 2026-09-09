@@ -1,0 +1,19 @@
+# GOV-04 — phase 5 stage A, key output lines of evidence/phase5/run-t07-retention-veto-flash.log (full run); docs/SECURITY_AUDIT.md row GOV-04
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: V = a contract holding exactly 1 share (deposited 1 USDC before the proposal exists)
+   ok: V holds 1 share
+== step 5: A proposes 'pay O 100 USDC'; A and B vote YES (2000 of 3051 shares)
+== step 6: V in ONE transaction: deposit 1600 USDC, vote NO (weight 1), ragequit the 1600 shares
+   tx 0x5d151bace0e4cdb96fefc873f5c1d84853e59526bd6d30981e0c7bc7051d1ce8: yes 2000 no 1; supply at votingStarts 3051, live supply 3051; exitedSince(#1) = 0 (V's 1600 burned shares were minted after votingStarts: not counted); V USDC 2999 -> 2999 (net 0), V shares 1
+   ok: exitedSince counts none of V's flash shares; the retention base is the supply at votingStarts
+   ok: live supply is back where it was
+== step 7: grace passes; processProposal -> passed; O paid
+   passed=true actionFailed=false; O USDC 10000 -> 10100; A+B YES 2000 shares stand against V's 1 share + 1600 USDC for one transaction
+   ok: the proposal passed and paid O
+   V spent gas + rounding (0 USDC) for nothing
+=== SCENARIO GOV-04 same-tx deposit + vote + exit cannot veto (phase 5 retention counts only shares held at votingStarts; fixed): PASS ===
+EXIT 0

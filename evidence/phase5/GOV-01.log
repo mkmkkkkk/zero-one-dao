@@ -1,0 +1,29 @@
+# GOV-01 — phase 5 stage A, key output lines of evidence/phase5/run-t01-lowgas-process-kills-proposal.log (full run); docs/SECURITY_AUDIT.md row GOV-01
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: A proposes: Safe pays O 500 USDC plus 39 x 1 USDC to fresh addresses (a multicall the size of a Project/Strategy start; baalGas = simulated need x 1.5, as every Zero One proposal)
+   ok: proposal is Ready (passed, grace over)
+== step 5: control: W processes with the mirror's explicit 5,000,000 gas -> O is paid
+   control  gas=5000000 status=success gasUsed=1178950 passed=true actionFailed=false O USDC 10000 -> 10500
+   ok: control: the multicall executed and O received 500 USDC
+== step 6: attack: W (holds no shares) sweeps processProposal gas limits from 500,000 to 1,600,000: every one must revert (not enough gas), never record actionFailed
+   proposal #1 baalGas = 1661958 (simulated action need x 1.5)
+   ok: the proposal carries a non-zero baalGas within the 8,000,000 cap
+   sweep gas=600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=800000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1000000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1200000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1400000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep: 45 of 45 low-gas attempts reverted; processed=false passed=false actionFailed=false state=Ready
+   ok: no gas limit exists at which processProposal succeeds while the voted multicall runs out of gas
+   ok: every low-gas attempt reverted (not enough gas); the proposal is untouched
+   ok: the proposal is still Ready; nothing moved
+== step 7: after the sweep the proposal still executes with the relay's explicit gas
+   processProposal gas=5000000 status=success passed=true actionFailed=false O USDC 10000 -> 10500
+   ok: the voted payment executed
+=== SCENARIO GOV-01 low-gas processProposal cannot kill a passed proposal (phase 5: baalGas = simulated x 1.5; fixed): PASS ===
+EXIT 0

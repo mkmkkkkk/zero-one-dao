@@ -1,0 +1,25 @@
+
+== (a) OPS-03: 1 USDC unit lands in the Safe inside the deploy window -> genesis still works
+   deployment transactions after SafeProxy creation and before the genesis deposit: 14 (+2 for approve/deposit) = 16 transactions ~ 32 s of Base blocks at 2 s each, before any RPC latency
+   order: singleton:Baal > singleton:ModuleProxyFactory > singleton:GnosisSafe > singleton:GnosisSafeProxyFactory > singleton:MultiSendCallOnly > TestToken > SafeProxy > BaalProxy > NavShareToken > LootToken > DepositShaman > WorkManager > PaymentDeployer > StrategyDeployer > ProjectDeployer > ConfigDeployer > TemplateFactory > ZeroOneIntentAccount > Constitution > Safe.setup > Baal.setUp
+   attacker sent 1 unit (0.000001 USDC) to the predicted Safe 0x0f3eF09f4cAF96251d770DdE50eEa5eFbA310B1c: tx 0x9dec373f584fa48844a2c6e29ff05bf28e7ad47d6fa3d63d73d70c25e6c31b29 gas 51214
+   ok: DepositShaman.quote(50 USDC) = 50000000000000000000 shares while supply is 0 (1 USDC = 1e18 shares regardless of the 1 unit on the Safe)
+   genesis: the Safe already holds 1 settlement units; they accrue to the genesis shares (supply 0 prices 1 USDC = 1e18 shares regardless)
+   ok: genesisDeposit succeeded: 50000000000000000000 shares minted to the founder (tx 0x8de87f51abb7b726e1d006e34cc76c52457c84e153ae1dac570c197c30e8e40e)
+   ok: totalSupply 50000000000000000000, Safe 50000001 units: the 1 unit accrued to the genesis shares
+   ok: a later deposit of 50 USDC quotes 49999999000000019999 shares = amount x supply / (Safe USDC incl. the dust): NAV pricing, no trap
+   ok: the deposit simulates and mints the quoted amount
+   ok: the founder can sponsor proposals (supply 50000000000000000000 >= sponsorThreshold 1000000000000000000)
+   verdict: OPS-03 closed; attacker cost = 1 unit + 51214 gas for a gift of 1 unit to the founder
+
+== (b) OPS-04: proxy salt nonces are deployer-bound; a front-runner can still create or initialize the proxy first, and our deployment aborts (griefing only)
+   ok: the same salt gives different proxy nonces for different deployers (deployer-bound)
+   ok: attacker created the Safe proxy at OUR predicted address 0xa63873F5f754CAa7d5E717c1F4F0EDFAAD06c029 (gas 105352)
+   ok: attacker is the sole owner of the Safe at our predicted address
+   revert ok [our createSafeProxy at the same nonce reverts (Create2 call failed): deployment aborts, nothing moved]: The contract function "createProxyWithNonce" reverted with the following reason: | Create2 call failed | Contract Call:
+   revert ok [our createBaalProxy at the same nonce reverts (TakenAddress): deployment aborts, nothing moved]: The contract function "deployModule" reverted. | Error: TakenAddress(address address_) |                    (0x0000000000000000000000000000000000000000)
+   ok: attacker initialized OUR Baal proxy 0xf779B373d7e03d146779e46b31de70d4BFaec74A with avatar = the attacker FakeAvatar 0xce8454234DaC847bD3e2C788d21B0B9F12b3240E (tx 0x0f2f223096fa79219fcc0085553c85e10b6d9534723a5abb21a5002e9cef096b)
+   consequence: deployZeroOne's initializeSafeAndBaal would revert ('Initializable: contract is already initialized' / GS200) and abort before genesis: griefing only, no USDC moved; the deployer retries with a new salt (documented, OPS-04)
+
+=== OPS-03/04 pre-genesis-window: PASS (OPS-03 fixed: no zero-supply trap; OPS-04 griefing-only, documented) ===
+EXIT 0

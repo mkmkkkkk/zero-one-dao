@@ -1,0 +1,26 @@
+# GOV-05 — phase 5 stage A, key output lines of evidence/phase5/run-t08-baalgas-20m-blocks-chain.log (full run); docs/SECURITY_AUDIT.md row GOV-05
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: A's submitProposal with baalGas = 20,000,000 reverts: the fork caps baalGas at 8,000,000
+   ok: baalGas 20,000,000 is refused (reverted with baalGas to high)
+   ok: baalGas 8,000,001 is refused (reverted with baalGas to high)
+== step 5: A submits #1 'pay O 1 USDC' with baalGas = 8,000,000 (the maximum the fork accepts) and votes YES
+   ok: submitProposal with baalGas 8,000,000 accepted
+== step 6: B submits #2 'pay O 2 USDC' (prevProposalId = 1) and votes YES
+   #1 state Ready (baalGas 8000000), #2 state Ready
+== step 7: processProposal(#1) with 5,000,000 gas -> reverts 'not enough gas'; #2 -> 'prev!processed' (a delay, not a lock)
+   processProposal(#1) gas=5000000 status=reverted
+   ok: #1 cannot be processed at 5 M gas
+   ok: #2 waits behind #1 (reverted with prev!processed)
+== step 8: a transaction under Base's 16,777,216 cap clears #1: processProposal(#1) with 8,500,000 gas
+   ok: the clearing transaction fits under the EIP-7825 cap (8500000 < 16777216)
+   processProposal(#1) gas=8500000 status=success gasUsed=148994 passed=true actionFailed=false; O USDC 10001
+   ok: #1 processed with 8.5 M gas
+   processProposal(#2) gas=5000000 status=success state=Processed
+   ok: #2 processes once #1 is terminal
+   worst case for a member holding 1 share: every later proposal waits until someone pays one 8.5 M gas transaction (Base: cents); never permanent
+=== SCENARIO GOV-05 baalGas capped at 8M: no proposal can block the chain permanently (phase 5 fork; fixed): PASS ===
+EXIT 0

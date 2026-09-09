@@ -1,0 +1,23 @@
+# NAV-01 — phase 5 stage A, key output lines of evidence/phase5/run-t04-hole1-instance-usdc-invisible.log (full run); docs/SECURITY_AUDIT.md row NAV-01
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: A proposes a Strategy with budget 3000 USDC (98% of the treasury); A, B, C YES; executed
+   A deployed StrategyProposal @ 0x34681947ec57E6A253Cdc27C103cf153DB194bA8 via TemplateFactory (tx 0x65a1ca9f19e7d93d926c31ec5b550342a23c8305281142053a4e011f9514da11, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0x0cc2ef7857b60826b7840333103cec4c84df0222ec9412f335e5f535ce2d77cf codeHash 0x6b7fe005bf7f866eddf476cce9ca168bdc53e4d5e44a339ba0110484264d4c80
+   ok: strategy funded and started
+   Safe 50 USDC; instance 3000 USDC; ledger depositTreasury 3050 USDC; supply 3050 shares (deposit NAV 1 USDC/share)
+   ok: the ledger counts the 3000 USDC held by the open instance
+== step 5: NAV-05, accepted (snapshot): A ragequits its 1000 shares while the budget is out -> paid pro-rata of the Safe only (exit price <= deposit price; documented)
+   A burned 1000 shares (32.8% of supply, true value 1000 USDC) and was paid 16.393442 USDC: 983.606558 USDC forfeited to the stayers (exit is pro-rata of the Safe, not of the DAO)
+== step 6: D deposits 50 USDC while the budget is out
+   D paid 50 USDC for 50 shares = 1.61% of supply (fair: 50 shares)
+   ok: D received exactly 50 shares for 50 USDC (NAV 1, the instance budget counted)
+== step 7: the deadline passes; anyone calls run(): the instance returns its 3000 USDC to the Safe
+   Safe 3100 USDC; instance 0 USDC
+== step 8: D ragequits all shares
+   D USDC 10000 -> 10000: net 0 USDC on a 50 USDC deposit; F/A/B/C keep their 3050
+   ok: D was paid exactly its 50 USDC back (50 of 3100 shares x 3100 USDC): no round-trip profit
+=== SCENARIO NAV-01 hole 1 closed: instance USDC counted by the TreasuryLedger (phase 4/5; fixed): PASS ===
+EXIT 0
