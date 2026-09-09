@@ -270,3 +270,52 @@ These are implementation interpretations of phase 5 rulings 6, 7, 9 and 10 (DW w
 7. Ruling 9, "persist the counter before rejecting": done inside `rate()`, which also means `persist()` now runs on every rejected `/relay` request (one small atomic write). The bucket key remains the `cf-connecting-ip` header, so the relay must sit behind Cloudflare or answer only on loopback; that is a deployment constraint recorded in PARAMETERS and RELAY.md, not a code fix, and the flipped F1 probe asserts the bucket rotation as documented behaviour.
 8. Audit rows flipped in stage C: A5-08 and A5-09 (`evidence/audit/account-relay/relay-adversarial.test.ts` F1, F2). A5-07 (F4) is asserted as the documented custody trade-off, like stage A's W-3 / W-4 / T-8 / T-9. A5-10's provable half (the fabricated success) is asserted in `npm run e2e:relay` step 18; the unprovable half (an operator that drops intents) is the README disclosure.
 9. Docs: DESIGN §6c rewritten to the phase 5 rule (open instances alone pause deposits; a stopped Strategy keeps its asset and stays open; the deposit price counts the task liability) and kept at 8 lines. The beacon README is exactly 44 lines. The repo README is 44 lines and now carries the settlement line, the retention rule and the T0 line. Disclosures OPS-05, NAV-05, ECO-08, NAV-02, NAV-06, ECO-05, ECO-09, A5-13, A5-14, A5-07, T-12(a) and GOV-02 are one line each in PARAMETERS under "Disclosures".
+
+## 2026-09-10 phase 5 stage D — clean-clone acceptance (reviewer pass, DW worker; the rulings remain the authority)
+Method: `git clone` of the branch into a scratchpad temp dir, `npm ci`, then every gate re-run there and nothing trusted from
+the stage A-C reports. Receipt: `evidence/phase5/acceptance-rerun.log` (37 steps, all EXIT 0) with the full output of each step
+under `evidence/phase5/stage-d/`. Covered: typecheck, compile (47 artifacts), scenarios A-L, scenario K on a Base fork
+(`FORK_RPC=https://base.drpc.org`, pinned block 51,000,000), `npm run e2e:relay` (beacon rebuilt and revalidated, README 44
+lines), the 11 flipped audit tests, the 20 remaining audit tests, the no-admin grep, the Baal fork diff (24 lines), the two
+verbatim vendored files, and `git diff 10923ea..HEAD -- docs/CONSTITUTION.md CLAUDE.md` (empty).
+1. Red on the first clean-clone run, fixed in `src/devnet.ts` (harness, no contract effect): a fresh `npm ci` leaves no
+   `node_modules/.bin/anvil`, because `@foundry-rs/anvil` and `@foundry-rs/anvil-darwin-arm64` both declare the bin name
+   `anvil` and npm links neither on a collision. Every scenario died with `spawn .../node_modules/.bin/anvil ENOENT`. The
+   existing checkout only worked because an older `npm install` had left the shim behind. `anvilBinary()` now resolves the
+   executable itself (`ANVIL_BIN`, shim, platform package, wrapper fallback) and never consults `PATH`. Recorded in PARAMETERS.
+2. Six audit tests outside the flipped set were red on the branch; stages A-C never ran them. All six are tests asserting
+   pre-phase-4/5 behaviour or signatures, and all six were changed on the test side, with the findings preserved:
+   (a) `t11-same-tx-roundtrip` (NAV-04) predicted the mint with `amount x supply / SafeUSDC`. Phase 5 prices the mint on the
+   ledger (Safe + open instances, plus the task liability), so it now asks `DepositShaman.quote()`. The invariant is restated
+   honestly: with the whole treasury in the Safe the round trip nets 0/-1 as before, but while a 3,000 USDC budget is out it
+   nets -48.39 on 50 USDC and -1,176.84 on 2,000 USDC, because the burn leg is still pro-rata of the Safe alone. Deposit-then-
+   exit inside one transaction never profits; the ECO-08 / NAV-05 asymmetry is what it loses to.
+   (b) `factory-create2-onlysafe` (T-1) called `deployer.initCode(member, params)`; the phase 4 factory takes the ledger as a
+   third argument.
+   (c-e) `T06-capture-small-treasury` (ECO-01/02/03), `T07-config-shortening` (ECO-04) and `T11-exit-cost-deployed-capital`
+   (ECO-08) expressed "pay the attacker whatever the Safe holds at execution" with a delegatecall Drainer, which ruling 6's
+   MultiSendCallOnly now refuses (the action fails, the Safe keeps its USDC). The capture itself is untouched, so each test now
+   votes one call-only `USDC.approve(attacker, 2**128)` and pulls with `transferFrom` in a second transaction: same money, same
+   conclusions (W still takes 2,050 USDC of other members' deposits; A still drains 3,050 USDC 6 s after submitting under a
+   4 s / 1 s Config; C's exit still costs it 65.6%). The relay reports that allowance as `usdcApproved` / `usdcAtRisk` with a
+   flag — a disclosure, not a defence.
+   (f) `T08-spam-economics` (ECO-05) submitted at `baalGas = 20,000,000`, which ruling 1 now refuses. It spams at the 8,000,000
+   ceiling instead; clearing still needs a self-paid gas limit above the relay's 8,000,000 execute cap, and the point of the cap
+   holds: one Base block (16,777,216) now clears two such proposals, so the queue can never be permanently stuck.
+3. `T09-hidden-treasury-effect` (ECO-06 / OPS-07) was red for the right reason and is now a flipped test: (1) the approve drain
+   still shows `usdcOut = 0` but is reported as `usdcApproved` / `usdcAtRisk` with an `allowance:` flag and the pull still works
+   (finding retained as a disclosure); (2) the delegatecall entry is flagged `delegatecall:`, labelled `DELEGATECALL ...` in the
+   decoded calls, and refused on chain — passed = true, actionFailed = true, Safe unchanged at 3,050 USDC (ruling 6 / A3 proven
+   end to end for the first time); (3) the details JSON naming an untouched instance now gets no panel and a `details:` flag
+   (A5-11). The reorg step is unchanged.
+4. Rulings the code still does not honour verbatim (all previously recorded, re-verified here, none newly introduced): ruling 2's
+   literal `burned(now) - burned(votingStarts)` formula (stage A item 1, exits are counted per account instead, at ~709k gas per
+   ragequit); ruling 1's "simulated x 1.5" on the two on-chain submit paths, which use constants (stage A item 2); ruling 8's
+   "salts bound to the deployer", which the vendored factories cannot enforce against a front-runner, leaving griefing-only
+   (stage A item 6); ruling 6's "count approve as treasury effect", reported as its own field rather than folded into `usdcOut`
+   (stage C item 2); ruling 9's 128-bit floor, whose estimator is this repo's and is dictionary-blind (stage C item 1); ruling 7,
+   whose "never broadcasts" half no code can close (stage C item 6). Everything else in rulings 1-10 is implemented and proven by
+   a green test named in the acceptance log.
+5. Not part of stage D and still open: the Base fork rehearsal of a whole deployment (`npm run e2e:base-fork`) and the mainnet
+   sequence. `evidence/phase4/beacon-validate.log` is still rewritten by `e2e:relay` (path and run id only); it is restored after
+   each run, and stage D's own beacon receipt is in `evidence/phase5/stage-d/e2e-relay.log`.

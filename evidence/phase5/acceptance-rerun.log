@@ -1,0 +1,247 @@
+Zero One DAO — phase 5 stage D acceptance, clean clone
+clone:   /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/phase5-accept  (git clone of the local repo, branch phase4-ledger-twap, then npm ci)
+commit:  2d2999b phase 5 stage D: ECO-05 spams at the new 8,000,000 baalGas ceiling (ruling 1 refuses 20,000,000); clearing still needs a self-paid limit above the relay cap
+node:    v22.16.0   npm: 10.9.2   platform: Darwin arm64
+started: 2026-09-09T21:33:18Z
+
+########## npm ci (clean install from package-lock.json)    (2026-09-09T21:33:18Z)
+$ npm ci
+EXIT 0   (full output: evidence/phase5/stage-d/npm-ci.log,       16 lines)
+
+########## typecheck (tsc --noEmit)    (2026-09-09T21:33:28Z)
+$ npx tsc --noEmit
+EXIT 0   (full output: evidence/phase5/stage-d/tsc.log,        0 lines)
+
+########## compile (solc 0.8.36)    (2026-09-09T21:33:33Z)
+$ npm run compile
+EXIT 0   (full output: evidence/phase5/stage-d/compile.log,      192 lines)
+    Wrote 47 local artifacts with 0.8.36+commit.8a079791.Emscripten.clang
+
+########## scenarios A-L (npm run scenarios)    (2026-09-09T21:34:04Z)
+$ npm run scenarios
+EXIT 0   (full output: evidence/phase5/stage-d/scenarios.log,     1430 lines)
+    === SCENARIO A: PASS ===
+    === SCENARIO B: PASS ===
+    === SCENARIO C: PASS ===
+    === SCENARIO D: PASS ===
+    === SCENARIO E: PASS ===
+    === SCENARIO F: PASS ===
+    === SCENARIO G: PASS ===
+    === SCENARIO H: PASS ===
+    === SCENARIO I: PASS ===
+    === SCENARIO J: PASS ===
+    === SCENARIO L: PASS ===
+    ===== SUMMARY =====
+    A: PASS
+    B: PASS
+    C: PASS
+    D: PASS
+    E: PASS
+    F: PASS
+    G: PASS
+    H: PASS
+    I: PASS
+    J: PASS
+    L: PASS
+
+########## scenario K on a Base fork (FORK_RPC=https://base.drpc.org)    (2026-09-09T21:34:17Z)
+$ env FORK_RPC=https://base.drpc.org npm run scenario:K
+EXIT 0   (full output: evidence/phase5/stage-d/K.log,      202 lines)
+    === SCENARIO K: PASS ===
+
+########## relay + beacon end to end (npm run e2e:relay)    (2026-09-09T21:36:26Z)
+$ npm run e2e:relay
+EXIT 0   (full output: evidence/phase5/stage-d/e2e-relay.log,      495 lines)
+    === RELAY HARDENING: PASS ===
+    === RELAY LEDGER HTTP: PASS ===
+    === RELAY E2E: PASS ===
+
+########## flipped audit test governance-nav/t01-lowgas-process-kills-proposal    (2026-09-09T21:38:20Z)
+$ npx tsx evidence/audit/governance-nav/t01-lowgas-process-kills-proposal.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t01-lowgas-process-kills-proposal.log,       96 lines)
+    === SCENARIO GOV-01 low-gas processProposal cannot kill a passed proposal (phase 5: baalGas = simulated x 1.5; fixed): PASS ===
+
+########## flipped audit test governance-nav/t03-retention-bypass-deposit-at-processing    (2026-09-09T21:38:27Z)
+$ npx tsx evidence/audit/governance-nav/t03-retention-bypass-deposit-at-processing.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t03-retention-bypass-deposit-at-processing.log,      108 lines)
+    === SCENARIO GOV-03 minRetention cannot be bypassed by deposit + process in one transaction (phase 5 retention rule; fixed): PASS ===
+
+########## flipped audit test governance-nav/t04-hole1-instance-usdc-invisible    (2026-09-09T21:38:34Z)
+$ npx tsx evidence/audit/governance-nav/t04-hole1-instance-usdc-invisible.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t04-hole1-instance-usdc-invisible.log,      104 lines)
+    === SCENARIO NAV-01 hole 1 closed: instance USDC counted by the TreasuryLedger (phase 4/5; fixed): PASS ===
+
+########## flipped audit test governance-nav/t07-retention-veto-flash    (2026-09-09T21:38:41Z)
+$ npx tsx evidence/audit/governance-nav/t07-retention-veto-flash.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t07-retention-veto-flash.log,       90 lines)
+    === SCENARIO GOV-04 same-tx deposit + vote + exit cannot veto (phase 5 retention counts only shares held at votingStarts; fixed): PASS ===
+
+########## flipped audit test governance-nav/t08-baalgas-20m-blocks-chain    (2026-09-09T21:38:49Z)
+$ npx tsx evidence/audit/governance-nav/t08-baalgas-20m-blocks-chain.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t08-baalgas-20m-blocks-chain.log,       94 lines)
+    === SCENARIO GOV-05 baalGas capped at 8M: no proposal can block the chain permanently (phase 5 fork; fixed): PASS ===
+
+########## flipped audit test governance-nav/t14-nav07-safe-dust-does-not-pause-deposits    (2026-09-09T21:38:56Z)
+$ npx tsx evidence/audit/governance-nav/t14-nav07-safe-dust-does-not-pause-deposits.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t14-nav07-safe-dust-does-not-pause-deposits.log,      130 lines)
+    === SCENARIO NAV-07 Safe dust does not pause deposits (phase 5 ruling 4a; fixed): PASS ===
+
+########## flipped audit test work-templates/work-invariants    (2026-09-09T21:39:03Z)
+$ npx tsx evidence/audit/work-templates/work-invariants.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-work-invariants.log,      207 lines)
+    === AUDIT TEST work-invariants: ALL INVARIANTS HOLD ===
+
+########## flipped audit test work-templates/project-config-edges    (2026-09-09T21:39:10Z)
+$ npx tsx evidence/audit/work-templates/project-config-edges.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-project-config-edges.log,      174 lines)
+    === AUDIT TEST project-config-edges: ALL INVARIANTS HOLD ===
+
+########## flipped audit test ops-economic/T03-pre-genesis-window    (2026-09-09T21:39:17Z)
+$ npx tsx evidence/audit/ops-economic/T03-pre-genesis-window.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T03-pre-genesis-window.log,       24 lines)
+    === OPS-03/04 pre-genesis-window: PASS (OPS-03 fixed: no zero-supply trap; OPS-04 griefing-only, documented) ===
+
+########## flipped audit test account-relay/relay-adversarial.test    (2026-09-09T21:39:24Z)
+$ npx tsx evidence/audit/account-relay/relay-adversarial.test.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-relay-adversarial.test.log,       18 lines)
+    === AUDIT TEST relay-adversarial: A5-09 and A5-08 FIXED (F1 limit fires and persists; F2 weak pass refused), A5-07 documented custody reproduced (F4) ===
+
+########## flipped audit test work-templates/strategy-price-reference (Base fork, T-4/T-5)    (2026-09-09T21:39:39Z)
+$ env FORK_RPC=https://base.drpc.org npx tsx evidence/audit/work-templates/strategy-price-reference.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-strategy-price-reference.log,      227 lines)
+    === AUDIT TEST strategy-price-reference: ALL INVARIANTS HOLD ===
+
+########## audit test governance-nav/t02-vote-weight-survives-exit    (2026-09-09T21:40:26Z)
+$ npx tsx evidence/audit/governance-nav/t02-vote-weight-survives-exit.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t02-vote-weight-survives-exit.log,       95 lines)
+    === SCENARIO GOV-02 vote weight survives exit: capital attack with 2-block exposure (finding demonstrated): PASS ===
+
+########## audit test governance-nav/t05-empty-safe-repricing    (2026-09-09T21:40:34Z)
+$ npx tsx evidence/audit/governance-nav/t05-empty-safe-repricing.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t05-empty-safe-repricing.log,       84 lines)
+    === SCENARIO NAV-02 empty-Safe 1:1 rule re-prices existing shares (finding demonstrated): PASS ===
+
+########## audit test governance-nav/t06-last-holder-inflation    (2026-09-09T21:40:41Z)
+$ npx tsx evidence/audit/governance-nav/t06-last-holder-inflation.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t06-last-holder-inflation.log,       56 lines)
+    === SCENARIO NAV-03 last-holder donation inflation (finding demonstrated; precondition: supply collapsed to dust): PASS ===
+
+########## audit test governance-nav/t09-minretention-boundary    (2026-09-09T21:40:47Z)
+$ npx tsx evidence/audit/governance-nav/t09-minretention-boundary.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t09-minretention-boundary.log,       87 lines)
+    === SCENARIO GOV-06 minRetention boundary (holds as documented): PASS ===
+
+########## audit test governance-nav/t10-one-second-periods-terminal    (2026-09-09T21:40:54Z)
+$ npx tsx evidence/audit/governance-nav/t10-one-second-periods-terminal.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t10-one-second-periods-terminal.log,      100 lines)
+    === SCENARIO GOV-07 1 s / 1 s and uint32-max periods are terminal for decisions, not for exit (accepted by principle, demonstrated): PASS ===
+
+########## audit test governance-nav/t11-same-tx-roundtrip    (2026-09-09T21:41:01Z)
+$ npx tsx evidence/audit/governance-nav/t11-same-tx-roundtrip.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t11-same-tx-roundtrip.log,       96 lines)
+    === SCENARIO NAV-04 same-transaction deposit + exit never profits (holds): PASS ===
+
+########## audit test governance-nav/t12-sponsor-order-delays-execution    (2026-09-09T21:41:08Z)
+$ npx tsx evidence/audit/governance-nav/t12-sponsor-order-delays-execution.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t12-sponsor-order-delays-execution.log,       97 lines)
+    === SCENARIO GOV-08 sponsorship-order processing delays later executions (holds as documented): PASS ===
+
+########## audit test governance-nav/t13-ready-proposal-vs-later-depositor    (2026-09-09T21:41:15Z)
+$ npx tsx evidence/audit/governance-nav/t13-ready-proposal-vs-later-depositor.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-t13-ready-proposal-vs-later-depositor.log,       85 lines)
+    === SCENARIO NAV-06 Ready proposal executes against a later depositor (finding demonstrated; mitigation informational only): PASS ===
+
+########## audit test work-templates/factory-create2-onlysafe    (2026-09-09T21:41:22Z)
+$ npx tsx evidence/audit/work-templates/factory-create2-onlysafe.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-factory-create2-onlysafe.log,      118 lines)
+    === AUDIT TEST factory-create2-onlysafe: ALL INVARIANTS HOLD ===
+
+########## audit test account-relay/intent-account.test    (2026-09-09T21:41:28Z)
+$ npx tsx evidence/audit/account-relay/intent-account.test.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-intent-account.test.log,       16 lines)
+
+########## audit test ops-economic/T01-founder-key-compromise    (2026-09-09T21:41:35Z)
+$ npx tsx evidence/audit/ops-economic/T01-founder-key-compromise.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T01-founder-key-compromise.log,      107 lines)
+    === SCENARIO OPS-01 founder-key-compromise: PASS ===
+
+########## audit test ops-economic/T02-sponsor-key-compromise    (2026-09-09T21:41:42Z)
+$ npx tsx evidence/audit/ops-economic/T02-sponsor-key-compromise.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T02-sponsor-key-compromise.log,       58 lines)
+    === SCENARIO OPS-02 sponsor-key-compromise: PASS ===
+
+########## audit test ops-economic/T04-usdc-blacklist    (2026-09-09T21:41:48Z)
+$ npx tsx evidence/audit/ops-economic/T04-usdc-blacklist.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T04-usdc-blacklist.log,      113 lines)
+    === SCENARIO OPS-05/06 usdc-blacklist: PASS ===
+
+########## audit test ops-economic/T05-deploy-refusals    (2026-09-09T21:41:55Z)
+$ npx tsx evidence/audit/ops-economic/T05-deploy-refusals.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T05-deploy-refusals.log,       23 lines)
+    === OPS-08 deploy-refusals: PASS (observations recorded) ===
+
+########## audit test ops-economic/T06-capture-small-treasury    (2026-09-09T21:41:59Z)
+$ npx tsx evidence/audit/ops-economic/T06-capture-small-treasury.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T06-capture-small-treasury.log,      108 lines)
+    === SCENARIO ECO-01/02/03 capture-small-treasury: PASS ===
+
+########## audit test ops-economic/T07-config-shortening    (2026-09-09T21:42:06Z)
+$ npx tsx evidence/audit/ops-economic/T07-config-shortening.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T07-config-shortening.log,      111 lines)
+    === SCENARIO ECO-04 config-shortening: PASS ===
+
+########## audit test ops-economic/T08-spam-economics    (2026-09-09T21:42:12Z)
+$ npx tsx evidence/audit/ops-economic/T08-spam-economics.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T08-spam-economics.log,      111 lines)
+    === SCENARIO ECO-05 spam-economics: PASS ===
+
+########## audit test ops-economic/T09-hidden-treasury-effect    (2026-09-09T21:42:19Z)
+$ npx tsx evidence/audit/ops-economic/T09-hidden-treasury-effect.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T09-hidden-treasury-effect.log,      111 lines)
+    === SCENARIO ECO-06/OPS-07 hidden-treasury-effect: PASS ===
+
+########## audit test ops-economic/T10-contract-member    (2026-09-09T21:42:27Z)
+$ npx tsx evidence/audit/ops-economic/T10-contract-member.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T10-contract-member.log,       87 lines)
+    === SCENARIO ECO-07 contract-member: PASS ===
+
+########## audit test ops-economic/T11-exit-cost-deployed-capital    (2026-09-09T21:42:34Z)
+$ npx tsx evidence/audit/ops-economic/T11-exit-cost-deployed-capital.ts
+EXIT 0   (full output: evidence/phase5/stage-d/audit-T11-exit-cost-deployed-capital.log,      110 lines)
+    === SCENARIO ECO-08 exit-cost-deployed-capital: PASS ===
+
+finished: 2026-09-09T21:42:40Z
+
+########## no-admin grep + vendor / docs checks (reviewer, run in the clean clone)    (2026-09-09T21:45:03Z)
+$ grep -rniE 'onlyowner|ownable|selfdestruct|delegatecall|upgradeTo|initializer' contracts --include='*.sol' | grep -v '^contracts/vendor/'
+    (no match: no owner, no upgrade, no delegatecall, no selfdestruct outside contracts/vendor)
+$ grep -rnE '^\s*address (public|private|internal)?\s*(owner|admin|governor|operator_)' contracts --include='*.sol' | grep -v vendor
+    (no match: no owner/admin state variable)
+$ grep -rn 'function pause' contracts --include='*.sol' | grep -v vendor   # the two ERC-20s Baal calls
+    contracts/LootToken.sol:39:    function paused() external pure returns (bool) {
+    contracts/LootToken.sol:43:    function pause() external pure {
+    contracts/LootToken.sol-44-        revert PermanentlyUnpaused();
+    contracts/NavShareToken.sol:135:    function paused() external pure returns (bool) {
+    contracts/NavShareToken.sol:139:    function pause() external pure {
+    contracts/NavShareToken.sol-140-        revert PermanentlyUnpaused();
+$ diff -u node_modules/@daohaus/baal-contracts/contracts/Baal.sol contracts/vendor/Baal.sol | grep -cE '^[-+][^-+]'   # size of the Baal fork
+    24 changed lines (cap 8,000,000 + registerProposal x2 + exitedSince retention + 2 imports/comments)
+$ diff -q node_modules/@gnosis.pm/safe-contracts/contracts/libraries/MultiSendCallOnly.sol contracts/vendor/MultiSendCallOnly.sol
+    identical (vendored verbatim)
+$ diff -q node_modules/@daohaus/baal-contracts/contracts/interfaces/IBaalToken.sol contracts/vendor/interfaces/IBaalToken.sol
+    identical (vendored verbatim)
+$ wc -l README.md beacon/templates/README.txt   # both capped at 44 by the goal
+          44 README.md
+          44 beacon/templates/README.txt
+          88 total
+$ git diff --stat 10923ea..HEAD -- docs/CONSTITUTION.md CLAUDE.md   # must be empty
+    (empty: the constitution and the CLAUDE.md principle are untouched by phases 4 and 5)
+
+ALL 37 STEPS EXIT 0 (scenarios A-L, K on a Base fork, e2e:relay, 11 flipped audit tests, 20 remaining audit tests).
+
+Provenance: every step above ran at commit 2d2999b, the last commit that touches code or tests. The only later commit
+adds this log, evidence/phase5/stage-d/, the stage D review in decision.md and one PARAMETERS line:
+$ git diff --stat 2d2999b..HEAD -- . ':!evidence/phase5' ':!decision.md' ':!docs/PARAMETERS.md'
+     evidence/audit/governance-nav/logs/t11-same-tx-roundtrip.log | 4 ++++
+    Only that test's own output log; no contract, script, scenario or audit test changed after the run, and no gate
+    reads decision.md or docs/PARAMETERS.md, so this run stands for the final tree.
