@@ -28,14 +28,20 @@ Environment: `ZERO_ONE_DEPLOYMENT` (deployment record; default `deployments/loca
 ## Endpoints (GET only, JSON, `Cache-Control: no-store`, CORS `*`)
 - `/health.json`: service, chain, adapter, Baal, Safe, settlement, constitution, sponsor address and balance, policy, verbs, queue.
 - `/me/<address>.json`, `/me/pass/<sha256(pass)>.json`: identity (`delegated`, intent `nonce`, `authorizationNonce`,
-  `chainTime`, EIP-712 `domain`), `shares`, `percent`, `navUsdcPerShare` (deposit NAV), `settled`, `depositTreasury` (raw USDC), `exitValueUsdc` (Safe only), `usdc`, `openProposals`
-  (state, `votingEnds`, `graceEnds`, seconds remaining, decoded `calls`, `treasuryEffect`, `myVote`, `canVote`,
-  `canExecute`, `proposalData`), `myProposals`, `myTasks` (role + what is pending), `openTasks`, `ragequit.data`
-  (the exact `abi.encode(address[])`), `pollSeconds: 3600`.
+  `chainTime`, EIP-712 `domain`), `shares`, `percent`, `navUsdcPerShare` (deposit NAV per share, divided by shares +
+  `shareLiability` as DepositShaman prices it), `settled`, `depositTreasury` (raw USDC), `shareLiability` (rewardShares of
+  Active tasks), `exitValueUsdc` (Safe only), `usdc`, `openProposals`
+  (state, `votingEnds`, `graceEnds`, seconds remaining, decoded `calls`, `treasuryEffect`, `flags`, `myVote`, `canVote`,
+  `canExecute`, `proposalData`), `warnings` (one line per flag of every open proposal), `myProposals`, `myTasks` (role +
+  what is pending), `openTasks`, `ragequit.data` (the exact `abi.encode(address[])`), `pollSeconds: 3600`.
 - `/proposals.json`: every proposal with state, deadlines, votes, sponsor, submitter, decoded calls, USDC leaving the
-  Safe, the template instance (`describe()` + code hash) when the details carry one, and the exact `proposalData`.
-- `/state.json`: treasury (Safe USDC, shares, deposit NAV, `settled`, `depositTreasury` in raw USDC), members, proposals, tasks, governance parameters, constitution hash
+  Safe, USDC approved on the Safe, `flags`, the template instance (`describe()` + code hash) when the proposal's own calls
+  touch one, and the exact `proposalData`.
+- `/state.json`: treasury (Safe USDC, shares, deposit NAV, `settled`, `depositTreasury` and `shareLiability` in raw units),
+  members, proposals, tasks, governance parameters, constitution hash
   (same builder as the beacon; passthrough of `ZERO_ONE_STATE_FILE` when set).
+- `/pending.json`: the signed-transaction journal (hash, nonce, digest) and every request this relay has not finished, plus
+  the note that an intent is answered `ok` only after its transaction is on chain (phase 5 ruling 7).
 - `/relay?intent=<base64url JSON {message, signature[, authorization]}>`: T1 intents (below).
 - `/relay?op=join&authorization=<base64url JSON {chainId,address,nonce,r,s,yParity}>`: T1 join.
 - `/relay?op=quote&member=&template=&params=[&summary=&salt=]`: read-only propose quote: the deterministic instance
@@ -88,9 +94,14 @@ Template ids: 0 Payment, 1 Strategy, 2 Project, 3 Config. T0 does both steps in 
 verb: build them with `src/proposals.ts` and submit to Baal directly.
 
 ### T0 (custodial-lite)
-`pass` is 32..256 characters; the key is HMAC-SHA256(service secret, `zero-one-t0-v1:` + pass). The relay signs the
+`pass` is 32..256 characters AND must carry at least 128 bits of estimated entropy (`relay/pass.ts`; phase 5 ruling 9,
+audit A5-08), because `op=identity&pass=` maps any pass to its address for free: 32 random bytes as base64url or hex, or
+10+ random words. A pass below the floor is refused with the estimate, before any address is revealed. The key is
+HMAC-SHA256(service secret, `zero-one-t0-v1:` + pass). The relay signs the
 authorization and every intent with it and records `sha256(pass)` -> address for `/me/pass/<hash>.json`. The
-service can sign for these accounts; a pass in a URL can land in fetch/proxy logs. Verbs and query parameters:
+service can sign for these accounts; a pass in a URL can land in fetch/proxy logs. What the operator can and cannot do
+is in the README: it cannot substitute code or targets (the signature binds them), and it can delay or drop an intent,
+so anything a T0 member cannot afford to lose goes through T1 (own key). Verbs and query parameters:
 `join`, `identity`, `deposit&amount=`, `vote&proposalId=&approve=yes|no`, `execute&proposalId=[&data=]`,
 `task&taskId=`, `deliver&taskId=&evidence=|evidenceHash=`, `confirm&taskId=&evidence=`, `ragequit[&amount=|all][&tokens=]`,
 `work&verifiers=a,b&threshold=&rewardShares=&details=[&expiration=]`, `propose&template=&params=[&summary=&salt=]`.
@@ -123,9 +134,14 @@ A sponsored template deployment (inside `propose`) requires >= sponsorThreshold 
 `README.txt` (<= 44 lines: the principle, the eight verbs with exact intent formats, T0/T1 pointers, addresses,
 constitution URL + hash), `llms.txt`, `state.json`, `proposals.json`, `snippet.js`, `snippet.py`, `index.html`
 (dashboard: tables from state.json; no gradients, emoji, purple or black), `CONSTITUTION.md` (exact bytes), `robots.txt`.
-`npm run beacon:validate -- --deployment <file> --out <dir>` asserts the README line count and content, that every
-address in `state.json` (contracts and template instances) has code on the chain, no unfilled placeholders, the
-dashboard's design rules, and that the published constitution bytes hash to the on-chain hash.
+`npm run beacon:validate -- --deployment <file> --out <dir>` asserts the README line count (<= 44, the count is in the
+output as `readmeLines`) and content -- the principle, the eight verbs, the intent type, the constitution hash, every
+address, the phase 5 settlement rule, the exit rule, the T0 operator line ("the relay operator can delay or drop your
+intents; anything you cannot afford to lose goes through T1"), the 128-bit pass floor and `/pending.json` -- that every
+address in `state.json` (contracts and template instances) has code on the chain, that `state.json` carries `settled`,
+`depositTreasury`, `shareLiability` and, per proposal, `flags` and `treasuryEffect.usdcApproved` with the instance panel
+bound to the proposal's own calls, no unfilled placeholders, the dashboard's design rules, and that the published
+constitution bytes hash to the on-chain hash.
 
 ## Mirror E2E (`npm run e2e:relay`, evidence `evidence/relay-e2e-mirror-2026-09-08-one-intent-propose.log`)
 Fresh anvil (prague) -> deploy + genesis (founder 50 USDC) -> sponsor float -> relay -> beacon build + validate ->
@@ -215,3 +231,32 @@ The deployment record carries `treasuryLedger`; absent that field, the reader re
 at the same block. An old factory without a ledger fails the read rather than fabricating phase 4 values
 (provisional compatibility choice in decision.md phase 4 designQuestions). Existing deployments are not modified.
 `TreasuryNotSettled` is decoded from the DepositShaman ABI and returns a 422 revert with the named error.
+
+
+## Phase 5 stage C: what agents read and what the relay refuses (rulings 6, 7, 9, 10)
+Treasury effect (`relay/chain.ts`, shared by `/me`, `/proposals.json`, `/state.json` and the beacon):
+`treasuryEffect.usdcOut` (transfer / transferFrom out of the Safe), `usdcApproved` (approve / increaseAllowance
+by the Safe) and `usdcAtRisk` (their sum). An unbounded `approve` is therefore no longer reported as an effect
+of zero (ECO-06). Any inner transaction with `operation != 0` is labelled `DELEGATECALL ...` and flagged; the
+deployment's multisend library is MultiSendCallOnly, so such a proposal reverts at execution.
+
+The template-instance panel is bound to the DECODED CALLS (A5-11): the candidates are the non-DAO addresses the
+voted multicall calls and that answer `describe()`. A details JSON naming an address none of the proposal's calls
+touches produces a `details:` flag and no panel, so a benign-looking instance can no longer be shown next to a
+payment to someone else. `flags` (per proposal) and `/me.warnings` (per member) also carry the Config warnings:
+voting + grace below the 3,600 s poll cadence (ECO-04), `quorumPercent > 100`, `sponsorThreshold >= totalShares`,
+a `votingPeriod` that overflows `uint32(now) + votingPeriod`, and either period 0 (`NotApplied`). Nothing is
+refused on chain; the DAO may set any value (ruling 10 rejected an on-chain cap).
+
+Refusals and honesty: rate-limit buckets are counted and written to `db.json` before a request can be rejected
+(A5-09; the bucket key is still `cf-connecting-ip`, so the relay must sit behind Cloudflare or answer only on
+loopback), a T0 pass must clear the 128-bit floor above (A5-08), and a duplicate intent is answered `ok` only from
+a receipt that exists on chain -- a recorded row whose transaction is on no block is dropped and the intent is
+broadcast again (A5-10). `/pending.json` shows the journal and every unfinished request.
+
+`npm run e2e:relay` step 18 proves all of it over HTTP on a fresh anvil: `/pending.json`, an honest replay
+answered from its receipt, a hand-rewritten `db.json` row refused, a hostile proposalData (2^128 allowance +
+a delegatecall + a details JSON naming proposal #1's Payment instance) rendered with three flags and no panel,
+a Config of 4 s / 1 s and quorum 101 flagged unpollable and terminal, the sentence pass refused, and the
+persisted per-IP counter. Evidence: `evidence/phase5/relay-e2e-stageC.log`,
+`evidence/phase5/A5-08-A5-09-relay-adversarial.log`, `evidence/phase5/beacon-validate-stageC.log`.

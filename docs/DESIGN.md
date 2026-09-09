@@ -39,12 +39,13 @@ A member that does not vote and does not leave is exposed to a passed proposal. 
 - Anything else (another asset, a different price, a grant) is an ordinary proposal that members vote on.
 - Out: ragequit any time, in the same block, pro-rata of the Safe only; funds in open instances stay with remaining members.
 
-## 6c. Settlement rule
+## 6c. Settlement rule (phase 5 rulings 4a-4c amend this section)
 - TreasuryLedger has immutable Safe, settlement and factory bindings, with no administrator.
-- Factory-recorded instances enter the active set on voted start and leave on completion, stop or migration.
+- Factory-recorded instances enter the active set on voted start and leave on completion, stop or migration; a stopped Strategy stays in it while it still holds its asset.
 - Strategy assets register once on open and remain registered forever; defeated or action-failed starts never enter.
-- Deposits revert TreasuryNotSettled while an open instance holds its asset or the Safe holds any registered asset, even 1 wei.
-- A settlement/sweep proposal clears the holdings; deposits resume automatically at Safe plus open-instance USDC NAV.
+- Deposits revert TreasuryNotSettled while an OPEN instance holds its asset. Safe balances are never consulted: dust on the Safe never pauses deposits (it is shared by exit only).
+- A later vote clears it: migrate() moves the raw holdings, unwind() sells them on the venue under the voted slippage bound; deposits then resume by themselves at Safe plus open-instance USDC NAV.
+- Deposit price = amount x (shares + the rewardShares of Active tasks) / that NAV: shares already voted away are priced in before they are minted.
 - Assets are never valued for deposits. Ragequit remains pro-rata of the Safe only.
 
 ## 7. Proposal contracts and templates (user 2026-09-08: the vote is on the contract)
