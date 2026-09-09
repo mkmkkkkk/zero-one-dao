@@ -9,10 +9,10 @@ relay up at http://127.0.0.1:18945; default per-IP rate = 30/min
    estimator: "correct horse battery staple correct horse!" -> 51.7 bits (floor 128)
    -> 400 pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its addres
    estimator: 32 random bytes as base64url -> 282.5 bits
-   strong pass -> 0xeE5236BeEf6Ef7C1e29f21085ca23AE2D517E317 (deterministic, delegated=false); guessing now costs the full 128 bits, not a dictionary
+   strong pass -> 0x943b1D609B8ba39EaC21244dCA1540eb9FC1Ada2 (deterministic, delegated=false); guessing now costs the full 128 bits, not a dictionary
 
 == F4 the relay's secret fully determines every T0 private key
-   secret (state/relay/secret) + pass reproduces the exact key -> 0xeE5236BeEf6Ef7C1e29f21085ca23AE2D517E317
+   secret (state/relay/secret) + pass reproduces the exact key -> 0x943b1D609B8ba39EaC21244dCA1540eb9FC1Ada2
    whoever holds this 32-byte secret can sign ANY intent (propose/vote/ragequit) for EVERY T0 account
 
 === AUDIT TEST relay-adversarial: A5-09 and A5-08 FIXED (F1 limit fires and persists; F2 weak pass refused), A5-07 documented custody reproduced (F4) ===
