@@ -319,3 +319,27 @@ verbatim vendored files, and `git diff 10923ea..HEAD -- docs/CONSTITUTION.md CLA
 5. Not part of stage D and still open: the Base fork rehearsal of a whole deployment (`npm run e2e:base-fork`) and the mainnet
    sequence. `evidence/phase4/beacon-validate.log` is still rewritten by `e2e:relay` (path and run id only); it is restored after
    each run, and stage D's own beacon receipt is in `evidence/phase5/stage-d/e2e-relay.log`.
+
+## 2026-09-10 phase 5 stages B/C/D review (Fable) — accepted, with these rulings on the deviations
+- Stage B: TWAP venue proven on a pinned Base fork (block 51,000,000); a 25% same-block print moves neither price() nor
+  value() and the run refuses on the bound; the fresh-pool constructor refusal is proven. Accepted. The two reds were test
+  infrastructure (anvil's zero-margin gas estimate; cold fork storage), not contract defects: correct call.
+  T-12(a) liveness (a strategy with slippageBps 50 refuses runs while spot and TWAP diverge by more than 0.5%) is accepted
+  and disclosed; the bound is voted per strategy, so a volatile pair votes a wider one.
+- Stage C: accepted, including the two deliberate departures. `usdcApproved` / `usdcAtRisk` reported next to `usdcOut`
+  rather than folded into it is the better disclosure (an allowance is not a transfer, and it is flagged). The entropy
+  estimator being this repo's own and dictionary-blind is accepted: the floor exists to stop a sentence, not to certify a
+  pass. Ruling: `navUsdcPerShare` published by the relay divides by shares + active task liability, so the published number
+  is what a deposit actually pays; the exit number is separate and lower, and both are named in /me.
+- Stage D (reviewer): accepted and valued. It found that the clean clone never ran at all (npm ci links no anvil shim
+  because two packages declare the same bin) and that six audit tests outside the flipped set were red against the new
+  signatures. This is why a reviewer re-runs from a clean clone instead of trusting reports.
+  NAV-04 consequence recorded as a disclosure, not a defect: a deposit made while capital is deployed prices on the ledger
+  while an immediate exit pays pro-rata of the Safe alone, so a same-window round trip loses money. Deposit price >= exit
+  price is the property that keeps the round trip unprofitable; it is stated in the README and PARAMETERS.
+  Ruling 6's consequence stands: a passed proposal that grants an allowance is disclosed and flagged, never blocked. Any
+  member may propose anything; the remedy is NO or exit.
+- Open: the retention accounting (ruling 2's implementation) is under a second review by gpt-6-astra against the code, on
+  the decisive sequence "hold 100 at votingStarts, burn 40, mint 40". The design authority's answer: the per-account deficit
+  (0) is correct; permanent cohort accounting would give any 34% holder a free veto while it keeps its stake. If the code
+  reports 40, it is a defect and the deficit semantics win.
