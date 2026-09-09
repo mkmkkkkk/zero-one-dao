@@ -445,3 +445,22 @@ changed. New: `relay/static.ts`, `relay/e2e-entry-point.ts` (`npm run e2e:entry-
 10. `npm run e2e:relay` needed one change to stay green: the relay it starts now runs with `RELAY_BEACON_DIR` at the
    directory that run builds, and the final rebuild refreshes that directory too. Without it the validator correctly
    refused, because the origin the README named served no README. It found the bug it exists to find on its first run.
+
+## 2026-09-10 entry point review (Fable) — accepted; going live is gated on the retention fix
+Accepted as built. The relay now serves the entry files itself on exact paths, reads no request header at all (so no
+user-agent sniffing and nothing to sniff for), refuses to start if a future edit makes a static path shadow a dynamic one,
+and answers a JSON 404 naming the rebuild command when no build is present. The canonical origin is the relay's own
+hostname and the Vercel build is the same builder with a mirror flag, so the mirror keeps working unchanged.
+The part that matters most is the validator: it derives the origin from the README's own text, fetches every path the README
+advertises, and fails if any answer is not a 200 of the expected type, if a bot-mitigation header appears, or if a path the
+README advertises has no probe. Its negative control fails against a captured challenge page. Today's outage passed every
+old check precisely because nothing tested the entry point the way an agent uses it.
+Two defects it found on its first run are the evidence that it works: the relay started by the end-to-end suite served no
+README at the origin its own README named, and the Vercel mirror had no route for a path the README advertises.
+Ruling on sequencing: the mini relay is not switched to this code yet. The branch is mid-redesign on the retention rule, and
+the live Sepolia relay must not run a half-finished branch. Order: retention mechanism lands, full acceptance re-runs, the
+branch merges, then the mini relay gets the beacon directory and the canonical build, then the mirror is rebuilt.
+Consequence accepted meanwhile: the canonical URL answers its JSON 404 and the mirror still challenges some addresses.
+Sepolia has no external members, so nothing is lost.
+Noted as true and not fixable by a probe: a validator run from our own address cannot tell what an agent on a datacenter
+address sees, because the challenge is IP reputation. That is an argument for owning the origin, which is what we did.
