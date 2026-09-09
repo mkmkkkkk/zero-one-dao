@@ -6,11 +6,15 @@
  * to the stayers (A included) when the project returns its unspent 2000. Expected: demonstrated; the
  * phase 4 ledger prices deposits on Safe + open instances but leaves ragequit on the Safe alone, so
  * this asymmetry is retained by design and is exactly what makes exit expensive when it matters.
+ *
+ * Phase 5 (ruling 6 / A3): MultiSendCallOnly refuses delegatecall, so "pay A what the Safe holds" is
+ * expressed call-only as `USDC.approve(A, 2**128)` plus A's own `transferFrom` after execution. Nothing
+ * about the exit arithmetic changes; only the shape of the grab does.
  */
 import { assert, fmtS, now, processProposal, propose, proposeTemplate, ragequit, read, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, snapshot, step, usdcOf, verdict, vote, warp, warpPastGrace, warpPastVoting } from "../../../scenarios/lib.js";
 import { encodeFunctionData } from "viem";
 
-import { bootAudit, deployAudit } from "./lib-audit.js";
+import { bootAudit } from "./lib-audit.js";
 
 export async function main(): Promise<void> {
   const mirror = await bootAudit("audit-eco08");
@@ -29,9 +33,8 @@ export async function main(): Promise<void> {
     const deployed = await snapshot(mirror, "after funding", ["F", "A", "B", "C"]);
     assert(deployed.safeSettlement === 1_050n * SETTLEMENT_UNIT && (await usdcOf(mirror, project.instance.address)) === 2_000n * SETTLEMENT_UNIT, "Safe 1050, project instance 2000");
 
-    step("A proposes 'move the Safe balance at execution to A' (delegatecall Drainer); C objects the only effective way: exit during grace");
-    const drainer = await deployAudit(mirror.actors.A, "Drainer");
-    const grab = await propose(mirror, "A", [{ to: drainer.address, operation: 1, data: encodeFunctionData({ abi: drainer.artifact.abi, functionName: "drain", args: [mirror.dao.settlement, A] }) }], "A: pay A what the Safe holds");
+    step("A proposes 'hand A an unlimited USDC allowance on the Safe' (call-only, = the Safe balance at execution); C objects the only effective way: exit during grace");
+    const grab = await propose(mirror, "A", [{ to: mirror.dao.settlement, data: encodeFunctionData({ abi: mirror.abi.settlement, functionName: "approve", args: [A, 2n ** 128n] }) }], "A: pay A what the Safe holds");
     await vote(mirror, "A", grab.id, true);
     await warpPastVoting(mirror, grab.id);
     const exitC = await ragequit(mirror, "C");
@@ -41,7 +44,10 @@ export async function main(): Promise<void> {
     await warpPastGrace(mirror, grab.id);
     const safeLeft = await read<bigint>(mirror, "settlement", "balanceOf", [mirror.dao.safe]);
     const executed = await processProposal(mirror, "A", grab);
-    assert(executed.info.status.passed && !executed.info.status.actionFailed && (await read<bigint>(mirror, "settlement", "balanceOf", [mirror.dao.safe])) === 0n, `A paid ${fmtS(safeLeft)} = the Safe after C's exit (B, F asleep; C's 16.4% exit is below the 34% trigger)`);
+    assert(executed.info.status.passed && !executed.info.status.actionFailed, "the allowance proposal executed");
+    const pull = await mirror.actors.A.walletClient.writeContract({ address: mirror.dao.settlement, abi: mirror.abi.settlement, functionName: "transferFrom", args: [mirror.dao.safe, A, safeLeft], account: mirror.actors.A.account, chain: mirror.actors.A.chain });
+    await mirror.chain.publicClient.waitForTransactionReceipt({ hash: pull });
+    assert((await read<bigint>(mirror, "settlement", "balanceOf", [mirror.dao.safe])) === 0n, `A paid ${fmtS(safeLeft)} = the Safe after C's exit (B, F asleep; C's 16.4% exit is below the 34% trigger)`);
 
     step("the project ends unspent; the 2000 return to the Safe and belong to the stayers (A, B, F) including C's forfeited part");
     await warp(mirror, 86_400 + 5, "past the project deadline");

