@@ -164,18 +164,18 @@ of those is a cold 22,100-gas store, which is where a ragequit's gas now goes:
 
 | Exit | Lots | Gas |
 | --- | --- | --- |
-| First exit of the DAO, member holding lots from 4 proposals | 4 | **796,196** |
+| First exit of the DAO, member holding lots from 4 proposals | 4 | **796,184** |
 | First exit of a fresh DAO, one genesis lot | 1 | 683,699 |
-| Later exit, one lot, tree already written | 1 | 282,420 |
+| Later exit, one lot, tree already written | 1 | 282,408 |
 | Later exit, one genesis lot (epoch 0), tree already written | 1 | 317,590 |
 
-Pre-phase-5 ragequit was ~120k. The first exit in a DAO pays a one-time premium of ~370-400k gas for
+Pre-phase-5 ragequit was ~120k. The first exit in a DAO pays a one-time premium of ~366k gas for
 writing the tree (683,699 against 317,590 for the same single genesis lot once the nodes are
 non-zero); after that a node costs the warm ~5k instead of the cold 22.1k, which is why the warm
-numbers land near 300k. Multiple lots add their own unshared nodes on top: 796,196 for four.
+numbers land near 300k. Extra lots add their own unshared nodes on top: 796,184 for four.
 
 At 0.05 gwei a 796k exit costs 0.00004 ETH, so this is a design cost, not an affordability problem —
-but the public copy should say that exiting is a 300k-800k gas transaction, not a ~120k one, and that
+but the public copy should say that exiting is a 280k-800k gas transaction, not a ~120k one, and that
 the member who exits first carries the tree for everyone after it.
 
 ## Testnet-only artifacts that never reach mainnet
