@@ -94,9 +94,9 @@ export async function main(): Promise<void> {
     const otherParams = await predictInstance(mirror.actors.A, mirror.dao, { template: "Payment", params: { recipients: [O], amounts: [101n * SETTLEMENT_UNIT] } }, A, salt);
     invariant("T-1", new Set([predicted, otherSalt, otherMember, otherParams]).size === 4, `salt, member and params each change the address (${predicted}, ${otherSalt}, ${otherMember}, ${otherParams})`);
     const deployerAbi = loadLocalArtifact("PaymentDeployer").abi;
-    const code = (await mirror.chain.publicClient.readContract({ address: mirror.dao.templateDeployers[0]!, abi: deployerAbi, functionName: "initCode", args: [A, params] })) as Hex;
+    const code = (await mirror.chain.publicClient.readContract({ address: mirror.dao.templateDeployers[0]!, abi: deployerAbi, functionName: "initCode", args: [A, params, mirror.dao.treasuryLedger] })) as Hex;
     const creation = loadLocalArtifact("PaymentProposal").bytecode as Hex;
-    invariant("T-1", code.toLowerCase().startsWith(creation.toLowerCase()), `deployer.initCode(member, params) == PaymentProposal.creationCode (${creation.length / 2 - 1} bytes) ‖ abi.encode(safe, settlement, member, params)`);
+    invariant("T-1", code.toLowerCase().startsWith(creation.toLowerCase()), `deployer.initCode(member, params, ledger) == PaymentProposal.creationCode (${creation.length / 2 - 1} bytes) ‖ abi.encode(safe, settlement, member, params)`);
     const expected = getAddress(`0x${keccak256(`0xff${mirror.dao.templateDeployers[0]!.slice(2)}${salt.slice(2)}${keccak256(code).slice(2)}` as Hex).slice(26)}`);
     invariant("T-1", expected === getAddress(predicted), `keccak256(0xff ‖ deployer ‖ salt ‖ keccak256(initCode))[12:] == predicted (${expected})`);
     for (const [name, deployer] of [["PaymentDeployer", mirror.dao.templateDeployers[0]!], ["StrategyDeployer", mirror.dao.templateDeployers[1]!], ["ProjectDeployer", mirror.dao.templateDeployers[2]!], ["ConfigDeployer", mirror.dao.templateDeployers[3]!]] as const) {
