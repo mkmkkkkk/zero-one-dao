@@ -35,13 +35,21 @@ export async function startBaseFork(runId: string): Promise<Devnet> {
   }
   throw new Error("BLOCKED: every Base fork RPC failed; see the exact Anvil errors above");
 }
-/** Impersonate a live USDC-rich address only inside the verified fork; never mint or set USDC storage. */
-export async function fundForkUsdc(devnet: Devnet, to: Address, amount: bigint): Promise<void> {
+/**
+ * Impersonate a live USDC-rich address only inside the verified fork; never mint or set USDC storage.
+ *
+ * Args:
+ *   devnet: The owned loopback fork.
+ *   to: Recipient of the USDC.
+ *   amount: USDC base units to move.
+ *   holder: Optional address to impersonate; default `FORK_USDC_HOLDER` or the Base WETH/USDC 0.05% pool.
+ */
+export async function fundForkUsdc(devnet: Devnet, to: Address, amount: bigint, holder?: Address): Promise<void> {
   await assertBaseFork(devnet.rpcUrl);
   const local = connectDevnet(devnet);
   const tokenAbi = parseAbi(["function decimals() view returns (uint8)", "function balanceOf(address) view returns (uint256)", "function transfer(address,uint256) returns (bool)"]);
   if (await local.publicClient.readContract({ address: BASE_USDC, abi: tokenAbi, functionName: "decimals" }) !== 6) throw new Error("USDC proxy decimals != 6");
-  const holder = process.env.FORK_USDC_HOLDER ? getAddress(process.env.FORK_USDC_HOLDER) : await local.publicClient.readContract({ address: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD", abi: parseAbi(["function getPool(address,address,uint24) view returns (address)"]), functionName: "getPool", args: [BASE_USDC, "0x4200000000000000000000000000000000000006", 500] });
+  holder ??= process.env.FORK_USDC_HOLDER ? getAddress(process.env.FORK_USDC_HOLDER) : await local.publicClient.readContract({ address: "0x33128a8fC17869897dcE68Ed026d694621f6FDfD", abi: parseAbi(["function getPool(address,address,uint24) view returns (address)"]), functionName: "getPool", args: [BASE_USDC, "0x4200000000000000000000000000000000000006", 500] });
   const balance = await local.publicClient.readContract({ address: BASE_USDC, abi: tokenAbi, functionName: "balanceOf", args: [holder] });
   if (balance < amount) throw new Error(`USDC holder ${holder} has ${balance}, needs ${amount}`);
   const before = await local.publicClient.readContract({ address: BASE_USDC, abi: tokenAbi, functionName: "balanceOf", args: [to] });
