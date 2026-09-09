@@ -198,15 +198,13 @@ async function main(): Promise<void> {
       ["genesis:approve", record.genesis.approveHash],
       ["genesis:deposit", record.genesis.depositHash],
     ];
-    let labelledTotal = 0n;
-    const breakdown: { step: string; gasUsed: string }[] = [];
-    for (const [name, hash] of labelled) {
-      const { gasUsed } = await publicClient.getTransactionReceipt({ hash });
-      labelledTotal += gasUsed;
-      breakdown.push({ step: name, gasUsed: gasUsed.toString() });
-    }
-    assertInvariant(labelledTotal === scanned.total, `the recorded tx hashes account for every deployer transaction (${labelledTotal} vs ${scanned.total} scanned)`);
-    console.log(`ASSERT deployment + genesis total gas ${scanned.total} over ${scanned.rows.length} transactions (record txHashes sum to the same)`);
+    const labelOf = new Map(labelled.map(([name, hash]) => [hash.toLowerCase(), name]));
+    const labelledTotal = labelled.reduce((sum, [, hash]) => sum + (scanned.rows.find((row) => row.hash === hash)?.gasUsed ?? -1n), 0n);
+    assertInvariant(labelledTotal === scanned.total && labelled.length === scanned.rows.length, `the recorded tx hashes are exactly the deployer's transactions (${labelled.length} recorded summing to ${labelledTotal}, ${scanned.rows.length} scanned summing to ${scanned.total})`);
+    // Chain order, not record order: the deployment sequence docs/MAINNET_PLAN.md documents.
+    const breakdown = scanned.rows.map(({ hash, gasUsed }) => ({ step: labelOf.get(hash.toLowerCase()) ?? "UNLABELLED", gasUsed: gasUsed.toString() }));
+    assertInvariant(breakdown.every(({ step }) => step !== "UNLABELLED"), "every deployer transaction is named in the record");
+    console.log(`ASSERT deployment + genesis total gas ${scanned.total} over ${scanned.rows.length} transactions, in chain order (the record's txHashes are the same set and sum)`);
     for (const row of breakdown) console.log(`   gas ${row.gasUsed.padStart(9)} ${row.step}`);
 
     const baalCode = await publicClient.getCode({ address: dao.infrastructure.baalSingleton });

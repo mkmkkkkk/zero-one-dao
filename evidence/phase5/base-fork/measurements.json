@@ -3,10 +3,10 @@
   "fork": true,
   "loopbackRpc": "http://127.0.0.1:11545",
   "forkBlock": 51000002,
-  "sourceCommit": "7cec900f464ff8aed7242f96cfab93706702d232",
+  "sourceCommit": "1f83f1cbd87145268081964f196c93a24d825238",
   "genesisCommit": "dcb3e83d209fc4c1cd4eab5f20434eeb632b5678",
   "deployment": {
-    "totalGas": "24778549",
+    "totalGas": "24778573",
     "transactions": 22,
     "breakdown": [
       {
@@ -46,10 +46,6 @@
         "gasUsed": "575817"
       },
       {
-        "step": "DepositShaman",
-        "gasUsed": "697889"
-      },
-      {
         "step": "WorkManager",
         "gasUsed": "1526142"
       },
@@ -74,8 +70,12 @@
         "gasUsed": "1545219"
       },
       {
+        "step": "DepositShaman",
+        "gasUsed": "697889"
+      },
+      {
         "step": "ZeroOneIntentAccount",
-        "gasUsed": "1343668"
+        "gasUsed": "1343692"
       },
       {
         "step": "Constitution",
@@ -100,12 +100,12 @@
     ]
   },
   "baalFork": {
-    "address": "0x9Eb1d1BF8C69F39A8bA7c0f843D89895d530Abd1",
+    "address": "0x336bF2d078845D9cDdD73309a9eD1448643Ef4FD",
     "runtimeBytes": 19497,
     "eip170Limit": 24576,
     "baalGasCap": "8000000",
     "multiSendCallOnly": {
-      "address": "0x3C7aCc98f6e6003505b9aF5366e1bE3943d89A28",
+      "address": "0x3Dc497584Ca84AC721d1e90050ca65F8C70159df",
       "runtimeBytes": 360
     }
   },
@@ -116,7 +116,7 @@
       "lots": "4",
       "usdcPaid": "43684082",
       "gasUsed": "796196",
-      "hash": "0x18e765c9a8ba729a520e35b74dbcff69b05efd94f69b7899b6aa5803b4640684"
+      "hash": "0xc60ed56cc4fa09f2a7b79b239d2f59b2e25c4d849da7a733550f16162f6af6a9"
     },
     {
       "label": "ragequit: worker with 1 lot (warm retention tree)",
@@ -124,7 +124,7 @@
       "lots": "1",
       "usdcPaid": "7052653",
       "gasUsed": "282420",
-      "hash": "0xe762b5d4559b809b2c016f4f5311f315f8526b0f51fdf943319183f81d713497"
+      "hash": "0x626bda2cf0021345f9b1c4de37352c6e837619be059f4e1675aadbe0c1b3ac1b"
     },
     {
       "label": "ragequit: founder with 1 genesis lot (warm retention tree)",
@@ -132,7 +132,7 @@
       "lots": "1",
       "usdcPaid": "35263265",
       "gasUsed": "317590",
-      "hash": "0x95f50917919cff08e77c3b7226b418a9a14e7042fdd994dc5729e622859f6625"
+      "hash": "0x45b4734981d300d5f018b3030617e262fb6b2329c9bd6a25dbf304d29e94efc6"
     },
     {
       "label": "ragequit: 1 genesis lot, fresh DAO (cold retention tree)",
@@ -140,7 +140,7 @@
       "lots": "1",
       "usdcPaid": "50000000",
       "gasUsed": "683699",
-      "hash": "0xad5bb0c662a4c2a86ae50e4bc46231b8e37a6d057caa7cb560bc8d66ee3bbebc"
+      "hash": "0x383ccc13529b2a73caac3b904e043028d8004367238a5f2c58474ae6b24c7f84"
     }
   ],
   "deposits": [
