@@ -28,3 +28,13 @@
    sweep gas=1600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
    sweep: 45 of 45 low-gas attempts reverted; processed=false passed=false actionFailed=false state=Ready
    processProposal gas=5000000 status=success passed=true actionFailed=false O USDC 10000 -> 10500
+   control  gas=5000000 status=success gasUsed=1178950 passed=true actionFailed=false O USDC 10000 -> 10500
+   proposal #1 baalGas = 1661958 (simulated action need x 1.5)
+   sweep gas=600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=800000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1000000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1200000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1400000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep: 45 of 45 low-gas attempts reverted; processed=false passed=false actionFailed=false state=Ready
+   processProposal gas=5000000 status=success passed=true actionFailed=false O USDC 10000 -> 10500
