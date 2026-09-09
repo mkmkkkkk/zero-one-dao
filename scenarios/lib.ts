@@ -439,7 +439,10 @@ async function write(context: WriteContext, request: { address: Address; abi: Ab
   const simulation = LIVE
     ? await simulateSettled<{ request: Record<string, unknown> }>(context, { ...call, ...(mirror ? { blockNumber: mirror.head } : {}) })
     : await context.publicClient.simulateContract({ ...call, account: context.account } as never);
-  const hash = await context.walletClient.writeContract({ ...simulation.request, ...(gas === undefined ? {} : { gas }), account: context.account, chain: context.chain } as never);
+  // Local Anvil can cross a second after estimation: both account and supply checkpoints then append
+  // instead of overwriting. Leave room for those storage writes; gasUsed remains the measured cost.
+  const sendGas = gas ?? (!LIVE ? await context.publicClient.estimateContractGas({ ...call, account: context.account } as never) + 120_000n : undefined);
+  const hash = await context.walletClient.writeContract({ ...simulation.request, ...(sendGas === undefined ? {} : { gas: sendGas }), account: context.account, chain: context.chain } as never);
   const receipt = await context.publicClient.waitForTransactionReceipt({ hash, timeout: 180_000 });
   if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
   if (mirror !== undefined) bump(mirror, receipt.blockNumber);

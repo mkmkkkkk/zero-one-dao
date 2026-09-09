@@ -6,9 +6,8 @@
  * started exit during vote + grace the proposal fails, which protects the members who stayed.
  *
  * Fix (decision.md phase 5 ruling 2): the Zero One Baal fork replaces the high-water-mark check with
- * NavShareToken.exitedSince(id) <= 34% x supply at votingStarts, where exitedSince counts shares that
- * existed at votingStarts and were burned since. Deposits move neither side: M's refill deposit mints
- * shares but cannot un-burn B's and C's.
+ * NavShareToken.exitedSince(id) <= 34% x supply at votingStarts, where exitedSince sums each account's positive
+ * balance deficit relative to votingStarts. M's refill cannot restore B's and C's balances.
  *
  * Steps: seed → contract member M (1000 USDC deposit) → M proposes "Safe pays M 2000 USDC", votes YES →
  * B and C (2000 of 4050 shares = 49.4%) ragequit during grace → control: plain processProposal fails →
@@ -81,6 +80,8 @@ export async function main(): Promise<void> {
     const safeEnd = await safeUsdc(mirror);
     const supplyEnd = await totalShares(mirror);
     logLine(LOG, `   one tx ${receipt.hash}: processed=${info.status.processed} passed=${info.status.passed} actionFailed=${info.status.actionFailed}; Safe ${fmtS(safeAfterExits)} -> ${fmtS(safeEnd)} USDC; M USDC ${fmtS(mStart)} -> ${fmtS(mEnd)} (net ${fmtS(mEnd - mStart)}; holds ${fmt(await sharesOf(mirror, M))} shares)`);
+    const afterDeficit = await mirror.chain.publicClient.readContract({ address: mirror.dao.shares, abi: mirror.abi.shares, functionName: "exitedSince", args: [id] } as never) as readonly [bigint, bigint];
+    assert(afterDeficit[0] === 2_000n * 10n ** 18n && afterDeficit[1] === hwm, "GOV-03 exact deficit stays 2000 after another member deposits at processing");
     assert(info.status.processed && !info.status.passed, "the proposal was processed as not passed: > 34% of the shares at votingStarts had exited and the deposit changes nothing");
     assert(safeEnd === safeAfterExits + amount && mEnd === mStart - amount, "M's deposit went into the Safe at NAV and no payment left it");
     for (const actor of ["F", "A"] as const) {

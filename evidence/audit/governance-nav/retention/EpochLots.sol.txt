@@ -10,9 +10,14 @@ import {IERC20Metadata} from "./Interfaces.sol";
 /// mint. Every share is minted through Baal by a shaman the DAO chose, and every share is exitable
 /// through Baal.ragequit at any time. Votes equal balance (self-delegated, no delegation).
 ///
-/// Retention is the exact balance deficit at the voting timestamp, not cumulative burns.
-/// exitedSince uses A - S + growth; only recipients of a positive mint after the timestamp
-/// can contribute growth. The append-only journal is scanned by the processor, never by exits.
+/// Retention accounting (phase 5 ruling 2, replaces Baal's high-water mark): Baal registers every
+/// sponsored proposal here (`registerProposal`, the registration index is the proposal's "epoch"). Shares
+/// are held in per-account lots stamped with the epoch they were minted in; burns consume the newest lots
+/// first. `exitedSince(id)` = shares burned after the proposal's registration out of lots minted before it,
+/// i.e. Σ over accounts of max(0, balance at votingStarts − balance now): a deposit made after the vote
+/// opened and exited again (flash or not) never counts, a member who was in at votingStarts and left does.
+/// Implemented as a Fenwick tree over epochs (one point update per lot consumed by a burn); the sum is
+/// exact and costs O(log EPOCHS) on burn and on query, never a loop over accounts or proposals.
 contract NavShareToken {
     using Math for uint256;
 
@@ -21,9 +26,10 @@ contract NavShareToken {
         uint256 votes;
     }
 
-    struct MintRecord {
-        uint32 timePoint;
-        address account;
+    /// @dev Shares minted while `epoch` proposals had been registered (LIFO-consumed by burns).
+    struct Lot {
+        uint32 epoch;
+        uint224 amount;
     }
 
     string public name;
@@ -39,15 +45,23 @@ contract NavShareToken {
     uint256 public totalSupply;
     uint256 public totalBurned;
 
-    /// @notice Sponsorship timestamp; all snapshots use the end of that timestamp, like Baal votes.
-    mapping(uint256 => uint256) public votingStarts;
-    MintRecord[] public mintJournal;
-    /// @dev One-based index of the account's latest positive mint; deduplicates the journal scan.
-    mapping(address => uint256) public lastMintIndex;
-    /// @dev End-of-timestamp supply, initialized at registration even when no balance changes.
-    mapping(uint256 => uint256) private _supplyAtTime;
+    /// @notice Fenwick tree capacity over epochs: at most this many proposals can ever be registered.
+    uint256 public constant MAX_EPOCHS = 1 << 24;
+
+    /// @notice Number of proposals Baal has registered (the epoch new lots are stamped with).
+    uint32 public epoch;
+    /// @notice Registration index of a Baal proposal id (0 = never sponsored).
+    mapping(uint256 proposalId => uint32) public registrationOf;
+    /// @notice Cumulative burned shares when registration `index` happened.
+    mapping(uint32 index => uint256) public burnedAtRegistration;
+    /// @notice Share supply when registration `index` happened (the retention base).
+    mapping(uint32 index => uint256) public supplyAtRegistration;
+    /// @dev Fenwick tree: node i covers burned amounts of lots whose epoch + 1 is in (i - lowbit(i), i].
+    mapping(uint256 => uint256) private _burnedByEpoch;
+
     mapping(address account => uint256) public balanceOf;
     mapping(address account => Checkpoint[]) private _checkpoints;
+    mapping(address account => Lot[]) private _lots;
 
     error OnlyBaal(address caller);
     error ZeroAddress();
@@ -58,6 +72,7 @@ contract NavShareToken {
     error TimePointNotDetermined(uint256 timePoint, uint256 now_);
     error InsufficientBalance(address account, uint256 available, uint256 required);
     error SupplyCapExceeded(uint256 attemptedSupply);
+    error EpochsExhausted();
     error AlreadyRegistered(uint256 proposalId);
     error NotRegistered(uint256 proposalId);
 
@@ -65,7 +80,7 @@ contract NavShareToken {
     event Approval(address indexed owner, address indexed spender, uint256 amount);
     event SharesBurned(address indexed account, uint256 amount, uint256 cumulativeBurned);
     event DelegateVotesChanged(address indexed delegate, uint256 previousBalance, uint256 newBalance);
-    event ProposalRegistered(uint256 indexed proposalId, uint256 votingStarts);
+    event ProposalRegistered(uint256 indexed proposalId, uint32 indexed index, uint256 supply, uint256 burned);
 
     modifier onlyBaal() {
         if (msg.sender != baal) revert OnlyBaal(msg.sender);
@@ -139,13 +154,12 @@ contract NavShareToken {
         if (account == address(0)) revert ZeroAddress();
         uint256 available = balanceOf[account];
         if (available < amount) revert InsufficientBalance(account, available, amount);
-        if (amount == 0) return;
         unchecked {
             balanceOf[account] = available - amount;
             totalSupply -= amount;
         }
         totalBurned += amount;
-        _supplyAtTime[block.timestamp] = totalSupply;
+        _consumeLots(account, amount);
         _writeCheckpoint(account, available, available - amount);
         emit Transfer(account, address(0), amount);
         emit SharesBurned(account, amount, totalBurned);
@@ -153,39 +167,38 @@ contract NavShareToken {
 
     // ---------------------------------------------------------------- Retention accounting (Baal)
 
-    /// @dev Registration changes no balances. Later changes in this timestamp belong to the snapshot.
-    function registerProposal(uint256 proposalId) external onlyBaal {
-        if (votingStarts[proposalId] != 0) revert AlreadyRegistered(proposalId);
-        votingStarts[proposalId] = block.timestamp;
-        _supplyAtTime[block.timestamp] = totalSupply;
-        emit ProposalRegistered(proposalId, block.timestamp);
+    /// @notice Record the start of voting on `proposalId`; callable only by Baal, once per proposal.
+    /// @return index The registration index (the proposal's epoch boundary).
+    function registerProposal(uint256 proposalId) external onlyBaal returns (uint32 index) {
+        if (registrationOf[proposalId] != 0) revert AlreadyRegistered(proposalId);
+        if (epoch >= MAX_EPOCHS - 1) revert EpochsExhausted();
+        index = ++epoch;
+        registrationOf[proposalId] = index;
+        burnedAtRegistration[index] = totalBurned;
+        supplyAtRegistration[index] = totalSupply;
+        emit ProposalRegistered(proposalId, index, totalSupply, totalBurned);
     }
 
-    /// @notice Exact sum of max(0, balanceAtStart - balanceNow), and supply at the same timestamp.
-    /// @dev Scan only post-start mints, counting each recipient once at its latest journal index.
-    /// If this call exhausts the caller's gas budget it reverts; no partial result can be accepted.
+    /// @notice Shares that existed when voting on `proposalId` started and were burned since, and the
+    /// supply at that moment. Shares minted after the registration never count, whoever burns them.
+    /// @return exited Burned shares out of lots minted before the registration (burns after it only).
+    /// @return supplyAtStart Share supply at the registration.
     function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
-        uint256 start = votingStarts[proposalId];
-        if (start == 0) revert NotRegistered(proposalId);
-        if (start >= block.timestamp) revert TimePointNotDetermined(start, block.timestamp);
-        supplyAtStart = _supplyAtTime[start];
-        uint256 lower;
-        uint256 upper = mintJournal.length;
-        while (lower < upper) {
-            uint256 mid = lower + (upper - lower) / 2;
-            if (mintJournal[mid].timePoint <= start) lower = mid + 1;
-            else upper = mid;
-        }
-        uint256 growth;
-        for (uint256 i = lower; i < mintJournal.length; ++i) {
-            address account = mintJournal[i].account;
-            if (lastMintIndex[account] != i + 1) continue;
-            uint256 beforeBalance = _past(_checkpoints[account], start);
-            uint256 current = balanceOf[account];
-            if (current > beforeBalance) growth += current - beforeBalance;
-        }
-        // A + growth >= S by the identity; do not subtract A - S in unsigned arithmetic.
-        exited = supplyAtStart + growth - totalSupply;
+        uint32 index = registrationOf[proposalId];
+        if (index == 0) revert NotRegistered(proposalId);
+        // Lots minted before registration `index` carry epoch <= index - 1, i.e. Fenwick positions 1..index.
+        exited = _prefix(index) - burnedAtRegistration[index];
+        supplyAtStart = supplyAtRegistration[index];
+    }
+
+    /// @notice Number of mint lots `account` holds (informational).
+    function lotCount(address account) external view returns (uint256) {
+        return _lots[account].length;
+    }
+
+    /// @notice One mint lot of `account` (informational).
+    function lot(address account, uint256 index) external view returns (Lot memory) {
+        return _lots[account][index];
     }
 
     // ---------------------------------------------------------------- Votes (timestamp checkpoints)
@@ -198,10 +211,7 @@ contract NavShareToken {
     /// @notice Voting weight of `account` at unix `timePoint`; Baal reads this at proposal votingStarts.
     function getPastVotes(address account, uint256 timePoint) external view returns (uint256) {
         if (timePoint >= block.timestamp) revert TimePointNotDetermined(timePoint, block.timestamp);
-        return _past(_checkpoints[account], timePoint);
-    }
-
-    function _past(Checkpoint[] storage history, uint256 timePoint) private view returns (uint256) {
+        Checkpoint[] storage history = _checkpoints[account];
         uint256 count = history.length;
         if (count == 0) return 0;
         if (history[count - 1].fromTimePoint <= timePoint) return history[count - 1].votes;
@@ -260,7 +270,6 @@ contract NavShareToken {
 
     function _mint(address recipient, uint256 amount) internal {
         if (recipient == address(0)) revert ZeroAddress();
-        if (amount == 0) return;
         uint256 nextSupply = totalSupply + amount;
         if (nextSupply > type(uint224).max) revert SupplyCapExceeded(nextSupply);
         totalSupply = nextSupply;
@@ -268,11 +277,52 @@ contract NavShareToken {
         unchecked {
             balanceOf[recipient] = previous + amount;
         }
-        mintJournal.push(MintRecord(uint32(block.timestamp), recipient));
-        lastMintIndex[recipient] = mintJournal.length;
-        _supplyAtTime[block.timestamp] = totalSupply;
+        _pushLot(recipient, amount);
         _writeCheckpoint(recipient, previous, previous + amount);
         emit Transfer(address(0), recipient, amount);
+    }
+
+    /// @dev Append `amount` to the account's newest lot when it has the current epoch, else open a lot.
+    function _pushLot(address account, uint256 amount) private {
+        Lot[] storage lots = _lots[account];
+        uint256 count = lots.length;
+        if (count != 0 && lots[count - 1].epoch == epoch) {
+            lots[count - 1].amount += uint224(amount);
+        } else {
+            lots.push(Lot({epoch: epoch, amount: uint224(amount)}));
+        }
+    }
+
+    /// @dev Consume `amount` from the account's lots, newest first, crediting each lot's epoch in the tree.
+    function _consumeLots(address account, uint256 amount) private {
+        Lot[] storage lots = _lots[account];
+        while (amount != 0) {
+            Lot storage last = lots[lots.length - 1];
+            uint256 held = last.amount;
+            if (held <= amount) {
+                _addBurned(last.epoch, held);
+                amount -= held;
+                lots.pop();
+            } else {
+                _addBurned(last.epoch, amount);
+                last.amount = uint224(held - amount);
+                amount = 0;
+            }
+        }
+    }
+
+    /// @dev Fenwick point update at position mintEpoch + 1.
+    function _addBurned(uint32 mintEpoch, uint256 amount) private {
+        for (uint256 i = uint256(mintEpoch) + 1; i <= MAX_EPOCHS; i += i & (~i + 1)) {
+            _burnedByEpoch[i] += amount;
+        }
+    }
+
+    /// @dev Fenwick prefix sum over positions 1..`position` (lots with epoch < position).
+    function _prefix(uint256 position) private view returns (uint256 total) {
+        for (uint256 i = position; i != 0; i -= i & (~i + 1)) {
+            total += _burnedByEpoch[i];
+        }
     }
 
     function _writeCheckpoint(address account, uint256 oldVotes, uint256 newVotes) internal {

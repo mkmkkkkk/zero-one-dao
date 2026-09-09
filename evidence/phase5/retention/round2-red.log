@@ -1,0 +1,183 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x9E46d67a617cAB1C53a3A13Be6FCAa502C2aCffA baal 0x48998989123304A9D5a5C663Ab82C36f73f3aEb5 shares 0xD1FCB3E0405029e6A9514b2bff8932d90B007dDd settlement 0x2B1f78F1BF6E22d71b486113039D69f04Bd05B40
+          depositShaman 0x0F38c41A64cD21655D64fc09AeF8200Af2fD6165 workManager 0xbA123DD977c8DC69bed053603F5fb8AA37b5c09e constitution 0xd130332e234a9C09205569309F7B0D3A349e1B65
+          templateFactory 0x0267B4383C85E41d4166242046dC85CfA397F34b deployers 0x32FC2FAFfC702ef605475489d3c069854047b6c8 0xFc950A87c1dA3E7810b916B833D1A1Bc53185212 0x16D9664E4532877eF515D1e2d56c78D99453eeF9 0x6fc3c8dFB99BcA2d98684f01DC4f6228d014D274 intentAccount 0xec59453Cde6ed772C7cfCf3b5Ebf6C9D69c8C863
+   F = 0xbbE629265A912f92b85e8903D8b6E267c65dea07  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xda3a89Ef82B82c743743247ADfCAEbD0A1afB645  member agent A
+   B = 0xD528a82eBa5510Da1caaF3B91c588f3711085661  member agent B
+   C = 0xce077E48b0687256d8BADd02c4bC7386B4Bb4FbC  member agent C
+   D = 0x8D8442A932943115C021d9A6D6d6427602D9ADAC  depositor D (joins later)
+   O = 0xE64085706948f421cb943Af0c9A886FD65213910  operator O (mandate recipient)
+   W = 0x1A2B72ae6984657670c67A4A88c395D84ACF1888  worker W (task deliverer)
+   shaman 0x0F38c41A64cD21655D64fc09AeF8200Af2fD6165 permission 2 (DepositShaman)
+   shaman 0xbA123DD977c8DC69bed053603F5fb8AA37b5c09e permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x32FC2FAFfC702ef605475489d3c069854047b6c8
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xFc950A87c1dA3E7810b916B833D1A1Bc53185212
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x16D9664E4532877eF515D1e2d56c78D99453eeF9
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x6fc3c8dFB99BcA2d98684f01DC4f6228d014D274
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+R2 MODE ORIGINAL dcb3e83 chain=31401
+   tx fund A with 10000 USDC: 0x3564560bf67d29c51db56810d4497a7de8b66c697bfd21bc809be307191d16fc (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x9bf4db5959e6996a443ad5d8bf0576343cd1ac87f5015b64b39d90b5e7a7d346 (block 23, gas 51250)
+   tx A approve deposit shaman: 0x8bbf5b949e1ebcbe11ade0bc25f635a417a5409c3d023af5253337fef3efcf67 (block 24, gas 45889)
+   tx A deposit 100 USDC -> 100 shares (quoted 100): 0x14a3c4f21e6711770cf6beac2b9dcf890a2e526e0f3c99913774d777b37ed56e (block 25, gas 259000)
+   warp +2s -> block 26 timestamp 1788993436
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x9cd5e5bd42aa45e7f62174ad92b9d4d8c0af031d8dd3ebaabee70ebeeb697999 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 100 / no 0: 0x79c76fd31a1201962c9f7575b39d474ecf91da5a977073c4ba795ab7f265098f (block 29, gas 117190)
+R2 Q1 startBalance=100
+   warp +2s -> block 30 timestamp 1788993439
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x35328b08769de2996cd19d7aa6f88b59fb5f12c3eda1a59165cd0c46d2d77004 (block 31, gas 739942)
+   warp +2s -> block 32 timestamp 1788993441
+   tx A approve deposit shaman: 0x2e287a3dc709cadfd843482197683c44582c65ee8bca024dd35ce05d7b2e433d (block 33, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0xb4cccb10559afcdb63182aac765f7647ba04505693061f5a83bbfc78a51e8cf8 (block 34, gas 178451)
+R2 Q1 exitedSince(1) raw=[40000000000000000000,100000000000000000000] balanceNow=100
+R2 Q1 burn40 -> mint40: exited=40 deficit=0 MISMATCH
+   warp +43196s (past grace of #1) -> block 35 timestamp 1789036637
+   proposal #1 state = Ready
+   tx A processProposal #1 -> passed=false actionFailed=false state=Processed: 0xe786d37a3dc231f0adcb57804ea45b7c4011ca977a6e5f757f07f79ced3de318 (block 36, gas 112869)
+R2 Q1 ragequitGas=739942 remintGas=178451 processGas=112869 passed=false actionFailed=false
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0xcde61afec0c586db3463b36b97e824a497790318ca00bf1fd5d8a4f791443ba7 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A approve deposit shaman: 0x3fcc48879f33cdddf47fc16be9e4fb48688c3d9a9799d101cc27c02a5c294e49 (block 30, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0x3c310927736465c3fa2f2368cbc8066ad6651629d3bda35b634f70ffce3eba3f (block 31, gas 178451)
+   warp +2s -> block 32 timestamp 1788993441
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 140 at supply 140): 0xe198a99e490f66c0671f4f689eb1247ff02bd470d7ec16b2873228208c8736cd (block 33, gas 715948)
+R2 mint40 -> burn40: exited=0 deficit=0 MATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x850ad9e26fec73f4573650d53df8d94bded805760a00e0d208acd1c59084757a (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A approve deposit shaman: 0x66cbdffc5a0a52c5eaeb8e185f6eca42614e9c3936b2346d739c7a0d4fe1c1cb (block 30, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0x6b2747eee739299996857cc8825d35d0ba6ef9b194c307199273b1f6831e770d (block 31, gas 178451)
+   warp +2s -> block 32 timestamp 1788993441
+   tx A ragequit 80 shares -> paid 80 USDC (pro-rata of 140 at supply 140): 0x44c7981f4fda6c95c80e979e83e0aa2a29ddd0bbf35d657aef8c539bfff6a192 (block 33, gas 755608)
+   warp +2s -> block 34 timestamp 1788993443
+   tx A approve deposit shaman: 0x4d2f8aeed84ccfd7ef74e8217651e8bc077945e9bdc052aa03d4ff9e1586b6a2 (block 35, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0xc8694718c59d30e51b89e2a6372753f307aee63d6b4c54f3addc996d251c0ea6 (block 36, gas 178451)
+R2 deposit40 -> exit80 -> deposit40: exited=40 deficit=0 MISMATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0xa69f0b5824374ead1f67c990e6a3190c49ed5b51a77b9612e7d9e56171d40b67 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A approve deposit shaman: 0x25f1276fb26ac76be3dc03b25cee98b8ce7d3bce458ff547f9d1f811e6ba20de (block 30, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0xe56c03538050624ad35a0bdd25bf0247df646fe910e2191f5855cbc7ec577cdd (block 31, gas 178451)
+   tx A submitProposal #2 "retention round2" (baalGas 74185): 0xd0d203c4ab8d26d1158340922696d92901ce590c389deaabf24827d4401fc001 (block 32, gas 269487)
+   warp +1s (let votingStarts become past) -> block 33 timestamp 1788993440
+   proposal #2 state = Voting
+   warp +2s -> block 34 timestamp 1788993442
+   tx A ragequit 60 shares -> paid 60 USDC (pro-rata of 140 at supply 140): 0x3344a85295455f4bf55a33adcdc7bbe964767548ec1f740e8d91d7f2be3a2d63 (block 35, gas 755608)
+R2 old+new lots P: exited=20 deficit=20 MATCH
+R2 old+new lots Q: exited=60 deficit=60 MATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x369bdca5dc54953dc9937ddd289224663c954e675e7909a66511ef4153575529 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x3fdd50b1868f46def74f4f2ccf661f9dea707a190a0350121280feeb1d2904dc (block 30, gas 739942)
+   warp +2s -> block 31 timestamp 1788993441
+   tx A approve deposit shaman: 0x3331f11689699adb40a25e9d2549bf1ec6c635849109bc7be487ffa41502fc04 (block 32, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0x30d3277e77c6522a5c3d161d4e10c4707147be231667c99b868b81c01d6fd3c6 (block 33, gas 178451)
+   tx A submitProposal #2 "retention round2" (baalGas 74185): 0x3f92444d976519c9e394df1898d044d69f84d817349f51637897de2588d323e7 (block 34, gas 289387)
+   warp +1s (let votingStarts become past) -> block 35 timestamp 1788993442
+   proposal #2 state = Voting
+   warp +2s -> block 36 timestamp 1788993444
+   tx A ragequit 20 shares -> paid 20 USDC (pro-rata of 100 at supply 100): 0xa18ef0be2b7771bc6de1fa38729896aa59f8018efbfb42d807a4de53457c4bfe (block 37, gas 290063)
+R2 one account two windows P: exited=40 deficit=20 MISMATCH
+R2 one account two windows Q: exited=20 deficit=20 MATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x6a9326d64ebc2fe1db81b585d08a974901b6920ac7153ffa92f73e682df2262c (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A ragequit 0 shares -> paid 0 USDC (pro-rata of 100 at supply 100): 0x866c4b6987c8367425b20bb84fa59c87bf8327c2848e1ce842d8758a74d0a223 (block 30, gas 57793)
+R2 ragequit(0): exited=0 deficit=0 MATCH
+R2 ragequit(0) gas=57793 lots unchanged
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x0129b51e90e3601ab4b75ad38b5b3d9ad43a684b81a708a909283921b6cd3351 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x09273962146f04f1639ee559ff7878aadbd2c98f55ff7036f90ae02a94892a39 (block 30, gas 739942)
+   warp +2s -> block 31 timestamp 1788993441
+   tx B approve deposit shaman: 0x3695d7c921ea502755810ed98e59e1ead866dff2887507e44dcc9f119e588125 (block 32, gas 45889)
+   tx B deposit 40 USDC -> 40 shares (quoted 40): 0x96aac90844cba9184ad46130379d6360dc0cd1150e31963c4e37b9a350e53bb8 (block 33, gas 224890)
+R2 different-account refill: exited=40 deficit=40 MATCH
+   warp +2s -> block 27 timestamp 1788993438
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x3bb898f85971ee3e0733d31bfef421ce8d8cb19ce4dfbfb72299bf5d61954250 (block 28, gas 739942)
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0xf748ce7869bf48563e2a432f45c4a30b7ad6d897393b4a4c3f4c0845e18c2a89 (block 29, gas 306487)
+   warp +1s (let votingStarts become past) -> block 30 timestamp 1788993439
+   proposal #1 state = Voting
+R2 pre-start burn baseline: exited=0 deficit=0 MATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x695f305ba114ae066ebd238471625dbc01015956292b9fc22843d13669ee487f (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x612fb29152f49d9c2d9779154f0359fab724ebad5f93a95c105bba77762064d1 (block 30, gas 739942)
+   warp +2s -> block 31 timestamp 1788993441
+   tx A approve deposit shaman: 0x22d930daf233c627b90c5db1a7f066379051877cdb3722ee9a85d5b1bb0040aa (block 32, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0x1d3d131f83a34058f21a49ed26e80d05cd382e953c01b4e0b3800482ed1625dc (block 33, gas 178451)
+   warp +2s -> block 34 timestamp 1788993443
+   tx A ragequit 40 shares -> paid 40 USDC (pro-rata of 100 at supply 100): 0x39f772f660b69bb614be997a14f95c48f39a145ae033b79c2f105a338f093492 (block 35, gas 288448)
+   warp +2s -> block 36 timestamp 1788993445
+   tx A approve deposit shaman: 0x17078c7134e114a9b1a075c7b43ac4b085630177cd20b5841a152c5bf5b43b3e (block 37, gas 45889)
+   tx A deposit 40 USDC -> 40 shares (quoted 40): 0x0640515aca20de745826ede4f150e297f54d4a2d7f2dcdbc41b6c6c8cea4b1b0 (block 38, gas 178451)
+R2 repeat same-account roundtrip twice: exited=40 deficit=0 MISMATCH
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x07b1d0476be44c13e29fdcf55c0d7218d158d6906c218fccf1c2f56533d83fb6 (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   warp +2s -> block 29 timestamp 1788993439
+   tx A ragequit 1 shares -> paid 1 USDC (pro-rata of 100 at supply 100): 0x0af34ecf50306ddd183c72a859884f2b3b2cfa37f6ce774177a8fba733804289 (block 30, gas 739930)
+   warp +2s -> block 31 timestamp 1788993441
+   tx A ragequit 1 shares -> paid 1 USDC (pro-rata of 99 at supply 99): 0xbb34f7581cab9518d3e6a86059af7c9142746a35fc39f8d453bd56f86e83bed9 (block 32, gas 295330)
+R2 gas epoch0 single lot firstTouch=739930 initializedTree=295330
+R2 unauthorized register: REVERT OnlyBaal
+R2 unknown proposal read: REVERT NotRegistered
+   tx B submitProposal #1 "unsponsored" (baalGas 74185): 0x4c8dea5e530f026109f58debecbddbca91ab5b788f3899a6b1458c8c13929df9 (block 27, gas 148778)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Submitted
+R2 duplicate sponsor: REVERT !submitted
+R2 unsponsored registration=0; separate sponsorship registration=1
+   tx A submitProposal #1 "retention round2" (baalGas 74185): 0x6e8279ff6c1f96ec1322070e30af9ea54fcbf9b55f02cfbc69e476fe839eeb9c (block 27, gas 286587)
+   warp +1s (let votingStarts become past) -> block 28 timestamp 1788993437
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 100 / no 0: 0xd5a5cec784156f0c0b1271a0644452d7e493ba9d092eb224857ee858c58c8fae (block 29, gas 117190)
+   tx A submitProposal #2 "retention round2" (baalGas 74185): 0xb65678061b42aebc150cf42338248e0216fcde9e80b47d20832c6dad50244bf1 (block 30, gas 269487)
+   warp +1s (let votingStarts become past) -> block 31 timestamp 1788993438
+   proposal #2 state = Voting
+R2 MAX_EPOCHS next sponsorship: REVERT EpochsExhausted
+   warp +2s -> block 32 timestamp 1788993440
+   tx A approve deposit shaman: 0xae380fae7db7e818d8d43a3c258acf357be5d2e00fdd231468b80a889f20b157 (block 33, gas 45889)
+   tx A deposit 1 USDC -> 1 shares (quoted 1): 0x94747fc1fcc9b13c987a9c1b2e969cb5412eaf320d9ff8badce334ea5d224c14 (block 34, gas 178451)
+   warp +2s -> block 35 timestamp 1788993442
+   tx A ragequit 1 shares -> paid 1 USDC (pro-rata of 101 at supply 101): 0x4f066b9f3949d75ba43a4a96b750778ba0e365f314121d6700e73b94fd91419d (block 36, gas 201219)
+   warp +43195s (past grace of #1) -> block 37 timestamp 1789036637
+   proposal #1 state = Ready
+   tx A processProposal #1 -> passed=true actionFailed=false state=Processed: 0xe57f495eb868b2c21320b578dccf233dd2b086bca2f25371aac2142dac5a17c0 (block 38, gas 143370)
+R2 MAX_EPOCHS=16777216 lastRegistration=16777215 epochSlot=4; mint/burn work; oldProposalPassed=true
+   warp +2s -> block 75 timestamp 1788993439
+   tx A ragequit 116 shares -> paid 116 USDC (pro-rata of 116 at supply 116): 0x9ffa557369dfd87ae7588346dc062671ca5005922561b40d993fed14e6c0a537 (block 76, gas 1225440)
+R2 STRESS liveLots=17 fullExitGas=1225440 blockGasLimit=30000000
+   warp +2s -> block 219 timestamp 1788993440
+   tx A ragequit 164 shares -> paid 164 USDC (pro-rata of 164 at supply 164): 0x30d005a672e65835e3101e20fca805791892629394d03eb4ee8633c8ae3c1901 (block 220, gas 2840560)
+R2 STRESS liveLots=65 fullExitGas=2840560 blockGasLimit=30000000
+anvil stopped (http://127.0.0.1:11545)
+Error: raw deposit reverted
+    at check (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t15-retention-round2.ts:16:61)
+    at raw (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t15-retention-round2.ts:29:67)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t15-retention-round2.ts:127:5)

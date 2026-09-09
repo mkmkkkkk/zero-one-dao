@@ -39,6 +39,6 @@ Stack: vendored Baal (Moloch v3) 1.2.18 + Safe, NavShareToken (non-transferable,
 
 ## Phase 4 + 5: ledger, pool TWAP, pre-mainnet audit fixes (docs/SECURITY_AUDIT.md, decision.md phase 5 rulings)
 Deposits pause while an open proposal contract still holds a non-USDC asset (a later vote settles it and they resume); dust on the Safe never pauses them; exit is pro-rata of the Safe only.
-Deposit NAV = Safe USDC + open-instance USDC, priced against shares + the rewardShares of Active tasks; the Uniswap venue prices and bounds every swap on the pool's own 30-minute TWAP; `baalGas <= 8,000,000`; retention counts the shares that existed at votingStarts and were burned since, so a deposit moves neither side.
+Deposit NAV = Safe USDC + open-instance USDC, priced against shares + the rewardShares of Active tasks; the Uniswap venue prices and bounds every swap on the pool's own 30-minute TWAP; `baalGas <= 8,000,000`; retention sums positive per-account balance deficits since votingStarts; a same-account return restores retention, and another account's deposit cannot mask an exit.
 T0 (custodial-lite): the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1. Its secret is every T0 key, and a pass needs 128 bits of entropy.
 Local acceptance: `npm run scenarios`, `npm run e2e:relay`, `FORK_RPC=https://mainnet.base.org npm run scenario:K`, the flipped tests under `evidence/audit/`, `python3 scripts/phase4-static-check.py`. Receipts: `evidence/phase4/`, `evidence/phase5/`.
