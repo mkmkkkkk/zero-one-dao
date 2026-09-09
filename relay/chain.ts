@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { withStateLock } from "./lock.js";
 import { atomic } from "./common.js";
-import { decodeFunctionData, getAddress, hexToBigInt, size, slice, type Address, type Hex } from "viem";
+import { decodeAbiParameters, decodeFunctionData, getAddress, hexToBigInt, size, slice, type Address, type Hex } from "viem";
 
 import { PROPOSAL_STATUS, type ProposalStatusName } from "../src/proposals.js";
 import { fmtShares, fmtUsdc, SETTLEMENT_UNIT, UNIT, type Env } from "./common.js";
@@ -25,8 +25,12 @@ export interface DecodedCall {
   operation: number;
   selector: Hex;
   label: string;
-  /** Settlement units leaving the Safe through this call (USDC.transfer from the Safe). */
+  /** Settlement units leaving the Safe through this call (USDC.transfer / transferFrom(safe) from the Safe). */
   usdcOut: string;
+  /** Settlement units this call puts at a spender's disposal (approve / increaseAllowance by the Safe; phase 5 ruling 6, ECO-06). */
+  usdcApproved: string;
+  /** Warnings a voter must read even when the label looks benign (`delegatecall`, `approve`, `config`). */
+  flags: string[];
 }
 
 export interface TemplateInstanceView {
@@ -66,7 +70,9 @@ export interface ProposalView {
   proposalData: Hex;
   proposalDataHash: Hex;
   calls: DecodedCall[];
-  treasuryEffect: { usdcOut: string; usdcOutFormatted: string; summary: string };
+  treasuryEffect: { usdcOut: string; usdcOutFormatted: string; usdcApproved: string; usdcApprovedFormatted: string; usdcAtRisk: string; usdcAtRiskFormatted: string; summary: string };
+  /** Everything a voter must read besides the summary: delegatecall, allowances, terminal Config shapes, a details JSON naming an instance the calls never touch. */
+  flags: string[];
   instance?: TemplateInstanceView;
   /** Task activated by this proposal (WorkManager), if any. */
   taskId?: number;
@@ -104,7 +110,7 @@ export interface DaoState {
   contracts: Record<string, Address>;
   constitution: { address: Address; textHash: Hex; textUrl: string };
   governance: { votingPeriod: number; gracePeriod: number; proposalOffering: string; quorumPercent: string; sponsorThreshold: string; minRetentionPercent: string };
-  treasury: { settled: boolean; depositTreasury: string; safe: Address; usdc: string; usdcFormatted: string; totalShares: string; totalSharesFormatted: string; navUsdcPerShare: string; assets: Array<{ token: Address; symbol: string; balance: string }> };
+  treasury: { settled: boolean; depositTreasury: string; depositTreasuryFormatted: string; shareLiability: string; shareLiabilityFormatted: string; safe: Address; usdc: string; usdcFormatted: string; totalShares: string; totalSharesFormatted: string; navUsdcPerShare: string; assets: Array<{ token: Address; symbol: string; balance: string }> };
   members: MemberView[];
   proposals: ProposalView[];
   openProposals: number[];
@@ -139,27 +145,97 @@ export function unpackMultiSend(packed: Hex): Array<{ operation: number; to: Add
   return calls;
 }
 
+/** Governance values of a `Baal.setGovernanceConfig` call, decoded from its bytes argument. */
+export interface GovernanceConfigCall {
+  votingPeriod: number;
+  gracePeriod: number;
+  proposalOffering: bigint;
+  quorumPercent: bigint;
+  sponsorThreshold: bigint;
+  minRetentionPercent: bigint;
+}
+
+/** The poll cadence the README promises agents (`/me.pollSeconds`): a shorter voting + grace can pass unseen. */
+export const POLL_SECONDS = 3600;
+
 /**
- * Decode a Baal proposalData (multiSend calldata) into labelled calls and the settlement leaving the Safe.
+ * Decode the bytes argument of `Baal.setGovernanceConfig`.
+ *
+ * @param data The abi.encode(uint32,uint32,uint256,uint256,uint256,uint256) bytes.
+ * @returns The six values, or undefined when the bytes are not that encoding.
+ */
+export function decodeGovernanceConfig(data: Hex): GovernanceConfigCall | undefined {
+  try {
+    const [votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent] = decodeAbiParameters(
+      [{ type: "uint32" }, { type: "uint32" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" }],
+      data,
+    ) as unknown as [number, number, bigint, bigint, bigint, bigint];
+    return { votingPeriod: Number(votingPeriod), gracePeriod: Number(gracePeriod), proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Warnings for a voted governance config (phase 5 ruling 10: ECO-04, T-9, GOV-07). Nothing is refused
+ * on chain — the constitution allows any value — but a member polling hourly must be told that this
+ * proposal would leave it no reaction window, or leave the DAO unable to decide again.
+ *
+ * @param config The six values the proposal would apply.
+ * @param context Chain time and share supply at the read block (both change what is terminal).
+ * @returns Human-readable warnings, empty when the shape is ordinary.
+ */
+export function governanceConfigFlags(config: GovernanceConfigCall, context: { now: number; totalShares: bigint }): string[] {
+  const flags: string[] = [];
+  const window = config.votingPeriod + config.gracePeriod;
+  if (config.votingPeriod === 0 || config.gracePeriod === 0) {
+    flags.push(`config: votingPeriod ${config.votingPeriod} / gracePeriod ${config.gracePeriod} means "unchanged" to Baal, so ConfigProposal.start() reverts NotApplied and the whole action fails (nothing is applied)`);
+  } else if (window < POLL_SECONDS) {
+    flags.push(`config: voting + grace = ${window} s is below the ${POLL_SECONDS} s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)`);
+  }
+  if (config.quorumPercent > 100n) {
+    flags.push(`config: quorumPercent ${config.quorumPercent} is above 100, so no proposal can ever reach quorum again, a repair Config included: TERMINAL (T-9b)`);
+  }
+  if (config.sponsorThreshold >= context.totalShares && context.totalShares > 0n) {
+    flags.push(`config: sponsorThreshold ${fmtShares(config.sponsorThreshold)} is at or above the whole share supply (${fmtShares(context.totalShares)}), so nobody can sponsor a proposal again: TERMINAL (T-9c)`);
+  }
+  const maxUint32 = 4_294_967_295;
+  if (config.votingPeriod > maxUint32 - (context.now % 4_294_967_296)) {
+    flags.push(`config: votingPeriod ${config.votingPeriod} overflows uint32(block.timestamp) + votingPeriod in submitProposal (Panic 0x11): nobody could submit a proposal again: TERMINAL (GOV-07b)`);
+  }
+  if (config.minRetentionPercent > 100n) {
+    flags.push(`config: minRetentionPercent ${config.minRetentionPercent} is above 100, so every proposal fails on retention: TERMINAL`);
+  }
+  return flags;
+}
+
+/**
+ * Decode a Baal proposalData (multiSend calldata) into labelled calls, the settlement leaving the Safe,
+ * the settlement put at a spender's disposal, and the warnings a voter must read (phase 5 ruling 6).
  *
  * @param env The environment (ABIs, addresses).
  * @param proposalData The exact bytes Baal stores.
- * @returns Calls and the total USDC out.
+ * @param context Chain time and share supply, used only to judge governance config shapes.
+ * @returns Calls, the total USDC out, the total USDC approved and the proposal-level flags.
  */
-export function decodeProposalData(env: Env, proposalData: Hex): { calls: DecodedCall[]; usdcOut: bigint } {
+export function decodeProposalData(env: Env, proposalData: Hex, context: { now: number; totalShares: bigint } = { now: 0, totalShares: 0n }): { calls: DecodedCall[]; usdcOut: bigint; usdcApproved: bigint; flags: string[] } {
   const d = env.deployment;
   let packed: Hex;
   try {
     const decoded = decodeFunctionData({ abi: env.abi.multiSend, data: proposalData });
     packed = (decoded.args ?? [])[0] as Hex;
   } catch {
-    return { calls: [{ to: d.safe, value: "0", operation: 0, selector: proposalData.slice(0, 10) as Hex, label: "not a multiSend payload", usdcOut: "0" }], usdcOut: 0n };
+    return { calls: [{ to: d.safe, value: "0", operation: 0, selector: proposalData.slice(0, 10) as Hex, label: "not a multiSend payload", usdcOut: "0", usdcApproved: "0", flags: ["the proposalData is not a multiSend payload: read the raw bytes before voting"] }], usdcOut: 0n, usdcApproved: 0n, flags: ["the proposalData is not a multiSend payload: read the raw bytes before voting"] };
   }
   let usdcOut = 0n;
-  const calls = unpackMultiSend(packed).map((call) => {
+  let usdcApproved = 0n;
+  const flags: string[] = [];
+  const calls = unpackMultiSend(packed).map((call, index) => {
     const selector = call.data.slice(0, 10) as Hex;
     let label = `${call.to}.${selector}`;
     let out = 0n;
+    let approved = 0n;
+    const callFlags: string[] = [];
     const tryDecode = (abi: typeof env.abi.baal) => {
       try {
         return decodeFunctionData({ abi, data: call.data });
@@ -173,10 +249,27 @@ export function decodeProposalData(env: Env, proposalData: Hex): { calls: Decode
         const [to, amount] = (decoded.args ?? []) as unknown as [Address, bigint];
         out = amount;
         label = `USDC.transfer(${to}, ${fmtUsdc(amount)} USDC) from the Safe`;
+      } else if (decoded?.functionName === "transferFrom") {
+        const [from, to, amount] = (decoded.args ?? []) as unknown as [Address, Address, bigint];
+        if (getAddress(from) === d.safe) out = amount;
+        label = `USDC.transferFrom(${from}, ${to}, ${fmtUsdc(amount)} USDC)${getAddress(from) === d.safe ? " out of the Safe" : ""}`;
+      } else if (decoded?.functionName === "approve" || decoded?.functionName === "increaseAllowance") {
+        const [spender, amount] = (decoded.args ?? []) as unknown as [Address, bigint];
+        approved = amount;
+        label = `USDC.${decoded.functionName}(${spender}, ${fmtUsdc(amount)} USDC) by the Safe`;
+        callFlags.push(`allowance: ${spender} may pull ${fmtUsdc(amount)} USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)`);
       } else if (decoded) label = `USDC.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
     } else if (call.to === d.baal) {
       const decoded = tryDecode(env.abi.baal);
       if (decoded) label = `Baal.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
+      if (decoded?.functionName === "setGovernanceConfig") {
+        const config = decodeGovernanceConfig((decoded.args ?? [])[0] as Hex);
+        if (config === undefined) callFlags.push("config: the setGovernanceConfig argument is not the six-value encoding; read the raw bytes before voting");
+        else {
+          label = `Baal.setGovernanceConfig(votingPeriod ${config.votingPeriod} s, gracePeriod ${config.gracePeriod} s, proposalOffering ${config.proposalOffering}, quorumPercent ${config.quorumPercent}, sponsorThreshold ${fmtShares(config.sponsorThreshold)}, minRetentionPercent ${config.minRetentionPercent})`;
+          callFlags.push(...governanceConfigFlags(config, context));
+        }
+      }
     } else if (call.to === d.workManager) {
       const decoded = tryDecode(env.abi.work);
       if (decoded) label = `WorkManager.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
@@ -190,11 +283,17 @@ export function decodeProposalData(env: Env, proposalData: Hex): { calls: Decode
       const decoded = tryDecode(env.abi.proposal);
       if (decoded) label = `${call.to}.${decoded.functionName}(${(decoded.args ?? []).map(String).join(", ")})`;
     }
+    if (call.operation !== 0) {
+      label = `DELEGATECALL ${label}`;
+      callFlags.push(`delegatecall: call ${index + 1} would run ${call.to}'s code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)`);
+    }
     if (call.value > 0n) label += ` +${call.value} wei`;
     usdcOut += out;
-    return { to: call.to, value: call.value.toString(), operation: call.operation, selector, label, usdcOut: out.toString() };
+    usdcApproved += approved;
+    flags.push(...callFlags);
+    return { to: call.to, value: call.value.toString(), operation: call.operation, selector, label, usdcOut: out.toString(), usdcApproved: approved.toString(), flags: callFlags };
   });
-  return { calls, usdcOut };
+  return { calls, usdcOut, usdcApproved, flags };
 }
 
 /** Percent of `part` in `whole` with 4 decimals. */
@@ -311,9 +410,10 @@ async function buildDaoState(env: Env): Promise<DaoState> {
   const block = await client.getBlock();
   const toBlock = block.number;
   const treasuryLedger = getAddress(d.treasuryLedger ?? await client.readContract({ address: d.templateFactory, abi: abi.factory, functionName: "ledger", blockNumber: toBlock }) as Address);
-  const [settled, depositTreasury] = await Promise.all([
+  const [settled, depositTreasury, shareLiability] = await Promise.all([
     client.readContract({ address: treasuryLedger, abi: abi.ledger, functionName: "settled", blockNumber: toBlock }) as Promise<boolean>,
     client.readContract({ address: treasuryLedger, abi: abi.ledger, functionName: "depositTreasury", blockNumber: toBlock }) as Promise<bigint>,
+    client.readContract({ address: d.workManager, abi: abi.work, functionName: "activeRewardShares", blockNumber: toBlock }) as Promise<bigint>,
   ]);
   const base = await readMany(client, [
     { address: d.settlement, abi: abi.settlement, functionName: "balanceOf", args: [d.safe] },
@@ -412,20 +512,28 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     { address: d.baal, abi: abi.baal, functionName: "proposals", args: [id] },
     { address: d.baal, abi: abi.baal, functionName: "getProposalStatus", args: [id] },
   ]), toBlock);
-  // Instances named in the details: code hash once (cached), describe() at this block for every one.
-  const instanceOf = new Map<number, Address>();
+  // Phase 5 ruling 6 (A5-11): the instance panel is bound to the DECODED CALLS, never to the details
+  // JSON. Candidates are the addresses the voted multicall actually calls that are not DAO contracts;
+  // the details JSON only picks among them, and an `instance` it names that no call touches is flagged.
+  const daoContracts = new Set<Address>([d.safe, d.baal, d.shares, d.loot, d.settlement, d.depositShaman, d.workManager, d.templateFactory, d.intentAccount, d.constitution.address, treasuryLedger]);
+  const decodedOf = new Map<number, ReturnType<typeof decodeProposalData>>();
+  const calledOf = new Map<number, Address[]>();
+  const namedOf = new Map<number, Address>();
   for (const id of ids) {
+    const decoded = decodeProposalData(env, submitted.get(id)?.data ?? "0x", { now: Number(block.timestamp), totalShares });
+    decodedOf.set(id, decoded);
+    calledOf.set(id, [...new Set(decoded.calls.map((call) => call.to).filter((to) => !daoContracts.has(to)))]);
     const details = submitted.get(id)?.details ?? "";
     const jsonStart = details.indexOf("{");
     if (jsonStart < 0) continue;
     try {
       const candidate = (JSON.parse(details.slice(jsonStart)) as { instance?: unknown }).instance;
-      if (typeof candidate === "string" && /^0x[0-9a-fA-F]{40}$/u.test(candidate)) instanceOf.set(id, getAddress(candidate));
+      if (typeof candidate === "string" && /^0x[0-9a-fA-F]{40}$/u.test(candidate)) namedOf.set(id, getAddress(candidate));
     } catch {
       // details without JSON
     }
   }
-  const instanceAddresses = [...new Set(instanceOf.values())];
+  const instanceAddresses = [...new Set([...calledOf.values()].flat())];
   await pMap(instanceAddresses.filter((address) => !instanceCache.has(address)), 4, async (address) => {
     const code = await client.getCode({ address, blockNumber: toBlock });
     if (code === undefined || code === "0x") return;
@@ -450,7 +558,8 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     if (stateIndex === undefined || raw === undefined || status === undefined) throw new Error(`proposal ${id}: read failed at block ${toBlock}`);
     const sub = submitted.get(id);
     const proposalData = sub?.data ?? "0x";
-    const decoded = decodeProposalData(env, proposalData);
+    const decoded = decodedOf.get(id)!;
+    const flags = [...decoded.flags];
     const details = sub?.details ?? "";
     let submittedJson: Record<string, unknown> | undefined;
     const jsonStart = details.indexOf("{");
@@ -461,11 +570,13 @@ async function buildDaoState(env: Env): Promise<DaoState> {
         submittedJson = undefined;
       }
     }
-    let instance: TemplateInstanceView | undefined;
-    const instanceAddress = instanceOf.get(id);
-    if (instanceAddress !== undefined) {
-      const view = instanceViews.get(instanceAddress);
-      if (view !== undefined) instance = { ...view, submitted: submittedJson };
+    const called = calledOf.get(id) ?? [];
+    const describedCalls = called.filter((address) => instanceViews.has(address));
+    const named = namedOf.get(id);
+    const instanceAddress = named !== undefined && describedCalls.includes(named) ? named : describedCalls[0];
+    const instance = instanceAddress === undefined ? undefined : { ...instanceViews.get(instanceAddress)!, submitted: submittedJson };
+    if (named !== undefined && (instanceAddress === undefined || named !== instanceAddress)) {
+      flags.push(`details: the proposal's details JSON names instance ${named}, which none of this proposal's calls touches${instanceAddress === undefined ? "" : ` (the calls run ${instanceAddress})`}; the panel below is built from the decoded calls, so read calls[] and ignore the name (A5-11)`);
     }
     const yes = raw[7] as bigint;
     const no = raw[8] as bigint;
@@ -473,10 +584,13 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     if (taskId !== undefined) taskDetails.set(taskId, details);
     const summaryParts = [] as string[];
     if (decoded.usdcOut > 0n) summaryParts.push(`${fmtUsdc(decoded.usdcOut)} USDC leaves the Safe`);
+    if (decoded.usdcApproved > 0n) summaryParts.push(`${fmtUsdc(decoded.usdcApproved)} USDC of allowance is granted on the Safe (the spender pulls it whenever it likes)`);
     if (instance) summaryParts.push(`${instance.template} contract ${instance.address} (budget ${instance.budgetUsdc} USDC, operator ${instance.operator})`);
     if (taskId !== undefined) summaryParts.push(`activates task ${taskId} (reward in shares, minted on verification)`);
     if (decoded.calls.some((call) => call.label.startsWith("Baal.setGovernanceConfig"))) summaryParts.push("changes governance parameters");
+    if (decoded.calls.some((call) => call.operation !== 0)) summaryParts.push("contains a delegatecall as the Safe");
     if (summaryParts.length === 0) summaryParts.push(decoded.calls.map((call) => call.label).join("; ") || "no calls");
+    if (flags.length > 0) summaryParts.push(`WARNING: ${flags.length} flag${flags.length === 1 ? "" : "s"} on this proposal (read flags[])`);
     return {
       id,
       state: PROPOSAL_STATES[stateIndex] ?? "Unborn",
@@ -499,7 +613,16 @@ async function buildDaoState(env: Env): Promise<DaoState> {
       proposalData,
       proposalDataHash: raw[12] as Hex,
       calls: decoded.calls,
-      treasuryEffect: { usdcOut: decoded.usdcOut.toString(), usdcOutFormatted: fmtUsdc(decoded.usdcOut), summary: summaryParts.join("; ") },
+      treasuryEffect: {
+        usdcOut: decoded.usdcOut.toString(),
+        usdcOutFormatted: fmtUsdc(decoded.usdcOut),
+        usdcApproved: decoded.usdcApproved.toString(),
+        usdcApprovedFormatted: fmtUsdc(decoded.usdcApproved),
+        usdcAtRisk: (decoded.usdcOut + decoded.usdcApproved).toString(),
+        usdcAtRiskFormatted: fmtUsdc(decoded.usdcOut + decoded.usdcApproved),
+        summary: summaryParts.join("; "),
+      },
+      flags,
       ...(instance ? { instance } : {}),
       ...(taskId !== undefined ? { taskId } : {}),
       votes: votes.get(id) ?? [],
@@ -553,7 +676,7 @@ async function buildDaoState(env: Env): Promise<DaoState> {
     contracts: { treasuryLedger, safe: d.safe, baal: d.baal, shares: d.shares, loot: d.loot, settlement: d.settlement, depositShaman: d.depositShaman, workManager: d.workManager, templateFactory: d.templateFactory, intentAccount: d.intentAccount, constitution: d.constitution.address },
     constitution: { address: d.constitution.address, textHash, textUrl },
     governance: { votingPeriod: Number(votingPeriod), gracePeriod: Number(gracePeriod), proposalOffering: proposalOffering.toString(), quorumPercent: quorumPercent.toString(), sponsorThreshold: sponsorThreshold.toString(), minRetentionPercent: minRetentionPercent.toString() },
-    treasury: { settled, depositTreasury: depositTreasury.toString(), safe: d.safe, usdc: treasuryUsdc.toString(), usdcFormatted: fmtUsdc(treasuryUsdc), totalShares: totalShares.toString(), totalSharesFormatted: fmtShares(totalShares), navUsdcPerShare: navPerShare(depositTreasury, totalShares), assets: [{ token: d.settlement, symbol: "USDC", balance: treasuryUsdc.toString() }] },
+    treasury: { settled, depositTreasury: depositTreasury.toString(), depositTreasuryFormatted: fmtUsdc(depositTreasury), shareLiability: shareLiability.toString(), shareLiabilityFormatted: fmtShares(shareLiability), safe: d.safe, usdc: treasuryUsdc.toString(), usdcFormatted: fmtUsdc(treasuryUsdc), totalShares: totalShares.toString(), totalSharesFormatted: fmtShares(totalShares), navUsdcPerShare: navPerShare(depositTreasury, totalShares + shareLiability), assets: [{ token: d.settlement, symbol: "USDC", balance: treasuryUsdc.toString() }] },
     members,
     proposals,
     openProposals: proposals.filter((p) => ["Submitted", "Voting", "Grace", "Ready"].includes(p.state)).map((p) => p.id),

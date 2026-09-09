@@ -6,7 +6,7 @@
  * response is JSON; every failure carries a decoded reason (docs/RELAY.md).
  *
  * Endpoints: /health.json, /me/<address>.json, /me/pass/<sha256(pass)>.json, /proposals.json,
- * /state.json, /relay?intent=<base64url envelope>, /relay?op=<verb>&pass=<secret>&..., /relay?op=join,
+ * /state.json, /pending.json, /relay?intent=<base64url envelope>, /relay?op=<verb>&pass=<secret>&..., /relay?op=join,
  * /relay?op=quote (read-only: the op-0 intent to sign for a template + params). Usage: tsx
  * relay/server.ts (env: ZERO_ONE_DEPLOYMENT, RELAY_SPONSOR_KEY, RELAY_PORT, RELAY_STATE_DIR,
  * ZERO_ONE_STATE_FILE, ZERO_ONE_RPC_URL).
@@ -30,6 +30,7 @@ import { atomic, connect, fmtShares, fmtUsdc, json, PROCESS_GAS, sponsorAccount,
 import { decodeRevert, explain, fail, RelayError } from "./errors.js";
 import { buildIntent, INTENT_TYPES, intentDomain, normalize, normalizeAuthorization, OP_NAMES, OPS, toWire, VERBS, type Envelope, type Intent, type Verb } from "./intents.js";
 import { identity, me, type Me } from "./me.js";
+import { passEntropyBits, PASS_ENTROPY_FLOOR } from "./pass.js";
 import { decodeProposeIntentData, TEMPLATE_IDS } from "../src/proposals.js";
 import { assertStateLockHeld, withStateLock } from "./lock.js";
 import { parseSpec, quoteProposal } from "./templates.js";
@@ -76,13 +77,37 @@ let queued = 0;
 /** sha256 hex of a T0 pass (the public handle of a custodial-lite account). */
 const hashPass = (pass: string): string => createHash("sha256").update(pass).digest("hex");
 
-/** Derive the custodial-lite key from the service secret and the pass (HMAC-SHA256). */
+/**
+ * Derive the custodial-lite key from the service secret and the pass (HMAC-SHA256).
+ *
+ * `op=identity&pass=` maps a pass to its address for free, so a guessable pass is a guessable member
+ * (audit A5-08): the pass must clear a 128-bit entropy floor (phase 5 ruling 9) before any request
+ * that uses it, `op=identity` included.
+ *
+ * @param pass The passphrase from the query.
+ * @returns The derived account.
+ * @throws RelayError 400 if the pass is the wrong length or below the entropy floor.
+ */
 function passAccount(pass: unknown): PrivateKeyAccount {
   if (typeof pass !== "string" || pass.length < 32 || pass.length > 256) fail(400, "pass must contain 32..256 characters");
+  const bits = passEntropyBits(pass);
+  if (bits < PASS_ENTROPY_FLOOR) {
+    fail(400, `pass carries about ${Math.floor(bits)} bits of entropy, below the ${PASS_ENTROPY_FLOOR}-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words`);
+  }
   return privateKeyToAccount(`0x${createHmac("sha256", secret).update(`zero-one-t0-v1:${pass}`).digest("hex")}`);
 }
 
-/** Fixed-window rate limit; throws 429 when exceeded. */
+/**
+ * Fixed-window rate limit. The request is counted and PERSISTED before it can be rejected (phase 5
+ * ruling 9, audit A5-09): every request begins with reload() + recoverJournal(), which rewrote db.json
+ * from the pre-increment state, so a counter that lived only in memory was discarded on every rejected
+ * path and the limiter never fired.
+ *
+ * @param key Bucket key (`ip:<address>`, `address:<member>`, `deploy:<member>`).
+ * @param limit Requests allowed per window.
+ * @param windowMs Window length in ms (default 60,000).
+ * @throws RelayError 429 when the bucket is over the limit (after the increment is on disk).
+ */
 function rate(key: string, limit: number, windowMs = 60_000): void {
   const now = Date.now();
   const entry = db.rates[key] ?? { at: now, n: 0 };
@@ -90,9 +115,10 @@ function rate(key: string, limit: number, windowMs = 60_000): void {
     entry.at = now;
     entry.n = 0;
   }
-  if (entry.n >= limit) fail(429, "rate limit; retry after 60 seconds");
   entry.n += 1;
   db.rates[key] = entry;
+  persist();
+  if (entry.n > limit) fail(429, "rate limit; retry after 60 seconds");
 }
 
 /** Today's budget row. */
@@ -423,7 +449,17 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
   if (recovered.toLowerCase() !== m.member.toLowerCase()) fail(401, "signature mismatch: the intent was not signed by intent.member for this chain and adapter");
   const digest = hashTypedData(typed);
   const prior = db.requests[digest];
-  if (prior) return { ok: prior.status === "success", replayed: true, hash: prior.hash, status: prior.status, verb: OP_NAMES[prior.op] };
+  if (prior !== undefined) {
+    // Phase 5 ruling 7 (audit A5-10): never answer ok from the dedupe map alone. A recorded row proves
+    // nothing unless the transaction it names is on chain, so the receipt is read before the answer; a
+    // row without one (a crash, a reorg, or a seeded db.json) is dropped and the intent is broadcast now.
+    const receipt = prior.hash === "0x" ? undefined : await client.getTransactionReceipt({ hash: prior.hash }).catch(() => undefined);
+    if (receipt !== undefined) {
+      return { ok: receipt.status === "success", replayed: true, hash: prior.hash, status: receipt.status, blockNumber: receipt.blockNumber.toString(), verb: OP_NAMES[prior.op] };
+    }
+    delete db.requests[digest];
+    persist();
+  }
   rate(`address:${m.member.toLowerCase()}`, RATE_ADDRESS);
   persist();
   const id = await settledIdentity(m.member);
@@ -581,7 +617,26 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
     const u = new URL(rawUrl, "http://localhost");
     if (u.pathname === "/health.json") {
       const [balance, block] = await Promise.all([client.getBalance({ address: sponsor.address }), client.getBlockNumber()]);
-      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8 }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, startedAt, queued, alive: true }));
+      return send(200, json({ service: "zero-one-relay", dao: "Zero One", chainId: D.chainId, chain: policy.name, adapter, baal: D.baal, safe: D.safe, settlement: D.settlement, constitution: D.constitution, sponsor: sponsor.address, sponsorBalanceWei: balance.toString(), blockNumber: block.toString(), policy: { dailyWei: policy.dailyWei.toString(), faucet: policy.faucet, faucetDailyUnits: policy.faucetDailyUnits.toString(), maxFeePerGas: policy.maxFeePerGas.toString(), ratePerAddressPerMinute: RATE_ADDRESS, ratePerIpPerMinute: RATE_IP, queue: 8, passEntropyFloorBits: PASS_ENTROPY_FLOOR }, verbs: ["join", "deposit", "task", "deliver", "propose", "vote", "execute", "ragequit", "work", "confirm"], templateFactory: D.templateFactory, startedAt, queued, alive: true }));
+    }
+    if (u.pathname === "/pending.json") {
+      // Phase 5 ruling 7 (A5-10): what this relay is holding right now. A member whose intent is not
+      // here and has no hash was never broadcast: send it through another relay or straight to Baal.
+      reload();
+      const journal = existsSync(pendingFile) ? (JSON.parse(readFileSync(pendingFile, "utf8")) as Pending | null) : null;
+      const inFlight = Object.entries(db.requests)
+        .filter(([, row]) => row.status === "pending")
+        .map(([digest, row]) => ({ digest, member: row.member, op: row.op, verb: OP_NAMES[row.op] ?? String(row.op), status: row.status, hash: row.hash }));
+      return send(200, json({
+        service: "zero-one-relay",
+        chainId: D.chainId,
+        sponsor: sponsor.address,
+        queued,
+        inFlight,
+        journal: journal === null ? null : { hash: journal.hash, nonce: journal.nonce, digest: journal.digest ?? null, day: journal.day },
+        note: "an intent is answered ok only after its transaction is on chain; anything listed here is unfinished, and anything listed nowhere was never broadcast. The relay operator can delay or drop your intents: verify the hash on chain, and send anything you cannot afford to lose from your own key (T1).",
+        generatedAt: new Date().toISOString(),
+      }));
     }
     if (u.pathname === "/proposals.json") {
       // Paging (docs/TESTNET_PLAN.md spam row): ?open=1 keeps only open proposals; ?before=<id>&limit=<n> pages
@@ -615,7 +670,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
       if (address === undefined || !isAddress(address)) fail(404, "unknown address or pass hash");
       return send(200, json(await me(env, getAddress(address), custody, undefined, await settledIdentity(getAddress(address)))));
     }
-    if (u.pathname !== "/relay") fail(404, "not found; see /health.json, /me/<address>.json, /proposals.json, /state.json, /relay");
+    if (u.pathname !== "/relay") fail(404, "not found; see /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay");
     if (queued >= 8) fail(503, "relay queue full; retry in a few seconds");
     queued += 1;
     const task = queue.then(() => withStateLock(env.stateDir, "sponsor", async () => {

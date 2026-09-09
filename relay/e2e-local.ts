@@ -16,16 +16,18 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { encodeErrorResult, getAddress, keccak256, type Address, type Hex } from "viem";
+import { encodeErrorResult, encodeFunctionData, getAddress, keccak256, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
+import { encodeProposalData, loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 import { chooseFreePort, startDevnet, stopDevnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
 import { buildBeacon } from "../beacon/scripts/build.js";
 
 import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
+import { encodeGovernanceConfig } from "../src/baal.js";
+import { passEntropyBits } from "./pass.js";
 import { hardening } from "./e2e-hardening.js";
 import { ledgerHttp } from "./e2e-ledger.js";
 import { connect as connectRelay } from "./common.js";
@@ -366,6 +368,82 @@ async function main(): Promise<void> {
     assert(retired.status === 400, "op=prepare is retired -> 400");
     const badQuote = await get(`${origin}/relay?op=quote&member=${F.account.address}&template=Payment&params=${encodeURIComponent(JSON.stringify({ recipients: [F.account.address], amounts: ["0"] }))}`, false);
     assert((badQuote.error as { name: string })?.name === "ZeroAmount", "quote with a zero payment -> the template constructor's ZeroAmount decoded from the factory dry run");
+
+    step("phase 5 stage C: /pending.json, allowance + delegatecall counted in the treasury effect, an instance name no call touches, Config flags, the T0 entropy floor, the persisted rate counter");
+    const pendingBody = (await (await fetch(`${origin}/pending.json`)).json()) as { inFlight: unknown[]; journal: unknown; note: string };
+    console.log(`   /pending.json: ${JSON.stringify(pendingBody).slice(0, 500)}`);
+    assert(Array.isArray(pendingBody.inFlight) && pendingBody.inFlight.length === 0 && pendingBody.journal === null, "/pending.json shows nothing in flight once every intent has settled (ruling 7)");
+    assert(pendingBody.note.includes("delay or drop your intents"), "/pending.json states what a T0 member is trusting the operator with (A5-10)");
+    // A5-10 / ruling 7: ok comes from the receipt, never from the dedupe map. The agent deposits 1 USDC,
+    // the same signed URL is replayed (answered from the real receipt), then the recorded hash is
+    // rewritten to a transaction that does not exist, as a lying operator would: the relay must refuse
+    // to report that fabricated hash as success.
+    const relayDb = path.join(devnet.stateDir, "relay", "db.json");
+    const depositUrl = snippet("node", beacon, ["deposit", "--key", agentFile, "--usdc", "1"]);
+    const firstSend = await get(depositUrl);
+    const realHash = String(firstSend.hash);
+    const honestReplay = await get(depositUrl);
+    assert(honestReplay.replayed === true && honestReplay.hash === realHash && typeof honestReplay.blockNumber === "string", "an identical envelope is answered from the recorded receipt (replayed, same hash, with the block it is in)");
+    const seededDb = JSON.parse(readFileSync(relayDb, "utf8")) as { requests: Record<string, { hash: Hex; member: Address; op: number; status: string }> };
+    const rowKey = Object.entries(seededDb.requests).find(([, row]) => row.hash === realHash)![0];
+    const fabricated = `0x${"ab".repeat(32)}` as Hex;
+    seededDb.requests[rowKey] = { ...seededDb.requests[rowKey]!, hash: fabricated };
+    writeFileSync(relayDb, `${JSON.stringify(seededDb, null, 2)}\n`, { mode: 0o600 });
+    console.log(`   db.json requests["${rowKey.slice(0, 14)}..."].hash rewritten to ${fabricated} (no such transaction)`);
+    const lying = await get(depositUrl, false);
+    assert(lying.hash !== fabricated && lying.replayed === undefined, `a recorded hash that is on no block is never reported as success: ${String(lying.reason).slice(0, 120)}`);
+    const cleaned = JSON.parse(readFileSync(relayDb, "utf8")) as { requests: Record<string, { hash: Hex }> };
+    assert(cleaned.requests[rowKey] === undefined, "the unbacked row is dropped and the intent is broadcast again instead (it then fails on its real reason: the nonce is spent)");
+
+    // ECO-06 / A5-11: one hostile proposalData submitted by an address holding no shares, so Baal never
+    // sponsors it and it blocks no execution order: an unbounded USDC allowance, a delegatecall as the
+    // Safe, and a details JSON naming the benign Payment instance of proposal #1.
+    const stranger = chain.contexts[9]!;
+    const baalAbi = loadBaalArtifact("Baal").abi;
+    const hostile = encodeProposalData([
+      { to: dao.settlement, data: encodeFunctionData({ abi: settlementAbi, functionName: "approve", args: [v1, 2n ** 128n] }) },
+      { to: dao.settlement, data: encodeFunctionData({ abi: settlementAbi, functionName: "transfer", args: [v1, 140n * SETTLEMENT_UNIT] }), operation: 1 },
+    ]);
+    await writeAndWait(stranger, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [hostile, 0, 0n, `routine top-up {"instance":"${String(proposed.instance)}"}`] });
+    const configData = encodeProposalData([{ to: dao.baal, data: encodeFunctionData({ abi: baalAbi, functionName: "setGovernanceConfig", args: [encodeGovernanceConfig({ votingPeriod: 4, gracePeriod: 1, proposalOffering: 0n, quorumPercent: 101n, sponsorThreshold: UNIT, minRetentionPercent: 66n })] }) }]);
+    await writeAndWait(stranger, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [configData, 0, 0n, "administrative: refresh governance parameters"] });
+    await sleep(3_200);
+    const afterProbe = (await (await fetch(`${origin}/proposals.json`)).json()) as { proposals: Array<Record<string, unknown>> };
+    // packMultiSend keeps the checksum case of the addresses it concatenates; the chain returns the same
+    // bytes in lower case, so the lookup compares the lower-cased hex.
+    const spoof = afterProbe.proposals.find((p) => String(p.proposalData).toLowerCase() === hostile.toLowerCase())!;
+    const configProposal = afterProbe.proposals.find((p) => String(p.proposalData).toLowerCase() === configData.toLowerCase())!;
+    assert(spoof !== undefined && configProposal !== undefined, `both probe proposals are indexed (#${spoof?.id}, #${configProposal?.id} of ${afterProbe.proposals.length})`);
+    const effect = spoof.treasuryEffect as { usdcOut: string; usdcApproved: string; usdcAtRisk: string; summary: string };
+    console.log(`   hostile #${spoof.id}: effect ${JSON.stringify(effect)}`);
+    console.log(`   hostile #${spoof.id} flags: ${JSON.stringify(spoof.flags)}`);
+    assert(effect.usdcApproved === (2n ** 128n).toString() && effect.usdcAtRisk === (2n ** 128n + 140n * SETTLEMENT_UNIT).toString() && effect.summary.includes("allowance"), "an approve of 2^128 USDC is counted as treasury effect, not as 0, and adds to the transfer in usdcAtRisk (ruling 6, ECO-06)");
+    const spoofFlags = spoof.flags as string[];
+    assert(spoofFlags.some((flag) => flag.startsWith("allowance:")) && spoofFlags.some((flag) => flag.startsWith("delegatecall:")) && spoofFlags.some((flag) => flag.startsWith("details:")), "the proposal carries the allowance, delegatecall and spoofed-instance-name flags");
+    assert(spoof.instance === undefined, "the instance panel is bound to the decoded calls: a details JSON naming a benign instance no call touches shows no panel (A5-11)");
+    assert((spoof.calls as Array<{ operation: number; label: string }>).some((call) => call.operation === 1 && call.label.startsWith("DELEGATECALL ")), "the delegatecall entry is labelled as one (operation 1 is never a bare field)");
+    const configFlags = configProposal.flags as string[];
+    console.log(`   config #${configProposal.id} flags: ${JSON.stringify(configFlags)}`);
+    assert(configFlags.some((flag) => flag.includes("below the 3600 s poll cadence")) && configFlags.some((flag) => flag.includes("TERMINAL")), "a Config cutting voting+grace to 5 s and quorum to 101 is flagged as both unpollable and terminal (ECO-04, T-9b)");
+    const founderMeFlagged = (await (await fetch(`${origin}/me/${F.account.address}.json`)).json()) as { warnings: string[]; shareLiability: string; depositTreasury: string; settled: boolean };
+    console.log(`   /me warnings (${founderMeFlagged.warnings.length}): ${JSON.stringify(founderMeFlagged.warnings).slice(0, 700)}`);
+    assert(founderMeFlagged.warnings.some((warning) => warning.includes("delegatecall:")) && founderMeFlagged.warnings.some((warning) => warning.includes("poll cadence")), "/me carries the same flags as warnings, one line per open proposal (ruling 10)");
+    assert(/^\d+$/u.test(founderMeFlagged.shareLiability), `/me exposes the share liability of Active tasks (${founderMeFlagged.shareLiability})`);
+    const stateLiability = (await (await fetch(`${origin}/state.json`)).json()) as { treasury: { shareLiability: string; depositTreasury: string; settled: boolean } };
+    assert(stateLiability.treasury.shareLiability === founderMeFlagged.shareLiability && stateLiability.treasury.depositTreasury === founderMeFlagged.depositTreasury && stateLiability.treasury.settled === founderMeFlagged.settled, "/state.json and /me report the same settled, depositTreasury and shareLiability");
+
+    // A5-08: the entropy floor. The audit's own vector is a 44-character sentence.
+    const weak = "correct horse battery staple correct horse!";
+    const refusedPass = await get(`${origin}/relay?op=identity&pass=${encodeURIComponent(weak)}`, false);
+    assert(refusedPass.status === 400 && /bits of entropy, below the 128-bit floor/u.test(String(refusedPass.reason)), `a 44-character sentence is refused before any address is revealed: ${String(refusedPass.reason).slice(0, 120)}`);
+    assert(passEntropyBits(weak) < 128 && passEntropyBits(pass) >= 128, `the estimator scores the sentence ${passEntropyBits(weak).toFixed(0)} bits and the E2E's 32 random bytes ${passEntropyBits(pass).toFixed(0)} bits`);
+    // A5-09: the counter is on disk before the rejection, so the limiter is not reset by the next reload.
+    const bucket = () => (JSON.parse(readFileSync(relayDb, "utf8")) as { rates: Record<string, { n: number }> }).rates["ip:127.0.0.1"]?.n ?? 0;
+    const countedBefore = bucket();
+    for (let attempt = 0; attempt < 5; attempt += 1) await fetch(`${origin}/relay?op=quote`);
+    const countedAfter = bucket();
+    console.log(`   persisted per-IP counter: ${countedBefore} -> ${countedAfter} after 5 rejected requests`);
+    assert(countedAfter >= countedBefore + 5, "every rejected request is counted on disk before it is rejected (A5-09)");
 
     step("cross-check: node, python and viem produce byte-identical signatures for the same intent (deterministic RFC 6979)");
     const founderMe = (await (await fetch(`${origin}/me/${F.account.address}.json`)).json()) as { nonce: string; chainTime: number };

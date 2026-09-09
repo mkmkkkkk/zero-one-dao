@@ -28,7 +28,11 @@ export async function validateBeacon(options: { deployment: string; out: string 
   const env = connect(deployment);
   const readme = readFileSync(path.join(options.out, "README.txt"), "utf8");
   const lines = readme.trimEnd().split("\n");
-  assert(readme.includes("Deposits pause while the treasury holds anything but USDC; exit is pro-rata of the Safe."), "README lacks the settlement rule");
+  assert(readme.includes("Deposits pause while an open proposal contract still holds a non-USDC asset"), "README lacks the settlement rule (phase 5 ruling 4a: open instances pause deposits, Safe dust does not)");
+  assert(readme.includes("exit is pro-rata of the Safe only"), "README lacks the exit rule (ragequit is pro-rata of the Safe only)");
+  assert(readme.includes("T0: the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1."), "README lacks the T0 relay-authority line (phase 5 ruling 7, A5-10)");
+  assert(/128 bits of entropy/u.test(readme), "README lacks the T0 pass entropy floor (phase 5 ruling 9, A5-08)");
+  assert(/\/pending\.json/u.test(readme), "README lacks /pending.json (phase 5 ruling 7)");
   assert(lines.length <= 44, `README.txt has ${lines.length} lines (max 44)`);
   assert(readme.includes("Any member can propose anything; only the other members' votes or exits can stop it."), "README lacks the principle");
   for (const verb of VERBS) assert(new RegExp(`^${verb}\\b`, "mu").test(readme), `README lacks verb ${verb}`);
@@ -41,6 +45,16 @@ export async function validateBeacon(options: { deployment: string; out: string 
   const state = JSON.parse(readFileSync(path.join(options.out, "state.json"), "utf8")) as DaoState;
   assert.equal(typeof state.treasury.settled, "boolean", "state.json lacks settled");
   assert.match(state.treasury.depositTreasury, /^\d+$/u, "state.json lacks raw depositTreasury");
+  assert.match(state.treasury.shareLiability, /^\d+$/u, "state.json lacks raw shareLiability (phase 5 ruling 4c)");
+  for (const proposal of state.proposals) {
+    assert(Array.isArray(proposal.flags), `state.json proposal ${proposal.id} lacks flags[]`);
+    assert.match(proposal.treasuryEffect.usdcApproved, /^\d+$/u, `state.json proposal ${proposal.id} lacks treasuryEffect.usdcApproved (phase 5 ruling 6)`);
+    // A5-11: the instance panel is bound to the decoded calls, never to the details JSON.
+    if (proposal.instance !== undefined) {
+      const called = proposal.calls.map((call) => getAddress(call.to));
+      assert(called.includes(getAddress(proposal.instance.address)), `state.json proposal ${proposal.id} shows an instance panel for ${proposal.instance.address}, which none of its calls touches`);
+    }
+  }
   assert.equal(state.chain.id, deployment.chainId, "state.json chain id differs from the deployment");
   assert.equal(state.constitution.textHash, deployment.constitution.textHash, "constitution hash differs from the deployment");
   assert(readme.includes(state.constitution.textHash), "README lacks the constitution hash");
@@ -66,7 +80,7 @@ export async function validateBeacon(options: { deployment: string; out: string 
   const constitution = readFileSync(path.join(options.out, "CONSTITUTION.md"));
   const { keccak256 } = await import("viem");
   assert.equal(keccak256(constitution), state.constitution.textHash, "published CONSTITUTION.md bytes do not hash to the on-chain constitution hash");
-  return { result: "PASS", readmeLines: lines.length, addressesWithCode: addresses.size, proposals: state.proposals.length, tasks: state.tasks.length, members: state.members.length, block: state.chain.blockNumber };
+  return { result: "PASS", readmeLines: lines.length, readmeLineLimit: 44, addressesWithCode: addresses.size, proposals: state.proposals.length, tasks: state.tasks.length, members: state.members.length, block: state.chain.blockNumber };
 }
 
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {

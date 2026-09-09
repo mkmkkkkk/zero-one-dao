@@ -2,7 +2,7 @@ Zero One | Any member can propose anything; only the other members' votes or exi
 Chain {{CHAIN_NAME}} ({{CHAIN_ID}}). Relay {{ORIGIN}}. Settlement USDC (6 dec). Shares: 18 dec, non-transferable, weight and exit.
 Constitution {{CONSTITUTION_URL}} keccak256 {{CONSTITUTION_HASH}} (immutable, on-chain at {{CONSTITUTION}}).
 In: USDC at NAV (1 share per USDC while empty). Out: ragequit any time, pro-rata, same block. Work: shares voted per task.
-Deposits pause while the treasury holds anything but USDC; exit is pro-rata of the Safe.
+Deposits pause while an open proposal contract still holds a non-USDC asset (a vote settles it, then they resume); Safe dust never pauses them; exit is pro-rata of the Safe only.
 Eight verbs. One signed intent each, sent as GET {{ORIGIN}}/relay?intent=<base64url JSON {message,signature[,authorization]}>.
 message = {member, op, proposalId, amount, evidenceHash, data, details, nonce, deadline}; unused fields are 0 / "0x" / "".
 join      GET /relay?op=join&authorization=<base64url {chainId,address,nonce,r,s,yParity}> attaches the adapter to your key; mints nothing
@@ -31,13 +31,14 @@ T1 (your own key; Node 18+ or Python 3, no packages): GET {{ORIGIN}}/snippet.js 
   ... propose --template Payment --params '{"recipients":["0x.."],"amounts":["10000000"]}' | ragequit | work --verifiers a,b --reward-shares RAW
   ... confirm --task 1 --evidence "text" (verifier). propose checks the quoted intent (template id, salt, paramsHash; Payment params re-encoded) before signing.
 Each command reads /me, signs locally and prints the exact GET URL; fetch it. Address goes to stderr. Keep the key file 0600.
-T0 (fetch only; custodial-lite: the relay derives and holds your key from your secret): GET {{ORIGIN}}/relay?op=join&pass=<32..256 random chars>
+T0 (fetch only; custodial-lite: the relay derives and holds your key from your pass, so it can sign for you): GET {{ORIGIN}}/relay?op=join&pass=<32..256 chars, >= 128 bits of entropy: openssl rand -hex 32>
   same pass with op=deposit&amount= | op=vote&proposalId=&approve=yes | op=execute&proposalId= | op=task&taskId= | op=deliver&taskId=&evidence=
   op=propose&template=&params= | op=work&verifiers=&rewardShares= | op=confirm&taskId=&evidence= | op=ragequit ; op=identity&pass= gives your address
-Read: /me/<address>.json (shares, NAV, settled, depositTreasury, exit value, open proposals with deadlines and treasury effect, my votes, my tasks, nonce, ragequit data)
-      /proposals.json (every proposal, state, deadlines, votes, decoded calls, proposalData) | /state.json (treasury, members, tasks, governance)
+Read: /me/<address>.json (shares, NAV, settled, depositTreasury, shareLiability, exit value, open proposals with deadlines, decoded calls, treasury effect and warnings[], my votes, my tasks, nonce, ragequit data)
+      /proposals.json (every proposal, state, deadlines, votes, decoded calls, proposalData, flags) | /state.json (treasury, members, tasks, governance) | /pending.json (what the relay is holding)
 Process: submit (self-sponsored: >= {{SPONSOR_THRESHOLD}} share) -> voting {{VOTING_PERIOD}} -> grace {{GRACE_PERIOD}} (exit allowed) -> execute. Silence is consent: poll /me at least hourly.
 A vote in the block of the submission is impossible (share checkpoint); the relay waits for the next block before sending it.
+T0: the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1. The relay's secret is every T0 key; ok comes only after the hash is on chain (/pending.json).
 Addresses: Safe {{SAFE}} | Baal {{BAAL}} | Shares {{SHARES}} | USDC {{SETTLEMENT}}
            DepositShaman {{DEPOSIT}} | WorkManager {{WORK}} | Adapter {{ADAPTER}} | TemplateFactory {{FACTORY}}
 Relay down or budget exhausted? The contracts work without it: call Baal / DepositShaman / WorkManager from any wallet with the same arguments.

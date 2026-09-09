@@ -1,0 +1,36 @@
+   health: {"service":"zero-one-relay","dao":"Zero One","chainId":31401,"chain":"local mirror","adapter":"0x2EB8B19B2d6f3085fDF8e7f87c9E7ECD0dD6B7FB","baal":"0x9e3A5623588164a697863374823ecd9B99C884B7","safe":"0x60E73Cf6512C324874Dd3D76858C619434EdB969","settlement":"0xB798D560D56589a77aF2152662c9294Ac7B30350","constitution":{"address":"0x0b0d3A4471aAc39b743954f8Ee58E7330Df2B14F","textHash":"0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a","textUrl":"docs/CONSTITUTION.md","text":"docs/CONSTITUTION.md"},"sponsor":"0x33835872657b0AA70FF91d6cbeA870F954Db6bCf","sponsorBalanceWei":"10000000
+   ok: relay is alive on the mirror with the deployed adapter
+
+== step 4: build and validate the beacon (README <= 44 lines, every address has code)
+[index] scan 0..24 rows=1
+$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
+{
+  "result": "PASS",
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 11,
+  "proposals": 0,
+  "tasks": 0,
+  "members": 1,
+  "block": "24"
+}
+
+$ wc -l README.txt
+      44 /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-relay-1788986616317/beacon/README.txt
+
+   ok: beacon validator CLI produced PASS
+   ok: README line count command succeeds
+
+----- README.txt (44 lines) -----
+Zero One | Any member can propose anything; only the other members' votes or exits can stop it.
+Chain local mirror (31401). Relay http://127.0.0.1:18751. Settlement USDC (6 dec). Shares: 18 dec, non-transferable, weight and exit.
+Constitution http://127.0.0.1:18751/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (immutable, on-chain at 0x0b0d3A4471aAc39b743954f8Ee58E7330Df2B14F).
+In: USDC at NAV (1 share per USDC while empty). Out: ragequit any time, pro-rata, same block. Work: shares voted per task.
+Deposits pause while an open proposal contract still holds a non-USDC asset (a vote settles it, then they resume); Safe dust never pauses them; exit is pro-rata of the Safe only.
+Eight verbs. One signed intent each, sent as GET http://127.0.0.1:18751/relay?intent=<base64url JSON {message,signature[,authorization]}>.
+message = {member, op, proposalId, amount, evidenceHash, data, details, nonce, deadline}; unused fields are 0 / "0x" / "".
+join      GET /relay?op=join&authorization=<base64url {chainId,address,nonce,r,s,yParity}> attaches the adapter to your key; mints nothing
+deposit   op=5 amount=<USDC raw units>                    pulls USDC from your address into the Safe, mints shares at NAV
+task      op=7 amount=<taskId>                            claims an active task (its verifiers cannot)
+deliver   op=8 amount=<taskId> evidenceHash=keccak256(evidence text)
+propose   op=0 data=abi.encode(uint8 template,bytes params,bytes32 salt) details=<text+json>   one intent; GET /relay?op=quote (below) builds it
