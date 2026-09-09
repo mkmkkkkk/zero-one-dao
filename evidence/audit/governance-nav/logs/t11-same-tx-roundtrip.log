@@ -1,0 +1,4 @@
+   full Safe: Safe 3050 USDC, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   budget out, 50 USDC: Safe 50 USDC, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   budget out, 2000 USDC: Safe 50 USDC, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   holds: both legs read USDC.balanceOf(Safe); the NAV-01 profit needs the instance to return USDC between deposit and exit (multi-block), seed 3050

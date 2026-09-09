@@ -1,0 +1,81 @@
+{
+  "contractName": "FakeAvatar",
+  "compiler": "0.8.36+commit.8a079791.Emscripten.clang",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "name": "execTransactionFromModule",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "name": "execTransactionFromModuleReturnData",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080806040523460155761017e908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c908163468721a7146100b55750635229073f14610032575f80fd5b346100b157610040366100d1565b5050505050604051602081019080821067ffffffffffffffff83111761009d57606090826040525f815260405192839160018352604060208401525180918160408501528484015e5f828201840152601f01601f19168101030190f35b634e487b7160e01b5f52604160045260245ffd5b5f80fd5b346100b1576020906100c6366100d1565b505050505060018152f35b9060806003198301126100b1576004356001600160a01b03811681036100b157916024359160443567ffffffffffffffff81116100b157826023820112156100b15780600401359267ffffffffffffffff84116100b157602484830101116100b157602401919060643560ff811681036100b1579056fea2646970667358221220e4a5e4507506b8a8d662a34b777ee6b4be72a6346748a5f27a5d07038d4c228464736f6c63430008240033",
+  "deployedBytecode": "0x6080806040526004361015610012575f80fd5b5f3560e01c908163468721a7146100b55750635229073f14610032575f80fd5b346100b157610040366100d1565b5050505050604051602081019080821067ffffffffffffffff83111761009d57606090826040525f815260405192839160018352604060208401525180918160408501528484015e5f828201840152601f01601f19168101030190f35b634e487b7160e01b5f52604160045260245ffd5b5f80fd5b346100b1576020906100c6366100d1565b505050505060018152f35b9060806003198301126100b1576004356001600160a01b03811681036100b157916024359160443567ffffffffffffffff81116100b157826023820112156100b15780600401359267ffffffffffffffff84116100b157602484830101116100b157602401919060643560ff811681036100b1579056fea2646970667358221220e4a5e4507506b8a8d662a34b777ee6b4be72a6346748a5f27a5d07038d4c228464736f6c63430008240033"
+}

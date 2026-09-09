@@ -1,0 +1,6 @@
+   tx 0x639955b37bbd4ff2f7b68afd35f902829469154662b4c94bd3810ea4939c8a77: yes 2000 no 1; high-water mark 4651 (66% = 3069.66), live supply 3051; V USDC 2999 -> 2999 (net 0), V shares 1
+   passed=false actionFailed=false; O USDC 10000 -> 10000; A+B YES 2000 shares overruled by V's 1 share + 1600 USDC for one transaction
+   attacker cost: gas + rounding (0 USDC); repeatable against every proposal; requires 1 share held before the proposal's votingStarts
+   tx 0x21d9c49ad4f33a72ccb35d3a190b966ee3493880916d6d386da70924672f0b75: yes 2000 no 1; high-water mark 4651 (66% = 3069.66), live supply 3051; V USDC 2999 -> 2999 (net 0), V shares 1
+   passed=false actionFailed=false; O USDC 10000 -> 10000; A+B YES 2000 shares overruled by V's 1 share + 1600 USDC for one transaction
+   attacker cost: gas + rounding (0 USDC); repeatable against every proposal; requires 1 share held before the proposal's votingStarts

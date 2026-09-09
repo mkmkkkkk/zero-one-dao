@@ -1,0 +1,100 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xCBbC6579521472ee41fCBaDAcBA42B2c270ff650 baal 0x57798d98c4Cf88935BBCbA97188d9d5D1c6ED9Aa shares 0x8030f0aC1E24826D8797680Fa2D935032df3c3fa settlement 0x77feb1e65561d87043C69dA6a674eD5B554D5313
+          depositShaman 0x228768f9B805Ad4831c01CB0B4AF0Fc8003Df991 workManager 0x3F55FF1F63FD98E492610D7EcC69061ea5E7aCc6 constitution 0x9F72Dd11C47D3771f6922EBa8578e53bCBFAf0D3
+          templateFactory 0x2B51262bc3285CbA9d228A15eAF4E31A311B72fc deployers 0x8F5348963aE7E0C2B5c3C5F941c7be16e3fd8620 0x0745b9B743e243b7F4C5998B12bf87783dc5525d 0x9B7CEF7A22A8dd0EBD7772b612e114C2FBA8aad5 0xAfdcE50f1748629Cea08E199eaf50D3DdD40B585 intentAccount 0x2A12050e7Fa0E92F6343e9535eb9777cCcfD675a
+   F = 0xc8C57a9EE0ED502BA7A3218F7844205cDbE28d24  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x8377F29A3a230029172b9cC702bFD007Daf05073  member agent A
+   B = 0xD7E6B79c5aA07A463d17d53A370540779E330Cd0  member agent B
+   C = 0x2a53e2eC72CaF7DFAeb298a900f07B70A8F885a1  member agent C
+   D = 0x2d31C49Ce16C0e73d74CCB91Eb615641e43bBCc3  depositor D (joins later)
+   O = 0x16D2b94EEbb8806FA22D9c892B836b098f83a581  operator O (mandate recipient)
+   W = 0xa55de347FFb8745114B02732BB127143b5706abA  worker W (task deliverer)
+   shaman 0x228768f9B805Ad4831c01CB0B4AF0Fc8003Df991 permission 2 (DepositShaman)
+   shaman 0x3F55FF1F63FD98E492610D7EcC69061ea5E7aCc6 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x8F5348963aE7E0C2B5c3C5F941c7be16e3fd8620
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x0745b9B743e243b7F4C5998B12bf87783dc5525d
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x9B7CEF7A22A8dd0EBD7772b612e114C2FBA8aad5
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xAfdcE50f1748629Cea08E199eaf50D3DdD40B585
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x643ba3b1e74ae09ac03ae5febc7e4792fb37948a177781f43234fa43daefb192 (block 22, gas 51238)
+   tx fund B with 10000 USDC: 0xb1a30bc125bab144746c8d8ba26460a3a660d2bb56992f725c3c65c7008017d8 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xb8b2d7782a9c5307fa261bc5e732eea7dc07448a0ac046ce6f42fcc167a51fd3 (block 24, gas 51238)
+   tx fund D with 10000 USDC: 0x5cc5c99460d0100bca28e687f126f7d38a63f53cfffd4eb195d7ed70136e9355 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0xa3869432cace84dd1582558719c929afd2e40d4e1d1af33601a035d2467f9233 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0xf12690459cd496b9752e7ace719d3a3a525a05ffc17432a9dabe0b8829bcf37d (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x6acfaa85595c38da4930c7a8b1c3902f6f7e90530ac6e4d384594ce55ca15ae0 (block 28, gas 45889)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x94311543492e72b924d61725999f6007cfcc4c5bb8030d030a89a0510416349c (block 29, gas 203247)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x1e7ffb24d754183954e01a9787fe1fbab6301ab2e9611b38c13f53458b0a34e2 (block 30, gas 45877)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0xeaa7296645c35a767c7c55ac422bbac71a475f5234798be163fca1dd8d9c06ef (block 31, gas 169134)
+   tx B approve deposit shaman: 0x69353ce42622e7d41197be4307e9eade40def0b94b2133284eb3b261f93602ec (block 32, gas 45877)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0xafa98eff27dc579c9c9e3eafe0e8fc25423b3b7a4972ec8bdb92f99c39ae6612 (block 33, gas 169134)
+   tx C approve deposit shaman: 0xc02b8058f189f4accfdc2feeefafc13438415e55c02ef9e72460b868cdd9ac07 (block 34, gas 45877)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x4d5042d31e7de3d0a57cc2af6bc5474cda0dd8d7a9d44d2fcb9f67dec34f968d (block 35, gas 169134)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: Config votingPeriod 1 s / gracePeriod 1 s passes (A, B YES) and executes
+   tx A submitProposal #1 "A: config 1s/1s": 0xa02498093c4d88621608bdecd59ee49aa79861560a504c8b09cde972b5d8179a (block 36, gas 206801)
+   warp +1s (let votingStarts become past) -> block 37 timestamp 1788956233
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0xcaed2a52c47da16f8bf21812b3c36c0ec9da5aee24ac0802ccfeaf28b392854f (block 38, gas 117855)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x0d1c1063bee46a6ce27b6165c740456ae0bcee65f95e05782f5f598e360c2179 (block 39, gas 100755)
+   warp +43200s (past grace of #1) -> block 40 timestamp 1788999433
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=false state=Processed: 0xd370ba7bf0e876df26f25c376237ff46305395c1a991d745600f5575e5ea93f4 (block 41, gas 158471)
+   ok: config applied
+   votingPeriod 1 s, gracePeriod 1 s
+
+== step 5: B submits #2 (repair back to 6 h / 6 h); the next block is 2 s later (Base block time)
+   warp +2s (next Base block (+2 s)) -> block 43 timestamp 1788999435
+   #2 state one block later: Grace
+   ok: no block can carry a vote (reverted with !voting)
+   warp +1s -> block 44 timestamp 1788999436
+   #2 state after grace: Defeated (0 yes > 0 no is false): the repair is dead; every later proposal meets the same fate
+   ok: repair defeated without a vote
+   tx C ragequit 1000 shares -> paid 1000 USDC (pro-rata of 3050 at supply 3050): 0xb1281463e7a61fce1ae612171028dda6182a170aeabc5426fd4e3b1562281528 (block 45, gas 149686)
+   C still exits: paid 1000 USDC for 1000 shares (exit is unaffected)
+
+== step 6: snapshot variant: Config votingPeriod = 2^32 - 1 -> submitProposal reverts on checked uint32 overflow
+   chain reverted to snapshot 0x0
+   tx A submitProposal #1 "A: config votingPeriod max": 0x3c8d11e15d0b393c5a7ebb8381bd530c6752dc8aa07988fb2d72e1150d5a0d80 (block 36, gas 206969)
+   warp +1s (let votingStarts become past) -> block 37 timestamp 1788956233
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x1376f4af60f8d8dfb6d418d9a3b7707c14409ffc887590b4c04a29cd97dbd4bd (block 38, gas 117855)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0xe721b98586499519ffbc148e7b0fcddfbdc1037be1bec77bb00a89263e54241c (block 39, gas 100755)
+   warp +43200s (past grace of #1) -> block 40 timestamp 1788999433
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=false state=Processed: 0x519a742725c0e82fc72197d6785ae26ee300883c6f127ffe4ff5798daa432335 (block 41, gas 158507)
+   ok: config applied
+   votingPeriod 4294967295 s
+   submitProposal by a member now reverts: Arithmetic operation resulted in underflow or overflow.
+   ok: no proposal can be submitted (uint32(block.timestamp) + votingPeriod overflows)
+
+=== SCENARIO GOV-07 1 s / 1 s and uint32-max periods are terminal for decisions, not for exit (accepted by principle, demonstrated): PASS ===
+
+anvil stopped (http://127.0.0.1:11545)
