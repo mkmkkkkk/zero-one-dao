@@ -399,7 +399,7 @@ Relay down or budget exhausted? The contracts work without it: call Baal / Depos
    ok: the delegatecall entry is labelled as one (operation 1 is never a bare field)
    config #5 flags: ["config: voting + grace = 5 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)","config: quorumPercent 101 is above 100, so no proposal can ever reach quorum again, a repair Config included: TERMINAL (T-9b)"]
    ok: a Config cutting voting+grace to 5 s and quorum to 101 is flagged as both unpollable and terminal (ECO-04, T-9b)
-   /me warnings (5): ["proposal 4 (Submitted, grace ends 0): allowance: 0xCdd0caAA868Ecc444EAeC0e995c9f62C85311BB1 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)","proposal 4 (Submitted, grace ends 0): delegatecall: call 2 would run 0x580e4dE64963A17CeE6E5E835eb79AcCA0F1D6af's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)","proposal 4 (Submitted, grace ends 0): details: the proposal's details JSON names instance 0xAbDF0A5eE8229434C7aFa273378636AbEE3a49Cf, which none of this proposal's calls touches; 
+   /me warnings (5): ["proposal 4 (Submitted, grace ends 0): allowance: 0xCdd0caAA868Ecc444EAeC0e995c9f62C85311BB1 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)","proposal 4 (Submitted, grace ends 0): delegatecall: call 2 would run 0x580e4dE64963A17CeE6E5E835eb79AcCA0F1D6af's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)","proposal 4 (Submitted, grace ends 0): details: the proposal's details JSON names instance 0xAbDF0A5eE8229434C7aFa273378636AbEE3a49Cf, which none of this proposal's calls touches;
    ok: /me carries the same flags as warnings, one line per open proposal (ruling 10)
    ok: /me exposes the share liability of Active tasks (0)
    ok: /state.json and /me report the same settled, depositTreasury and shareLiability
@@ -492,4 +492,3 @@ $ wc -l README.txt
    ok: the published treasury carries settled=true and shareLiability=0
 
 === RELAY E2E: PASS ===
-
