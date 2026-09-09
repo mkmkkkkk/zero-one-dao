@@ -13,7 +13,10 @@ import {ProposalBase} from "./ProposalBase.sol";
 /// topUp(amount) (Safe only) adds money without a schedule; amend(params) (Safe only) cancels every
 /// unreleased tranche and installs the new list (released tranches are history and stay). Both are
 /// normally voted in one multicall. Anything held beyond the unreleased tranches is unallocated and
-/// returns with the rest.
+/// returns with the rest. Once the deadline has come, release() and confirm() revert (`DeadlinePassed`)
+/// and only end() applies, so the destination of a due-but-unreleased tranche is the Safe, never the
+/// winner of a transaction race (phase 5 ruling 10, T-7); a Project whose deadline has already come
+/// cannot start.
 contract ProjectProposal is ProposalBase {
     enum ReleaseType {
         Date,
@@ -56,6 +59,7 @@ contract ProjectProposal is ProposalBase {
     error AlreadyConfirmed(uint256 index, address verifier);
     error NoDeadline();
     error DeadlineNotReached(uint256 deadline);
+    error DeadlinePassed(uint256 deadline);
     error Overcommitted(uint256 scheduled, uint256 held);
 
     event TrancheAdded(uint256 indexed index, uint256 amount, ReleaseType releaseType, uint256 releaseAt, address[] verifiers, uint16 threshold);
@@ -103,6 +107,7 @@ contract ProjectProposal is ProposalBase {
     /// @notice Release a Date tranche whose date has come; anyone may call.
     function release(uint256 index) external nonReentrant {
         _requireStatus(Status.Running);
+        _requireBeforeDeadline();
         Tranche storage plan = _open(index);
         if (plan.releaseType != ReleaseType.Date) revert WrongReleaseType(index);
         if (block.timestamp < plan.releaseAt) revert NotDue(index, plan.releaseAt);
@@ -112,6 +117,7 @@ contract ProjectProposal is ProposalBase {
     /// @notice Confirm a Verifiers tranche; at threshold it is released to the operator.
     function confirm(uint256 index) external nonReentrant {
         _requireStatus(Status.Running);
+        _requireBeforeDeadline();
         Tranche storage plan = _open(index);
         if (plan.releaseType != ReleaseType.Verifiers) revert WrongReleaseType(index);
         if (!isVerifier[index][msg.sender]) revert OnlyVerifier(index, msg.sender);
@@ -133,6 +139,7 @@ contract ProjectProposal is ProposalBase {
 
     /// @dev Funding check, then release every Date tranche already due.
     function _start() internal override {
+        _requireBeforeDeadline();
         uint256 balance = held();
         if (balance < budget) revert Underfunded(budget, balance);
         for (uint256 i; i < _tranches.length && status == Status.Running; ++i) {
@@ -220,6 +227,11 @@ contract ProjectProposal is ProposalBase {
             total += plan.amount;
             emit TrancheAdded(index, plan.amount, plan.releaseType, plan.releaseAt, plan.verifiers, plan.threshold);
         }
+    }
+
+    /// @dev Revert once the deadline (when set) has come: after it only end() applies.
+    function _requireBeforeDeadline() private view {
+        if (deadline != 0 && block.timestamp >= deadline) revert DeadlinePassed(deadline);
     }
 
     /// @dev The tranche at `index`, which must exist and be neither released nor cancelled.

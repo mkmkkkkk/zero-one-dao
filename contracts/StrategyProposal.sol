@@ -22,10 +22,13 @@ interface IStrategyVenue {
 ///      value >= budget x (1 + takeProfit) or stopLossBps != 0 and value <= budget x (1 - stopLoss)
 ///      -> unwind, return, Complete;
 ///   4. otherwise buy the asset with min(maxPerRun, settlement held) settlement units.
-/// stop() and migrate(newContract) (Safe only) move the raw holdings (every settlement unit and every
-/// asset unit) to the Safe / the new contract WITHOUT calling the venue, so a dead venue can never trap
-/// funds (DESIGN.md §7; decision.md phase 2a ruling 2). Unwinding on the venue is run()'s job before the
-/// deadline. params = abi.encode(address venue, address asset, uint256 budget, Rule rule);
+/// stop() (Safe only) returns the raw settlement to the Safe WITHOUT calling the venue and keeps the
+/// asset inside this contract, which then stays open in the TreasuryLedger (deposits paused) until a
+/// later vote either migrate()s the raw holdings to a new voted contract (no venue call, so a dead venue
+/// can never trap funds; DESIGN.md §7, decision.md phase 2a ruling 2) or unwind()s: sells the asset on
+/// the venue under the rule's slippage bound, returns the proceeds to the Safe and closes the ledger
+/// entry (phase 5 ruling 4b). Unwinding on the venue before the deadline is otherwise run()'s job.
+/// params = abi.encode(address venue, address asset, uint256 budget, Rule rule);
 /// amend(params) replaces the Rule only (venue, asset and budget do not change by amend).
 contract StrategyProposal is ProposalBase {
     struct Rule {
@@ -54,6 +57,7 @@ contract StrategyProposal is ProposalBase {
     error TooSoon(uint256 nextRunAt);
     error NothingToDo();
     error ApproveFailed();
+    error NotUnwindable(Status observed);
 
     event Ran(uint256 indexed run, uint256 valueBefore, uint256 bought, uint256 assetOut);
     event Unwound(uint256 assetIn, uint256 settlementOut, string reason);
@@ -144,9 +148,26 @@ contract StrategyProposal is ProposalBase {
         paramsHash = keccak256(abi.encode(address(venue), address(asset), budget, next));
     }
 
-    /// @dev Move the raw holdings (settlement + asset) to the Safe; the venue is not called.
+    /// @notice Executed by the Safe (a later passed proposal) on a stopped Strategy that still holds its
+    /// asset: sell every asset unit on the venue under the rule's `slippageBps`, return every settlement
+    /// unit to the Safe and close the ledger entry, so deposits reopen. Status stays Stopped.
+    function unwind() external onlySafe nonReentrant {
+        if (status != Status.Stopped || !ledger.isOpen(address(this))) revert NotUnwindable(status);
+        _unwind("unwind");
+        uint256 returned = _returnSettlement(safe);
+        ledger.close();
+        emit Moved(safe, returned, 0, "unwind");
+    }
+
+    /// @dev Return the raw settlement to the Safe; the asset stays here and the venue is not called.
     function _stop() internal override returns (uint256 returned) {
-        return _moveHoldings(safe, "stop");
+        returned = _returnSettlement(safe);
+        emit Moved(safe, returned, 0, "stop");
+    }
+
+    /// @dev Asset units held: while non-zero after stop() the ledger entry stays open.
+    function _assetHeld() internal view override returns (uint256) {
+        return asset.balanceOf(address(this));
     }
 
     /// @dev Move the raw holdings (settlement + asset) to the new voted contract; the venue is not called.

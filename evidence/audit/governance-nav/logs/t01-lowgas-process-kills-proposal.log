@@ -8,3 +8,23 @@
    attack   gas=500000 gasUsed=481798 processed=true passed=true actionFailed=true state=Processed
    Safe USDC 3050 -> 3050; O USDC 10000 -> 10000 (voted payment: 500)
    attacker cost: 481798 gas (~$0.001 on Base); DAO cost: a new proposal + 12 h; repeatable on every proposal
+   control  gas=5000000 status=success gasUsed=1178950 passed=true actionFailed=false O USDC 10000 -> 10500
+   proposal #1 baalGas = 228405 (simulated action need x 1.5)
+   sweep gas=500000 status=success gasUsed=479575 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=600000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=800000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=1000000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=1200000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=1400000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep gas=1600000 status=reverted gasUsed=120220 processed=true passed=true actionFailed=true O USDC 10000
+   sweep: 44 of 45 low-gas attempts reverted; processed=true passed=true actionFailed=true state=Processed
+   control  gas=5000000 status=success gasUsed=1178950 passed=true actionFailed=false O USDC 10000 -> 10500
+   proposal #1 baalGas = 1661958 (simulated action need x 1.5)
+   sweep gas=600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=800000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1000000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1200000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1400000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep gas=1600000 status=reverted gasUsed=120220 processed=false passed=false actionFailed=false O USDC 10000
+   sweep: 45 of 45 low-gas attempts reverted; processed=false passed=false actionFailed=false state=Ready
+   processProposal gas=5000000 status=success passed=true actionFailed=false O USDC 10000 -> 10500

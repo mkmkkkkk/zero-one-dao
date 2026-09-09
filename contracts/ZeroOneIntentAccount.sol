@@ -13,6 +13,9 @@ import {TemplateFactory} from "./TemplateFactory.sol";
 /// of the factory-built fund+start multicall; decision.md phase 2b ruling 2) | 2 vote | 3 execute
 /// (processProposal) | 4 ragequit | 5 deposit | 6 work (submitTask, then sponsorProposal in the same
 /// transaction; ruling 4) | 7 claim | 8 deliver | 9 confirm. Op 1 (sponsor) no longer exists.
+/// Op 0 baalGas (phase 5 ruling 1): the intent's `proposalId` field (unused by op 0 otherwise) carries the
+/// baalGas the relay simulated (action need x 1.5, at most 8,000,000); 0 selects DEFAULT_BAAL_GAS, which
+/// covers every template start the mirror measures (< 1.3 M) with the same margin.
 contract ZeroOneIntentAccount {
     struct Intent {
         address member;
@@ -32,6 +35,8 @@ contract ZeroOneIntentAccount {
     }
 
     bytes32 private constant SLOT = keccak256("zero-one.intent.account.storage.v1");
+    /// @notice baalGas of an op 0 proposal whose intent carries no explicit value.
+    uint256 public constant DEFAULT_BAAL_GAS = 2_000_000;
     bytes32 public constant TYPEHASH = keccak256(
         "Intent(address member,uint8 op,uint32 proposalId,uint256 amount,bytes32 evidenceHash,bytes data,string details,uint256 nonce,uint256 deadline)"
     );
@@ -111,7 +116,8 @@ contract ZeroOneIntentAccount {
             (uint8 template, bytes memory params, bytes32 salt) = abi.decode(i.data, (uint8, bytes, bytes32));
             (address instance,) = factory.deploy(template, params, address(this), salt);
             bytes memory proposalData = factory.proposalData(template, params, instance);
-            result = bytes32(baal.submitProposal{value: msg.value}(proposalData, uint32(i.amount), 0, i.details));
+            uint256 baalGas = i.proposalId == 0 ? DEFAULT_BAAL_GAS : uint256(i.proposalId);
+            result = bytes32(baal.submitProposal{value: msg.value}(proposalData, uint32(i.amount), baalGas, i.details));
         } else if (i.op == 2) {
             baal.submitVote(i.proposalId, i.amount != 0);
         } else if (i.op == 3) {

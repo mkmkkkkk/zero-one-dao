@@ -68,6 +68,8 @@ interface IDepositShaman {
 }
 
 interface IWorkManager {
+    /// @notice Sum of rewardShares of every Active, unexpired task: shares already voted but not yet minted.
+    function activeRewardShares() external view returns (uint256);
     function submitTask(
         address[] calldata verifiers,
         uint16 verifierThreshold,

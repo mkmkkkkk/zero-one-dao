@@ -10,3 +10,8 @@
    processProposal(#1) gas=20400000 status=success gasUsed=154537 passed=true actionFailed=false; O USDC 10001
    processProposal(#2) gas=5000000 status=success state=Processed
    attacker cost: 1 share (1 USDC) + one submitProposal; effect: every later proposal waits until someone pays a 20.4 M gas tx (Base: ~$0.02 at 1 gwei); permanent if the chain caps tx gas below 20.4 M
+   #1 state Ready (baalGas 8000000), #2 state Ready
+   processProposal(#1) gas=5000000 status=reverted
+   processProposal(#1) gas=8500000 status=success gasUsed=148994 passed=true actionFailed=false; O USDC 10001
+   processProposal(#2) gas=5000000 status=success state=Processed
+   worst case for a member holding 1 share: every later proposal waits until someone pays one 8.5 M gas transaction (Base: cents); never permanent

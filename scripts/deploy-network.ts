@@ -8,7 +8,7 @@ import { concatHex, encodeAbiParameters, erc20Abi, getAddress, getContractAddres
 import { parseArgs } from "../beacon/scripts/build.js";
 import { deployLocal } from "../src/onchain.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
-import { BASE_USDC, constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, genesisDeposit, SETTLEMENT_UNIT } from "../src/zeroOne.js";
+import { BASE_USDC, constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, genesisDeposit, proxySaltNonce, SETTLEMENT_UNIT } from "../src/zeroOne.js";
 import { constructorArguments, writeVerificationInputs, type VerificationRecord } from "../src/verification.js";
 import { loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 
@@ -104,7 +104,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   const emptySafe = async (address: Address) => {
     if (predictedSafe && getAddress(address) !== getAddress(predictedSafe)) throw new Error("Safe prediction changed: deployer nonce was used concurrently");
     const held = await publicClient.readContract({ address: BASE_USDC, abi: erc20Abi, functionName: "balanceOf", args: [address] });
-    if (held !== 0n) throw new Error(`REFUSED: predicted Safe ${address} holds ${held} USDC (zero-supply trap)`);
+    if (held !== 0n) throw new Error(`REFUSED: predicted Safe ${address} already holds ${held} USDC (no longer a trap since phase 5 ruling 8, it would accrue to the genesis shares; pick a fresh salt for a clean address)`);
     console.log(`ASSERT CREATE2-predicted Safe ${address} USDC=0 before deployment`);
   };
   if (mainnet) {
@@ -115,7 +115,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
     const singleton = getContractAddress({ from: deployer.account.address, nonce: nonce + 2n });
     const factory = getContractAddress({ from: deployer.account.address, nonce: nonce + 3n });
     const bytecode = concatHex([loadBaalArtifact("GnosisSafeProxy").bytecode, encodeAbiParameters([{ type: "uint256" }], [BigInt(singleton)])]);
-    const salt = keccak256(concatHex([keccak256("0x"), encodeAbiParameters([{ type: "uint256" }], [DEFAULT_PARAMS.salt * 2n])]));
+    const salt = keccak256(concatHex([keccak256("0x"), encodeAbiParameters([{ type: "uint256" }], [proxySaltNonce(deployer.account.address, DEFAULT_PARAMS.salt, 0)])]));
     predictedSafe = getContractAddress({ opcode: "CREATE2", from: factory, salt, bytecode });
     await emptySafe(predictedSafe);
   }

@@ -1,16 +1,18 @@
 /**
  * Audit rows T-7, T-8, T-9 (ProjectProposal tranche edges and ConfigProposal NotApplied / terminal
- * configurations, security-audit component 4) on the anvil mirror.
+ * configurations, security-audit component 4) on the anvil mirror — phase 5 (decision.md phase 5
+ * ruling 10).
  *
- * T-7 after a Project's deadline both `release(i)` (pays the operator) and `end()` (returns to the Safe)
- *     are valid for a due Date tranche; whoever's transaction lands first decides where the money goes.
- * T-8 `amend` on a Pending Project always reverts Overcommitted (held() == 0), although TEMPLATES.md
- *     lists Project amend as "Running or Pending".
- * T-9 Config: a period of 0 fails atomically (NotApplied, documented); quorumPercent > 100 is accepted
- *     by Baal and then no proposal, a repair included, can ever pass (terminal like 1 s / 1 s);
- *     ragequit still works, which is the constitution's remedy.
+ * T-7 FLIPPED: after a Project's deadline `release(i)` and `confirm(i)` revert `DeadlinePassed`; only
+ *     `end()` applies, so a due-but-unreleased tranche always returns to the Safe (no transaction race).
+ * T-8 documented: `amend` on a Pending Project reverts Overcommitted (held() == 0); TEMPLATES.md says
+ *     "Running" for Project amend. Shown, asserted as the documented behaviour.
+ * T-9 documented (ruling: no on-chain cap on Config values, rejected): a period of 0 fails atomically
+ *     (NotApplied); quorumPercent > 100 is accepted and makes the DAO terminal for collective action;
+ *     ragequit still works. Shown, asserted as the documented behaviour; the relay's /me flags such
+ *     Config proposals (phase 5 stage C).
  *
- * Run: `npx tsx evidence/audit/work-templates/project-config-edges.ts`.
+ * Run: `npx tsx evidence/audit/work-templates/project-config-edges.ts` (exit code 1 = an invariant is violated).
  */
 import { decodeErrorResult, encodeFunctionData, type Hex } from "viem";
 
@@ -19,6 +21,7 @@ import {
   boot,
   DAY,
   describeAt,
+  expectRevert,
   fmt,
   fmtS,
   now,
@@ -71,22 +74,35 @@ export async function main(): Promise<void> {
     const processed = await processProposal(mirror, "D", p1);
     assert(processed.info.status.passed && !processed.info.status.actionFailed, "P1 funded (500) and Running");
     const project = p1.instance.address;
-    step("T-7: nobody calls release(0) on day 2; the deadline passes; now both release(0) and end() simulate successfully");
+    step("T-7: nobody calls release(0) on day 2; the deadline passes; release(0) and confirm(1) revert DeadlinePassed, only end() applies");
     await warp(mirror, Number(deadline + 1n - (await now(mirror))), "past the project deadline");
     let releaseOk = true;
+    let confirmOk = true;
     let endOk = true;
     try { await simulateAt(mirror, "A", project, "project", "release", [0]); } catch { releaseOk = false; }
+    try { await simulateAt(mirror, "B", project, "project", "confirm", [1]); } catch { confirmOk = false; }
     try { await simulateAt(mirror, "W", project, "project", "end", []); } catch { endOk = false; }
-    console.log(`   at deadline + 1: release(0) by the operator ${releaseOk ? "succeeds" : "reverts"}; end() by anyone ${endOk ? "succeeds" : "reverts"}`);
-    invariant("T-7", !(releaseOk && endOk), "after the deadline exactly one of {pay the operator, return to the Safe} is possible for a due tranche (observed: both are valid, first transaction wins)");
+    console.log(`   at deadline + 1: release(0) by the operator ${releaseOk ? "succeeds" : "reverts"}; confirm(1) by a verifier ${confirmOk ? "succeeds" : "reverts"}; end() by anyone ${endOk ? "succeeds" : "reverts"}`);
+    invariant("T-7", !releaseOk && !confirmOk && endOk, "after the deadline exactly one of {pay the operator, return to the Safe} is possible for a due tranche (end() only)");
+    await expectRevert(simulateAt(mirror, "A", project, "project", "release", [0]), "DeadlinePassed", "release(0) after the deadline reverts DeadlinePassed");
+    await expectRevert(simulateAt(mirror, "B", project, "project", "confirm", [1]), "DeadlinePassed", "confirm(1) after the deadline reverts DeadlinePassed");
     const aBefore = await usdcOf(mirror, A);
-    await sendAt(mirror, "A", project, "project", "release", [0], "A release(0) after the deadline");
-    const paidLate = (await usdcOf(mirror, A)) - aBefore;
-    console.log(`   operator A received ${fmtS(paidLate)} USDC ${Number((await now(mirror)) - deadline)} s after the deadline`);
-    invariant("T-7", paidLate === 0n, `no tranche is paid after the project deadline (paid ${fmtS(paidLate)} USDC after deadline ${deadline})`);
     const safeBefore = await usdcOf(mirror, mirror.dao.safe);
     await sendAt(mirror, "W", project, "project", "end", [], "W end()");
-    console.log(`   end(): ${fmtS((await usdcOf(mirror, mirror.dao.safe)) - safeBefore)} USDC (the unconfirmed tranche 1) back to the Safe; ${(await describeAt(mirror, project, "P1")).status}`);
+    const paidLate = (await usdcOf(mirror, A)) - aBefore;
+    const returned = (await usdcOf(mirror, mirror.dao.safe)) - safeBefore;
+    console.log(`   end(): ${fmtS(returned)} USDC (both unreleased tranches) back to the Safe; operator A received ${fmtS(paidLate)} USDC after the deadline; ${(await describeAt(mirror, project, "P1")).status}`);
+    invariant("T-7", paidLate === 0n && returned === 500n * SETTLEMENT_UNIT, `no tranche is paid after the project deadline (paid ${fmtS(paidLate)} USDC; ${fmtS(returned)} USDC returned)`);
+
+    step("T-7: a Project whose deadline has already come cannot start (the funding multicall fails atomically, nothing moves)");
+    const late = await proposeTemplate(mirror, "A", { template: "Project", params: { tranches: [{ ...t0, releaseAt: 0n }], deadline: (await now(mirror)) + BigInt(2 * DAY) } }, "A: P-late, deadline before its own grace ends");
+    await vote(mirror, "A", late.id, true);
+    await vote(mirror, "B", late.id, true);
+    await warpPastGrace(mirror, late.id);
+    await warp(mirror, 2 * DAY, "past the late project's deadline before processing");
+    const safeBeforeLate = await usdcOf(mirror, mirror.dao.safe);
+    const lateResult = await processProposal(mirror, "D", late);
+    invariant("T-7", lateResult.info.status.passed && lateResult.info.status.actionFailed && (await usdcOf(mirror, mirror.dao.safe)) === safeBeforeLate && (await describeAt(mirror, late.instance.address, "P-late")).status === "Pending", "a Project started after its deadline reverts DeadlinePassed inside start(): actionFailed, the Safe keeps the budget");
 
     // ---------------------------------------------------------------- T-8 amend while Pending
     step("T-8: a Pending Project cannot be amended by the Safe (eth_call from the Safe): Overcommitted(scheduled, held = 0)");
@@ -101,7 +117,7 @@ export async function main(): Promise<void> {
       amendError = withData?.data ? decodeErrorResult({ abi: mirror.abi.project, data: withData.data }).errorName : (error instanceof Error ? error.message.split("\n")[0]! : String(error));
     }
     console.log(`   Safe -> amend(Pending P2 @ ${p2.address}) : ${amendError}`);
-    invariant("T-8", amendError === "no revert", `Project amend is usable while Pending as TEMPLATES.md states (observed: ${amendError}; a Pending instance holds 0 so any non-empty schedule is Overcommitted)`);
+    invariant("T-8", amendError === "Overcommitted", `Project amend while Pending reverts Overcommitted (a Pending instance holds 0): documented in TEMPLATES.md (Project amend: Running); observed ${amendError}`);
 
     // ---------------------------------------------------------------- T-9 Config
     step("T-9a: Config with gracePeriod 0: Baal keeps the old value, start() reverts NotApplied, the whole action fails; nothing applied");
@@ -121,7 +137,7 @@ export async function main(): Promise<void> {
     const r1 = await processProposal(mirror, "D", c1);
     const quorum = await read<bigint>(mirror, "baal", "quorumPercent");
     console.log(`   quorumPercent now ${quorum}; Config instance ${(await describeAt(mirror, c1.instance.address, "C1")).status}`);
-    invariant("T-9", quorum <= 100n, `Baal rejects a quorum above 100% (applied quorumPercent = ${quorum})`);
+    invariant("T-9", quorum === 101n, `Baal accepts a quorum above 100% (applied quorumPercent = ${quorum}): no on-chain cap by ruling; disclosed in PARAMETERS and flagged by the relay's /me`);
 
     step("T-9b: a Payment (10 USDC to O) with 100% of shares voting YES is processed as not passed; a repair Config (quorum 0) with 100% YES fails the same way");
     const pay = await proposeTemplate(mirror, "A", { template: "Payment", params: { recipients: [O], amounts: [10n * SETTLEMENT_UNIT] } }, "A: pay O 10");
@@ -130,12 +146,12 @@ export async function main(): Promise<void> {
     const rp = await processProposal(mirror, "D", pay);
     const supply = await read<bigint>(mirror, "shares", "totalSupply");
     console.log(`   payment: yes ${fmt(rp.info.yesVotes)} of ${fmt(supply)} shares (100%), passed=${rp.info.status.passed}, state ${await stateOf(mirror, pay.id)}, O got ${fmtS(await usdcOf(mirror, O))} USDC`);
-    invariant("T-9", rp.info.status.passed, "a proposal approved by 100% of shares executes (observed: quorum 101% makes yes*100 < 101*supply for every possible vote)");
+    invariant("T-9", !rp.info.status.passed, "with quorum 101% a proposal approved by 100% of shares is processed as not passed (yes*100 < 101*supply for every vote): terminal for collective action, documented");
     const repair = await proposeTemplate(mirror, "A", { template: "Config", params: { ...INITIAL_GOVERNANCE } }, "A: repair quorum -> 0");
     for (const actor of ["A", "B", "C", "F"] as const) await vote(mirror, actor, repair.id, true);
     await warpPastGrace(mirror, repair.id);
     const rr = await processProposal(mirror, "D", repair);
-    invariant("T-9", rr.info.status.passed, `a unanimous repair proposal can restore the parameters (passed=${rr.info.status.passed}; quorumPercent still ${await read<bigint>(mirror, "baal", "quorumPercent")}: the DAO can never execute anything again)`);
+    invariant("T-9", !rr.info.status.passed && (await read<bigint>(mirror, "baal", "quorumPercent")) === 101n, `a unanimous repair proposal cannot pass either (passed=${rr.info.status.passed}; quorumPercent still ${await read<bigint>(mirror, "baal", "quorumPercent")}): the documented terminal shape; exit is the remedy`);
 
     step("T-9b: exit still works: C ragequits 1000 shares and is paid pro-rata (the constitution's remedy survives the terminal config)");
     const exit = await ragequit(mirror, "C");

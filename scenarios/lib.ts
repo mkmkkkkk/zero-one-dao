@@ -25,7 +25,7 @@ import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, 
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
 import { connectDevnet, deployLocal, increaseTime, simulateSettled, type LocalChain } from "../src/onchain.js";
-import { describe, factoryAbi, submitTemplateProposal, TEMPLATE_NAMES, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
+import { baalGasFor, describe, factoryAbi, submitTemplateProposal, TEMPLATE_NAMES, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
 import { constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, INITIAL_GOVERNANCE, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
 export { GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT };
@@ -652,13 +652,14 @@ export interface Proposal {
   submit: Receipt;
 }
 
-/** Submit a Baal proposal (self-sponsored when the submitter holds >= sponsorThreshold). */
+/** Submit a Baal proposal (self-sponsored when the submitter holds >= sponsorThreshold) with baalGas = simulated need x 1.5 (src/proposals.ts baalGasFor). */
 export async function propose(mirror: Mirror, actor: ActorName, calls: readonly PackedCall[], details: string): Promise<Proposal> {
   const data = encodeProposalData(calls);
   const before = await read<number>(mirror, "baal", "proposalCount");
-  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 0n, details] }, mirror);
+  const baalGas = await baalGasFor(mirror.actors[actor], mirror.dao, data);
+  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, baalGas, details] }, mirror);
   const id = Number(before) + 1;
-  printReceipt(`${actor} submitProposal #${id} "${details}"`, receipt);
+  printReceipt(`${actor} submitProposal #${id} "${details}" (baalGas ${baalGas})`, receipt);
   await warp(mirror, 1, "let votingStarts become past");
   console.log(`   proposal #${id} state = ${await stateOf(mirror, id)}`);
   return { id, data, submit: receipt };

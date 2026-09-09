@@ -112,8 +112,16 @@ export function loadLocalAbi(contractName: string): Abi {
   return parsed.abi as Abi;
 }
 
-/** Load a vendored @daohaus/baal-contracts 1.2.18 artifact (Baal, Safe, factories, MultiSend). */
+/**
+ * Load a Baal-stack artifact. "Baal" is the Zero One fork compiled from contracts/vendor/Baal.sol
+ * (decision.md phase 5 rulings 1 and 2: baalGas cap, retention on burned shares) and "MultiSend" is
+ * MultiSendCallOnly (ruling 6: the Safe never delegatecalls inside a proposal); both come from
+ * contracts/artifacts. The Safe, its proxy and the two factories are the vendored
+ * @daohaus/baal-contracts 1.2.18 build.
+ */
 export function loadBaalArtifact(name: keyof typeof PACKAGE_ARTIFACTS): ContractArtifact {
+  if (name === "Baal") return loadLocalArtifact("Baal");
+  if (name === "MultiSend") return loadLocalArtifact("MultiSendCallOnly");
   return parseArtifact(path.join(BAAL_PACKAGE_ROOT, PACKAGE_ARTIFACTS[name]));
 }
 
@@ -157,7 +165,7 @@ export async function deployArtifact(
   return { address: getAddress(receipt.contractAddress), hash };
 }
 
-/** Deploy the five vendored singletons: Baal, ModuleProxyFactory, Safe, SafeProxyFactory, MultiSend. */
+/** Deploy the five singletons: Baal (Zero One fork), ModuleProxyFactory, Safe, SafeProxyFactory, MultiSendCallOnly. */
 export async function deployBaalInfrastructure(context: WriteContext): Promise<BaalInfrastructure> {
   const baal = await deployArtifact(context, loadBaalArtifact("Baal"));
   const moduleFactory = await deployArtifact(context, loadBaalArtifact("ModuleProxyFactory"));

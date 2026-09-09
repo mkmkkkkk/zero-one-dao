@@ -1,0 +1,5 @@
+   Safe MOCK = 1 raw units (registered asset); ledger.settled() = true
+   D deposited 100 USDC -> 100 shares at NAV 3050 / 3050 (dust ignored, shared by exit only)
+   open instance MOCK = 50000000; ledger.settled() = false
+   after the unwind vote: open instances 0, Safe USDC 3150, Safe MOCK dust still 1; ledger.settled() = true
+   NAV-07 closed: a stranger's dust on the Safe cannot pause deposits; only a voted instance holding its asset does, and only until the vote or the rule ends it

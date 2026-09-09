@@ -29,7 +29,9 @@ revert for anyone else (`OnlySafe`), so they happen only through a later passed 
 ```
 topUp:    [ USDC.transfer(instance, amount), instance.topUp(amount) ]          topUpCalls()
 amend:    [ instance.amend(abi.encode(newParams)) ]                            amendCalls()
-stop:     [ instance.stop() ]                 -> everything back to the Safe   stopCalls()
+stop:     [ instance.stop() ]                 -> settlement back to the Safe (a Strategy keeps its asset)   stopCalls()
+unwind:   [ strategy.unwind() ]               -> stopped Strategy sells its asset on the venue, closes   unwindCalls()
+          [ strategy.stop(), strategy.unwind() ]  in one vote                                stopAndUnwindCalls()
 migrate:  [ old.migrate(new), new.start() ]   -> everything to the new voted contract   migrateCalls()
 ```
 
@@ -46,12 +48,15 @@ settlement (USDC, 6 decimals) the treasury committed (funding + topUps). Immutab
 | Safe `start()` | `open()` checks the factory record; Strategy registers its asset once |
 | Instant Payment/Config completion | Open and `close()` atomically in the voted start |
 | Strategy `run()` completion; Project last release or `end()` | `close()` after return to the Safe; existing permissionless completion retained (phase 4 designQuestions) |
-| Safe `stop()`, including zero holdings | `close()` after returning holdings |
-| Safe `migrate(new)` and `new.start()` | Old instance closes; factory-recorded successor opens on start |
+| Safe `stop()` on a Payment/Project/Config, or on a Strategy holding no asset | `close()` after returning holdings |
+| Safe `stop()` on a Strategy holding its asset | Settlement back to the Safe, asset stays inside, instance stays **open** (Stopped): deposits paused |
+| Safe `unwind()` on a stopped, open Strategy | Sells the asset on the venue at the rule's `slippageBps`, proceeds to the Safe, `close()` |
+| Safe `migrate(new)` (Running, or Stopped-and-open) and `new.start()` | Old instance closes; factory-recorded successor opens on start (raw holdings move, no venue call) |
 
-Ledger NAV includes USDC held by every open instance. Deposits require no open instance to hold its
-asset and no registered asset in the Safe, even dust. Raw Strategy stop can therefore refuse deposits
-until a later settlement/sweep vote clears the Safe; exits remain pro-rata of the Safe only.
+Ledger NAV includes USDC held by every open instance. Deposits require that no open instance holds its
+asset; balances of the Safe or of closed instances are never consulted (dust on the Safe is shared by
+exit only). A stopped Strategy therefore pauses deposits until a later `unwind()` or `migrate()` vote;
+exits remain pro-rata of the Safe only.
 
 ## 1. Payment (`PaymentProposal`)
 - params: `address[] recipients`, `uint256[] amounts` (same length, non-zero); `budget = sum(amounts)`.
@@ -71,11 +76,13 @@ until a later settlement/sweep vote clears the Safe; exits remain pro-rata of th
   3. `value = settlement held + asset held × price`; `takeProfit` and `value >= budget × (1 + tp)` or
      `stopLoss` and `value <= budget × (1 - sl)` → unwind, return, `Complete`.
   4. otherwise buy the asset with `min(maxPerRun, settlement held)`.
-- `stop()` / `migrate(new)` (Safe only): move the raw holdings (every settlement unit and every asset unit)
-  to the Safe / to `new` without calling the venue, so a dead venue can never trap funds; unwinding on the
-  venue is `run()`'s job before the deadline. `new.start()` requires `new` to hold at least its own `budget`
-  in settlement unless it already holds the asset (a migrated position); an asset that lands in the Safe is
-  sold or added to guild assets by a later proposal.
+- `stop()` (Safe only): returns every settlement unit to the Safe without calling the venue and keeps the
+  asset inside; the instance is `Stopped` and stays open in the ledger (deposits paused) until a later vote
+  `unwind()`s it (Safe only: sells every asset unit on the venue at the rule's `slippageBps`, returns the
+  proceeds, closes the ledger entry; `stop()` + `unwind()` fit one multicall) or `migrate(new)`s it (Safe
+  only; allowed while Running or while Stopped-and-open): every remaining settlement and asset unit moves
+  to `new` without calling the venue, so a dead venue can never trap funds. `new.start()` requires `new` to
+  hold at least its own `budget` in settlement unless it already holds the asset (a migrated position).
 - `amend(abi.encode(Rule))` replaces the rule (venue, asset, budget unchanged); `topUp` raises `budget`
   (the take-profit / stop-loss reference).
 - operator role: leads by default; no special power. Views: `value()`, `rule()`, `runs()`, `lastRun()`.
@@ -89,9 +96,11 @@ until a later settlement/sweep vote clears the Safe; exits remain pro-rata of th
   vote" = Date with `releaseAt 0`).
 - `release(i)` — anyone, when a Date tranche's date has come. `confirm(i)` — a named verifier of a
   Verifiers tranche, once; at `threshold` the tranche is paid to the operator.
-- `end()` — anyone after `deadline`: unreleased tranches return to the Safe, `Complete`. When the last
-  tranche is released the project is `Complete` and anything left (unallocated money, proceeds sent to the
-  contract) returns to the Safe.
+- `end()` — anyone after `deadline`: unreleased tranches return to the Safe, `Complete`. Once the deadline
+  has come `release(i)` and `confirm(i)` revert `DeadlinePassed` (only `end()` applies: a due-but-unreleased
+  tranche always returns to the Safe, no transaction race) and `start()` refuses (the funding action fails
+  atomically). When the last tranche is released the project is `Complete` and anything left (unallocated
+  money, proceeds sent to the contract) returns to the Safe.
 - `topUp(amount)` (Safe only) records money without a schedule; `amend(abi.encode(Tranche[], deadline))`
   (Safe only) cancels every unreleased tranche, installs the new list (must fit what is held) and releases any
   Date tranche already due. To raise a budget, vote both in one multicall (scenario I).
@@ -99,11 +108,14 @@ until a later settlement/sweep vote clears the Safe; exits remain pro-rata of th
 - Views: `trancheCount()`, `tranche(i)` → `(plan, state{released, cancelled, confirmations})`, `unreleased()`, `released()`.
 
 ## 4. Work (`WorkManager`, not a template instance)
-- Unchanged: `WorkManager.submitTask(verifiers, threshold, rewardShares, expiration, details)` records the
-  task and submits the Baal proposal that activates it; verifier ≠ proposer enforced there; reward in shares
-  minted at the confirmation threshold (DESIGN.md §5, scenarios E and F). Through the relay (`work`, op 6)
-  the member's intent account calls `submitTask` and then `Baal.sponsorProposal` in the same transaction
-  (ruling 4), so the proposal enters voting at once; a member below sponsorThreshold gets `!sponsor`.
+- `WorkManager.submitTask(verifiers, threshold, rewardShares, expiration, details)` records the task and
+  submits the Baal proposal that activates it (baalGas 500,000); verifier ≠ proposer enforced there; reward
+  in shares minted at the confirmation threshold (DESIGN.md §5, scenarios E and F). Through the relay
+  (`work`, op 6) the member's intent account calls `submitTask` and then `Baal.sponsorProposal` in the same
+  transaction (ruling 4), so the proposal enters voting at once; a member below sponsorThreshold gets `!sponsor`.
+- `expiration` is also the task's expiration: `confirm()` reverts after it, anyone may `expireTask()`, and
+  `activeRewardShares()` (the share liability DepositShaman prices into deposits) stops counting it. A claim
+  that delivers nothing for `CLAIM_TIMEOUT` (7 d) lapses; the next `claim()` takes the task over.
 
 ## 5. Config (`ConfigProposal`)
 - params: `Config{votingPeriod, gracePeriod, proposalOffering, quorumPercent, sponsorThreshold, minRetentionPercent}`.
