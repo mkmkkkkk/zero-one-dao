@@ -1,10 +1,10 @@
 /** Phase 4 HTTP regression against the owned relay/devnet after the ordinary cold start. */
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { encodeFunctionData, type Abi, type Address, type Hex } from "viem";
+import { type Abi, type Address, type Hex } from "viem";
 import { loadBaalArtifact, loadLocalArtifact, type WriteContext } from "../src/baal.js";
 import { deployLocal, increaseTime, writeAndWait } from "../src/onchain.js";
-import { stopCalls, submitCalls, submitTemplateProposal } from "../src/proposals.js";
+import { stopCalls, submitCalls, submitTemplateProposal, unwindCalls } from "../src/proposals.js";
 import { HOUR, SETTLEMENT_UNIT as U, type ZeroOneDao } from "../src/zeroOne.js";
 
 export async function ledgerHttp(origin: string, owner: WriteContext, dao: ZeroOneDao): Promise<void> {
@@ -72,17 +72,16 @@ export async function ledgerHttp(origin: string, owner: WriteContext, dao: ZeroO
     assert.equal(await balance(dao.safe), safeBefore, "refused deposit did not move treasury funds");
   };
   await refuse();
-  const stop = await submitCalls(owner, dao, stopCalls(proposal.instance.address), "phase 4 relay stop");
+  const stop = await submitCalls(owner, dao, stopCalls(proposal.instance.address), "phase 5 relay stop");
   await pass(stop);
-  assert.equal(await balance(dao.safe, asset.address), U);
+  // Phase 5 ruling 4b: stop() keeps the asset inside the stopped instance (still open); the Safe holds none of it.
+  assert.equal(await balance(proposal.instance.address, asset.address), U);
+  assert.equal(await balance(dao.safe, asset.address), 0n);
   assert.equal((await state()).settled, false);
   await refuse();
-  const call = (to: Address, abi: Abi, functionName: string, args: readonly unknown[]) => ({ to, value: 0n, operation: 0 as const, data: encodeFunctionData({ abi, functionName, args }) });
-  const settlement = await submitCalls(owner, dao, [
-    call(asset.address, token, "approve", [dex.address, U]),
-    call(dex.address, dex.artifact.abi, "sell", [U, 0n]),
-  ], "phase 4 relay settlement vote");
+  const settlement = await submitCalls(owner, dao, unwindCalls(proposal.instance.address), "phase 5 relay unwind vote");
   await pass(settlement);
+  assert.equal(await balance(proposal.instance.address, asset.address), 0n);
   assert.equal(await balance(dao.safe, asset.address), 0n);
   assert.equal((await state()).settled, true);
   const response = await fetch(`${origin}/relay?op=deposit&amount=${U}&pass=${passphrase}`);
