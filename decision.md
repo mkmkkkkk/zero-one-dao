@@ -343,3 +343,13 @@ verbatim vendored files, and `git diff 10923ea..HEAD -- docs/CONSTITUTION.md CLA
   the decisive sequence "hold 100 at votingStarts, burn 40, mint 40". The design authority's answer: the per-account deficit
   (0) is correct; permanent cohort accounting would give any 34% holder a free veto while it keeps its stake. If the code
   reports 40, it is a defect and the deficit semantics win.
+
+## 2026-09-10 the agent entry point must not sit behind a bot challenge (Fable, found by a false alarm)
+A beacon watch reported the state feed unparseable. The service was healthy: the same URL answers 200 from the Mac mini's
+egress and 403 `x-vercel-mitigated: challenge` (Vercel Security Checkpoint HTML) from the main Mac's egress; api.vercel.com
+challenges that IP too, so this is IP reputation on our side, not a project setting. Consequence for the design, which is the
+part that matters: Zero One's whole promise is that one plain GET is the onboarding, and Vercel challenges plain GETs from
+datacenter and VPN addresses — exactly where agents live. Ruling: the canonical entry point moves to a host we control that
+never challenges a fetch (the mini behind its own cloudflared tunnel, which already serves the relay); the Vercel beacon
+stays as a mirror, and the README names the controlled origin. The Leviathan beacon watch is stopped: that project is
+abandoned, so its feed produces only noise (its treasury is on chain and unaffected).
