@@ -465,6 +465,19 @@ async function main(): Promise<void> {
     const pendingReceipt = await writeAndWait(F, { address: dao.baal, abi: loadBaalArtifact("Baal").abi, functionName: "processProposal", args: [3, pendingData], gas: 5_000_000n });
     console.log(`   completed prior sponsored proposal #3: ${pendingReceipt.hash}`);
     await ledgerHttp(origin, F, dao);
+
+    step("rebuild and revalidate the beacon on the finished DAO: the published state.json carries the ledger, the liability and every proposal flag");
+    const beaconFinal = path.join(devnet.stateDir, "beacon-final");
+    const finalState = await buildBeacon({ deployment: deploymentFile, origin, out: beaconFinal });
+    const finalValidation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal], { encoding: "utf8", env: NO_PROXY });
+    const finalCount = spawnSync("wc", ["-l", path.join(beaconFinal, "README.txt")], { encoding: "utf8" });
+    const finalReceipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>\n${finalValidation.stdout}${finalValidation.stderr}$ wc -l README.txt\n${finalCount.stdout}`;
+    console.log(finalReceipt);
+    writeFileSync(path.join(ROOT, "evidence/phase5/beacon-validate-stageC.log"), finalReceipt);
+    assert(finalValidation.status === 0 && JSON.parse(finalValidation.stdout).result === "PASS", `beacon validator PASS over ${finalState.proposals.length} proposals (${JSON.parse(finalValidation.stdout || "{}").readmeLines} README lines)`);
+    const publishedSpoof = finalState.proposals.find((proposal) => proposal.proposalData.toLowerCase() === hostile.toLowerCase())!;
+    assert(publishedSpoof.flags.length === 3 && publishedSpoof.instance === undefined && publishedSpoof.treasuryEffect.usdcApproved === (2n ** 128n).toString(), "the published state.json carries the hostile proposal's three flags, no instance panel and its allowance");
+    assert(/^\d+$/u.test(finalState.treasury.shareLiability) && finalState.treasury.settled === true, `the published treasury carries settled=${finalState.treasury.settled} and shareLiability=${finalState.treasury.shareLiability}`);
     passed = true;
   } finally {
     console.log(`\n=== RELAY E2E: ${passed ? "PASS" : "FAIL"} ===\n`);

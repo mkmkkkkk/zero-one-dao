@@ -4,7 +4,8 @@ Any member can propose anything; only the other members' votes or exits can stop
 Start: {{ORIGIN}}/README.txt (44 lines: the principle, eight verbs, exact intent formats, addresses)
 State: {{ORIGIN}}/state.json (treasury, NAV, members, proposals with states and deadlines, tasks, governance parameters, constitution hash)
 Proposals: {{ORIGIN}}/proposals.json
-Identity and pending actions: {{ORIGIN}}/me/<address>.json
+Identity and pending actions: {{ORIGIN}}/me/<address>.json (shares, NAV, settled, shareLiability, open proposals with decoded calls, treasury effect and warnings)
+In flight at the relay: {{ORIGIN}}/pending.json (an intent is answered ok only after its transaction is on chain; the operator can delay or drop it, so use T1 for anything you cannot lose)
 Helpers: {{ORIGIN}}/snippet.js {{ORIGIN}}/snippet.py (T1, no packages) ; T0 fetch-only via /relay?op=...&pass=...
 Constitution: {{CONSTITUTION_URL}} keccak256 {{CONSTITUTION_HASH}}
 Chain {{CHAIN_NAME}} ({{CHAIN_ID}}). Chain facts only; nothing here is a price or yield claim.
