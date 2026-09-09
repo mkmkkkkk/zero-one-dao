@@ -35,6 +35,8 @@ export const FORK_USDC_WHALES: Address[] = [
 
 /** Spot move the sandwiches must reach (basis points of the pre-manipulation price). */
 export const SANDWICH_MOVE_BPS = 2_000n;
+/** Voted slippage tolerance of every Strategy the sandwiches attack (basis points off the TWAP). */
+export const SANDWICH_SLIPPAGE_BPS = 50n;
 const SANDWICH_USDC = 60_000_000n * SETTLEMENT_UNIT;
 const SANDWICH_ETH = 100_000n * 10n ** 18n;
 
@@ -214,10 +216,29 @@ function harness(fork: ForkDao, venueAddress: Address, venueAbi: Abi) {
     }
     return swaps;
   }
+  /**
+   * Gas to supply for one call: the estimate plus half again, capped a million below the block limit.
+   *
+   * A sandwich crosses hundreds of initialized ticks and anvil returns the binary-search minimum with no
+   * margin, so the mined transaction — a different block, a different oracle observation slot — can need a
+   * little more than the estimate and run out of gas after the simulation said it would pass.
+   *
+   * @param context The sender.
+   * @param request address / abi / functionName / args (and value) of the call.
+   * @returns The gas limit to send.
+   */
+  async function generousGas(context: WriteContext, request: { address: Address; abi: Abi; functionName: string; args: readonly unknown[]; value?: bigint }): Promise<bigint> {
+    const estimate = await publicClient.estimateContractGas({ account: context.account, ...request } as never);
+    const ceiling = (await publicClient.getBlock()).gasLimit - 1_000_000n;
+    const wanted = (estimate * 3n) / 2n;
+    return wanted < ceiling ? wanted : ceiling;
+  }
   async function send(address: Address, abi: Abi, functionName: string, args: readonly unknown[], label: string, other = false, value?: bigint) {
     const context = other ? stranger : founder;
     const simulation = await publicClient.simulateContract({ account: context.account, address, abi, functionName, args, ...(value === undefined ? {} : { value }) });
-    const result = await writeAndWait(context, { ...simulation.request, ...(functionName === "run" ? { gas: 2_000_000n } : {}) } as unknown as Record<string, unknown>);
+    // A permissionless run() is sent with the fixed budget a real caller would use; everything else gets a margin.
+    const gas = functionName === "run" ? 2_000_000n : await generousGas(context, { address, abi, functionName, args, ...(value === undefined ? {} : { value }) });
+    const result = await writeAndWait(context, { ...simulation.request, gas } as unknown as Record<string, unknown>);
     console.log(`tx ${label} ${result.hash} block=${result.receipt.blockNumber} gas=${result.receipt.gasUsed}`);
     swapsIn(result.receipt);
     return result;
@@ -317,7 +338,7 @@ export async function proveSandwiches(fork: ForkDao, venue: { address: Address; 
   }
 
   const deadline = (await publicClient.getBlock()).timestamp + 30n * 86400n;
-  const rule = { maxPerRun: 2n * SETTLEMENT_UNIT, minInterval: 0n, deadline, takeProfitBps: 0n, stopLossBps: 0n, slippageBps: 50n };
+  const rule = { maxPerRun: 2n * SETTLEMENT_UNIT, minInterval: 0n, deadline, takeProfitBps: 0n, stopLossBps: 0n, slippageBps: SANDWICH_SLIPPAGE_BPS };
 
   // T-4: DCA buy during a +25% print is refused; after the back-run the same run fills within the bound.
   const entryStrategy = await h.start({ venue: venue.address, asset: BASE_UNISWAP.weth, budget: 20n * SETTLEMENT_UNIT, rule }, "T-4 victim: DCA 2 USDC per run, slippage 50 bps");
