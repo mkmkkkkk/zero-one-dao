@@ -1,5 +1,5 @@
 /** K is opt-in: all broadcasts are to a validated loopback Base Anvil fork. */
-import { decodeEventLog, encodeFunctionData, getAddress, parseAbi, type Abi, type Address } from "viem";
+import { decodeEventLog, encodeDeployData, encodeFunctionData, getAddress, parseAbi, type Abi, type Address } from "viem";
 import { assertBaseFork, fundForkUsdc, startBaseFork } from "../src/baseFork.js";
 import { loadBaalArtifact, loadLocalArtifact, type PackedCall } from "../src/baal.js";
 import { stopDevnet, type Devnet } from "../src/devnet.js";
@@ -71,6 +71,25 @@ export async function runUniswapFork(devnet: Devnet, dao: ZeroOneDao): Promise<v
   }
   assert(await publicClient.readContract({ address: BASE_UNISWAP.factory, abi: dependencyAbi, functionName: "feeAmountTickSpacing", args: [500] }) === 10, "factory feeAmountTickSpacing(500)=10");
   assert(await publicClient.readContract({ address: BASE_USDC, abi: erc20, functionName: "decimals" }) === 6, "USDC decimals read through proxy = 6");
+  const pool = await publicClient.readContract({ address: BASE_UNISWAP.factory, abi: dependencyAbi, functionName: "getPool", args: [BASE_USDC, BASE_UNISWAP.weth, 500] });
+  const poolAbi = parseAbi(["function observe(uint32[]) view returns(int56[],uint160[])", "function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)"]);
+  const venueArgs = [dao.safe, BASE_USDC, BASE_UNISWAP.weth, BASE_UNISWAP.router, BASE_UNISWAP.quoter, BASE_UNISWAP.factory, 500] as const;
+  console.log(`ASSERT real fork pool=${pool} slot0=${JSON.stringify(await publicClient.readContract({ address: pool, abi: poolAbi, functionName: "slot0" }), (_, value) => typeof value === "bigint" ? value.toString() : value)}`);
+  try {
+    await publicClient.readContract({ address: pool, abi: poolAbi, functionName: "observe", args: [[1800, 0]] });
+    console.log("ASSERT upstream pool already serves observe([1800,0])");
+  } catch (error) {
+    console.log(`OBSERVATION HISTORY REFUSAL: ${error instanceof Error ? error.message : String(error)}`);
+    const artifact = loadLocalArtifact("UniswapV3Venue");
+    let refused = false;
+    try { await publicClient.call({ account: founder.account, data: encodeDeployData({ abi: artifact.abi, bytecode: artifact.bytecode, args: venueArgs }) }); }
+    catch (failure) { refused = true; console.log(`ASSERT constructor refuses unavailable window: ${failure instanceof Error ? failure.message : String(failure)}`); }
+    assert(refused, "constructor refuses the real pool with insufficient observation history");
+  }
+  // Advance only local fork time: the actual V3 oracle accumulates its unchanged tick for a full window.
+  await increaseTime(founder, 1801);
+  const observations = await publicClient.readContract({ address: pool, abi: poolAbi, functionName: "observe", args: [[1800, 0]] });
+  console.log(`ASSERT real observe([1800,0]) after local 1801s warm-up=${observations[0].join(",")}`);
   const venue = await deployLocal(founder, "UniswapV3Venue", [dao.safe, BASE_USDC, BASE_UNISWAP.weth, BASE_UNISWAP.router, BASE_UNISWAP.quoter, BASE_UNISWAP.factory, 500]);
   venueAddress = venue.address;
   console.log(`tx UniswapV3Venue deploy ${venue.hash} address=${venue.address}`);

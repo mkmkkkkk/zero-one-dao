@@ -28,6 +28,7 @@
     "e2e:relay": "tsx relay/e2e-local.ts",
     "deploy:base": "tsx scripts/deploy-base.ts",
     "scenario:K": "tsx scenarios/K-uniswap-v3-fork.ts",
+    "scenario:L": "tsx scenarios/L-treasury-ledger.ts",
     "e2e:base-fork": "tsx scripts/e2e-base-fork.ts"
   },
   "dependencies": {

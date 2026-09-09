@@ -58,7 +58,7 @@ export interface StrategyRule {
   deadline: bigint;
   takeProfitBps: bigint;
   stopLossBps: bigint;
-  /** Quote-to-execution tolerance; omitted mirror rules use exact output (0 bps). */
+  /** TWAP and quote execution tolerance; omitted mirror rules use exact output (0 bps). */
   slippageBps?: bigint;
 }
 

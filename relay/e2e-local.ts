@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { encodeErrorResult, getAddress, keccak256, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { loadLocalArtifact } from "../src/baal.js";
+import { loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 import { chooseFreePort, startDevnet, stopDevnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
@@ -27,6 +27,7 @@ import { buildBeacon } from "../beacon/scripts/build.js";
 
 import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
 import { hardening } from "./e2e-hardening.js";
+import { ledgerHttp } from "./e2e-ledger.js";
 import { connect as connectRelay } from "./common.js";
 import { decodeRevert } from "./errors.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
@@ -379,6 +380,13 @@ async function main(): Promise<void> {
 
     step("phase 3 two-process concurrency, duplicate intents, restart cursor and killed broadcaster recovery");
     await hardening({ deploymentFile, stateDir: path.join(devnet.stateDir, "relay"), sponsorKey, origin, client: chain.publicClient, adapter: dao.intentAccount, settlement: dao.settlement, safe: dao.safe, shares: dao.shares, chainId: devnet.chainId });
+    step("phase 4 ledger HTTP: open-budget NAV, actual unsettled deposit refusals, and settlement recovery");
+    // Finish the cold-start's last Payment before submitting later sponsored proposals.
+    await increaseTime(F, 12 * HOUR + 5);
+    const pendingData = await chain.publicClient.readContract({ address: dao.templateFactory, abi: loadLocalArtifact("TemplateFactory").abi, functionName: "proposalData", args: [0, encodeParams({ template: "Payment", params: { recipients: [t0Address], amounts: [SETTLEMENT_UNIT] } }), getAddress(String(proposed2.instance))] });
+    const pendingReceipt = await writeAndWait(F, { address: dao.baal, abi: loadBaalArtifact("Baal").abi, functionName: "processProposal", args: [3, pendingData], gas: 5_000_000n });
+    console.log(`   completed prior sponsored proposal #3: ${pendingReceipt.hash}`);
+    await ledgerHttp(origin, F, dao);
     passed = true;
   } finally {
     console.log(`\n=== RELAY E2E: ${passed ? "PASS" : "FAIL"} ===\n`);
