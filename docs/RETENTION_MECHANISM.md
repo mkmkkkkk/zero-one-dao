@@ -21,7 +21,7 @@ The historical comparison and rejected variants remain in
   change in timestamp `t`, including changes later in that same timestamp.
 - `balanceJournal` expands the old positive-mint journal into immutable
   `(timestamp, account, beforeBalance, afterBalance)` records for **both mints and
-  burns**. Each positive change appends one record. Zero mint/burn appends nothing.
+  burns**. Each nonzero mint or burn appends one record. Zero mint/burn appends nothing.
 - `settlements[id] = {cursor, growth}` represents a possibly partial window.
   Registration sets `cursor` to the current journal length and `growth` to zero.
   Records subsequently appended within the start timestamp are consumed but excluded
@@ -123,9 +123,38 @@ before, midway through and after the storm; balance checkpoint timestamp shape i
 held constant. The proposal uses `baalGas=50,000`, deliberately far below the total
 settlement cost, and a subsequent proposal also processes.
 
-Measured values are recorded below after the acceptance run. Attacker gas includes
-batch-call overhead and all deposit receipts; it excludes helper deployment and
-approval (both are separately receipted). USDC is contributed principal and can be
+The completed runs measured:
+
+| Receipt measurement | Storm run (`d776548`) | Clean clone (`753b470`) |
+| --- | ---: | ---: |
+| Real deposit records | 5,000 | 5,000 |
+| Settlement calls, at most 128 records each | 40 | 40 |
+| Total settlement gas | 41,263,129 | 41,263,129 |
+| Settlement gas per record | 8,252.6258 | 8,252.6258 |
+| Proposal processing gas | 147,349 | 147,373 |
+| Writer deposit batch gas, total | 487,702,824 | 484,317,537 |
+| Writer gas per record | 97,540.5648 | 96,863.5074 |
+| Writer gas / settler gas | 11.819337 | 11.737295 |
+| Writer contributed USDC, total / per record | 0.005 / 0.000001 | 0.005 / 0.000001 |
+| Deposit gas at quiet, 2,500 and 5,000 records | 245,235 at all three | 245,235 at all three |
+| Exit gas at quiet, 2,500 and 5,000 records | 249,624 at all three | 249,636 at all three |
+
+Both storm proposals and their queue successors processed successfully. Between
+chunks, the existing test appends burns and a returning deposit; the added readback
+asserts cursor `4 -> 8 == tail`, four pending records consumed, exact growth
+`1e18`, and zero deficit. It also checks refusal with all four flags unchanged,
+saved progress after an out-of-gas chunk, an already-finished no-op, and a mint
+after completion reopening the pending suffix.
+
+Random deployment/account addresses explain the 12-gas exit difference between
+runs: the first run's ragequit address arguments contain one zero byte, the clean
+clone's contain none (16 rather than 4 intrinsic gas for that byte). Constancy is
+compared within each run using identical calldata and checkpoint timestamp shape.
+The independent readback counts all 100 deposit batch receipts and 40 settlement
+receipts and verifies their sums in `evidence/phase5/incremental/acceptance-clean-summary.json`.
+
+Attacker gas includes batch-call overhead and all deposit receipts; it excludes
+helper deployment, approval and helper funding transfer. USDC is contributed principal and can be
 recovered via ordinary exit, **not an irreversible protocol fee or burned cost**.
 No fiat ETH price, public-chain gas price or Base L1 data fee is inferred from local
 gas units; those costs are unknown. Timestamp boundary writes cause small variations
@@ -136,14 +165,17 @@ in batched attacker gas between runs, so each run reports its own totals.
 ```
 npm ci
 HTTPS_PROXY=http://127.0.0.1:7897 FORK_RPC=https://mainnet.base.org python3 scripts/acceptance-retention.py
+# Independent committed-branch clone, fresh npm ci, full log, and automatic cleanup:
+HTTPS_PROXY=http://127.0.0.1:7897 FORK_RPC=https://mainnet.base.org python3 scripts/acceptance-clean-retention.py
 ```
 
 The runner executes compile, typecheck, `npm run scenarios` with K included at the
 pinned Base block 51,000,000 (pool warming is retained), relay E2E, entry-point E2E,
 deployment refusals, and the full maintained audit test set (governance/NAV, economic,
 work templates and account/relay). Each job's complete output and exit status is
-preserved; a failure makes the runner fail. The untracked t15 lotCount experiment
-predates this branch's journal and is not part of the maintained suite. Frozen a/b
+preserved; a failure makes the runner fail. The tracked historical t15 lotCount/epoch
+experiment targets removed interfaces; t16 supersedes its deficit cases and t15 is
+explicitly excluded from the 34 maintained audit tests. Frozen a/b
 comparison variants are historical research fixtures, not acceptance implementations.
 
 `t18 --legacy` installs the prior monolithic token only in an empty owned local DAO:
@@ -152,3 +184,25 @@ normal deployment is GREEN. t16 retains the exit40/return40 counterexample, mult
 windows, same-timestamp starts/mints, zero-exit behavior, registration access controls,
 YES-member departures and the independent 36-step/6-window oracle. GOV-03/GOV-04 are
 rerun with the explicit settlement step and preserve their economic assertions.
+
+Final worktree and independent clean-clone results are both
+`ACCEPTANCE TOTAL jobs=40 green=40 red=0`: compile, typecheck, scenarios A-L with
+K actually executed on Base block 51,000,000, both E2Es, deployment refusals and all
+34 maintained audit tests. The clean clone built commit `753b470` from a fresh
+`npm ci`; its initial tracked status was empty. Its full log is committed in
+`48f13ad`, with SHA-256
+`3e0c8a6b2dd0b9ecd64663e895cc7945fb84df80a0b1714d96d6844670bf14f2`.
+The clone preserves the canonical Git origin for the deployment constitution
+checks and is moved to Trash after the run. No dependencies or devnet state are
+copied into it. Fork pool warming covers both 25% directions (3,000 ticks each
+side); the final fork receipts record 1,627 reads, including observations.
+
+Red-to-green evidence remains under `evidence/phase5/incremental/`: the initial
+fork receipt wait timed out despite a successful local funding receipt; the
+helpers now keep normal fork polling, disable replacement lookup for that owned
+impersonated transfer and clean up a failed fork setup. The first clean clone
+exposed an origin mismatch and T08's unchecked raw submission (`!voting` on #20).
+The clone runner preserves origin; T08 gives its submissions gas headroom and
+checks every submit/clear receipt and proposal count. The final full clone rerun
+passes both. These continuation fixes are in test/devnet helpers; the committed
+contracts from `75c9ac6` are unchanged.

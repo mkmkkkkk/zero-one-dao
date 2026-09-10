@@ -528,4 +528,25 @@ Append-time per-account deduplication is omitted under “if it stays simple”:
 
 Verification: `t18 --legacy` is RED against the frozen previous token because it permits unsettled processing; normal deployment is GREEN only after asserting atomic refusal, mutations between chunks, returned-member zero deficit, no-op completion and a real 5,000-deposit storm followed by both its proposal and its queue successor processing. t16 retains the independent 36-change/6-window oracle and the exit40-return40 counterexample. GOV-03 includes deposit + settle + process in one transaction; GOV-04 retains flash-deposit/vote/exit economics. `scripts/acceptance-retention.py` runs compile/typecheck, scenarios A–L including the warmed Base fork at block 51,000,000, both E2Es, deployment refusals, and all 34 maintained audit tests sequentially with full output and failure propagation.
 
-Final measured receipts and clean-clone acceptance are recorded below when those runs complete. Specification and proof: `docs/RETENTION_MECHANISM.md`; red/green evidence: `evidence/phase5/incremental/`; independent acceptance receipt: `evidence/phase5/acceptance-rerun-retention.log`. No public-chain transaction, push, credential/state commit, hook bypass or live-service change is authorized by this work.
+Completed continuation receipts: `d776548` finishes the storm and strengthens the between-chunk cursor/growth readback; `47ed12c` records independently summed writer/settler economics; `1454d5c` records the worktree's 40/40 acceptance; `48f13ad` records the fresh-clone rerun of `753b470`, also 40/40. The clone starts with empty tracked status, installs via `npm ci`, preserves the canonical origin and moves itself to Trash when finished. Its full output and independently checked receipt sums are committed, not inferred from the process exit code.
+
+Measured storm: 5,000 real deposit records, 40 settlement calls, 41,263,129 total settlement gas (8,252.6258 per record), successful processing and a successful queue successor. Between chunks, burns and the returning deposit advance cursor 4 to tail 8, consume all four pending records and produce growth 1e18 / deficit zero. Partial/unsettled processing changes no flags; a failed chunk preserves its saved progress; completion is a no-op until another change appends work.
+
+Economics: the first completed storm used 487,702,824 writer gas; the independent clone used 484,317,537 (96,863.5074 per record, 11.737295 times the settler's gas). Both contributed 0.005 USDC total, 0.000001 per record, as recoverable principal. In the clone, deposit was 245,235 gas and exit 249,636 gas at quiet / 2,500 / 5,000 records. The first run's exit was 249,624 at all three points; its address arguments contain one extra zero calldata byte, accounting for the 12-gas difference between deployments. Batched writer gas also varies with timestamp checkpoint boundaries. Public gas price, L1 data fees and USD cost remain unknown.
+
+Acceptance output from the independent clone:
+
+```text
+K: PASS
+=== RELAY E2E: PASS ===
+=== ENTRY POINT E2E: PASS ===
+ACCEPTANCE RESULT npm run test:deploy-refusals exit=0
+STORM records=5000 settle_calls=40 settle_total_gas=41263129 settle_gas_per_record=8252.6258 process_gas=147373 processed=true passed=true actionFailed=false
+ACCEPTANCE TOTAL jobs=40 green=40 red=0
+```
+
+All A-L scenarios ran; K and the price-reference audit used owned Base forks pinned at 51,000,000, with actual pool warming (1,627 reads in the final run). The 34 maintained audits include governance/NAV, economic, work-template and account/relay tests. Historical t15 is a tracked lotCount/epoch research prototype targeting removed interfaces; its deficit cases are superseded by t16, and its exclusion is explicit in the runner and logs.
+
+Failures were preserved and fixed in the test/devnet workflow: a cold-fork funding receipt wait timed out despite successful local mining; fork polling and replacement detection were adjusted and failed setup now cleans up its Anvil. The first clone used a local-directory origin and correctly hit the deployment origin gate; the clone workflow now retains the official origin without weakening that gate. The clone also exposed an unchecked T08 submit followed by `!voting`; the fixture now supplies timestamp-boundary gas headroom and verifies every receipt and proposal count. T08's unmeasured dollar-cost assertion was changed to unknown. Targeted reruns and the final fresh-clone suite are green. Contracts remain byte-for-byte unchanged from `75c9ac6` in this continuation.
+
+Specification and proof: `docs/RETENTION_MECHANISM.md`; economics and red/green evidence: `evidence/phase5/incremental/`; independent acceptance receipt: `evidence/phase5/acceptance-rerun-retention.log`, SHA-256 `3e0c8a6b2dd0b9ecd64663e895cc7945fb84df80a0b1714d96d6844670bf14f2`. Reproduce with `python3 scripts/acceptance-clean-retention.py` (authorized read-only fork RPC/proxy settings as documented). No public-chain transaction, push, credential/state commit, hook bypass or live-service change was performed.
