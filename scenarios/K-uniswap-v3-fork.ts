@@ -93,14 +93,19 @@ export interface ForkDao { devnet: Devnet; dao: ZeroOneDao; founder: WriteContex
  */
 export async function bootForkDao(runId: string): Promise<ForkDao> {
   const devnet = await startBaseFork(runId);
-  const chain = connectDevnet(devnet);
-  const founder = chain.contexts[0]!;
-  await fundForkUsdc(devnet, founder.account.address, 50n * SETTLEMENT_UNIT);
-  const dao = await deployZeroOne(founder, { ...DEFAULT_PARAMS, founder: founder.account.address, settlement: BASE_USDC });
-  for (const [name, hash] of Object.entries(dao.txHashes)) console.log(`tx deploy ${name} ${hash}`);
-  const genesis = await genesisDeposit(founder, dao);
-  console.log(`tx genesis ${genesis.depositHash} shares=${genesis.sharesMinted}`);
-  return { devnet, dao, founder, stranger: chain.contexts[1]! };
+  try {
+    const chain = connectDevnet(devnet);
+    const founder = chain.contexts[0]!;
+    await fundForkUsdc(devnet, founder.account.address, 50n * SETTLEMENT_UNIT);
+    const dao = await deployZeroOne(founder, { ...DEFAULT_PARAMS, founder: founder.account.address, settlement: BASE_USDC });
+    for (const [name, hash] of Object.entries(dao.txHashes)) console.log(`tx deploy ${name} ${hash}`);
+    const genesis = await genesisDeposit(founder, dao);
+    console.log(`tx genesis ${genesis.depositHash} shares=${genesis.sharesMinted}`);
+    return { devnet, dao, founder, stranger: chain.contexts[1]! };
+  } catch (error) {
+    await stopDevnet(devnet);
+    throw error;
+  }
 }
 
 /**

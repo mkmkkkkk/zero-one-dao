@@ -12,7 +12,9 @@ env['HTTPS_PROXY'] = env.get('HTTPS_PROXY', 'http://127.0.0.1:7897')
 env['NO_PROXY'] = env['no_proxy'] = '127.0.0.1,localhost'
 env.pop('ZERO_ONE_LIVE_DEPLOYMENT', None)
 rpc = env.pop('FORK_RPC', 'https://mainnet.base.org')
-# t15 is an untracked, obsolete lotCount prototype, not part of the branch's test set.
+env['FORK_BLOCK'] = '51000000'
+# t15 is a tracked historical lotCount/epoch prototype; t16 supersedes its deficit
+# cases for the shipped ABI. Keep the research fixture, but do not claim it was run.
 tests = sorted(str(p) for p in (root/'evidence/audit').glob('**/*.ts')
                if (p.name.startswith('t') and p.name[1:3].isdigit() and not p.name.startswith('t15-'))
                or (p.name.startswith('T') and p.name[1:3].isdigit())
@@ -26,6 +28,7 @@ print('ACCEPTANCE cwd=' + str(root), flush=True)
 print('ACCEPTANCE commit=' + subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), flush=True)
 print('ACCEPTANCE initial tracked status:\n' + subprocess.check_output(['git','status','--short','--untracked-files=no'],text=True),flush=True)
 print('ACCEPTANCE fork RPC=' + rpc + ' pinned by src/baseFork.ts; public RPC reads only',flush=True)
+print('ACCEPTANCE excluded historical fixture: t15-retention-round2.ts (removed lotCount/epoch ABI; superseded by t16)',flush=True)
 results=[]
 for command, fork in jobs:
     child_env=env.copy()
