@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /**
  * Shared mirror harness for DESIGN.md §11 scenarios: boots one anvil, deploys Zero One, asserts
  * that DepositShaman and WorkManager are the only mint paths, seeds members through the design's
@@ -736,6 +737,7 @@ export const PROCESS_GAS = 5_000_000n;
 
 /** Process (execute) a Ready proposal with an explicit gas limit; returns the resulting flags. */
 export async function processProposal(mirror: Mirror, actor: ActorName, proposal: Proposal): Promise<{ receipt: Receipt; info: ProposalInfo }> {
+  await settleRetention(mirror.actors[actor], mirror.dao.shares, proposal.id);
   const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [proposal.id, proposal.data], gas: PROCESS_GAS }, mirror);
   const info = await proposalInfo(mirror, proposal.id);
   printReceipt(`${actor} processProposal #${proposal.id} -> passed=${info.status.passed} actionFailed=${info.status.actionFailed} state=${await stateOf(mirror, proposal.id)}`, receipt);

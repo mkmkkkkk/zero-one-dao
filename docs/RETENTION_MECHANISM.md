@@ -1,101 +1,154 @@
-# Retention mechanism — 2026-09-10
+# Retention mechanism — incremental settlement, 2026-09-10
 
-Choose (c), the append-only mint journal with processing-time growth settlement, because it computes the exact ruled deficit while making every exit independent of proposal volume and mint history.
+Fable's final ruling is implemented for a fresh deployment. The exact rule remains
+`deficit(p) = Σ max(0, balanceAtStart(a,p) − balanceNow(a))`; retention fails iff
+`100 × deficit > (100 − minRetentionPercent) × supplyAtStart`. End-of-sponsorship-
+timestamp balances and supply are the baseline, as with Baal's timestamp votes.
+Same-account returns restore retention. Another account's deposits cannot restore
+it; flash mint/burn does not create a deficit. Historical YES tallies are unchanged.
 
-This implements Fable's ruling supplied in the task: `deficit(p) = Σ max(0, balanceAtStart(account,p) − balanceNow(account))`; fail retention iff `100 × deficit > (100 − minRetentionPercent) × supplyAtStart`. The historical cohort-departure interpretation is rejected. The supplied path `docs/REVIEW_RETENTION.md` was absent; the on-disk round-2 test and a new independent regression reproduced its decisive counterexample. This is an implementation for a fresh deployment, not a storage migration for an existing token.
+The former monolithic mint-journal scan is superseded: permissionless callers now
+settle a bounded number of records per transaction. Processing never scans the
+journal and does not forward a proposal-specific gas budget to retention accounting.
+No new cap, minimum deposit, cooldown, lock, deadline or mandatory settler is added.
+The historical comparison and rejected variants remain in
+`evidence/phase5/retention-mechanism.log` and `evidence/audit/governance-nav/retention/`.
 
-## Comparison and measured gas
+## State and why partial sums are safe
 
-All figures below are transaction receipt `gasUsed` on owned loopback Anvil (Cancun), solc 0.8.36, optimizer 200, viaIR. No deployment or approval gas is included in the deposit column. Quiet means **one** open sponsored proposal, storm means **100** (uncapped, real submissions), matching the existing spam100 workload size. The first proposal is voted YES, with a zero-value USDC transfer as its action and `baalGas=8,000,000`; it is the processed proposal in both workloads. Initial account A holds 100 shares; deposit mints 40. Snapshot/revert isolates a 40-share ordinary exit, deposit, a 40-share exit after that mint, and processing with that mint still held. Exits have one settlement token in their calldata. Separate fragmentation runs interleave 100 actual proposals with 100 one-share deposits, then exit all 200 shares. Random Anvil addresses can change intrinsic calldata gas by small multiples of 12 between runs.
+- `votingStarts[id]` records sponsorship once, only through Baal, on both sponsorship
+  paths. `_supplyAtTime[t]` is overwritten on registration and every positive balance
+  change in timestamp `t`, including changes later in that same timestamp.
+- `balanceJournal` expands the old positive-mint journal into immutable
+  `(timestamp, account, beforeBalance, afterBalance)` records for **both mints and
+  burns**. Each positive change appends one record. Zero mint/burn appends nothing.
+- `settlements[id] = {cursor, growth}` represents a possibly partial window.
+  Registration sets `cursor` to the current journal length and `growth` to zero.
+  Records subsequently appended within the start timestamp are consumed but excluded
+  from growth, because they belong to the final timestamp baseline.
+- `settleRetention(id, maxRecords)` is permissionless. It consumes at most
+  `min(maxRecords, journalLength − cursor)` records, without addition overflow for
+  even a uint256-max request. For each strictly post-start record it finds that
+  account's baseline and adds `g(after) − g(before)`, where `g(x)=max(0,x−baseline)`.
+  It writes the new cursor and growth only after the chunk completes. An OOG/revert
+  preserves the previous complete chunk. A zero-size chunk, or an already-current
+  window, performs no writes and emits no event.
+- `exitedSince(id)` does constant work: require a registered, past start; require
+  **cursor == the current journal length**; return `A + growth − totalSupply, A`.
+  Otherwise it reverts `RetentionUnsettled(id,cursor,end)`. It never returns a partial
+  deficit or performs a hidden view scan.
+- Baal calls this guard before setting any processed/pass/actionFailed flag, including
+  before expiration/quorum failure verdicts. A refused processing transaction changes
+  none of the four proposal flags and cannot execute the action.
 
-| Mechanism | Open proposals | Deposit | Exit, last mint before oldest start | Exit, minted inside window | Process |
-|---|---:|---:|---:|---:|---:|
-| (a) historical epoch lots/Fenwick | 1 | 178451 | 739912 | 715918 | 143506 |
-| (a) historical epoch lots/Fenwick | 100 | 178451 | 739912 | 671160 | 143506 |
-| (b) eager exact contributions + shortcut | 1 | 231696 | 203005 | 212976 | 190383 |
-| (b) eager exact contributions + shortcut | 100 | 5546808 | 203005 | 1720345 | 194891 |
-| (c) lazy mint journal | 1 | 201269 | 194736 | 194736 | 163106 |
-| (c) lazy mint journal | 100 | 201269 | 194736 | 194736 | 163106 |
+Suppose a mint lands between two settle calls, even to an account already visited.
+It appends an immutable transition; the second call continues from the stored cursor
+and eventually includes that transition's growth delta. A burn of already-settled
+shares works identically with a negative delta. No restart, invalidation scan, live-
+balance reread of previous records, fixed end snapshot or lost update is needed.
+A new mint/burn after completion makes the window pending again until that suffix is
+settled. Once the guard succeeds, the EVM cannot interleave an external transaction
+before the retention verdict. Proposal actions occur after that verdict.
 
-| Mechanism | Full exit after 100 proposal/mint interleavings |
-|---|---:|
-| (a) | 4005196 |
-| (b) | 2208777 |
-| (c) | 140536 |
+A caller may batch the last chunk and `processProposal` in one ordinary multicall to
+avoid a transaction gap. GOV-03 tests a deposit, settlement and processing in the same
+transaction. Continuous new changes still cost their originator transactions and
+append work; an arbitrarily long **finite** history can always be settled in chunks.
+This does not promise that a particular settler's transaction wins a censorship or
+perpetual active-spam race. Old fixed `baalGas` cannot permanently strand the backlog.
+Existing caller-selected Baal expiration semantics remain; no settlement expiration
+has been introduced and partial progress never expires.
 
-The full-exit row has storage-clearing refunds and a different balance/treasury state from the partial-exit rows; it is not a marginal-gas subtraction. The smaller (a) post-mint exit in the storm reflects the Fenwick path for epoch 100 versus epoch 1, not improved asymptotic complexity.
+## Proof and complexity
 
-| Mechanism | Exactness and hierarchy | Griefing | Whole-token source lines (physical / nonblank, noncomment) |
-|---|---|---|---:|
-| (a) | **Reject.** Exit 40, return 40 leaves balance 100 but reports 40. LIFO lots remember destroyed cohort units, not recoverable per-account deficits. Also has `MAX_EPOCHS=2^24`, contrary to the no-cap requirement. | Each burn loops over all consumed lots, with a tree update for each. Proposal/mint interleaving fragments a holder's lots; cost is O(lots consumed × tree height), not O(log n) for a whole exit. | 339 / 234 |
-| (b) | Exact using end-of-timestamp baselines and recomputed positive growth contributions. **Reject:** the shortcut only protects accounts with no mint after the oldest open start. All other exits still scale with proposal count. | Spam raises deposits and recently-minted holders' exits without bound. A mint recipient cannot use the shortcut until old windows retire. Tracking/retiring windows adds lifecycle complexity. | 290 / 211 |
-| (c) | **Select:** exact, no proposal/mint-history loop in either mint or burn, and no new cap, cooldown or lock. | Mint spam moves cost to processors and read callers. Fixed `baalGas` can become insufficient, permanently preventing processing and consequently blocking later Ready proposals in Baal's ordered queue. Exits remain cheap. | 289 / 208 |
+For each account with baseline `b` and current balance `c`,
+`max(0,b−c) − max(0,c−b) = b−c`. Summing gives
+`deficit = A + growth − S`. Initially every account's growth is zero at the final
+start timestamp. Every later mint/burn is journaled centrally in the only token
+balance-mutation paths, including manager/reward mints. Replaying each account's
+ordered transitions telescopes from `g(b)=0` to `g(c)`. Interleaving accounts does
+not change that sum. Thus every cursor prefix has an exact growth sum for that
+prefix, and at the **current** end the sum is exactly the required live growth.
+Only then is it combined with the live supply. This also explains why immutable
+burn records are necessary: a settled positive growth contribution can later fall.
 
-Line counts cover each complete token, including its common ERC-20/NAV/checkpoint surface. (b) additionally needs two Baal cleanup calls plus an interface declaration in the comparison adapter. (c)'s existing Baal fork changes only three executable lines: the registration interface loses its obsolete return value, the retention call receives an explicit gas budget, and a zero-value exit returns before Baal's division by supply; four comment lines are updated. Every existing `ZERO ONE` marker location remains. The older upstream fork changes, including the 8,000,000 baalGas ceiling, remain intact.
+The arithmetic `growth + afterGrowth − beforeGrowth` cannot underflow: the prefix
+sum includes this account's beforeGrowth. Growth and supply obey the existing
+uint224 balance/supply range; their sums and percentage products fit uint256.
+The existing timestamp/vote integer widths are unchanged.
 
-(a) cannot be repaired by choosing a different lot burn order: the offending burn precedes the return mint, so both FIFO and LIFO have already credited the permanent tree. Simply reversing tree entries on a return also needs account-specific, proposal-baseline-dependent information (e.g. two proposals separated by a partial return require different credits). No exact repair preserving the current aggregate-tree operations and logarithmic whole-exit bound was established; this is not a claim that every possible data structure is impossible. Moving that recalculation into every affected window is (b), and fails cheap exit for recent recipients. Building another more complex structure is outside these three candidates and loses simplicity priority.
+Mint, burn, deposit and ordinary single-token exit perform O(1) retention work,
+independent of journal length, open proposals, accounts and balance history.
+Registration is O(1). A chunk takes O(k × log H) for k requested records and account
+checkpoint history H; timestamp checkpoints are binary-searched, never linearly
+scanned. `processProposal`'s retention read is O(1). Storage grows with balance
+changes and registrations. The extra fixed journal writes increase absolute hook
+cost relative to the previous implementation; they do not increase it during spam.
 
-The (b) fixture stores growth and per-account contributions for every registered window, skips closed entries, and maintains an oldest-window cursor on process/cancel. Its full counterexample, timestamp, multiple-window and independent-oracle checks pass. Gas measurements exercise genuinely open windows. A production version would also need a way to retire naturally Defeated proposals; the fixture is a measured rejected alternative, not a supported deployment path. Its cleanup costs for the processed window are included above. (a) uses the frozen original token runtime under the same current Baal caller; (b) adds only its cleanup calls. Anvil runtime replacement occurs only in an empty local DAO and is verified by code readback. (c) uses normal repository deployment with no runtime replacement.
+Append-time account deduplication is deliberately omitted under the ruling's
+“if it stays simple” condition. An account may already have been consumed by one
+window but not another; suppressing its next transition would lose a return or burn
+for that window. Updating all affected windows, or finding the oldest live window
+with unbounded cleanup, would sacrifice constant-cost hooks. The stress test uses
+**one repeated address and the smallest positive USDC unit**, so the economic result
+does not assume that attackers need fresh addresses or a minimum deposit. The former
+latest-mint-index field is removed; transitions must not be suppressed at replay.
 
-## State and snapshot convention
+## Baal delta and callers
 
-`balanceOf`, `totalSupply` and account timestamp checkpoints remain the authority. Transfers and delegation remain disabled. Add:
+Every previous `ZERO ONE:` marker remains. Both sponsorship hooks and the zero-exit
+return remain. Relative to the prior journal implementation, the only executable
+Baal change is moving its `exitedSince(id)` call before the processed flag and removing
+its explicit `prop.baalGas` forwarding. The read no longer loops. Existing action-gas,
+readiness, sponsorship ordering, ballot and configuration checks are unchanged.
+No settlement cleanup hook or additional Baal storage is required.
 
-- `votingStarts[proposalId]`: the sponsorship timestamp, zero if not registered; Baal writes it once on either sponsorship path.
-- `_supplyAtTime[t]`: final supply of timestamp `t`. Registration initializes the current timestamp even when no mint/burn occurs; every subsequent positive mint/burn in that timestamp overwrites it. Thus A and S are each a single storage read at processing.
-- `mintJournal[]`: append-only packed `(uint32 timestamp, address recipient)` for **every positive mint**, including future manager-shaman mints because all use the same token `mint` entry.
-- `lastMintIndex[account]`: one-based index of its latest positive mint record, for duplicate suppression.
+`src/retention.ts` provides the explicit permissionless client loop, with a default
+128-record chunk; this is a client choice, not a protocol cap. Its receipts are
+logged and verified. Scenario processing and relay E2E preparation use it. Production
+callers must settle the window before requesting relay execution; the relay's existing
+signed execute operation is unchanged. A concurrently appended suffix causes a retry,
+never processing with a stale result. A caller can use a smaller chunk if its chosen
+transaction gas is insufficient. Unknown/unregistered and present-time starts revert.
 
-The baseline is the **end of the votingStarts timestamp**, exactly as existing Baal `getPastVotes` resolves timestamp checkpoints. It is not the intra-transaction instant of registration. If P starts, a mint happens, and Q starts in one timestamp, P and Q have the same account balances and supply baseline. Reads at a timestamp not yet in the past revert. Mint records at the start timestamp belong to that baseline and are excluded by the strict journal lower bound. No epoch counter or `MAX_EPOCHS` remains. Existing Baal and vote timestamp integer widths are unchanged.
+## Receipts, gas and attacker economics
 
-## Hooks, calls, and function invariants
+The source of truth is `evidence/phase5/incremental/green-storm.log`, with an independent
+rerun in `evidence/phase5/acceptance-rerun-retention.log`. Both runs use owned loopback
+Anvil, the repository's compiler/optimizer settings and actual receipt `gasUsed`.
+The stress workload makes 5,000 real `DepositShaman.deposit(1)` calls, batched 50 per
+transaction through an audit-only contract. No privileged mint or direct storage
+injection creates the storm. Snapshots isolate identical A deposits and partial exits
+before, midway through and after the storm; balance checkpoint timestamp shape is
+held constant. The proposal uses `baalGas=50,000`, deliberately far below the total
+settlement cost, and a subsequent proposal also processes.
 
-| Function | Operation and preserved invariant |
-|---|---|
-| `mint` / `_mint` | Only Baal; zero is a no-op after recipient validation. Increase recipient and supply, append exactly one positive-mint record, set the latest index, overwrite current supply snapshot, and checkpoint balance. Supply equals sum of balances, journal order is monotonic, and no contributing mint path bypasses the journal. Constant work independent of histories/proposals. |
-| `burn` | Only Baal; validate balance, return immediately on zero. Reduce balance and supply, update totalBurned for existing informational consumers, current supply snapshot and account checkpoint. Do not touch or scan the journal or proposals. Supply equality and timestamp histories remain exact. |
-| `registerProposal` | Only Baal, once per id, on self-sponsorship or later sponsorship. Record start and initialize `_supplyAtTime[start]`; alter no balances. Later same-timestamp balance changes update that same supply slot. No open-proposal list or cleanup hook. |
-| `_writeCheckpoint` | Append on a new timestamp, overwrite on the same timestamp; last checkpoint equals current balance and earlier timestamps never change. |
-| `_past` / `getPastVotes` | Binary search yields the final balance at the greatest checkpoint timestamp ≤ requested timestamp, or zero before an account's first checkpoint. Public past-vote reads reject present/future timestamps. |
-| `exitedSince` | Require registered, past start. Read A, binary-search journal's first record strictly after start, and scan to current journal length. Skip an entry unless its one-based index equals `lastMintIndex[recipient]`. For each remaining recipient add `max(0, currentBalance − pastBalance)`. Return `A + growth − totalSupply, A`. No stored partial sums, no state mutations and no approximation. |
-| Baal `ragequit` | Return before token validation/treasury division when both burn amounts are zero; even an empty DAO has a zero-exit no-op. Nonzero exits retain the existing path. |
-| Baal `processProposal` | Existing readiness, ordering, expiration, quorum and ballot checks remain. Call `exitedSince{gas: prop.baalGas == 0 ? gasleft() : prop.baalGas}(id)` and compare the exact strict inequality. A failed/OOG call reverts the entire transaction, including its earlier processed flag write; no guessed deficit or fail/pass verdict is recorded. |
+Measured values are recorded below after the acceptance run. Attacker gas includes
+batch-call overhead and all deposit receipts; it excludes helper deployment and
+approval (both are separately receipted). USDC is contributed principal and can be
+recovered via ordinary exit, **not an irreversible protocol fee or burned cost**.
+No fiat ETH price, public-chain gas price or Base L1 data fee is inferred from local
+gas units; those costs are unknown. Timestamp boundary writes cause small variations
+in batched attacker gas between runs, so each run reports its own totals.
 
-A nonzero baalGas bounds the accounting subcall, subject to EIP-150's forwarding bound and available transaction gas. Zero retains Baal's pre-existing caller-gas convention; it does not introduce a new fixed maximum. Accounting exhaustion is a **processing liveness failure**, not evidence that the numerical retention test failed. The fixed budget cannot be repaired merely by sending more gas after the subcall itself exceeds that budget. We deliberately do not add caps on mints, proposals, accounts, windows, or exit rate to hide this tradeoff.
+## Reproduction and acceptance coverage
 
-The effective retained support includes YES voters' balance deficits exactly like other members' deficits: a YES voter holding all 100 start shares, then leaving 40, defeats a 66% retention proposal. Historical `prop.yesVotes` remains the Baal ballot tally. This implements the given deficit ruling and existing GOV-02 interpretation; it does not add a different dynamic-majority rule.
-
-## Completeness and arithmetic proof
-
-Let account a have start balance b and current balance c. Its two nonnegative differences obey `max(0,b−c) − max(0,c−b) = b−c`. Summing yields `deficit = A − S + growth`. Compute `A + growth − S` to avoid unsigned underflow when S > A. `growth ≤ S`; the existing uint224 supply range leaves ample uint256 headroom for this sum and the percentage multiplication.
-
-If c > b, some positive mint to a must have occurred strictly after the start timestamp: balances can increase only through `_mint`, and burns only decrease them. Every such mint appends a record. The latest record for a is therefore also strictly after the start, is inside the binary-searched suffix, and is counted exactly once. Any earlier record for a is skipped by `lastMintIndex`. Accounts with no post-start mint cannot have positive growth and may safely be omitted even if they exited; their losses are already in A − S. This also proves that an account whose last mint predates the oldest window contributes zero growth to every open proposal.
-
-Same-account returns decrease deficits; different-account deposits increase S and growth by matching amounts and cannot cover another member's deficit. Flash deposit/exit ends with no growth or net supply change. Minting multiple times or receiving rewards cannot double-count an account. All reads in a processing call see one synchronous EVM state; no incremental settlement can become stale.
-
-If M is total journal length, W its post-start suffix length and H the relevant account history length, processing takes O(log M + W + U log H), where U is unique recipients in that suffix. Old nonrecipients are never enumerated. Mint and burn perform O(1) retention work; processing is not bounded by proposal count. The journal suffix still scans duplicate records, so repeating mints to the same account can grief processing even though its contribution is counted only once.
-
-## Receipts and replay
-
-From the repository root, using installed dependencies and no live/fork environment:
-
-```sh
-npm run compile
-node_modules/.bin/tsx evidence/audit/governance-nav/t16-retention-mechanism.ts --variant=a
-node_modules/.bin/tsx evidence/audit/governance-nav/t16-retention-mechanism.ts --variant=a --gas-only
-node_modules/.bin/tsx evidence/audit/governance-nav/t16-retention-mechanism.ts --variant=b
-node_modules/.bin/tsx evidence/audit/governance-nav/t16-retention-mechanism.ts
-node_modules/.bin/tsx evidence/audit/governance-nav/t03-retention-bypass-deposit-at-processing.ts
-node_modules/.bin/tsx evidence/audit/governance-nav/t07-retention-veto-flash.ts
-node_modules/.bin/tsx evidence/audit/governance-nav/t09-minretention-boundary.ts
-node_modules/.bin/tsx evidence/audit/governance-nav/t17-zero-empty.ts
-npm run typecheck
-npm run scenarios
-npm run e2e:relay
+```
+npm ci
+HTTPS_PROXY=http://127.0.0.1:7897 FORK_RPC=https://mainnet.base.org python3 scripts/acceptance-retention.py
 ```
 
-The first t16 command must be RED at `exited=40 expected=0`; all other t16 commands must be GREEN. Full receipts and the independent per-account oracle are in `evidence/phase5/retention/`; decisive lines and the gas table are in `evidence/phase5/retention-mechanism.log`.
+The runner executes compile, typecheck, `npm run scenarios` with K included at the
+pinned Base block 51,000,000 (pool warming is retained), relay E2E, entry-point E2E,
+deployment refusals, and the full maintained audit test set (governance/NAV, economic,
+work templates and account/relay). Each job's complete output and exit status is
+preserved; a failure makes the runner fail. The untracked t15 lotCount experiment
+predates this branch's journal and is not part of the maintained suite. Frozen a/b
+comparison variants are historical research fixtures, not acceptance implementations.
 
-The original round-2 run reproduced four semantic mismatches, then its stress harness hit a raw deposit revert; it is retained as partial RED evidence, not a completed test run. The replacement t16 red test stops directly on the counterexample and the new gas harness sends explicit gas limits and checks every receipt. An initial scenario run also reverted at H's seed deposit without a recorded revert reason. Since checkpoint writes can append instead of overwrite when estimation and mining cross a second, the local scenario sender now provides 120,000 extra gas for that storage-write variation; explicit process budgets are unchanged. The subsequent full local scenario run is the acceptance receipt.
-
-A separate t17 red/green receipt covers zero exit before genesis: the original Baal path divides by zero even though neither burn amount is positive. A one-line marked early return makes it a no-op; this does not add a lock or affect nonzero exit semantics.
+`t18 --legacy` installs the prior monolithic token only in an empty owned local DAO:
+it is RED because processing accepts an unsettled window. The same test against the
+normal deployment is GREEN. t16 retains the exit40/return40 counterexample, multiple
+windows, same-timestamp starts/mints, zero-exit behavior, registration access controls,
+YES-member departures and the independent 36-step/6-window oracle. GOV-03/GOV-04 are
+rerun with the explicit settlement step and preserve their economic assertions.

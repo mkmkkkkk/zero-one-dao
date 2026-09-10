@@ -1,3 +1,4 @@
+import { settleRetention } from '../../../src/retention.js';
 /**
  * GOV-04 (phase 5, FLIPPED) — no flash veto: a holder of 1 share cannot defeat a proposal with a
  * same-transaction deposit + vote + ragequit.
@@ -51,6 +52,7 @@ export async function main(): Promise<void> {
     const info = await proposalInfo(mirror, proposal.id);
     const vEnd = await usdcOf(mirror, V);
     const supply1 = await totalShares(mirror);
+    await settleRetention(mirror.actors.W, mirror.dao.shares, proposal.id);
     const exited = (await mirror.chain.publicClient.readContract({ address: mirror.dao.shares, abi: mirror.abi.shares, functionName: "exitedSince", args: [proposal.id] } as never)) as readonly [bigint, bigint];
     logLine(LOG, `   tx ${receipt.hash}: yes ${fmt(info.yesVotes)} no ${fmt(info.noVotes)}; supply at votingStarts ${fmt(exited[1])}, live supply ${fmt(supply1)}; exitedSince(#${proposal.id}) = ${fmt(exited[0])} (V's ${fmt(expectedShares)} burned shares were minted after votingStarts: not counted); V USDC ${fmtS(vStart)} -> ${fmtS(vEnd)} (net ${fmtS(vEnd - vStart)}), V shares ${fmt(await sharesOf(mirror, V))}`);
     assert(exited[0] === 0n && exited[1] === supply0, "exitedSince counts none of V's flash shares; the retention base is the supply at votingStarts");

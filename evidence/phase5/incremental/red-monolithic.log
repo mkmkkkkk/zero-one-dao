@@ -1,0 +1,52 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x8A994E42fc4958C5fD4Fd39380754564dB1bd040 baal 0x0A72857B84f6970B345f378817381b59e49AcA9a shares 0x43211864e958a9dF1760Bb81657c1EfeF34e3e58 settlement 0x416Da54B768aE9e023239F65b8ADDbA1b46B78f6
+          depositShaman 0x414d1D050089a8a26Cdd2e0F3912B6a24944b14E workManager 0x62c1f80Dac21943C72A6ef709e6a3f5C204b5Ca3 constitution 0x82Da825D2fB414AB3eAA4187CC3E25Fbbd707820
+          templateFactory 0x9df5f6D808c69F3883F0dc04318Ef3137C7f81E1 deployers 0x80481179B9D996bE646e98CfC97DE7D10af68176 0xf2ba91Ef6dB4f3ed6C601Df3B6F54DD4bb2586ae 0x0cB6Ccf30ACB85c0Bbc3522158A9726160F9697C 0x6702e78Af20144d888bfdA0F25819794067AbFf3 intentAccount 0xFcF03605E01CE9d67E948415FaaC2Bd97A8E1D1A
+   F = 0x52a9a7ABB8a161b4a00888857cA4D2De5d8B2c48  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x58Db464379276C8af67EB2A79236a808F4bb6c79  member agent A
+   B = 0xf13Af02aaC732e6491C36A1e8e6ea82926e39B1c  member agent B
+   C = 0x1bdF874296788F78b4A1a2d3A9a45aeabEF67AaC  member agent C
+   D = 0x03D25e4B00A04402CD530396a69a32e762822F3a  depositor D (joins later)
+   O = 0x11ab5A79b3bB3D73bEa67d07b90C639405f37e2c  operator O (mandate recipient)
+   W = 0x850C9Cc8377931c5cc40D8437ece411F70fDbbFf  worker W (task deliverer)
+   shaman 0x414d1D050089a8a26Cdd2e0F3912B6a24944b14E permission 2 (DepositShaman)
+   shaman 0x62c1f80Dac21943C72A6ef709e6a3f5C204b5Ca3 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x80481179B9D996bE646e98CfC97DE7D10af68176
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xf2ba91Ef6dB4f3ed6C601Df3B6F54DD4bb2586ae
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x0cB6Ccf30ACB85c0Bbc3522158A9726160F9697C
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x6702e78Af20144d888bfdA0F25819794067AbFf3
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+FIXTURE legacy: real compiled runtime installed in EMPTY local DAO; receipt=0xe589278c340cb1672ae68a0f4f03c1640fdf6dd8f41e999897e209373ccdcd85
+   tx fund A with 1000 USDC: 0x5422f299c9ea825c73671249c6ab0e2d98c0a1c2c9ed6da25a3564df078e86de (block 23, gas 51238)
+   tx fund B with 1000 USDC: 0xe0ebd41d74031bc21996cf97f7ab5679e45ad690b3f162f8831c457accef034a (block 24, gas 51238)
+   tx A approve deposit shaman: 0x6e0850aa0cd33dd22197ebf7f7f8795b4f8bc153c11a3524f7925f82d11db9fd (block 25, gas 45877)
+   tx A deposit 100 USDC -> 100 shares (quoted 100): 0x9a4969267e567134a4bb982d874e4163845b4c8e5798afb3d2a050e4d7c2a36c (block 26, gas 301397)
+   warp +2s -> block 27 timestamp 1789021216
+   warp +2s -> block 29 timestamp 1789021218
+   tx A approve deposit shaman: 0x35a2b7e19d7d12b6b58c4efb8ec6848398701a955d4e422a080f25cc1de9e202 (block 30, gas 45877)
+   tx A deposit 1 USDC -> 1 shares (quoted 1): 0xd6dc6c008cb3977f3bb5b59427b2837d3b7ac90a17ec8043604c805b9a65f30f (block 31, gas 201269)
+   warp +2s -> block 32 timestamp 1789021220
+   warp +2s -> block 34 timestamp 1789021222
+   tx A votes YES on #1 -> yes 100 / no 0: 0x1252056c0ca69919c239092505de4fc5c851f5404d06448347cb42b670fa87c1 (block 35, gas 117205)
+   warp +43199s (past grace of #1) -> block 36 timestamp 1789064421
+   proposal #1 state = Ready
+anvil stopped (http://127.0.0.1:11545)
+Error: processProposal: expected reverted, got success
+    at check (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t18-incremental-settlement.ts:9:70)
+    at send (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t18-incremental-settlement.ts:18:4)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t18-incremental-settlement.ts:32:3)

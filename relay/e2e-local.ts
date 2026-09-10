@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /**
  * Mirror E2E through the relay (docs/TESTNET_PLAN.md cold-start): fresh anvil + deploy + genesis
  * (50 USDC founder), a sponsor float, the relay against it, the beacon built and validated, then a
@@ -267,6 +268,7 @@ async function main(): Promise<void> {
     step("warp past voting + grace (12 h); T1 agent executes #1 via the relay (explicit 5,000,000 gas)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
+    await settleRetention(F, dao.shares, 1);
     const executed = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "1"]));
     const processed = executed.processed as { passed: boolean; actionFailed: boolean };
     assert(processed.passed === true && processed.actionFailed === false, "proposal #1 passed and its action executed (fund + start)");
@@ -287,6 +289,7 @@ async function main(): Promise<void> {
     assert(agentVote2.waitedBlocks === 0, "a vote after a later block exists is sent at once (waitedBlocks 0)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
+    await settleRetention(F, dao.shares, 2);
     const activated = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "2"]));
     assert((activated.processed as { passed: boolean; actionFailed: boolean }).passed === true && (activated.processed as { actionFailed: boolean }).actionFailed === false, "task proposal executed: task #1 active");
 
@@ -464,6 +467,7 @@ async function main(): Promise<void> {
     // Finish the cold-start's last Payment before submitting later sponsored proposals.
     await increaseTime(F, 12 * HOUR + 5);
     const pendingData = await chain.publicClient.readContract({ address: dao.templateFactory, abi: loadLocalArtifact("TemplateFactory").abi, functionName: "proposalData", args: [0, encodeParams({ template: "Payment", params: { recipients: [t0Address], amounts: [SETTLEMENT_UNIT] } }), getAddress(String(proposed2.instance))] });
+    await settleRetention(F, dao.shares, 3);
     const pendingReceipt = await writeAndWait(F, { address: dao.baal, abi: loadBaalArtifact("Baal").abi, functionName: "processProposal", args: [3, pendingData], gas: 5_000_000n });
     console.log(`   completed prior sponsored proposal #3: ${pendingReceipt.hash}`);
     await ledgerHttp(origin, F, dao);

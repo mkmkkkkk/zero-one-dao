@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /** Phase 4 HTTP regression against the owned relay/devnet after the ordinary cold start. */
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
@@ -24,6 +25,7 @@ export async function ledgerHttp(origin: string, owner: WriteContext, dao: ZeroO
     await increaseTime(owner, 2);
     await send(dao.baal, baal, "submitVote", [proposal.id, true]);
     await increaseTime(owner, 12 * HOUR + 5);
+    await settleRetention(owner, dao.shares, proposal.id);
     await send(dao.baal, baal, "processProposal", [proposal.id, proposal.data], 5_000_000n);
   };
   const state = async () => {

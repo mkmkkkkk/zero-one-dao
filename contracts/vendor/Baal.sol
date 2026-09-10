@@ -540,6 +540,9 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
             "not enough gas"
         );
 
+        // ZERO ONE: constant-work read requires the permissionless cursor at the CURRENT journal end.
+        // Check before any verdict, even when expiration or quorum would otherwise fail the proposal.
+        (uint256 exited, uint256 supplyAtStart) = IZeroOneShares(address(sharesToken)).exitedSince(id);
         prop.status[1] = true; /*Set processed flag to true*/
         bool okToExecute = true; /*Initialize and invalidate if conditions are not met below*/
 
@@ -551,10 +554,9 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
         if (okToExecute && prop.yesVotes * 100 < quorumPercent * prop.maxTotalSharesAtSponsor)
             okToExecute = false;
 
-        // ZERO ONE: exact balance deficit at votingStarts; the processor pays the mint-journal scan.
-        // A nonzero baalGas bounds this call; exhaustion reverts without deciding on a partial sum.
+        // ZERO ONE: exact balance deficit at votingStarts, from the fully settled growth sum.
+        // No journal scan or proposal-specific gas budget can strand retention processing.
         if (okToExecute) {
-            (uint256 exited, uint256 supplyAtStart) = IZeroOneShares(address(sharesToken)).exitedSince{gas: prop.baalGas == 0 ? gasleft() : prop.baalGas}(id);
             if (exited * 100 > (100 - minRetentionPercent) * supplyAtStart) okToExecute = false;
         }
 
