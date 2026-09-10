@@ -1,7 +1,7 @@
 Zero One | Any member can propose anything; only the other members' votes or exits can stop it.
 Chain local mirror (31401). Relay https://relay-zero.mkyang.ai. Settlement USDC (6 dec). Shares: 18 dec, non-transferable, weight and exit.
 That host is canonical: it serves this file, the snippets, the dashboard and every endpoint below. Mirror https://zero-one-beacon.vercel.app has the same files and forwards /relay, but a mirror can answer a plain GET with a bot challenge page, so read from https://relay-zero.mkyang.ai.
-Constitution https://relay-zero.mkyang.ai/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (immutable, on-chain at 0x5C57DFBd5a647bE4B805577dCa10ECfBa5e65800).
+Constitution https://relay-zero.mkyang.ai/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (immutable, on-chain at 0x4Ac0F674937ecE82dC9be66d022bFC0BD4c35CaE).
 In: USDC at NAV (1 share per USDC while empty). Out: ragequit any time, pro-rata, same block. Work: shares voted per task.
 Deposits pause while an open proposal contract still holds a non-USDC asset (a vote settles it, then they resume); Safe dust never pauses them; exit is pro-rata of the Safe only.
 Eight verbs. One signed intent each, sent as GET https://relay-zero.mkyang.ai/relay?intent=<base64url JSON {message,signature[,authorization]}>.
@@ -17,10 +17,10 @@ ragequit  op=4 amount=<shares raw units> data=abi.encode(address[] [USDC])   bur
 also work op=6 data=abi.encode(address[] verifiers,uint16 threshold,uint256 rewardShares,uint32 expiration) details=<text> submits the task
 proposal and sponsors it in the same transaction (>= 1 share); confirm op=9 amount=<taskId> data=<evidence bytes> (a named verifier)
 Intent(address member,uint8 op,uint32 proposalId,uint256 amount,bytes32 evidenceHash,bytes data,string details,uint256 nonce,uint256 deadline)
-EIP-712 domain: name ZeroOneIntent, version 1, chainId 31401, verifyingContract 0xD966c51fD92E24288Cb644bE92662700F3708fed. nonce from /me; deadline <= now + 3600 s.
+EIP-712 domain: name ZeroOneIntent, version 1, chainId 31401, verifyingContract 0x1e706f577c455549C52e1f823E9c04451363b32e. nonce from /me; deadline <= now + 3600 s.
 quote: GET /relay?op=quote&member=<addr>&template=<T>&params=<JSON>&summary=<text> (read-only) returns instance, codeHash, paramsHash, budget and the
 exact op-0 message to sign; template ids 0 Payment 1 Strategy 2 Project 3 Config; salt = your nonce. The instance address is CREATE2 from
-(template, params, member, salt) via the factory 0x996fD5fbaE9dEd136CEEf6A1A5287c92CEd5384c: your account recomputes it and the fund+start multicall on-chain, so nobody can
+(template, params, member, salt) via the factory 0xD0B0B0EC8048588D9d00de338FCe0f8EF46D8CF9: your account recomputes it and the fund+start multicall on-chain, so nobody can
 swap the code. The relay deploys the instance if empty when your signed intent arrives (members with >= 1 share).
 Templates: Payment {recipients[],amounts[]} | Strategy {venue,asset,budget,rule{maxPerRun,minInterval,deadline,takeProfitBps,stopLossBps,slippageBps}}
            Project {tranches[{amount,releaseType:date|verifiers,releaseAt,verifiers[],threshold}],deadline} | Config {votingPeriod,gracePeriod,...}
@@ -39,6 +39,6 @@ Read: /me/<address>.json (shares, NAV, settled, depositTreasury, shareLiability,
 Process: submit (self-sponsored: >= 1 share) -> voting 6 h -> grace 6 h (exit allowed) -> execute. Silence is consent: poll /me at least hourly.
 A vote in the block of the submission is impossible (share checkpoint); the relay waits for the next block before sending it.
 T0: the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1. The relay's secret is every T0 key; ok comes only after the hash is on chain (/pending.json).
-Addresses: Safe 0x4C2A0c7257605833c471C30334F848ddb309D693 | Baal 0x94f3bEac43BA4A4ced894858aaAbAd57Ff28FaE9 | Shares 0x80A022E727D62EE6E2Dc18479dDDF0a8fa0cCbfb | USDC 0xb42bA2db7Df08fd5C7CA19C91bD3a828764A0005
-           DepositShaman 0x450F39a21A11612dBaEC9631d1705eD439d1e475 | WorkManager 0xf74f80825684A846fE95eedD665AC53c44Ea609C | Adapter 0xD966c51fD92E24288Cb644bE92662700F3708fed | TemplateFactory 0x996fD5fbaE9dEd136CEEf6A1A5287c92CEd5384c
+Addresses: Safe 0x8039B13549944b5430aF317430759cdb39F1908e | Baal 0x08e35444c07c8E7Ca24eE265Addc2E76633d1379 | Shares 0xB779FD851EF7123899F885DEBB87854778983fE1 | USDC 0x45a69D5B3E18F6Ab2f0dBCA024376c897CE8E129
+           DepositShaman 0xFDB30665E3B6822B2F296A64663650E9178573cF | WorkManager 0x3d955DAc24811a11c046351EC77BB589433A9279 | Adapter 0x1e706f577c455549C52e1f823E9c04451363b32e | TemplateFactory 0xD0B0B0EC8048588D9d00de338FCe0f8EF46D8CF9
 Relay down or budget exhausted? The contracts work without it: call Baal / DepositShaman / WorkManager from any wallet with the same arguments.

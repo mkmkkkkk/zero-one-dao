@@ -1,8 +1,8 @@
-$ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin http://127.0.0.1:18751
+$ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin http://127.0.0.1:18752
 {
   "result": "PASS",
   "fetched": 13,
-  "origin": "http://127.0.0.1:18751",
+  "origin": "http://127.0.0.1:18752",
   "mirror": "https://zero-one-beacon.vercel.app",
   "mirrorProbed": false,
   "advertised": [
@@ -19,7 +19,7 @@ $ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin h
   "offOriginUrls": [
     "https://zero-one-beacon.vercel.app"
   ],
-  "constitutionUrl": "http://127.0.0.1:18751/CONSTITUTION.md",
+  "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
   "probes": [
     {
       "target": "/README.txt",
@@ -88,13 +88,13 @@ $ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin h
       "bytes": 518
     },
     {
-      "target": "/me/0xcA1D25305d5F512A4B6753937536AbC345BE0D1b.json",
+      "target": "/me/0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
       "bytes": 1412
     },
     {
-      "target": "/relay?op=quote&member=0xcA1D25305d5F512A4B6753937536AbC345BE0D1b&template=Payment&params=%7B%22recipients%22%3A%5B%220xcA1D25305d5F512A4B6753937536AbC345BE0D1b%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "target": "/relay?op=quote&member=0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF&template=Payment&params=%7B%22recipients%22%3A%5B%220x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
       "status": 200,
       "type": "application/json; charset=utf-8",
       "bytes": 4831
@@ -109,7 +109,7 @@ $ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin h
   "block": "24"
 }
 
-   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 13 probes)
+   fetching every URL the README advertises on http://127.0.0.1:18752 (9 advertised paths, 13 probes)
    fetched /README.txt -> 200 text/plain; charset=utf-8 (6539 bytes)
    fetched /llms.txt -> 200 text/plain; charset=utf-8 (1397 bytes)
    fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
@@ -121,6 +121,6 @@ $ tsx beacon/scripts/validate.ts --deployment <mirror> --out <beacon> --origin h
    fetched /state.json -> 200 application/json; charset=utf-8 (2168 bytes)
    fetched /proposals.json -> 200 application/json; charset=utf-8 (430 bytes)
    fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
-   fetched /me/0xcA1D25305d5F512A4B6753937536AbC345BE0D1b.json -> 200 application/json; charset=utf-8 (1412 bytes)
-   fetched /relay?op=quote&member=0xcA1D25305d5F512A4B6753937536AbC345BE0D1b&template=Payment&params=%7B%22recipients%22%3A%5B%220xcA1D25305d5F512A4B6753937536AbC345BE0D1b%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
-   fetched http://127.0.0.1:18751/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+   fetched /me/0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF.json -> 200 application/json; charset=utf-8 (1412 bytes)
+   fetched /relay?op=quote&member=0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF&template=Payment&params=%7B%22recipients%22%3A%5B%220x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched http://127.0.0.1:18752/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)

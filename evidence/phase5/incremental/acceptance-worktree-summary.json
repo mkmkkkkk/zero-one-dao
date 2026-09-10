@@ -1,0 +1,187 @@
+{
+  "source": "evidence/phase5/incremental/acceptance-worktree.log",
+  "sha256": "91086f2219c2ff5b4c2f98767ee4b3dcbcc7e86b31598e6e07bb8dc5aa2b68b3",
+  "source_commit": "3d9ebd2",
+  "jobs": 40,
+  "audit_tests": 34,
+  "scenarios": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L"
+  ],
+  "fork_block": 51000000,
+  "green": 40,
+  "red": 0,
+  "results": [
+    {
+      "command": "npm run compile",
+      "exit": 0
+    },
+    {
+      "command": "npm run typecheck",
+      "exit": 0
+    },
+    {
+      "command": "npm run scenarios",
+      "exit": 0
+    },
+    {
+      "command": "npm run e2e:relay",
+      "exit": 0
+    },
+    {
+      "command": "npm run e2e:entry-point",
+      "exit": 0
+    },
+    {
+      "command": "npm run test:deploy-refusals",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/account-relay/intent-account.test.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/account-relay/relay-adversarial.test.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t01-lowgas-process-kills-proposal.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t02-vote-weight-survives-exit.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t03-retention-bypass-deposit-at-processing.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t04-hole1-instance-usdc-invisible.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t05-empty-safe-repricing.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t06-last-holder-inflation.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t07-retention-veto-flash.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t08-baalgas-20m-blocks-chain.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t09-minretention-boundary.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t10-one-second-periods-terminal.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t11-same-tx-roundtrip.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t12-sponsor-order-delays-execution.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t13-ready-proposal-vs-later-depositor.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t14-nav07-safe-dust-does-not-pause-deposits.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t16-retention-mechanism.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t17-zero-empty.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/governance-nav/t18-incremental-settlement.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T01-founder-key-compromise.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T02-sponsor-key-compromise.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T03-pre-genesis-window.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T04-usdc-blacklist.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T05-deploy-refusals.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T06-capture-small-treasury.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T07-config-shortening.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T08-spam-economics.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T09-hidden-treasury-effect.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T10-contract-member.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/ops-economic/T11-exit-cost-deployed-capital.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/work-templates/factory-create2-onlysafe.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/work-templates/project-config-edges.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/work-templates/strategy-price-reference.ts",
+      "exit": 0
+    },
+    {
+      "command": "node_modules/.bin/tsx evidence/audit/work-templates/work-invariants.ts",
+      "exit": 0
+    }
+  ],
+  "historical_fixture_excluded": "t15-retention-round2.ts: removed lotCount/epoch prototype, superseded by t16"
+}
