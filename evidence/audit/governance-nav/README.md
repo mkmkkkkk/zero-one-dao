@@ -20,3 +20,6 @@ Helper: `contracts/AuditMulticall.sol` (audit-only contract member batching call
 | NAV-03 | t06-last-holder-inflation.ts |
 | NAV-04 | t11-same-tx-roundtrip.ts |
 | NAV-06 | t13-ready-proposal-vs-later-depositor.ts |
+| NAV-07 | t14-nav07-safe-dust-does-not-pause-deposits.ts (phase 5) |
+
+Phase 5 (branch phase4-ledger-twap): t01, t03, t04, t07, t08 and t14 are FLIPPED — they now assert the fixed behaviour and PASS means the invariant holds (decision.md phase 5 rulings; key lines under evidence/phase5/<row>.log).

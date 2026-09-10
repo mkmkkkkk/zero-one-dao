@@ -2,13 +2,20 @@
  * Build the public beacon for one deployment: README.txt (<= 44 lines), llms.txt, state.json (from the
  * chain via relay/chain.ts), proposals.json, snippet.js / snippet.py (addresses filled in) and the
  * dashboard (index.html). Pattern: agent-only-wallet/beacon/scripts/build.mjs, parameterized here.
- * Usage: tsx beacon/scripts/build.ts --deployment <file> --origin <relay url> [--out <dir>] [--constitution-url <url>]
+ *
+ * `--origin` is the origin the built files advertise, and it defaults to CANONICAL_ORIGIN, the relay's
+ * own public hostname (decision.md 2026-09-10: the canonical entry point must be a host we control that
+ * never challenges a plain GET; the relay serves these files itself, relay/static.ts). `--mirror` is the
+ * second copy the README names in one line, default MIRROR_ORIGIN (the Vercel beacon). Building the
+ * mirror is the same command with `--origin <mirror>`, which is what keeps the Vercel deployment working
+ * unchanged: every URL in its files then points at itself, and its rewrites forward /relay to the relay.
+ * Usage: tsx beacon/scripts/build.ts [--deployment <file>] [--origin <url>] [--mirror <url>] [--out <dir>] [--constitution-url <url>]
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { readDaoState, type DaoState } from "../../relay/chain.js";
-import { connect, json, loadDeployment, ROOT, fmtShares } from "../../relay/common.js";
+import { CANONICAL_ORIGIN, connect, json, loadDeployment, MIRROR_ORIGIN, ROOT, fmtShares } from "../../relay/common.js";
 
 const TEMPLATES = path.join(ROOT, "beacon", "templates");
 
@@ -54,18 +61,22 @@ export function fill(text: string, values: Record<string, string>): string {
 /**
  * Build the beacon into `out`.
  *
- * @param options Deployment file, relay origin, output dir, constitution URL.
+ * @param options Deployment file, the origin these files advertise (default CANONICAL_ORIGIN), output
+ *   dir, the mirror origin the README names (default MIRROR_ORIGIN), constitution URL.
  * @returns The state that was written.
  */
-export async function buildBeacon(options: { deployment: string; origin: string; out: string; constitutionUrl?: string }): Promise<DaoState> {
+export async function buildBeacon(options: { deployment: string; origin?: string; out: string; mirror?: string; constitutionUrl?: string }): Promise<DaoState> {
+  const origin = (options.origin ?? CANONICAL_ORIGIN).replace(/\/+$/u, "");
+  const mirror = (options.mirror ?? MIRROR_ORIGIN).replace(/\/+$/u, "");
   const deployment = loadDeployment(options.deployment);
   const env = connect(deployment);
   const state = await readDaoState(env, 0);
-  const constitutionUrl = options.constitutionUrl ?? (deployment.constitution.textUrl.startsWith("http") ? deployment.constitution.textUrl : `${options.origin}/CONSTITUTION.md`);
+  const constitutionUrl = options.constitutionUrl ?? (deployment.constitution.textUrl.startsWith("http") ? deployment.constitution.textUrl : `${origin}/CONSTITUTION.md`);
   const values: Record<string, string> = {
     CHAIN_ID: String(deployment.chainId),
     CHAIN_NAME: state.chain.name,
-    ORIGIN: options.origin.replace(/\/$/u, ""),
+    ORIGIN: origin,
+    MIRROR: mirror,
     CONSTITUTION_URL: constitutionUrl,
     CONSTITUTION_HASH: state.constitution.textHash,
     CONSTITUTION: deployment.constitution.address,
@@ -95,10 +106,11 @@ export async function buildBeacon(options: { deployment: string; origin: string;
 if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
   const args = parseArgs(process.argv.slice(2));
   const deployment = args.deployment ?? process.env.ZERO_ONE_DEPLOYMENT ?? "deployments/local.json";
-  const origin = args.origin ?? process.env.RELAY_ORIGIN ?? "http://127.0.0.1:18751";
+  const origin = args.origin ?? process.env.RELAY_ORIGIN ?? CANONICAL_ORIGIN;
+  const mirror = args.mirror ?? MIRROR_ORIGIN;
   const out = path.resolve(ROOT, args.out ?? "beacon/public");
-  buildBeacon({ deployment, origin, out, constitutionUrl: args["constitution-url"] })
-    .then((state) => console.log(json({ out, block: state.chain.blockNumber, members: state.members.length, proposals: state.proposals.length, tasks: state.tasks.length })))
+  buildBeacon({ deployment, origin, out, mirror, constitutionUrl: args["constitution-url"] })
+    .then((state) => console.log(json({ out, origin, mirror, block: state.chain.blockNumber, members: state.members.length, proposals: state.proposals.length, tasks: state.tasks.length })))
     .catch((error) => {
       console.error(error);
       process.exitCode = 1;

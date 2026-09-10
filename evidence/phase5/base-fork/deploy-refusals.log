@@ -1,0 +1,59 @@
+local HEAD 3d9ebd23a6d6e989a287d2cb7be051ce11828876 is NOT advertised by origin; newest pushed ancestor e568870e39a5e5406adbe766df657151e4c96e4a
+
+$ deploy-base.ts --help
+Usage: tsx scripts/deploy-base.ts --constitution-url <raw GitHub URL> --key-file <file> [--rpc <url>] [--out <file>] --i-confirmed-parameters
+Base mainnet refuses unless all five preconditions hold:
+1. HEAD is pushed to origin (constitution URL pins that genesis commit).
+2. Constitution URL bytes hash to Constitution.textHash.
+3. Deployer holds >= 50 USDC and >= 0.005 ETH; proxy decimals must be 6.
+4. CREATE2-predicted Safe holds exactly 0 USDC before deployment.
+5. --i-confirmed-parameters is passed (checked before key access or RPC).
+A public deployment additionally requires a clean working tree.
+Fork rehearsal only: --fork; requires a loopback Anvil fork of Base, no public fallback, record under evidence/.
+  --fork-genesis-commit <sha> lets the rehearsal pin the constitution to a pushed ANCESTOR of the local
+  HEAD (the fetched bytes must still hash to Constitution.textHash). Refused without --fork; a public
+  deployment always pins its own pushed HEAD.
+Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.
+ASSERT --help still lists all five preconditions
+
+$ deploy-base.ts --rpc http://127.0.0.1:18680 --key-file /does-not-exist/never-read
+REFUSED: --i-confirmed-parameters is required before any RPC write
+ASSERT missing --i-confirmed-parameters refuses before key access
+
+ASSERT the recording endpoint on 127.0.0.1:18680 saw 0 requests: no RPC call, no write
+
+$ deploy-base.ts --i-confirmed-parameters --out deployments/base-sepolia.json --rpc http://127.0.0.1:18680
+REFUSED: /Users/michaelmacmini/srv/zero-one-phase4/deployments/base-sepolia.json exists: a deployment is already recorded (move it aside deliberately to redeploy)
+ASSERT an existing deployment record refuses a redeploy
+
+$ deploy-base.ts --i-confirmed-parameters --rpc http://127.0.0.1:18680
+REFUSED: production deployment requires a clean working tree at pushed HEAD
+ASSERT a dirty working tree refuses a public deployment
+
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 block=51000000 loopback=http://127.0.0.1:11545
+$ deploy-base.ts --i-confirmed-parameters --fork --rpc https://mainnet.base.org
+fork writes require loopback HTTP Anvil
+ASSERT fork mode rejects a public RPC before any request
+
+$ deploy-base.ts --i-confirmed-parameters --fork --rpc http://127.0.0.1:11545 --key-file /Users/michaelmacmini/srv/zero-one-phase4/state/phase5-refusals-1789025659943-0/deployer.env --out evidence/phase5/base-fork/refusal-must-not-write-this.json
+REFUSED: genesis commit 3d9ebd23a6d6e989a287d2cb7be051ce11828876 is not pushed as an origin ref
+ASSERT an unpushed HEAD refuses even a fork rehearsal
+
+$ deploy-base.ts --i-confirmed-parameters --fork --rpc http://127.0.0.1:11545 --key-file /Users/michaelmacmini/srv/zero-one-phase4/state/phase5-refusals-1789025659943-0/deployer.env --out evidence/phase5/base-fork/refusal-must-not-write-this.json --fork-genesis-commit e568870e39a5e5406adbe766df657151e4c96e4a --constitution-url https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/3d9ebd23a6d6e989a287d2cb7be051ce11828876/docs/CONSTITUTION.md
+ASSERT genesis commit e568870e39a5e5406adbe766df657151e4c96e4a advertised by public origin (local HEAD 3d9ebd23a6d6e989a287d2cb7be051ce11828876, fork rehearsal pinned to a pushed ancestor)
+REFUSED: constitution URL must pin the pushed genesis SHA
+ASSERT a constitution URL pinning another commit refuses the deployment
+
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x4c8f6411579511F167da062420F1debB0201f296 tx=0x2c3ede44fecd3c83a2bad0a2072af90cc8f64f2edf48ced00b6334acd8e9d2fc
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=1000000 recipient=0x84648a0De44F7E9DBa718Cea1845cd66E397c387 tx=0xda7d4046d4947e500faf434cb43d42e68e9ed55276c1ded369200f4b8ae94a9d
+the predicted Safe 0x84648a0De44F7E9DBa718Cea1845cd66E397c387 was given 1000000 USDC before the run
+
+$ deploy-base.ts --i-confirmed-parameters --fork --rpc http://127.0.0.1:11545 --key-file /Users/michaelmacmini/srv/zero-one-phase4/state/phase5-refusals-1789025659943-0/deployer.env --out evidence/phase5/base-fork/refusal-must-not-write-this.json --fork-genesis-commit e568870e39a5e5406adbe766df657151e4c96e4a
+ASSERT genesis commit e568870e39a5e5406adbe766df657151e4c96e4a advertised by public origin (local HEAD 3d9ebd23a6d6e989a287d2cb7be051ce11828876, fork rehearsal pinned to a pushed ancestor)
+constitution https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/e568870e39a5e5406adbe766df657151e4c96e4a/docs/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (matches local bytes)
+deployer 0x4c8f6411579511F167da062420F1debB0201f296 balance 1000 ETH on Base (http://127.0.0.1:11545)
+REFUSED: predicted Safe 0x84648a0De44F7E9DBa718Cea1845cd66E397c387 already holds 1000000 USDC (no longer a trap since phase 5 ruling 8, it would accrue to the genesis shares; pick a fresh salt for a clean address)
+ASSERT a predicted Safe holding USDC refuses the deployment (the positive case is the rehearsal's USDC=0 assertion)
+
+ASSERT all five deployment refusals plus the predicted-Safe balance gate still fire; no record was written and no public-network transaction was sent

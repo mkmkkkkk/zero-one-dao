@@ -1,0 +1,175 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x054bCA8DC05A0008eb3ED2764B065ACCCEA9e834 baal 0x7F1553791e29576b8C59e382865cc54c2a5cBF36 shares 0x6c4C26D9B2Fb7e8dBf34CBE46Ce4A79DaDd97D2D settlement 0x53c7816A1d998C1d6b21C0a0B210B8762538ed64
+          depositShaman 0x0d8C1B9FDde2e8d794f39C90A4223B0498eC2352 workManager 0x728bC394012693C4866F7242921B747513C879d3 constitution 0x875c1161f79A23b1E37e1880F5aD321287a62647
+          templateFactory 0xec991E4B8C255E8B9c72b8b56dfe08aD24C4b247 deployers 0x74525Bbf58a8d2De392BD198AA9A6A58A6728261 0x4c473c04EfFB412Ef9992F00328bE662d971DB6e 0x299f65EC7A5ac572d95Bac9C52d07d4Fb96E7f49 0xb6d6dfd8fdDA0DC05A845C0748586C5c15fca145 intentAccount 0xbC1F65dFD4413D793b9349837224C546b9E9d8b4
+   F = 0xa499bff378a8536Ea05cAe5C32D4fE3961FBf89f  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9  member agent A
+   B = 0x0FeCF5EBa6aF3aD1536CD7FE4973fb3eD7542e7f  member agent B
+   C = 0xE5af059baB444182ca35957D442133240d66B164  member agent C
+   D = 0x59b14290811cBEAe919cc174C8ACd845543aA10E  depositor D (joins later)
+   O = 0x3F9Da1D8783c3662E1c32B3AE49C48f04873be9c  operator O (mandate recipient)
+   W = 0x3f339a4579B0D8d6ECCeF70B929772802005BaCB  worker W (task deliverer)
+   shaman 0x0d8C1B9FDde2e8d794f39C90A4223B0498eC2352 permission 2 (DepositShaman)
+   shaman 0x728bC394012693C4866F7242921B747513C879d3 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x74525Bbf58a8d2De392BD198AA9A6A58A6728261
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x4c473c04EfFB412Ef9992F00328bE662d971DB6e
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x299f65EC7A5ac572d95Bac9C52d07d4Fb96E7f49
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xb6d6dfd8fdDA0DC05A845C0748586C5c15fca145
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x382fce1be2367ec55b61bdc1f224098e827b95632d540f326a326732a31a7662 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x16ab2ab9a7ac61696bd687cb171e4401c1846f42345f2f94f241bc5aed965560 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xd2fa60392146ed04d4cedbdf890ff8df4c96e9c7a5d266a0c3be01c295b62afc (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0xf6fbfdea9f6dce17bdbbedb6b2dc8d540688163dcfa9f75f3e44d8e188128282 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0x13ba7e4c42553013b4756ce88100a8082260a95abdf3bbe7c30e91cd9d7db40a (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x2a7e151c2335c1d0c778ab9248826d0d9c28afa0d69fddef2f5f0e1a5de90656 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x30ef8c3b776df9dd8ced282e3bcf2fb4d573e42f243abde91f2c50edb0bd64b6 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x6e9c2935332c11b9fa692895dd4735040a7089d88e37a542cfb869c86e2bb913 (block 29, gas 259012)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xd3a20896f64c0ae782756d44e98291ee4464212b2f86d44ee8837c8df9cba7ed (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x26416ec6dbac0f2f57e792033b9c7feb6893f872baa641c2716f5f6b4220e748 (block 31, gas 224890)
+   tx B approve deposit shaman: 0x191a81271357b19d88269bf0ea8a92eac8230d9f15e64a05d615b04d17bf6c37 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x4c83453f832632a38915a265f55d30a1812bbbe219a97433954b5ab53e4d8997 (block 33, gas 224890)
+   tx C approve deposit shaman: 0x291e4a9679a17c05667874ea781ceac970e25fb7a570c8ef1dafe2e158ef1b6d (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x73ab67ebb49d75f022aa7196392bfa2049fbf1c0f5a5086fcbe95f1978d945e7 (block 35, gas 224890)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: T-7: Project P1: tranche 0 = 300 USDC by date (due day 2), tranche 1 = 200 USDC by verifiers B, C; deadline day 3; voted and started
+   A deployed ProjectProposal @ 0x0389ac24E364780F8eb7eD86830476288B99e313 via TemplateFactory (tx 0x30f1c14997be0a1a56355f5ee06d6245b63ff18fa8f4ad2b17c9787b6ee879bb, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0xc4124c7433fc07e4003bf44e94dd28ffbc9c64cac3f8f1d91d5e2e55632e559e codeHash 0xc80f9af3995fb3a56e57d46ca89e81986dd6d7d657f3ad7b5625286a14cff325
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "A: P1 two tranches, 3 d deadline {"template":"Project","contract":"ProjectPropos...": 0x224e811a15db1fd3f02c22b3fb54982896277fe7db453d2f500783b6ee4a060a (block 37, gas 308628)
+   details: A: P1 two tranches, 3 d deadline {"template":"Project","contract":"ProjectProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x0389ac24E364780F8eb7eD86830476288B99e313","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"500000000","deadline":"1789219243","params":{"tranches":[{"amount":"300000000","releaseType":"date","releaseAt":"1789132843","verifiers":[],"threshold":0},{"amount":"200000000","releaseType":"verifiers","releaseAt":"0","verifiers":["0x0FeCF5EBa6aF3aD1536CD7FE4973fb3eD7542e7f","0xE5af059baB444182ca35957D442133240d66B164"],"threshold":2}],"deadline":"1789219243"},"paramsHash":"0xc4124c7433fc07e4003bf44e94dd28ffbc9c64cac3f8f1d91d5e2e55632e559e","codeHash":"0xc80f9af3995fb3a56e57d46ca89e81986dd6d7d657f3ad7b5625286a14cff325","salt":"0x0000000000000000000000000000000000000000000000000000000000000002"}
+   warp +1s (let votingStarts become past) -> block 38 timestamp 1788960044
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0xae3895bd6bcb2c4f77904bb9ba9568cabf7be84cf2dd0238bc68828b8cdcae96 (block 39, gas 117190)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0xd14205054d1888bdd0e5c1913239897cbac2fef8f463497313f6c9581ea3babd (block 40, gas 100090)
+   warp +43200s (past grace of #1) -> block 41 timestamp 1789003244
+   proposal #1 state = Ready
+   tx D processProposal #1 -> passed=true actionFailed=false state=Processed: 0xd30984f056c5a8c3b58571a81981f18ecffc50c5e17b19e4dab65a257734618d (block 42, gas 295056)
+   ok: P1 funded (500) and Running
+
+== step 5: T-7: nobody calls release(0) on day 2; the deadline passes; release(0) and confirm(1) revert DeadlinePassed, only end() applies
+   warp +216000s (past the project deadline) -> block 43 timestamp 1789219244
+   at deadline + 1: release(0) by the operator reverts; confirm(1) by a verifier reverts; end() by anyone succeeds
+   holds [T-7]: after the deadline exactly one of {pay the operator, return to the Safe} is possible for a due tranche (end() only)
+   ok: release(0) after the deadline reverts DeadlinePassed (reverted with DeadlinePassed)
+   ok: confirm(1) after the deadline reverts DeadlinePassed (reverted with DeadlinePassed)
+   tx W end(): 0x5872ef97f5f1218773f92e5318d3b4e6f30e00b9ab70e3c7eb23e4ee86d70f39 (block 44, gas 62267)
+   [P1] Project @ 0x0389ac24E364780F8eb7eD86830476288B99e313: status Complete budget 500 deadline 1789219243 operator 0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9 params 0xc4124c7433fc07e4003bf44e94dd28ffbc9c64cac3f8f1d91d5e2e55632e559e held 0 USDC
+   end(): 500 USDC (both unreleased tranches) back to the Safe; operator A received 0 USDC after the deadline; Complete
+   holds [T-7]: no tranche is paid after the project deadline (paid 0 USDC; 500 USDC returned)
+
+== step 6: T-7: a Project whose deadline has already come cannot start (the funding multicall fails atomically, nothing moves)
+   A deployed ProjectProposal @ 0x8F8e7c993dfd131dC9bEBB8d5d33F7cA7F33D316 via TemplateFactory (tx 0x4e3220c4046ad66d883380e24aef4e6248a5e46412e2e374db92600da15dfe73, salt 0x0000000000000000000000000000000000000000000000000000000000000005) paramsHash 0xe3334af470feb9ffa30014d8112fc601d31e56ee2f6cb84b5a7a860dba5d731d codeHash 0xc80f9af3995fb3a56e57d46ca89e81986dd6d7d657f3ad7b5625286a14cff325
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #2 "A: P-late, deadline before its own grace ends {"template":"Project","contract":"...": 0xdecbfb63d4498ed32862d081f323fd155f76226e4d0a32cbe5d9f0be7664c857 (block 46, gas 287398)
+   details: A: P-late, deadline before its own grace ends {"template":"Project","contract":"ProjectProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x8F8e7c993dfd131dC9bEBB8d5d33F7cA7F33D316","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"300000000","deadline":"1789392044","params":{"tranches":[{"amount":"300000000","releaseType":"date","releaseAt":"0","verifiers":[],"threshold":0}],"deadline":"1789392044"},"paramsHash":"0xe3334af470feb9ffa30014d8112fc601d31e56ee2f6cb84b5a7a860dba5d731d","codeHash":"0xc80f9af3995fb3a56e57d46ca89e81986dd6d7d657f3ad7b5625286a14cff325","salt":"0x0000000000000000000000000000000000000000000000000000000000000005"}
+   warp +1s (let votingStarts become past) -> block 47 timestamp 1789219245
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xb0afa792de3d826fd4b636163ffd4592415621bbb9dee3da501f74ec89a501b3 (block 48, gas 117190)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0x03c312f8a84d69d70c43237ac4897c32e5fffbff47d8a3298a5c09b0c202b00a (block 49, gas 100090)
+   warp +43200s (past grace of #2) -> block 50 timestamp 1789262445
+   proposal #2 state = Ready
+   warp +172800s (past the late project's deadline before processing) -> block 51 timestamp 1789435245
+   tx D processProposal #2 -> passed=true actionFailed=true state=Processed: 0x53659a021dcf924708a3d8d56a0e75ffbdb3df9d1a67480cff3fc332cf9eb585 (block 52, gas 277224)
+   [P-late] Project @ 0x8F8e7c993dfd131dC9bEBB8d5d33F7cA7F33D316: status Pending budget 300 deadline 1789392044 operator 0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9 params 0xe3334af470feb9ffa30014d8112fc601d31e56ee2f6cb84b5a7a860dba5d731d held 0 USDC
+   holds [T-7]: a Project started after its deadline reverts DeadlinePassed inside start(): actionFailed, the Safe keeps the budget
+
+== step 7: T-8: a Pending Project cannot be amended by the Safe (eth_call from the Safe): Overcommitted(scheduled, held = 0)
+   Safe -> amend(Pending P2 @ 0xe9ada2134a54Cc9f6dd07B852Ef6AD9c310B5a0E) : Overcommitted
+   holds [T-8]: Project amend while Pending reverts Overcommitted (a Pending instance holds 0): documented in TEMPLATES.md (Project amend: Running); observed Overcommitted
+
+== step 8: T-9a: Config with gracePeriod 0: Baal keeps the old value, start() reverts NotApplied, the whole action fails; nothing applied
+   baalGas: the action fails at every gas limit (meant to fail?); using the fallback 2000000
+   A deployed ConfigProposal @ 0x778e6f26d6c02b20440c10D15faB3563cb8Ee28B via TemplateFactory (tx 0xb9e8d1c90f58117df1edbe7a3dea1bf3ae2d19ce902125445b27c5eb27663122, salt 0x0000000000000000000000000000000000000000000000000000000000000009) paramsHash 0x2df32bbb55251c99d4c61ace1c9bace4e69c94093a7600bcd244233723889124 codeHash 0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #3 "A: grace 0 {"template":"Config","contract":"ConfigProposal","compiler":"0.8.36+c...": 0x799738a3706eaeb2c091e3e06a30f27a5d799441df8398d6c50a498d76b271fc (block 55, gas 289001)
+   details: A: grace 0 {"template":"Config","contract":"ConfigProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x778e6f26d6c02b20440c10D15faB3563cb8Ee28B","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"0","deadline":"0","params":{"votingPeriod":21600,"gracePeriod":0,"proposalOffering":"0","quorumPercent":"0","sponsorThreshold":"1000000000000000000","minRetentionPercent":"66"},"paramsHash":"0x2df32bbb55251c99d4c61ace1c9bace4e69c94093a7600bcd244233723889124","codeHash":"0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8","salt":"0x0000000000000000000000000000000000000000000000000000000000000009"}
+   warp +1s (let votingStarts become past) -> block 56 timestamp 1789435246
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x38af62adcb00963d1e333899790bbe0145c133afbd6c4266687d777efbf4cc09 (block 57, gas 117190)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0xa20e7903b0aa91ffe3866dbb6128ad9c1f8ccc40c2cadc982fd246aa1c062828 (block 58, gas 100090)
+   warp +43200s (past grace of #3) -> block 59 timestamp 1789478446
+   proposal #3 state = Ready
+   tx D processProposal #3 -> passed=true actionFailed=true state=Processed: 0x0f9ea64de7d9fd7b87eca3e54385f3aa1da074f6edd7c059284347bdc83b611b (block 60, gas 276690)
+   holds [T-9]: grace 0 -> actionFailed=true, gracePeriod still 21600 (documented; holds)
+
+== step 9: T-9b: Config with quorumPercent 101 (Baal only checks minRetention <= 100): A and B vote YES; it applies
+   A deployed ConfigProposal @ 0xd5bd5Dfa92e99d025d7e0863f19528aBc942142A via TemplateFactory (tx 0xc4506e5329e048977c4680cedb405c387d6a8983a31b9b7ca809e285680ea144, salt 0x000000000000000000000000000000000000000000000000000000000000000c) paramsHash 0xd655b080c5e9e04793fd6aa0c66d288e2f332cc93416e5000db8a1d547264fae codeHash 0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #4 "A: quorum 101% {"template":"Config","contract":"ConfigProposal","compiler":"0.8....": 0x63f28f8342955095b2b7a966eadf5b119e1bbb9475823a221424fb05a679306c (block 62, gas 289157)
+   details: A: quorum 101% {"template":"Config","contract":"ConfigProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xd5bd5Dfa92e99d025d7e0863f19528aBc942142A","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"0","deadline":"0","params":{"votingPeriod":21600,"gracePeriod":21600,"proposalOffering":"0","quorumPercent":"101","sponsorThreshold":"1000000000000000000","minRetentionPercent":"66"},"paramsHash":"0xd655b080c5e9e04793fd6aa0c66d288e2f332cc93416e5000db8a1d547264fae","codeHash":"0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8","salt":"0x000000000000000000000000000000000000000000000000000000000000000c"}
+   warp +1s (let votingStarts become past) -> block 63 timestamp 1789478447
+   proposal #4 state = Voting
+   tx A votes YES on #4 -> yes 1000 / no 0: 0x97e220a3ca10bf27bd52e19f8f52df60a8908eb3b3a6e59de732606fecb28547 (block 64, gas 117190)
+   tx B votes YES on #4 -> yes 2000 / no 0: 0x1c051088ec5caa089aeb400f231c0b34d8aaecf413d89b412866454ad9e0a9d3 (block 65, gas 100090)
+   warp +43200s (past grace of #4) -> block 66 timestamp 1789521647
+   proposal #4 state = Ready
+   tx D processProposal #4 -> passed=true actionFailed=false state=Processed: 0xc8a1b814d1c604d132a8c87084145811ef02da707bcbc2446383d7dc68422a76 (block 67, gas 254436)
+   [C1] Config @ 0xd5bd5Dfa92e99d025d7e0863f19528aBc942142A: status Complete budget 0 deadline 0 operator 0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9 params 0xd655b080c5e9e04793fd6aa0c66d288e2f332cc93416e5000db8a1d547264fae held 0 USDC
+   quorumPercent now 101; Config instance Complete
+   holds [T-9]: Baal accepts a quorum above 100% (applied quorumPercent = 101): no on-chain cap by ruling; disclosed in PARAMETERS and flagged by the relay's /me
+
+== step 10: T-9b: a Payment (10 USDC to O) with 100% of shares voting YES is processed as not passed; a repair Config (quorum 0) with 100% YES fails the same way
+   A deployed PaymentProposal @ 0x3DAff1A37197B1b00814d3724aAdB90b49deE8F8 via TemplateFactory (tx 0xc6dc8c302101ce7f174a3dd22a8b3c041cc4cc915baddd17c0efbc671dbee8b7, salt 0x000000000000000000000000000000000000000000000000000000000000000f) paramsHash 0xdd7477d940d986c0ef731d2bb0c02987564530e1605ff39460c6ce4d5684938b codeHash 0xd965a1d8338bc81af6717feced361e040826806e274b87a70e402ad8db997516
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #5 "A: pay O 10 {"template":"Payment","contract":"PaymentProposal","compiler":"0.8.3...": 0x588857c36aeff22c104e8f0297214fce70f60b601e3d769a9c2a1e760f55e781 (block 69, gas 285164)
+   details: A: pay O 10 {"template":"Payment","contract":"PaymentProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x3DAff1A37197B1b00814d3724aAdB90b49deE8F8","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"10000000","deadline":"0","params":{"recipients":["0x3F9Da1D8783c3662E1c32B3AE49C48f04873be9c"],"amounts":["10000000"]},"paramsHash":"0xdd7477d940d986c0ef731d2bb0c02987564530e1605ff39460c6ce4d5684938b","codeHash":"0xd965a1d8338bc81af6717feced361e040826806e274b87a70e402ad8db997516","salt":"0x000000000000000000000000000000000000000000000000000000000000000f"}
+   warp +1s (let votingStarts become past) -> block 70 timestamp 1789521648
+   proposal #5 state = Voting
+   tx A votes YES on #5 -> yes 1000 / no 0: 0x08822fa69a6519a540b9e2aeb0ae8b85a435f56ecbecbcc47e13e1862260800d (block 71, gas 117190)
+   tx B votes YES on #5 -> yes 2000 / no 0: 0x8e472928724589269f2475c9416e46281a4fde07f5493a43de14d5e77b0b435a (block 72, gas 100090)
+   tx C votes YES on #5 -> yes 3000 / no 0: 0x1f758de045f393bd039817fcc7f51d5f3f0ea4120b8af17ac0cdbf1840227114 (block 73, gas 100090)
+   tx F votes YES on #5 -> yes 3050 / no 0: 0xc3c8ea279639fbf2845d74fa4398649576f36d331573d1a35edd6055c5b90daa (block 74, gas 100090)
+   warp +43200s (past grace of #5) -> block 75 timestamp 1789564848
+   proposal #5 state = Ready
+   tx D processProposal #5 -> passed=false actionFailed=false state=Processed: 0x3a57175b0c437cb0c15f459c41518051afc5d7b0dbe69244bc7327c95974fd21 (block 76, gas 96436)
+   payment: yes 3050 of 3050 shares (100%), passed=false, state Processed, O got 10000 USDC
+   holds [T-9]: with quorum 101% a proposal approved by 100% of shares is processed as not passed (yes*100 < 101*supply for every vote): terminal for collective action, documented
+   A deployed ConfigProposal @ 0x243417AbE3a8F89688B5f366c405450117484D07 via TemplateFactory (tx 0xb6fbb5529b93dc883af86806e24842ab48205789685106446707c586c3a07df8, salt 0x0000000000000000000000000000000000000000000000000000000000000012) paramsHash 0xb9f9f1a54858fd63758e419fc36ed08822228936575879b1c60d6abd43c019ca codeHash 0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #6 "A: repair quorum -> 0 {"template":"Config","contract":"ConfigProposal","compiler...": 0x801344bacaabdae96448676f5103bc8c35a2eeed70fe38ec96b37e0f8a99f9b7 (block 78, gas 289205)
+   details: A: repair quorum -> 0 {"template":"Config","contract":"ConfigProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x243417AbE3a8F89688B5f366c405450117484D07","operator":"0x9DA7E501f47aCfa8822a4db8aF63AD04488394d9","budget":"0","deadline":"0","params":{"votingPeriod":21600,"gracePeriod":21600,"proposalOffering":"0","quorumPercent":"0","sponsorThreshold":"1000000000000000000","minRetentionPercent":"66"},"paramsHash":"0xb9f9f1a54858fd63758e419fc36ed08822228936575879b1c60d6abd43c019ca","codeHash":"0x6a44e848ce8b2d0ca642c504761d73ab2de38425061cd280dfac4115329280e8","salt":"0x0000000000000000000000000000000000000000000000000000000000000012"}
+   warp +1s (let votingStarts become past) -> block 79 timestamp 1789564849
+   proposal #6 state = Voting
+   tx A votes YES on #6 -> yes 1000 / no 0: 0x4d1ba56f1e2c99eae050437e7782c9c010c79cbc6795e3db2f171216e6174f47 (block 80, gas 117190)
+   tx B votes YES on #6 -> yes 2000 / no 0: 0x3336c412f738d9b67737214a0f03fac8d92d03bf0ca224870834e6f7c9c1bf21 (block 81, gas 100090)
+   tx C votes YES on #6 -> yes 3000 / no 0: 0xcaf00e205337f24d08214aacfb20919b84278a70c1bb27b53aa0b0eff10f1424 (block 82, gas 100090)
+   tx F votes YES on #6 -> yes 3050 / no 0: 0x5a6f11346f9737df52145d2b2321e3a4b232a3bf0b49051f1d14d9e96913f379 (block 83, gas 100090)
+   warp +43200s (past grace of #6) -> block 84 timestamp 1789608049
+   proposal #6 state = Ready
+   tx D processProposal #6 -> passed=false actionFailed=false state=Processed: 0xc7cacec4fefd4e5c965214bf2c849c34d68c6d292253d1a5ca9534908971b430 (block 85, gas 97256)
+   holds [T-9]: a unanimous repair proposal cannot pass either (passed=false; quorumPercent still 101): the documented terminal shape; exit is the remedy
+
+== step 11: T-9b: exit still works: C ragequits 1000 shares and is paid pro-rata (the constitution's remedy survives the terminal config)
+   tx C ragequit 1000 shares -> paid 1000 USDC (pro-rata of 3050 at supply 3050): 0xa2ac978d0ef0d362ee9ad9a8f1e2fa38a2f3434fee3e28ba35bfc8424e378a71 (block 86, gas 708827)
+   holds [T-9]: C exited with 1000 USDC (expected pro-rata 1000): exit protects every member; only collective action is dead
+   ok: C address present
+
+=== AUDIT TEST project-config-edges: ALL INVARIANTS HOLD ===
+anvil stopped (http://127.0.0.1:11545)
+EXIT 0

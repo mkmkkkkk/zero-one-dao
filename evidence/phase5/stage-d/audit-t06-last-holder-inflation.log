@@ -1,0 +1,56 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x4b29f5328d819A4Db99FE2FA642c6d715f8C6dbb baal 0x0bCC99fD4f9A2c8B61a82fBaF6D33eeD52eE004b shares 0x7E9F26CD719E24268Ee2EB816A468dCD93d42c0E settlement 0x837f85FdF4068f54d3735E6e5D8713B6cee339aA
+          depositShaman 0xf0d3a73dDF46CDe6BA806408Ca1C82781cC1A441 workManager 0x5ad606EA8CC3Fc55557365cC9cC9ea0b6511f2d7 constitution 0xC862698cB17Ab6aF737e14b215e5170dC542e8cC
+          templateFactory 0x11471ED62635F06054F22b16872Cc65b1028ea19 deployers 0x373909C24CbeF3F55651542Ccfbf8238E7087d0e 0x6Fb2A153a2CcEB9Ac172B467517043B1A283F6Ca 0xE896eDE388103d4ab3443B1B1f665bC076402F76 0x3480D6E76DFadB7c937A3E950866FE9d4737F5d2 intentAccount 0x143a869745560eeA2C97415BfA77a6F0319D0095
+   F = 0x04a833d5CCBDFD79A359109536AF7a2857235694  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x1681DF28a2E259e6D158d7051a49420E4E4dF637  member agent A
+   B = 0xDFc941C9D52e1c85AC12B0FfeA0e3Fff59467E5a  member agent B
+   C = 0x5E052996f7050C6838A9B1208E81f676Ea1dbF02  member agent C
+   D = 0x01eE3A6ca0Ba3feaD93cf9fB25853D7FC98ec961  depositor D (joins later)
+   O = 0x00F934CdCCd980C5771dDe03fD5617841fa703Df  operator O (mandate recipient)
+   W = 0x49DF098f254fe34807bf0ff5cEd46718Eea2471B  worker W (task deliverer)
+   shaman 0xf0d3a73dDF46CDe6BA806408Ca1C82781cC1A441 permission 2 (DepositShaman)
+   shaman 0x5ad606EA8CC3Fc55557365cC9cC9ea0b6511f2d7 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x373909C24CbeF3F55651542Ccfbf8238E7087d0e
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x6Fb2A153a2CcEB9Ac172B467517043B1A283F6Ca
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xE896eDE388103d4ab3443B1B1f665bC076402F76
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x3480D6E76DFadB7c937A3E950866FE9d4737F5d2
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+   tx fund D with 10000 USDC: 0x4915cf240b4ca8278574f5ef14061520febec1c0237db31bf152cf529baa4212 (block 22, gas 51250)
+
+== step 1: genesis: F deposits 50 USDC -> 50e18 shares; then F ragequits all but 1 wei-share
+   tx F approve deposit shaman: 0x5ae9c3cbed48bee6b65df32f2a3a6941bd74cd3fa4b729b0eab8400dc2fa5792 (block 23, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xdd35715ed479ebd1a2773360ded6eef9410c05310e2909bbdcbee861cde07bf3 (block 24, gas 259012)
+   tx F ragequit 49.999999999999999999 shares -> paid 49.999999 USDC (pro-rata of 50 at supply 50): 0x993a44762b9726065580c6ab9a234d7fce9ec195e394bd41af7efd2c8dda47a4 (block 25, gas 697675)
+   supply 1 wei-shares (F), Safe 1 units
+
+== step 2: F donates 1000 USDC to the Safe (a plain transfer)
+   Safe 1000.000001 USDC, supply 1 wei-shares -> NAV per wei-share 1000.000001 USDC
+
+== step 3: D quotes and deposits
+   quote(999 USDC) = 0 shares; quote(1500 USDC) = 1 shares
+   ok: 999 USDC cannot be deposited at all (reverted with ZeroShares)
+   tx D approve deposit shaman: 0x61ca4843506041201a43bc2e99e737bb3dda08290570246c02ca5933877c2aa1 (block 28, gas 28789)
+   tx D deposit 1500 USDC -> 0.000000000000000001 shares (quoted 0.000000000000000001): 0xbf9be6764f9ddbeea210ccf2128226576dbb63d125232e4211ef0bacc3e8f9cd (block 29, gas 224890)
+   D paid 1500 USDC for 1 wei-share(s) of 2; D's exit value 1250 USDC (loss 250); F's 1 wei-share now worth 1250 USDC after donating 1000
+   tx D ragequit 0.000000000000000001 shares -> paid 1250 USDC (pro-rata of 2500.000001 at supply 0.000000000000000002): 0x7d4c5c0d4455f5d0d3322ebdea43ac872e140ddcdacc9aece2846a508fe690c1 (block 30, gas 236964)
+   D USDC 10000 -> 9750 after deposit + exit (paid 1250)
+   ok: D received 1 wei-share and exits with 1250 of 1500 USDC
+
+=== SCENARIO NAV-03 last-holder donation inflation (finding demonstrated; precondition: supply collapsed to dust): PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

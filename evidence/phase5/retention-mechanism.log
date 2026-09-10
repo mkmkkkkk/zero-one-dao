@@ -1,0 +1,91 @@
+Zero One retention mechanism — local receipt readback
+Base commit dcb3e83; selected (c) append-only mint journal / exact A + growth - S.
+All transaction destinations were owned local Anvil. No public-network transaction or push.
+RED (original runtime, same new regression):
+ASSERT COUNTEREXAMPLE exit40 return40 balance100: exited=40 expected=0 supplyAtStart=100
+GREEN (normally deployed current contracts):
+ASSERT COUNTEREXAMPLE exit40 return40 balance100: exited=0 expected=0 supplyAtStart=100
+ASSERT separate sponsorship: exited=0 expected=0 supplyAtStart=100
+ASSERT registration: unauthorized/unknown rejected; separate sponsorship records start
+ASSERT mint40 exit80 return40: exited=0 expected=0 supplyAtStart=100
+ASSERT MULTI earlier window: exited=20 expected=20 supplyAtStart=100
+ASSERT MULTI later window: exited=60 expected=60 supplyAtStart=140
+ASSERT MULTI earlier return: exited=0 expected=0 supplyAtStart=100
+ASSERT MULTI later return: exited=40 expected=40 supplyAtStart=140
+ASSERT different-account refill does not mask exit: exited=40 expected=40 supplyAtStart=100
+ASSERT YES voter leaves: deficit reduces retained support: exited=40 expected=40 supplyAtStart=100
+ASSERT YES voter departure: passed=false (historical yesVotes remain the Baal ballot)
+ASSERT ragequit(0) no-op: exited=0 expected=0 supplyAtStart=100
+ASSERT ZERO state unchanged gas=29052
+ASSERT TIMESTAMP P: exited=40 expected=40 supplyAtStart=240
+ASSERT TIMESTAMP Q: exited=40 expected=40 supplyAtStart=240
+ASSERT ORACLE 36 changes / 6 overlapping windows: exact per-account deficits and supply
+ASSERT budget exhausted but full read exact: exited=0 expected=0 supplyAtStart=100
+ASSERT BUDGET exhaustion reverts atomically processed=false gas=151306
+GREEN retention c all exact-deficit assertions
+GAS TABLE (receipt gasUsed; deposits exclude approval; quiet=1, storm=100):
+GAS a open=1 deposit=178451 exit_ordinary=739912 exit_after_mint=715918 process=143506
+GAS a open=100 deposit=178451 exit_ordinary=739912 exit_after_mint=671160 process=143506
+GAS a open=100 interleaved_mints=100 full_exit=4005196
+GAS b open=1 deposit=231696 exit_ordinary=203005 exit_after_mint=212976 process=190383
+GAS b open=100 deposit=5546808 exit_ordinary=203005 exit_after_mint=1720345 process=194891
+GAS b open=100 interleaved_mints=100 full_exit=2208777
+GAS c open=1 deposit=201269 exit_ordinary=194736 exit_after_mint=194736 process=163106
+GAS c open=100 deposit=201269 exit_ordinary=194736 exit_after_mint=194736 process=163106
+GAS c open=100 interleaved_mints=100 full_exit=140536
+ZERO EXIT EMPTY DAO RED -> GREEN:
+ASSERT empty-DAO ragequit(0): status=reverted gas=55048 hash=0xfeea0d453f040be3de7e7fa094ac2f45c83d5b877be76274f4c75bbddda269c3
+ASSERT empty-DAO ragequit(0): status=success gas=29052 hash=0x9ae537fd810fe547052f22045f96fbdc43c34946dc36aa90da512e6b71135ac7
+GREEN empty-DAO zero exit no-op
+AUDIT:
+=== SCENARIO GOV-03 minRetention cannot be bypassed by deposit + process in one transaction (phase 5 retention rule; fixed): PASS ===
+=== SCENARIO GOV-04 same-tx deposit + vote + exit cannot veto (phase 5 retention counts only shares held at votingStarts; fixed): PASS ===
+=== SCENARIO GOV-06 minRetention boundary (holds as documented): PASS ===
+COMPILE: Wrote 47 local artifacts with 0.8.36+commit.8a079791.Emscripten.clang
+TYPECHECK: tsc --noEmit, no diagnostics
+npm run scenarios (FORK_RPC unset):
+A: PASS
+B: PASS
+C: PASS
+D: PASS
+E: PASS
+F: PASS
+G: PASS
+H: PASS
+I: PASS
+J: PASS
+L: PASS
+K: BLOCKED (not executed; result unknown)
+scenarios/run-all.ts adds K only when FORK_RPC is set.
+scenarios/K-uniswap-v3-fork.ts uses published Base Uniswap contracts.
+src/baseFork.ts pins BASE_FORK_BLOCK = 51_000_000n and requires a Base upstream fork.
+Local cache check: ~/.foundry/cache/rpc/base/51000000/storage.json does not exist.
+Cached blocks observed: 51039292, 51039416, 51039441, 51039475, 51039482,
+51039564, 51039700, 51039737, 51051722, 51082849, 51082879.
+No read-only RPC clarification reply received; no network call attempted under the no-network red line.
+A-J/L PASS does not mean A-L PASS. No mock result or previous run was substituted for K.
+=== RELAY E2E: PASS ===
+PROTECTED: docs/CONSTITUTION.md and CLAUDE.md byte-identical to dcb3e83.
+RETENTION-ONLY acceptance green; full A-L acceptance BLOCKED on K.
+SHA256 of source and full receipt files:
+b889d7407d8d2f4eb766e6d8234f49f5acb5a681950f875fd2a2408ee140d4bb  contracts/NavShareToken.sol
+64e32dd8499ba8d5686882a41bf84685e5a83d4bd73648d65f83e510469f1966  contracts/vendor/Baal.sol
+b9ddd22eb1fa1dc679fde8fe2c39531d9acb8516fb5974e1ef5ecc5e53a42946  evidence/audit/governance-nav/t16-retention-mechanism.ts
+f73302ad5dda486d616808465701deec559696427a9176a3ec49c6c117ee8558  evidence/audit/governance-nav/retention/EpochLots.sol.txt
+5cf4f1db2d502c0a85061e8c2e974089cfadb426078c60339938662edb79645f  evidence/audit/governance-nav/retention/Eager.sol.txt
+aba5356d428e0a3ede7e2973a9430d10918310c2138189f13ba74aa651f74db2  evidence/phase5/retention/compile.log
+7688481c98f5f7c30eb304ce160556f65dee5db6d9a9314344dedfc8ccca15f6  evidence/phase5/retention/e2e-relay.log
+c71b0a7afef83fade99f57b5f5a7fdd7acef8273f42e08d52f1e38edf1c82e19  evidence/phase5/retention/gas-a.log
+fb01205b6504b0954b7c499124aafc025babbfb274af7e0a2e20ccc14de12bc0  evidence/phase5/retention/gas-b.log
+103ab4a2c927d05c790518a9faffe9d9f7582acf1ba0a42a9bbc24e195b0874c  evidence/phase5/retention/k-blocked.log
+c100d2ef5d7d467e6f8794caedd92dbcfc093f8b891b1161a2eff72c2c6f66e5  evidence/phase5/retention/round2-red.log
+7f283b23a394b1205ca5ad6591513f20acf11d3dec2924609b37673f11db2b35  evidence/phase5/retention/scenarios-red.log
+7687a6eaa402adc61a5298e294dd06689d461884a1f5bd67d22514b410af65b8  evidence/phase5/retention/scenarios.log
+3d6b825dcc2f352709c14cb2da78ebb8cedf08f0140ad37e913303f25280633a  evidence/phase5/retention/t03.log
+aa8c843489a346054a4bbe1596c5be0d9f0ec813c41f7fdcc6cec97b1c4b0640  evidence/phase5/retention/t07.log
+8132a29981e2d251ceef09f57fa66bc0d8aa6bf6c109195edc0ebd0c37b30065  evidence/phase5/retention/t09.log
+836bf4f406dca87e2e215357a5e0a13fcdae6a3f4a28d2f25e149b9a0e400ab2  evidence/phase5/retention/t16-green.log
+05953e5ee1e654cc737ddbf87efe2842707ef01294dc5a656c96dd2555bd616d  evidence/phase5/retention/t16-red.log
+429f35fe8559090ea3a3d56e343ae802963892221fc331e42322ebf85e076e7b  evidence/phase5/retention/t17-green.log
+59fa563799d3408ee37830efc2078b9413cfc7ccb30d86e612049fbb1cb8746d  evidence/phase5/retention/t17-red.log
+6c1dbbabe9cd3e1f35c057d6c9f8748ea07e6a693091de8817fae17168523521  evidence/phase5/retention/typecheck.log

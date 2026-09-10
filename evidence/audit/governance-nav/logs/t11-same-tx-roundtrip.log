@@ -2,3 +2,15 @@
    budget out, 50 USDC: Safe 50 USDC, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
    budget out, 2000 USDC: Safe 50 USDC, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
    holds: both legs read USDC.balanceOf(Safe); the NAV-01 profit needs the instance to return USDC between deposit and exit (multi-block), seed 3050
+   full Safe: Safe 3050 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   budget out, 50 USDC: Safe 50 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 4951.612903 (net -48.387097), R shares 0
+   budget out, 2000 USDC: Safe 98.387097 USDC, ledger treasury 3098.387097, supply 3050; R USDC 4951.612903 -> 3774.770131 (net -1176.842772), R shares 0
+   holds: the mint leg reads the ledger (Safe + open instances), the burn leg USDC.balanceOf(Safe): with 3000 of 3050 deployed a 50 USDC round trip returns 1.612903 (net -48.387097) and a 2000 USDC one nets -1176.842772; the NAV-01 profit needed the instance to return USDC between the legs (multi-block)
+   full Safe: Safe 3050 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   budget out, 50 USDC: Safe 50 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 4951.612903 (net -48.387097), R shares 0
+   budget out, 2000 USDC: Safe 98.387097 USDC, ledger treasury 3098.387097, supply 3050; R USDC 4951.612903 -> 3774.770131 (net -1176.842772), R shares 0
+   holds: the mint leg reads the ledger (Safe + open instances), the burn leg USDC.balanceOf(Safe): with 3000 of 3050 deployed a 50 USDC round trip returns 1.612903 (net -48.387097) and a 2000 USDC one nets -1176.842772; the NAV-01 profit needed the instance to return USDC between the legs (multi-block)
+   full Safe: Safe 3050 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   budget out, 50 USDC: Safe 50 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 4951.612903 (net -48.387097), R shares 0
+   budget out, 2000 USDC: Safe 98.387097 USDC, ledger treasury 3098.387097, supply 3050; R USDC 4951.612903 -> 3774.770131 (net -1176.842772), R shares 0
+   holds: the mint leg reads the ledger (Safe + open instances), the burn leg USDC.balanceOf(Safe): with 3000 of 3050 deployed a 50 USDC round trip returns 1.612903 (net -48.387097) and a 2000 USDC one nets -1176.842772; the NAV-01 profit needed the instance to return USDC between the legs (multi-block)

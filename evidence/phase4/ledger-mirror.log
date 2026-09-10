@@ -1,0 +1,210 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xA5c0c9A1b105e21700Fa4256F157A338CC9f7Da1 baal 0x9d6BdC7B71234D3Eb15eCdeAd2dD982137f13a36 shares 0xb2FCBFFEC29F1F294ec1ecB690Cd9c7e5885A69c settlement 0x6b7461F08815db06943aF07Fb6A0D19825B495A9
+          depositShaman 0x750fc91f663f1B66b16BC02368EC200d0F955781 workManager 0xCEaC05666E04a60d3b064894298799A14F89e20D constitution 0xAc2F450c6409a6778A2c69969c3f17946Ff9Dde0
+          templateFactory 0x2baB3118571346029C56A05E7C8408025738be10 deployers 0x7e8473eD2392EFDc077c176466eb99853898ee96 0x8815e10b1EaDf3BCcB679F91e0A42f9f78C36739 0x94556080e9c87FB52860d49eb38535B31Efc3268 0xFd1b4902675C3A737119C29F3304Ad9d14cA6cfd intentAccount 0x3791Ea7a99E5837cD4b8a115DB793858C15C8eB7
+   F = 0x0fF295972b5203C11e773D269A51756084221b9d  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xAA77D00AB9887fCd843b9bE4993F39a63B245d01  member agent A
+   B = 0x882b2977063c58039018EEB3B66E9bB8d12cb8B1  member agent B
+   C = 0x1D3720B891AA05d81E4E7fa19341c4759f31cc0c  member agent C
+   D = 0x9D99eBfe6dDB9c3d6a0763b4BEeE28Ba125b5B0F  depositor D (joins later)
+   O = 0x0e772b91F9F730B53E0f2A917047bCB37A4f2cC1  operator O (mandate recipient)
+   W = 0x4535B339FF01C322ebba207474C0C71FAc764E35  worker W (task deliverer)
+   shaman 0x750fc91f663f1B66b16BC02368EC200d0F955781 permission 2 (DepositShaman)
+   shaman 0xCEaC05666E04a60d3b064894298799A14F89e20D permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x7e8473eD2392EFDc077c176466eb99853898ee96
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x8815e10b1EaDf3BCcB679F91e0A42f9f78C36739
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x94556080e9c87FB52860d49eb38535B31Efc3268
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xFd1b4902675C3A737119C29F3304Ad9d14cA6cfd
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x128af0221c1d63ba76fa5fa6297406630e909b292afc15163164aae9d013502d (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x93c3f4f2dfb30f8abdb2b9fbbe2f5ccc8480f009a93109ee4e4def9be6538dd6 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xe3e6bc6fd417b97fbf1dc2d995e2316ffa6d281b561fc12fedc11c1e2e532d31 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x32a47b2a60bb6c0b25c7438b7813b7d9b61aff4bf08077a11b86bea3608b3f33 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0x2a87c0a426c33dac353e2023ef2bd3ef1e9c155c69879d36fe8fda8aa06e100e (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x480c04ac1cde5cf6ff70f4210ad77af950f4e3f727bf0c277764f10ac5be92ea (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0xa9750d76a491ccd0109b840c5d7e9c44da6b366bd9f27f185985652e79010f18 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x2c4638fdc36fe0451b9911c4f46a114580a790cb9a6651080bcc96fa15328566 (block 29, gas 208079)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xbf86382dcbdf09d90bd5c79488f38fdd0c101468b25de03d10a6b8476f8a9b5c (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x0721d8595ac324f1a26fee86861a8a7e9f1d3bb9ce9dd291decddc7a5f9fec80 (block 31, gas 173861)
+   tx B approve deposit shaman: 0xbdc83d271674d1e955b4a254003be96699ae1622d1c0ab1e2047322bae33f812 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x9a8493bf2b0e9f21dc7b6ff3c09939407b65a2b43c1d69d018b2b8bdf8719687 (block 33, gas 173861)
+   tx C approve deposit shaman: 0x06438846719d84db50c181cbd198bae0c0a3de50c5f7b901dc658393ed60bf62 (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x97a2a7955569e8e785e47bcc744556064924709d3ac61b7942da593c387f264e (block 35, gas 173861)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: seed sufficient settlement for a voted 100k Strategy; record NAV from chain
+   tx fund Safe with additional settlement: 0x2f28a4ec1e4e7a68570bf115b4c46b5f21d12b270a7a0fe9ff1098c53f747f08 (block 36, gas 34138)
+   MOCK 0x4cA469ABC58862f19c03a24E0b48083972d845DC (tx 0x4a9dafc35e20381c7f2071e33110dde0d17c28ac371aa002436349f4a41c3d7c); MockDex 0x93D1C81A666aBc52d5b0CDFDd654F1fE96d45c0f (tx 0xbe8c6a04256c0515192b0b8d8e00a8773e704125109f01e507f50dea30b59ba4) price 2 USDC per MOCK
+   tx F seeds MockDex with 1000000 USDC: 0x7ccd3e6b9274d1e1c4001f585c047de7bcf30220e1f10386effb1e6382193155 (block 39, gas 51250)
+   tx F seeds MockDex with 1000000 MOCK: 0xc57c5e2f8cb2c5d76c0a1845d2b0633b515ea23fdebe7d867fa4ba525fef5e16 (block 40, gas 51250)
+   LedgerProbe 0xdd0b38Ae8aE67e99B0Ea5ec003E12ab18d83c3B4 deployment tx 0x44eec593aa7d3f32efa45463e4f0157eedca937e38fe961556e8cf901d977017; TreasuryLedger 0x13Ddee7129Ea9FDA8d6952Efb69CEBe8C51e52C4
+   ok: unregistered contract cannot spoofOpen despite claiming Running (reverted with UnknownInstance)
+   ok: unregistered contract cannot spoofClose despite claiming Running (reverted with UnknownInstance)
+   ok: EOA cannot open ledger (reverted with UnknownInstance)
+   tx donate one settlement unit to never-voted instance: 0xb9ae3ca061a5a89a0eda78a69112867256891d1d239abd4819242b3b94f9a187 (block 43, gas 51214)
+   ok: deployment alone adds no active instance and registers no asset
+   ok: never-voted instance balance is excluded from deposit NAV
+   tx A submitProposal #1 "underfunded start must roll back ledger registration": 0x3f3b3727e81beb2045240f92b823d6ae1c4c069de73b76e75bedfd89bfc77cfa (block 44, gas 203643)
+   warp +1s (let votingStarts become past) -> block 45 timestamp 1788955325
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x44226aeeab1ebff22c8b38c2412bbcd8b661324db262fc0cbc6abed20fe8fdc9 (block 46, gas 117855)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x88483e206815feef0bf389b434211118940faf6df2d7cf94107c946beb4cec6c (block 47, gas 100755)
+   warp +43200s (past grace of #1) -> block 48 timestamp 1788998525
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=true state=Processed: 0x17e4c4bd302bc7ccc295489e41fd03d2f9f7a78a0d6d3c3fac5b888b16fad4df (block 49, gas 348393)
+   ok: proposal #1: passed=true actionFailed=true
+   ok: actionFailed start rolls back active set and append-only asset registration
+   tx A submitProposal #2 "stop pending instance with donated settlement": 0x588bfeb131d8d559ae26c7dd4286f32130bb41854658c7e364ec6e8f22baff13 (block 50, gas 203559)
+   warp +1s (let votingStarts become past) -> block 51 timestamp 1788998526
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xf97376ce7c2c4288dc403cc5f88a0227c2ac8be8674f7e57d4179e90911958fa (block 52, gas 117855)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0xffa3cbeed6f2aaeb2bbc0244646e908f4f837e6cc3f0dc781527ccc1e40aa409 (block 53, gas 100755)
+   warp +43200s (past grace of #2) -> block 54 timestamp 1789041726
+   proposal #2 state = Ready
+   tx W processProposal #2 -> passed=true actionFailed=false state=Processed: 0x93167d1394f1ef2cfb3680f9eb8faf95db84ca75020e93cda415e8467d3181af (block 55, gas 198589)
+   ok: proposal #2: passed=true actionFailed=false
+   ok: stopping never-open instance does not corrupt active set
+   A deployed StrategyProposal @ 0x09525e407E2a46bF79815E2E07Ce3bfd4470310D via TemplateFactory (tx 0x477849e2de03dc3889360008d08a9cc9397a733f77b0f029938acce8123ecbd9, salt 0x0000000000000000000000000000000000000000000000000000000000000007) paramsHash 0x55fd776547280c6ec0c01a7b1d8859fcc7836e00ecfde2a29725fbb625711982 codeHash 0xa299bac4762ea74e5bbb9b835fcd40564eb8523e10670ccda89053efaaa4bee8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #3 "100k Strategy tests deposit treasury accounting {"template":"Strategy","contract...": 0x0dd327cd76bb8813d65c040a8c76d42d8fdc1a606d8f9b378737ae492f5fece6 (block 57, gas 225464)
+   details: 100k Strategy tests deposit treasury accounting {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x09525e407E2a46bF79815E2E07Ce3bfd4470310D","operator":"0xAA77D00AB9887fCd843b9bE4993F39a63B245d01","budget":"100000000000","deadline":"1820491324","params":{"venue":"0x93D1C81A666aBc52d5b0CDFDd654F1fE96d45c0f","asset":"0x4cA469ABC58862f19c03a24E0b48083972d845DC","budget":"100000000000","rule":{"maxPerRun":"10000000000","minInterval":"1","deadline":"1820491324","takeProfitBps":"0","stopLossBps":"0","slippageBps":"100"}},"paramsHash":"0x55fd776547280c6ec0c01a7b1d8859fcc7836e00ecfde2a29725fbb625711982","codeHash":"0xa299bac4762ea74e5bbb9b835fcd40564eb8523e10670ccda89053efaaa4bee8","salt":"0x0000000000000000000000000000000000000000000000000000000000000007"}
+   warp +1s (let votingStarts become past) -> block 58 timestamp 1789041727
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x2124fb93a56a9a348388ab2c23a88599c2af9ee7a2814bf0c0ba45bd193fd0be (block 59, gas 117855)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0xc2139b0126cbcdf279063e71b193d7a933861e79d82991ed6f7cac00a3f62a59 (block 60, gas 100755)
+   warp +43200s (past grace of #3) -> block 61 timestamp 1789084927
+   proposal #3 state = Ready
+   tx W processProposal #3 -> passed=true actionFailed=false state=Processed: 0xf81d86573b7e3c2e339cdc0bd045b0e10d56682a6ac52c7fdda8ac354249fa40 (block 62, gas 371389)
+   ok: proposal #3: passed=true actionFailed=false
+   NAV before budget=203050000001 Safe after=103050000001 open instance=100000000000 ledger=203050000001
+   ok: 100k budget moved from Safe into active instance without changing total settlement
+   ok: ledger counts open USDC budget and permits settled deposits
+   ok: voted Strategy is in the active set
+   tx D approve deposit shaman: 0xe5381129cdcb66b38a3f234ddf6d4be9b64cd951cc6a51417d6eecd83f5d076d (block 63, gas 45889)
+   tx D deposit 1000 USDC -> 15.020930805146412554 shares (quoted 15.020930805146412554): 0xbcca847caf1f3a5aca66f77a09f45341e84f39c5ded3c22d4d139120d8481479 (block 64, gas 194181)
+   ok: actual deposit mint uses ledger NAV including the 100k active budget
+   ok: receipt and balances reject the former Safe-only cheap-mint amount
+
+== step 5: two running Strategy instances share one registered asset; migrate closes old identity
+   A deployed StrategyProposal @ 0x7DBf5E39098eE0FC521057a9F894808D5895B6a5 via TemplateFactory (tx 0x93294ddff409c6e2915e5016d0797af3318e7f395de62e5c9ccb599a385de0b5, salt 0x000000000000000000000000000000000000000000000000000000000000000a) paramsHash 0xa34c382b7ae302883c08429cb656801c54f65b2c420d9d8c6e275dcc82fa92af codeHash 0xa299bac4762ea74e5bbb9b835fcd40564eb8523e10670ccda89053efaaa4bee8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #4 "second Strategy shares registered asset {"template":"Strategy","contract":"Strat...": 0x23caf7b14c70987d35768d33b9a7d965d1ba911918ad66b98b340d50548b8883 (block 66, gas 225284)
+   details: second Strategy shares registered asset {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x7DBf5E39098eE0FC521057a9F894808D5895B6a5","operator":"0xAA77D00AB9887fCd843b9bE4993F39a63B245d01","budget":"100000000","deadline":"1820491324","params":{"venue":"0x93D1C81A666aBc52d5b0CDFDd654F1fE96d45c0f","asset":"0x4cA469ABC58862f19c03a24E0b48083972d845DC","budget":"100000000","rule":{"maxPerRun":"10000000000","minInterval":"1","deadline":"1820491324","takeProfitBps":"0","stopLossBps":"0","slippageBps":"100"}},"paramsHash":"0xa34c382b7ae302883c08429cb656801c54f65b2c420d9d8c6e275dcc82fa92af","codeHash":"0xa299bac4762ea74e5bbb9b835fcd40564eb8523e10670ccda89053efaaa4bee8","salt":"0x000000000000000000000000000000000000000000000000000000000000000a"}
+   warp +1s (let votingStarts become past) -> block 67 timestamp 1789084928
+   proposal #4 state = Voting
+   tx A votes YES on #4 -> yes 1000 / no 0: 0x41cc1c88dd1b77e0aa78fbaeba81d4ad36d40bda4be1a45d6986ca479857f607 (block 68, gas 117855)
+   tx B votes YES on #4 -> yes 2000 / no 0: 0xb2fc2b7e1e282ba07201257c8aef377d09c0aa15fbb884273676924da6dbcd0f (block 69, gas 100755)
+   warp +43200s (past grace of #4) -> block 70 timestamp 1789128128
+   proposal #4 state = Ready
+   tx W processProposal #4 -> passed=true actionFailed=false state=Processed: 0xb3c5bf6c3d5539c5be49e9defa9a91f6430853445ee925102736ed0d5b6de8db (block 71, gas 289525)
+   ok: proposal #4: passed=true actionFailed=false
+   ok: two active Strategies register the same asset only once
+   tx A submitProposal #5 "migrate second Strategy and start replacement": 0xe61547391004157366e9e214e8a73fa2bfad910c27924602cfc061a44892103a (block 73, gas 206026)
+   warp +1s (let votingStarts become past) -> block 74 timestamp 1789128129
+   proposal #5 state = Voting
+   tx A votes YES on #5 -> yes 1000 / no 0: 0x9165fa068b6bf80648be28a7d111f10bab14507b603152b095ea7db853b1eef8 (block 75, gas 117855)
+   tx B votes YES on #5 -> yes 2000 / no 0: 0xee215b80ed28c62688b5b5afd48c7c41b5f1f69f7fdae53d6e9f3ae9abcb8774 (block 76, gas 100755)
+   warp +43200s (past grace of #5) -> block 77 timestamp 1789171329
+   proposal #5 state = Ready
+   tx W processProposal #5 -> passed=true actionFailed=false state=Processed: 0x2f4a034068fbf7e4286fd73cb0ab5911709c971b6210bfc5aa5cac1a941fa566 (block 78, gas 293336)
+   ok: proposal #5: passed=true actionFailed=false
+   ok: migration removes old identity and opens voted replacement
+   tx A submitProposal #6 "stop replacement while it holds only settlement": 0xce14c3c84a5f653a9e11e602b4c7304d0614a742f220871e79e905602d43a1b8 (block 79, gas 203583)
+   warp +1s (let votingStarts become past) -> block 80 timestamp 1789171331
+   proposal #6 state = Voting
+   tx A votes YES on #6 -> yes 1000 / no 0: 0xdc54934cd11b27852b28577722dd4593f346d9978b30f4eed755cbea90cb03bf (block 81, gas 117855)
+   tx B votes YES on #6 -> yes 2000 / no 0: 0x9b4aba65dafa03a9836deaec8d4d841cc9f75f0ee7f71b5b0b090f4ec009d64a (block 82, gas 100755)
+   warp +43200s (past grace of #6) -> block 83 timestamp 1789214531
+   proposal #6 state = Ready
+   tx W processProposal #6 -> passed=true actionFailed=false state=Processed: 0x5f0a5a7f4e2e8e41a7e7e39a785d5f75a2c9bb1dda4c13a59e4c8eb3dac16bd8 (block 84, gas 186357)
+   ok: proposal #6: passed=true actionFailed=false
+   ok: stop closes a running instance with zero asset holdings
+
+== step 6: actual buy blocks deposits while active; voted stop returns raw asset and keeps refusal
+   tx buy asset with 10k settlement: 0x6d2bc6fa0becb00b870027d4aa99b51bf0cc72b8b17bf273d84c3fad17aff0b6 (block 85, gas 152431)
+   ok: open instance asset balance makes treasury unsettled
+   ok: deposit refuses active asset holdings (reverted with TreasuryNotSettled)
+   ok: quote refuses active asset holdings (reverted with TreasuryNotSettled)
+   tx A submitProposal #7 "return Strategy raw holdings to Safe": 0x39e5ce475439b0a30530059ac0c1e5571f7b2f2a05b5bc6423a86080f1535f0d (block 86, gas 203451)
+   warp +1s (let votingStarts become past) -> block 87 timestamp 1789214532
+   proposal #7 state = Voting
+   tx A votes YES on #7 -> yes 1000 / no 0: 0xcd0f481b3b0ada99939915184796dce32cff3ea3cc41061e0526152dd27124be (block 88, gas 117855)
+   tx B votes YES on #7 -> yes 2000 / no 0: 0xbe164e537b97d33292d46b87ab65922e36b9975aa314ea9acfb6ff8f570155c2 (block 89, gas 100755)
+   warp +43200s (past grace of #7) -> block 90 timestamp 1789257732
+   proposal #7 state = Ready
+   tx W processProposal #7 -> passed=true actionFailed=false state=Processed: 0x0e00c334f44a8292a05c1f4c5fdf8931effa288310be033ff24070e2ff3f7436 (block 91, gas 204908)
+   ok: proposal #7: passed=true actionFailed=false
+   ok: stop closes active instance and returns its asset to Safe
+   ok: registered asset in Safe refuses deposits even with empty active set
+   ok: same deposit refuses asset returned by stop (reverted with TreasuryNotSettled)
+   actual rejected deposit tx 0x9082b87605c8c43ed7a43b9b1d2bfca34f5fb430e884a8d4d9b3089844c6bca4 block 92 status reverted
+   ok: mined refusal changes neither Safe settlement nor share supply
+
+== step 7: Payment-style Safe vote sells returned asset at new price, restoring settled NAV
+   tx MockDex price -> 3 USDC per MOCK: 0x1c73b20608d58cd34a4ba1f36705abe5107f4745d8b7dd01174b0694929f5fe8 (block 93, gas 27534)
+   tx A submitProposal #8 "sell returned Strategy asset; settlement proceeds go directly to Safe": 0xda9fad9b1e3b7cd0401f2822a8996452fde41d078fc5f4fbe416b5d8282f547a (block 94, gas 208268)
+   warp +1s (let votingStarts become past) -> block 95 timestamp 1789257733
+   proposal #8 state = Voting
+   tx A votes YES on #8 -> yes 1000 / no 0: 0xba1ee9e21a124cf16d33395bac47f8662bad411b36b0519664961a484a80ce6a (block 96, gas 117855)
+   tx B votes YES on #8 -> yes 2000 / no 0: 0x503d45543a839567e969792a433ee59c81d03e4c45ce6b21f25d4a4ccac72198 (block 97, gas 100755)
+   warp +43200s (past grace of #8) -> block 98 timestamp 1789300933
+   proposal #8 state = Ready
+   tx W processProposal #8 -> passed=true actionFailed=false state=Processed: 0x88975813262ce4acc16da59e53d2c30ad7d6b2ecbae4553a6c7af984516a66e6 (block 99, gas 181653)
+   ok: proposal #8: passed=true actionFailed=false
+   ok: voted sale clears all registered Safe asset holdings
+   ok: new NAV comes from actual sale proceeds, not an assumed constant
+   tx D approve deposit shaman: 0x924248cacc0d4bfc1e700adaa834c0f07d2d8fcb608d9b94a10e462a99864ab6 (block 100, gas 45889)
+   tx D deposit 1000 USDC -> 14.661664342456277197 shares (quoted 14.661664342456277197): 0x4eab2e6ae2a78e2e960df4325f7dbe93a1e9c6e76c04b3d3a419ae92348f50f3 (block 101, gas 149838)
+   ok: same formerly-refused deposit succeeds at measured new NAV
+
+== step 8: one raw asset unit of Safe dust blocks until a sweep vote clears it
+   tx one raw unit registered asset dust to Safe: 0x7d27c61ac51f2663ce5ac399d62461b972542a1eb2a207cf255f497c843ac0d4 (block 102, gas 51202)
+   ok: one raw unit dust blocks settlement
+   ok: deposit refuses dust (reverted with TreasuryNotSettled)
+   tx A submitProposal #9 "sweep one raw unit asset dust": 0x53d192a3f5573ec4fd176cece29f83fac387c97c29f4d36be92810dace8b98a8 (block 103, gas 204180)
+   warp +1s (let votingStarts become past) -> block 104 timestamp 1789300934
+   proposal #9 state = Voting
+   tx A votes YES on #9 -> yes 1000 / no 0: 0xa0e2f25231402bff4be2e6a296cf3e2eb7cb311d9b80319587a87f831b0812ea (block 105, gas 117855)
+   tx B votes YES on #9 -> yes 2000 / no 0: 0xd9d0343d8bd024e4a52098115e5e6252307415009757910e75e5d1fc0d39892e (block 106, gas 100755)
+   warp +43200s (past grace of #9) -> block 107 timestamp 1789344134
+   proposal #9 state = Ready
+   tx W processProposal #9 -> passed=true actionFailed=false state=Processed: 0xf6d6c013b28346b21e32f6a95c486e57e43c74017f673fdf6ffae080118479d5 (block 108, gas 149700)
+   ok: proposal #9: passed=true actionFailed=false
+   ok: sweep vote restores settlement
+
+== step 9: one transaction deposits then ragequits: measured net USDC and share supply are zero
+   tx fund local round-trip probe with exactly current treasury value: 0x40ebecc2019aa7c1768b366ca1bdec340e2f90f38ebe3bd6134e28ceb65edb2a (block 109, gas 51262)
+   atomic tx 0x37fe0777d9fb51aec2426782084f92f0b1e410fb4dfb3aaec53ab40d758b358b block 110 status success probe before=210050000001 after=210050000001 net=0; event=RoundTrip
+   ok: same-transaction deposit plus ragequit nets exactly zero USDC (event and balances)
+   ok: atomic round trip restores Safe balance and supply, leaving probe with zero shares
+   ok: final ledger is settled with no active instances
+
+=== SCENARIO L: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

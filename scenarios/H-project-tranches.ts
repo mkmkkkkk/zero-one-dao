@@ -5,6 +5,7 @@
  * anyone ends the project after its deadline. A project naming the proposer as verifier cannot be
  * deployed at all.
  */
+import { loadLocalAbi } from "../src/baal.js";
 import type { ProjectParams, Tranche } from "../src/proposals.js";
 import { assert, boot, describeAt, expectDeployRevert, expectRevert, fmtS, now, processProposal, proposeTemplate, readAt, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, simulateAt, snapshot, step, T, usdcOf, verdict, vote, warp, warpPastGrace } from "./lib.js";
 
@@ -18,6 +19,7 @@ export async function main(): Promise<void> {
   let passed = false;
   try {
     const seeded = await seedMembers(mirror);
+    const ledgerInstances = async () => mirror.chain.publicClient.readContract({ address: mirror.dao.treasuryLedger, abi: loadLocalAbi("TreasuryLedger"), functionName: "openInstances", blockNumber: await mirror.chain.publicClient.getBlockNumber() }) as Promise<readonly string[]>;
     const A = mirror.actors.A.account.address;
     const B = mirror.actors.B.account.address;
     const C = mirror.actors.C.account.address;
@@ -33,14 +35,15 @@ export async function main(): Promise<void> {
     };
 
     step("negative: a Project whose verifier is the proposer cannot be deployed");
-    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, [{ ...t0, releaseType: 0 }, { ...t1, releaseType: 1, verifiers: [A, B] }], deadline], "VerifierIsOperator", "A naming A as verifier is rejected by the constructor");
-    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, [{ ...t1, releaseType: 1, verifiers: [B, B] }], deadline], "DuplicateVerifier", "duplicate verifiers are rejected");
-    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, [{ ...t1, releaseType: 1, threshold: 3 }], deadline], "InvalidThreshold", "threshold above the verifier count is rejected");
+    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, mirror.dao.treasuryLedger, [{ ...t0, releaseType: 0 }, { ...t1, releaseType: 1, verifiers: [A, B] }], deadline], "VerifierIsOperator", "A naming A as verifier is rejected by the constructor");
+    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, mirror.dao.treasuryLedger, [{ ...t1, releaseType: 1, verifiers: [B, B] }], deadline], "DuplicateVerifier", "duplicate verifiers are rejected");
+    await expectDeployRevert(mirror, "A", "ProjectProposal", [mirror.dao.safe, mirror.dao.settlement, A, mirror.dao.treasuryLedger, [{ ...t1, releaseType: 1, threshold: 3 }], deadline], "InvalidThreshold", "threshold above the verifier count is rejected");
 
     step("A deploys a Project (tranches: 300 at once; 200 after B and C confirm; 100 after B and C confirm; 30 d deadline) and submits fund+start");
     const proposal = await proposeTemplate(mirror, "A", { template: "Project", params }, "A: build the beacon, 600 USDC in three tranches");
     const p = proposal.instance.address;
     const pending = await describeAt(mirror, p, "before vote");
+    assert((await ledgerInstances()).length === 0, "Pending project is absent from active ledger");
     assert(pending.status === "Pending" && pending.budget === 600n * SETTLEMENT_UNIT && pending.deadline === deadline && pending.operator === A, "describe(): Pending, budget 600, deadline, operator A");
     assert((await readAt<bigint>(mirror, p, "project", "trancheCount")) === 3n, "three tranches recorded");
 
@@ -57,6 +60,7 @@ export async function main(): Promise<void> {
     assert((await usdcOf(mirror, p)) === 300n * SETTLEMENT_UNIT, "the project holds the two unreleased tranches (300)");
     assert((await trancheOf(p, 0)).state.released && !(await trancheOf(p, 1)).state.released, "tranche 0 released, tranche 1 not");
     assert((await describeAt(mirror, p, "running")).status === "Running", "project is Running");
+    assert((await ledgerInstances()).length === 1, "started project is open in ledger");
 
     step("second tranche: A (operator) and D (stranger) cannot confirm; B confirms (1/2) -> nothing; B again refused; C confirms (2/2) -> 200 to A");
     await expectRevert(simulateAt(mirror, "A", p, "project", "confirm", [1]), "OnlyVerifier", "A (proposer/operator) cannot confirm its own tranche");
@@ -77,6 +81,7 @@ export async function main(): Promise<void> {
     await warp(mirror, Number(deadline + 1n - (await now(mirror))), "to the project deadline");
     await sendAt(mirror, "W", p, "project", "end", [], "W end() after the deadline");
     const ended = await describeAt(mirror, p, "ended");
+    assert((await ledgerInstances()).length === 0, "permissionless Project.end closes the recorded ledger instance");
     assert(ended.status === "Complete" && (await usdcOf(mirror, p)) === 0n, "project Complete, holds nothing");
     assert((await usdcOf(mirror, mirror.dao.safe)) === safeBefore + 100n * SETTLEMENT_UNIT, `unspent tranche (${fmtS(100n * SETTLEMENT_UNIT)} USDC) returned to the Safe`);
     assert((await usdcOf(mirror, mirror.dao.safe)) === seeded.safeSettlement - 500n * SETTLEMENT_UNIT, "treasury = start - what A actually received (500)");

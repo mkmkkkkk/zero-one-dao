@@ -9,12 +9,28 @@ import {IERC20Metadata} from "./Interfaces.sol";
 /// lock (cliff, unvested gate on burn/transfer), the exit gate, the burn observer and the genesis
 /// mint. Every share is minted through Baal by a shaman the DAO chose, and every share is exitable
 /// through Baal.ragequit at any time. Votes equal balance (self-delegated, no delegation).
+///
+/// Retention is the exact balance deficit at the voting timestamp, not cumulative burns.
+/// exitedSince uses A - S + growth; only recipients of a positive mint after the timestamp
+/// can contribute growth. Permissionless chunks replay balance changes; exits never scan history.
 contract NavShareToken {
     using Math for uint256;
 
     struct Checkpoint {
         uint32 fromTimePoint;
         uint256 votes;
+    }
+
+    struct BalanceRecord {
+        uint32 timePoint;
+        address account;
+        uint256 beforeBalance;
+        uint256 afterBalance;
+    }
+
+    struct Settlement {
+        uint256 cursor;
+        uint256 growth;
     }
 
     string public name;
@@ -30,6 +46,13 @@ contract NavShareToken {
     uint256 public totalSupply;
     uint256 public totalBurned;
 
+    /// @notice Sponsorship timestamp; all snapshots use the end of that timestamp, like Baal votes.
+    mapping(uint256 => uint256) public votingStarts;
+    /// @dev Immutable mint AND burn transitions, so changes between chunks cannot stale a sum.
+    BalanceRecord[] public balanceJournal;
+    mapping(uint256 => Settlement) public settlements;
+    /// @dev End-of-timestamp supply, initialized at registration even when no balance changes.
+    mapping(uint256 => uint256) private _supplyAtTime;
     mapping(address account => uint256) public balanceOf;
     mapping(address account => Checkpoint[]) private _checkpoints;
 
@@ -42,11 +65,16 @@ contract NavShareToken {
     error TimePointNotDetermined(uint256 timePoint, uint256 now_);
     error InsufficientBalance(address account, uint256 available, uint256 required);
     error SupplyCapExceeded(uint256 attemptedSupply);
+    error AlreadyRegistered(uint256 proposalId);
+    error NotRegistered(uint256 proposalId);
+    error RetentionUnsettled(uint256 proposalId, uint256 cursor, uint256 end);
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
     event SharesBurned(address indexed account, uint256 amount, uint256 cumulativeBurned);
     event DelegateVotesChanged(address indexed delegate, uint256 previousBalance, uint256 newBalance);
+    event ProposalRegistered(uint256 indexed proposalId, uint256 votingStarts);
+    event RetentionSettled(uint256 indexed proposalId, uint256 cursor, uint256 end, uint256 growth);
 
     modifier onlyBaal() {
         if (msg.sender != baal) revert OnlyBaal(msg.sender);
@@ -120,14 +148,74 @@ contract NavShareToken {
         if (account == address(0)) revert ZeroAddress();
         uint256 available = balanceOf[account];
         if (available < amount) revert InsufficientBalance(account, available, amount);
+        if (amount == 0) return;
         unchecked {
             balanceOf[account] = available - amount;
             totalSupply -= amount;
         }
+        balanceJournal.push(BalanceRecord(uint32(block.timestamp), account, available, available - amount));
         totalBurned += amount;
+        _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(account, available, available - amount);
         emit Transfer(account, address(0), amount);
         emit SharesBurned(account, amount, totalBurned);
+    }
+
+    // ---------------------------------------------------------------- Retention accounting (Baal)
+
+    /// @dev Registration changes no balances. Later changes in this timestamp belong to the snapshot.
+    function registerProposal(uint256 proposalId) external onlyBaal {
+        if (votingStarts[proposalId] != 0) revert AlreadyRegistered(proposalId);
+        votingStarts[proposalId] = block.timestamp;
+        settlements[proposalId].cursor = balanceJournal.length;
+        _supplyAtTime[block.timestamp] = totalSupply;
+        emit ProposalRegistered(proposalId, block.timestamp);
+    }
+
+    /// @notice Permissionlessly replay at most maxRecords changes. No deadline or fixed work cap.
+    /// @dev Each transition changes positive growth by g(after)-g(before) at this window's baseline.
+    /// Immutable records telescope even across calls, including returns and burns of already settled mints.
+    function settleRetention(uint256 proposalId, uint256 maxRecords) external {
+        uint256 start = _retentionStart(proposalId);
+        Settlement storage progress = settlements[proposalId];
+        uint256 cursor = progress.cursor;
+        uint256 end = balanceJournal.length;
+        uint256 count = Math.min(maxRecords, end - cursor);
+        if (count == 0) return;
+        uint256 stop = cursor + count;
+        uint256 growth = progress.growth;
+        for (; cursor < stop; ++cursor) {
+            BalanceRecord storage record = balanceJournal[cursor];
+            // Later changes in the sponsorship second are part of the end-of-second baseline.
+            if (record.timePoint <= start) continue;
+            uint256 baseline = _past(_checkpoints[record.account], start);
+            uint256 beforeGrowth = record.beforeBalance > baseline ? record.beforeBalance - baseline : 0;
+            uint256 afterGrowth = record.afterBalance > baseline ? record.afterBalance - baseline : 0;
+            growth = growth + afterGrowth - beforeGrowth;
+        }
+        progress.cursor = cursor;
+        progress.growth = growth;
+        emit RetentionSettled(proposalId, cursor, end, growth);
+    }
+
+    function journalLength() external view returns (uint256) {
+        return balanceJournal.length;
+    }
+
+    function _retentionStart(uint256 proposalId) private view returns (uint256 start) {
+        start = votingStarts[proposalId];
+        if (start == 0) revert NotRegistered(proposalId);
+        if (start >= block.timestamp) revert TimePointNotDetermined(start, block.timestamp);
+    }
+
+    /// @notice Exact current deficit. Constant work; a partial/stale sum is never returned.
+    function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
+        uint256 start = _retentionStart(proposalId);
+        Settlement storage progress = settlements[proposalId];
+        uint256 end = balanceJournal.length;
+        if (progress.cursor != end) revert RetentionUnsettled(proposalId, progress.cursor, end);
+        supplyAtStart = _supplyAtTime[start];
+        exited = supplyAtStart + progress.growth - totalSupply;
     }
 
     // ---------------------------------------------------------------- Votes (timestamp checkpoints)
@@ -140,7 +228,10 @@ contract NavShareToken {
     /// @notice Voting weight of `account` at unix `timePoint`; Baal reads this at proposal votingStarts.
     function getPastVotes(address account, uint256 timePoint) external view returns (uint256) {
         if (timePoint >= block.timestamp) revert TimePointNotDetermined(timePoint, block.timestamp);
-        Checkpoint[] storage history = _checkpoints[account];
+        return _past(_checkpoints[account], timePoint);
+    }
+
+    function _past(Checkpoint[] storage history, uint256 timePoint) private view returns (uint256) {
         uint256 count = history.length;
         if (count == 0) return 0;
         if (history[count - 1].fromTimePoint <= timePoint) return history[count - 1].votes;
@@ -199,13 +290,16 @@ contract NavShareToken {
 
     function _mint(address recipient, uint256 amount) internal {
         if (recipient == address(0)) revert ZeroAddress();
+        if (amount == 0) return;
         uint256 nextSupply = totalSupply + amount;
-        if (nextSupply > type(uint256).max / 2) revert SupplyCapExceeded(nextSupply);
+        if (nextSupply > type(uint224).max) revert SupplyCapExceeded(nextSupply);
         totalSupply = nextSupply;
         uint256 previous = balanceOf[recipient];
         unchecked {
             balanceOf[recipient] = previous + amount;
         }
+        balanceJournal.push(BalanceRecord(uint32(block.timestamp), recipient, previous, previous + amount));
+        _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(recipient, previous, previous + amount);
         emit Transfer(address(0), recipient, amount);
     }

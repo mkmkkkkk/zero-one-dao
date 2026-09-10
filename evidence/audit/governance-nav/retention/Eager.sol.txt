@@ -1,0 +1,290 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20Metadata} from "./Interfaces.sol";
+
+/// @notice Non-transferable Baal voting shares priced at treasury NAV, with timestamp checkpoints.
+/// @dev Derived from agent-only-wallet/exit NavShareToken. Removed on purpose: the founder vesting
+/// lock (cliff, unvested gate on burn/transfer), the exit gate, the burn observer and the genesis
+/// mint. Every share is minted through Baal by a shaman the DAO chose, and every share is exitable
+/// through Baal.ragequit at any time. Votes equal balance (self-delegated, no delegation).
+///
+/// Rejected comparison fixture (b): eager growth contributions for open windows.
+/// Last-mint shortcut makes old holders cheap; recipients inside a window still scan proposals.
+contract NavShareToken {
+    using Math for uint256;
+
+    struct Checkpoint {
+        uint32 fromTimePoint;
+        uint256 votes;
+    }
+
+    string public name;
+    string public symbol;
+    uint8 public constant decimals = 18;
+
+    address public immutable baal;
+    address public immutable safe;
+    IERC20Metadata public immutable settlementToken;
+    /// @notice 10 ** settlement decimals; one settlement unit mints one share while the treasury is empty.
+    uint256 public immutable settlementUnit;
+
+    uint256 public totalSupply;
+    uint256 public totalBurned;
+
+    /// @notice Sponsorship timestamp; all snapshots use the end of that timestamp, like Baal votes.
+    mapping(uint256 => uint256) public votingStarts;
+    uint256[] private _open;
+    mapping(uint256 => uint256) private _growth;
+    mapping(uint256 => mapping(address => uint256)) private _contribution;
+    mapping(address => uint256) private _lastMint;
+    mapping(uint256 => bool) private _closed;
+    uint256 private _oldest;
+    /// @dev End-of-timestamp supply, initialized at registration even when no balance changes.
+    mapping(uint256 => uint256) private _supplyAtTime;
+    mapping(address account => uint256) public balanceOf;
+    mapping(address account => Checkpoint[]) private _checkpoints;
+
+    error OnlyBaal(address caller);
+    error ZeroAddress();
+    error EmptyName();
+    error EmptySymbol();
+    error NonTransferable();
+    error PermanentlyUnpaused();
+    error TimePointNotDetermined(uint256 timePoint, uint256 now_);
+    error InsufficientBalance(address account, uint256 available, uint256 required);
+    error SupplyCapExceeded(uint256 attemptedSupply);
+    error AlreadyRegistered(uint256 proposalId);
+    error NotRegistered(uint256 proposalId);
+
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+    event Approval(address indexed owner, address indexed spender, uint256 amount);
+    event SharesBurned(address indexed account, uint256 amount, uint256 cumulativeBurned);
+    event DelegateVotesChanged(address indexed delegate, uint256 previousBalance, uint256 newBalance);
+    event ProposalRegistered(uint256 indexed proposalId, uint256 votingStarts);
+
+    modifier onlyBaal() {
+        if (msg.sender != baal) revert OnlyBaal(msg.sender);
+        _;
+    }
+
+    /// @param name_ ERC-20 name.
+    /// @param symbol_ ERC-20 symbol.
+    /// @param baal_ The Baal module that alone may mint and burn.
+    /// @param safe_ The treasury Safe whose settlement balance defines NAV.
+    /// @param settlementToken_ The settlement asset used for NAV pricing.
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address baal_,
+        address safe_,
+        IERC20Metadata settlementToken_
+    ) {
+        if (bytes(name_).length == 0) revert EmptyName();
+        if (bytes(symbol_).length == 0) revert EmptySymbol();
+        if (baal_ == address(0) || safe_ == address(0) || address(settlementToken_) == address(0)) {
+            revert ZeroAddress();
+        }
+        name = name_;
+        symbol = symbol_;
+        baal = baal_;
+        safe = safe_;
+        settlementToken = settlementToken_;
+        settlementUnit = 10 ** uint256(settlementToken_.decimals());
+    }
+
+    // ---------------------------------------------------------------- ERC-20 (non-transferable)
+
+    function transfer(address, uint256) external pure returns (bool) {
+        revert NonTransferable();
+    }
+
+    function approve(address, uint256) external pure returns (bool) {
+        revert NonTransferable();
+    }
+
+    function transferFrom(address, address, uint256) external pure returns (bool) {
+        revert NonTransferable();
+    }
+
+    function allowance(address, address) external pure returns (uint256) {
+        return 0;
+    }
+
+    // ---------------------------------------------------------------- Baal token surface
+
+    function paused() external pure returns (bool) {
+        return false;
+    }
+
+    function pause() external pure {
+        revert PermanentlyUnpaused();
+    }
+
+    function unpause() external pure {
+        revert PermanentlyUnpaused();
+    }
+
+    /// @notice Mint shares; callable only by Baal (i.e. by a manager shaman the DAO installed).
+    function mint(address recipient, uint256 amount) external onlyBaal {
+        _mint(recipient, amount);
+    }
+
+    /// @notice Burn shares; callable only by Baal (ragequit path). No lock, no gate, no cliff.
+    function burn(address account, uint256 amount) external onlyBaal {
+        if (account == address(0)) revert ZeroAddress();
+        uint256 available = balanceOf[account];
+        if (available < amount) revert InsufficientBalance(account, available, amount);
+        if (amount == 0) return;
+        unchecked {
+            balanceOf[account] = available - amount;
+            totalSupply -= amount;
+        }
+        totalBurned += amount;
+        _supplyAtTime[block.timestamp] = totalSupply;
+        _writeCheckpoint(account, available, available - amount);
+        _updateGrowth(account);
+        emit Transfer(account, address(0), amount);
+        emit SharesBurned(account, amount, totalBurned);
+    }
+
+    // ---------------------------------------------------------------- Retention accounting (Baal)
+
+    /// @dev Registration changes no balances. Later changes in this timestamp belong to the snapshot.
+    function registerProposal(uint256 proposalId) external onlyBaal {
+        if (votingStarts[proposalId] != 0) revert AlreadyRegistered(proposalId);
+        votingStarts[proposalId] = block.timestamp;
+        _supplyAtTime[block.timestamp] = totalSupply;
+        _open.push(proposalId);
+        emit ProposalRegistered(proposalId, block.timestamp);
+    }
+
+    /// @notice Exact sum of max(0, balanceAtStart - balanceNow), and supply at the same timestamp.
+    /// @dev Balance hooks maintain the exact stored growth for each window.
+    function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
+        uint256 start = votingStarts[proposalId];
+        if (start == 0) revert NotRegistered(proposalId);
+        if (start >= block.timestamp) revert TimePointNotDetermined(start, block.timestamp);
+        supplyAtStart = _supplyAtTime[start];
+        exited = supplyAtStart + _growth[proposalId] - totalSupply;
+    }
+
+    // Benchmark cleanup hook, invoked through the Baal fixture when a proposal is processed/cancelled.
+    function closeProposal(uint256 id) external onlyBaal {
+        _closed[id] = true;
+        while (_oldest < _open.length && _closed[_open[_oldest]]) ++_oldest;
+    }
+
+    function _updateGrowth(address account) private {
+        if (_oldest == _open.length || _lastMint[account] <= votingStarts[_open[_oldest]]) return;
+        for (uint256 i = _oldest; i < _open.length; ++i) {
+            uint256 id = _open[i];
+            if (_closed[id]) continue;
+            uint256 beforeBalance = _past(_checkpoints[account], votingStarts[id]);
+            uint256 current = balanceOf[account];
+            uint256 next = current > beforeBalance ? current - beforeBalance : 0;
+            _growth[id] = _growth[id] + next - _contribution[id][account];
+            _contribution[id][account] = next;
+        }
+    }
+
+    // ---------------------------------------------------------------- Votes (timestamp checkpoints)
+
+    /// @notice Current voting weight: the account's balance (shares are self-delegated).
+    function getVotes(address account) external view returns (uint256) {
+        return balanceOf[account];
+    }
+
+    /// @notice Voting weight of `account` at unix `timePoint`; Baal reads this at proposal votingStarts.
+    function getPastVotes(address account, uint256 timePoint) external view returns (uint256) {
+        if (timePoint >= block.timestamp) revert TimePointNotDetermined(timePoint, block.timestamp);
+        return _past(_checkpoints[account], timePoint);
+    }
+
+    function _past(Checkpoint[] storage history, uint256 timePoint) private view returns (uint256) {
+        uint256 count = history.length;
+        if (count == 0) return 0;
+        if (history[count - 1].fromTimePoint <= timePoint) return history[count - 1].votes;
+        if (history[0].fromTimePoint > timePoint) return 0;
+        uint256 lower = 0;
+        uint256 upper = count - 1;
+        while (upper > lower) {
+            uint256 center = upper - (upper - lower) / 2;
+            Checkpoint storage cp = history[center];
+            if (cp.fromTimePoint == timePoint) return cp.votes;
+            if (cp.fromTimePoint < timePoint) lower = center;
+            else upper = center - 1;
+        }
+        return history[lower].votes;
+    }
+
+    function numCheckpoints(address account) external view returns (uint256) {
+        return _checkpoints[account].length;
+    }
+
+    function getCheckpoint(address account, uint256 index) external view returns (Checkpoint memory) {
+        return _checkpoints[account][index];
+    }
+
+    function delegates(address account) external pure returns (address) {
+        return account;
+    }
+
+    // ---------------------------------------------------------------- NAV
+
+    /// @notice Settlement-asset balance of the treasury Safe.
+    function treasuryValue() public view returns (uint256) {
+        return settlementToken.balanceOf(safe);
+    }
+
+    /// @notice Shares matching a settlement contribution at the current NAV per share.
+    /// @dev While NAV is undefined (no shares or no assets) one settlement unit mints one share.
+    /// @notice Shares minted for `contributedValue` settlement units: amount x totalSupply / treasury
+    /// while the treasury holds assets; one share (18 dec) per one settlement unit while the treasury
+    /// is empty (DESIGN.md §6). No other fallback: treasury > 0 with totalSupply == 0 quotes zero.
+    function navSharesFor(uint256 contributedValue) external view returns (uint256) {
+        uint256 nav = treasuryValue();
+        if (nav == 0) return Math.mulDiv(contributedValue, 10 ** decimals, settlementUnit);
+        return Math.mulDiv(contributedValue, totalSupply, nav);
+    }
+
+    /// @notice Settlement-asset claim represented by a share amount, rounded down (zero when NAV is zero).
+    function navValueForShares(uint256 shares) external view returns (uint256) {
+        uint256 supply = totalSupply;
+        uint256 nav = treasuryValue();
+        if (supply == 0 || nav == 0) return 0;
+        return Math.mulDiv(shares, nav, supply);
+    }
+
+    // ---------------------------------------------------------------- internals
+
+    function _mint(address recipient, uint256 amount) internal {
+        if (recipient == address(0)) revert ZeroAddress();
+        if (amount == 0) return;
+        uint256 nextSupply = totalSupply + amount;
+        if (nextSupply > type(uint224).max) revert SupplyCapExceeded(nextSupply);
+        totalSupply = nextSupply;
+        uint256 previous = balanceOf[recipient];
+        unchecked {
+            balanceOf[recipient] = previous + amount;
+        }
+        _lastMint[recipient] = block.timestamp;
+        _supplyAtTime[block.timestamp] = totalSupply;
+        _writeCheckpoint(recipient, previous, previous + amount);
+        _updateGrowth(recipient);
+        emit Transfer(address(0), recipient, amount);
+    }
+
+    function _writeCheckpoint(address account, uint256 oldVotes, uint256 newVotes) internal {
+        Checkpoint[] storage history = _checkpoints[account];
+        uint32 timePoint = uint32(block.timestamp);
+        uint256 count = history.length;
+        if (count != 0 && history[count - 1].fromTimePoint == timePoint) {
+            history[count - 1].votes = newVotes;
+        } else {
+            history.push(Checkpoint({fromTimePoint: timePoint, votes: newVotes}));
+        }
+        emit DelegateVotesChanged(account, oldVotes, newVotes);
+    }
+}

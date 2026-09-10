@@ -1,19 +1,18 @@
+import { settleRetention } from '../../../src/retention.js';
 /**
- * GOV-04 — universal veto: any holder of 1 share defeats any proposal with a same-transaction
- * deposit + vote + ragequit (flash-loanable), by pushing the minRetention high-water mark up and
- * then pulling supply below 66% of it.
+ * GOV-04 (phase 5, FLIPPED) — no flash veto: a holder of 1 share cannot defeat a proposal with a
+ * same-transaction deposit + vote + ragequit.
  *
- * Invariant that should hold (DESIGN.md §3.3): minRetention fails a proposal only when real
- * members leave; a member with 1 share cannot stop a proposal the others support.
+ * Invariant (DESIGN.md §3.3): minRetention fails a proposal only when members who were in at
+ * votingStarts leave; a member with 1 share cannot stop a proposal the others support.
  *
- * Why it fails: Baal raises maxTotalSharesAndLootAtVote to totalSupply() on EVERY vote (yes or
- * no), deposits are open and instant, ragequit is instant, and the retention check compares live
- * supply with that mark at processing.
+ * Fix (decision.md phase 5 ruling 2): the Zero One Baal fork compares NavShareToken.exitedSince(id)
+ * (the sum of each account's positive balance deficit relative to votingStarts) with 34% of the supply at votingStarts. There is no
+ * high-water mark to push up, and V's 1600 fresh shares are not "exits".
  *
- * Steps: seed → contract V holds 1 share (1 USDC deposited before the proposal) → A proposes
- * "pay O 100 USDC", A and B YES (2000 vs 0) → V in ONE transaction: deposit 1600 USDC, vote NO
- * with its 1 share, ragequit the 1600 shares → grace → processProposal: passed = false. V's USDC
- * is unchanged (± rounding).
+ * Steps: seed → contract V holds 1 share → A proposes "pay O 100 USDC", A and B YES (2000 vs 0) → V in
+ * ONE transaction: deposit 1600 USDC, vote NO with weight 1, ragequit the 1600 shares → exitedSince = 0
+ * → grace → processProposal: passed = true, O paid. V's USDC unchanged (± rounding).
  */
 import { assert, boot, fmt, fmtS, fund, processProposal, proposalInfo, propose, runIfMain, seedMembers, SETTLEMENT_UNIT, shutdown, step, transferCall, UNIT, usdcOf, verdict, vote, warpPastGrace } from "../../../scenarios/lib.js";
 import { approveCall, depositCall, deployHelper, logLine, ragequitCall, runCalls, safeUsdc, sharesOf, totalShares, voteCall } from "./audit-lib.js";
@@ -53,20 +52,22 @@ export async function main(): Promise<void> {
     const info = await proposalInfo(mirror, proposal.id);
     const vEnd = await usdcOf(mirror, V);
     const supply1 = await totalShares(mirror);
-    const hwm = supply0 + expectedShares;
-    logLine(LOG, `   tx ${receipt.hash}: yes ${fmt(info.yesVotes)} no ${fmt(info.noVotes)}; high-water mark ${fmt(hwm)} (66% = ${fmt((hwm * 66n) / 100n)}), live supply ${fmt(supply1)}; V USDC ${fmtS(vStart)} -> ${fmtS(vEnd)} (net ${fmtS(vEnd - vStart)}), V shares ${fmt(await sharesOf(mirror, V))}`);
-    assert(supply1 < (hwm * 66n) / 100n, "supply is below 66% of the high-water mark although no real member left");
+    await settleRetention(mirror.actors.W, mirror.dao.shares, proposal.id);
+    const exited = (await mirror.chain.publicClient.readContract({ address: mirror.dao.shares, abi: mirror.abi.shares, functionName: "exitedSince", args: [proposal.id] } as never)) as readonly [bigint, bigint];
+    logLine(LOG, `   tx ${receipt.hash}: yes ${fmt(info.yesVotes)} no ${fmt(info.noVotes)}; supply at votingStarts ${fmt(exited[1])}, live supply ${fmt(supply1)}; exitedSince(#${proposal.id}) = ${fmt(exited[0])} (V's ${fmt(expectedShares)} burned shares were minted after votingStarts: not counted); V USDC ${fmtS(vStart)} -> ${fmtS(vEnd)} (net ${fmtS(vEnd - vStart)}), V shares ${fmt(await sharesOf(mirror, V))}`);
+    assert(exited[0] === 0n && exited[1] === supply0, "exitedSince counts none of V's flash shares; the retention base is the supply at votingStarts");
+    assert(supply1 === supply0, "live supply is back where it was");
 
-    step("grace passes; processProposal -> defeated by minRetention; O unpaid");
+    step("grace passes; processProposal -> passed; O paid");
     await warpPastGrace(mirror, proposal.id);
     const oBefore = await usdcOf(mirror, mirror.actors.O.account.address);
     const processed = await processProposal(mirror, "W", proposal);
-    logLine(LOG, `   passed=${processed.info.status.passed} actionFailed=${processed.info.status.actionFailed}; O USDC ${fmtS(oBefore)} -> ${fmtS(await usdcOf(mirror, mirror.actors.O.account.address))}; A+B YES 2000 shares overruled by V's 1 share + 1600 USDC for one transaction`);
-    assert(!processed.info.status.passed, "the proposal did not pass");
-    logLine(LOG, `   attacker cost: gas + rounding (${fmtS(vStart - vEnd)} USDC); repeatable against every proposal; requires 1 share held before the proposal's votingStarts`);
+    logLine(LOG, `   passed=${processed.info.status.passed} actionFailed=${processed.info.status.actionFailed}; O USDC ${fmtS(oBefore)} -> ${fmtS(await usdcOf(mirror, mirror.actors.O.account.address))}; A+B YES 2000 shares stand against V's 1 share + 1600 USDC for one transaction`);
+    assert(processed.info.status.passed && !processed.info.status.actionFailed && (await usdcOf(mirror, mirror.actors.O.account.address)) === oBefore + 100n * SETTLEMENT_UNIT, "the proposal passed and paid O");
+    logLine(LOG, `   V spent gas + rounding (${fmtS(vStart - vEnd)} USDC) for nothing`);
     passed = true;
   } finally {
-    verdict("GOV-04 minRetention veto with same-tx deposit + vote + exit (finding demonstrated)", passed);
+    verdict("GOV-04 same-tx deposit + vote + exit cannot veto (phase 5 retention counts only shares held at votingStarts; fixed)", passed);
     await shutdown(mirror);
   }
 }

@@ -8,7 +8,7 @@ import { concatHex, encodeAbiParameters, erc20Abi, getAddress, getContractAddres
 import { parseArgs } from "../beacon/scripts/build.js";
 import { deployLocal } from "../src/onchain.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
-import { BASE_USDC, constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, genesisDeposit, SETTLEMENT_UNIT } from "../src/zeroOne.js";
+import { BASE_USDC, constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, genesisDeposit, proxySaltNonce, SETTLEMENT_UNIT } from "../src/zeroOne.js";
 import { constructorArguments, writeVerificationInputs, type VerificationRecord } from "../src/verification.js";
 import { loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 
@@ -31,7 +31,11 @@ Base mainnet refuses unless all five preconditions hold:
 3. Deployer holds >= 50 USDC and >= 0.005 ETH; proxy decimals must be 6.
 4. CREATE2-predicted Safe holds exactly 0 USDC before deployment.
 5. --i-confirmed-parameters is passed (checked before key access or RPC).
-Fork rehearsal only: --fork; requires loopback Anvil fork of Base, no public fallback, output under evidence/phase3.
+A public deployment additionally requires a clean working tree.
+Fork rehearsal only: --fork; requires a loopback Anvil fork of Base, no public fallback, record under evidence/.
+  --fork-genesis-commit <sha> lets the rehearsal pin the constitution to a pushed ANCESTOR of the local
+  HEAD (the fetched bytes must still hash to Constitution.textHash). Refused without --fork; a public
+  deployment always pins its own pushed HEAD.
 Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`);
     return;
   }
@@ -43,15 +47,28 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   if (fork && !mainnet) throw new Error("--fork is only supported for Base rehearsal");
   if (args["genesis-commit"]) throw new Error("genesis commit is always HEAD; overrides are refused");
   if (fork) await assertBaseFork(args.rpc ?? "");
-  const out = path.resolve(ROOT, args.out ?? (fork ? "evidence/phase3/deploy-base-fork.json" : `deployments/${network}.json`));
-  if (existsSync(out)) throw new Error(`${out} exists: a deployment is already recorded (move it aside deliberately to redeploy)`);
-  if (fork && !out.startsWith(path.join(ROOT, "evidence", "phase3") + path.sep)) throw new Error("fork record must be under evidence/phase3");
+  const out = path.resolve(ROOT, args.out ?? (fork ? "evidence/phase5/base-fork/deploy-base-fork.json" : `deployments/${network}.json`));
+  if (existsSync(out)) throw new Error(`REFUSED: ${out} exists: a deployment is already recorded (move it aside deliberately to redeploy)`);
+  if (fork && !out.startsWith(path.join(ROOT, "evidence") + path.sep)) throw new Error("fork record must be under evidence/");
   const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
   const workingTreeDirty = execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], { cwd: ROOT, encoding: "utf8" }).trim() !== "";
   if (mainnet && !fork && workingTreeDirty) throw new Error("REFUSED: production deployment requires a clean working tree at pushed HEAD");
-  const genesisCommit = head;
+  // The constitution is always pinned to a commit the public origin advertises. A public deployment pins
+  // its own HEAD and accepts no override. A fork rehearsal of an unpublished working tree may pin a pushed
+  // ANCESTOR of HEAD instead: the fetch-and-hash check below still has to pass against the real raw URL,
+  // so the rehearsal exercises the same gate, and the record keeps both commits apart.
+  const forkGenesis = args["fork-genesis-commit"];
+  if (forkGenesis !== undefined && !fork) throw new Error("--fork-genesis-commit is a fork-rehearsal argument; a public deployment pins its own pushed HEAD");
+  const genesisCommit = forkGenesis ?? head;
   if (mainnet) {
     if (!/^[0-9a-f]{40}$/u.test(genesisCommit)) throw new Error("genesis commit must be a full SHA");
+    if (forkGenesis !== undefined) {
+      try {
+        execFileSync("git", ["merge-base", "--is-ancestor", forkGenesis, head], { cwd: ROOT, stdio: "ignore" });
+      } catch {
+        throw new Error(`REFUSED: --fork-genesis-commit ${forkGenesis} is not an ancestor of HEAD ${head}`);
+      }
+    }
     const origin = execFileSync("git", ["remote", "get-url", "origin"], { cwd: ROOT, encoding: "utf8" }).trim();
     if (!["https://github.com/mkmkkkkk/zero-one-dao.git", "https://github.com/mkmkkkkk/zero-one-dao", "git@github.com:mkmkkkkk/zero-one-dao.git"].includes(origin)) throw new Error("origin must be the public genesis repository");
     // Read the same live ref advertisement used by git ls-remote. curl respects the host's
@@ -67,11 +84,11 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
       if (row.startsWith(`${genesisCommit} refs/`)) pushed = true;
       offset += size;
     }
-    if (!pushed) throw new Error("REFUSED: genesis HEAD is not pushed as an origin ref");
-    console.log(`ASSERT HEAD ${head} advertised by public origin`);
+    if (!pushed) throw new Error(`REFUSED: genesis commit ${genesisCommit} is not pushed as an origin ref`);
+    console.log(`ASSERT genesis commit ${genesisCommit} advertised by public origin (local HEAD ${head}${forkGenesis === undefined ? "" : ", fork rehearsal pinned to a pushed ancestor"})`);
   }
   const constitutionUrl = args["constitution-url"] ?? (mainnet ? `https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/${genesisCommit}/docs/CONSTITUTION.md` : undefined);
-  if (mainnet && constitutionUrl !== `https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/${genesisCommit}/docs/CONSTITUTION.md`) throw new Error("constitution URL must pin the pushed genesis SHA");
+  if (mainnet && constitutionUrl !== `https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/${genesisCommit}/docs/CONSTITUTION.md`) throw new Error("REFUSED: constitution URL must pin the pushed genesis SHA");
   if (constitutionUrl === undefined || !constitutionUrl.startsWith("https://")) throw new Error("--constitution-url <https url of the exact CONSTITUTION.md bytes> is required");
   if (mainnet && !args["key-file"] && !process.env.ZERO_ONE_DEPLOYER_KEY_FILE) throw new Error("Base requires an explicit deployer key file");
   const keyFile = args["key-file"] ?? process.env.ZERO_ONE_DEPLOYER_KEY_FILE ?? path.join(process.env.HOME ?? "", "srv", "aow-exit", ".env.sepolia");
@@ -104,7 +121,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   const emptySafe = async (address: Address) => {
     if (predictedSafe && getAddress(address) !== getAddress(predictedSafe)) throw new Error("Safe prediction changed: deployer nonce was used concurrently");
     const held = await publicClient.readContract({ address: BASE_USDC, abi: erc20Abi, functionName: "balanceOf", args: [address] });
-    if (held !== 0n) throw new Error(`REFUSED: predicted Safe ${address} holds ${held} USDC (zero-supply trap)`);
+    if (held !== 0n) throw new Error(`REFUSED: predicted Safe ${address} already holds ${held} USDC (no longer a trap since phase 5 ruling 8, it would accrue to the genesis shares; pick a fresh salt for a clean address)`);
     console.log(`ASSERT CREATE2-predicted Safe ${address} USDC=0 before deployment`);
   };
   if (mainnet) {
@@ -115,7 +132,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
     const singleton = getContractAddress({ from: deployer.account.address, nonce: nonce + 2n });
     const factory = getContractAddress({ from: deployer.account.address, nonce: nonce + 3n });
     const bytecode = concatHex([loadBaalArtifact("GnosisSafeProxy").bytecode, encodeAbiParameters([{ type: "uint256" }], [BigInt(singleton)])]);
-    const salt = keccak256(concatHex([keccak256("0x"), encodeAbiParameters([{ type: "uint256" }], [DEFAULT_PARAMS.salt * 2n])]));
+    const salt = keccak256(concatHex([keccak256("0x"), encodeAbiParameters([{ type: "uint256" }], [proxySaltNonce(deployer.account.address, DEFAULT_PARAMS.salt, 0)])]));
     predictedSafe = getContractAddress({ opcode: "CREATE2", from: factory, salt, bytecode });
     await emptySafe(predictedSafe);
   }
@@ -127,6 +144,14 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   const genesis = await genesisDeposit(deployer, dao, GENESIS_DEPOSIT);
   console.log(`genesis: ${genesis.sharesMinted} shares to the founder (approve ${genesis.approveHash}, deposit ${genesis.depositHash})`);
   const shamans = await enumerateShamans(deployer, dao.baal, dao.startBlock);
+  // Post-condition, not a precondition: value has already moved by now. It still belongs here, because
+  // the record is the document agents trust, and "DepositShaman and WorkManager are the only mint
+  // paths" (DESIGN.md) is only true if no other address was ever granted a shaman permission.
+  const expectedShamans = [dao.depositShaman, dao.workManager].map((address) => getAddress(address));
+  if (shamans.length !== expectedShamans.length || !shamans.every(({ shaman, permission }) => permission === 2n && expectedShamans.includes(getAddress(shaman)))) {
+    throw new Error(`REFUSED: Baal must have exactly the two manager shamans ${expectedShamans.join(", ")}; the ShamanSet log says ${shamans.map(({ shaman, permission }) => `${shaman}:${permission}`).join(", ") || "none"}`);
+  }
+  console.log(`ASSERT the only shamans Baal ever granted are DepositShaman ${dao.depositShaman} and WorkManager ${dao.workManager}, both permission 2 (manager)`);
 
   let sponsorFloat: { to: Address; usdc: string; hash: Hex } | undefined;
   if (args.sponsor !== undefined && mock) {
@@ -142,10 +167,16 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   const artifactVersion = (loadLocalArtifact("Constitution") as unknown as { compiler: string }).compiler;
   const compiler = `v${artifactVersion.replace(/\.Emscripten\.clang$/u, "")}`;
   const records: VerificationRecord[] = [
+    // Phase 5: the Baal singleton is the vendored fork (contracts/vendor/Baal.sol) and the multisend
+    // library is MultiSendCallOnly, both compiled here; they verify from the local standard input, not
+    // from the @daohaus/baal-contracts 1.2.18 build any more.
+    { name: "Baal", contractName: "contracts/vendor/Baal.sol:Baal", address: dao.infrastructure.baalSingleton, constructorArguments: "", compiler, txHash: dao.txHashes["singleton:Baal"] ?? dao.infrastructure.deploymentTransactions[0]! },
+    { name: "MultiSendCallOnly", contractName: "contracts/vendor/MultiSendCallOnly.sol:MultiSendCallOnly", address: dao.infrastructure.multiSend, constructorArguments: "", compiler, txHash: dao.txHashes["singleton:MultiSendCallOnly"] ?? dao.infrastructure.deploymentTransactions[4]! },
     ...(mock ? [{ name: "MockUSDC", contractName: "contracts/MockUSDC.sol:MockUSDC", address: settlement, constructorArguments: constructorArguments("MockUSDC", ["USDC-mock", "USDC", supply]), compiler, txHash: mock.hash }] : []),
     { name: "NavShareToken", contractName: "contracts/NavShareToken.sol:NavShareToken", address: dao.shares, constructorArguments: constructorArguments("NavShareToken", [DEFAULT_PARAMS.shareName, DEFAULT_PARAMS.shareSymbol, dao.baal, dao.safe, settlement]), compiler, txHash: dao.txHashes["NavShareToken"]! },
     { name: "LootToken", contractName: "contracts/LootToken.sol:LootToken", address: dao.loot, constructorArguments: constructorArguments("LootToken", [`${DEFAULT_PARAMS.shareName} Loot`, `${DEFAULT_PARAMS.shareSymbol}-LOOT`, dao.baal]), compiler, txHash: dao.txHashes["LootToken"]! },
-    { name: "DepositShaman", contractName: "contracts/DepositShaman.sol:DepositShaman", address: dao.depositShaman, constructorArguments: constructorArguments("DepositShaman", [dao.baal, dao.shares]), compiler, txHash: dao.txHashes["DepositShaman"]! },
+    { name: "TreasuryLedger", contractName: "contracts/TreasuryLedger.sol:TreasuryLedger", address: dao.treasuryLedger, constructorArguments: constructorArguments("TreasuryLedger", [dao.safe, settlement, dao.templateFactory]), compiler, txHash: dao.txHashes["TemplateFactory"]! },
+    { name: "DepositShaman", contractName: "contracts/DepositShaman.sol:DepositShaman", address: dao.depositShaman, constructorArguments: constructorArguments("DepositShaman", [dao.baal, dao.shares, dao.treasuryLedger, dao.workManager]), compiler, txHash: dao.txHashes["DepositShaman"]! },
     { name: "WorkManager", contractName: "contracts/WorkManager.sol:WorkManager", address: dao.workManager, constructorArguments: constructorArguments("WorkManager", [dao.baal, dao.shares]), compiler, txHash: dao.txHashes["WorkManager"]! },
     { name: "PaymentDeployer", contractName: "contracts/TemplateFactory.sol:PaymentDeployer", address: dao.templateDeployers[0], constructorArguments: constructorArguments("PaymentDeployer", [dao.safe, settlement]), compiler, txHash: dao.txHashes["PaymentDeployer"]! },
     { name: "StrategyDeployer", contractName: "contracts/TemplateFactory.sol:StrategyDeployer", address: dao.templateDeployers[1], constructorArguments: constructorArguments("StrategyDeployer", [dao.safe, settlement]), compiler, txHash: dao.txHashes["StrategyDeployer"]! },
@@ -179,6 +210,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
     shares: dao.shares,
     loot: dao.loot,
     depositShaman: dao.depositShaman,
+    treasuryLedger: dao.treasuryLedger,
     workManager: dao.workManager,
     templateFactory: dao.templateFactory,
     templateDeployers: dao.templateDeployers,

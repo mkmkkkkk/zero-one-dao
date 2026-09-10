@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TreasuryLedger} from "./TreasuryLedger.sol";
+
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {IBaalV3, IERC20Minimal} from "./Interfaces.sol";
@@ -18,13 +20,13 @@ interface ITemplateDeployer {
     function template() external pure returns (string memory);
 
     /// @notice The exact creation code + constructor arguments an instance is created from.
-    function initCode(address member, bytes calldata params) external view returns (bytes memory);
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) external view returns (bytes memory);
 
     /// @notice The CREATE2 address of the instance for (member, params, salt).
-    function predict(address member, bytes calldata params, bytes32 salt) external view returns (address);
+    function predict(address member, bytes calldata params, bytes32 salt, TreasuryLedger ledger_) external view returns (address);
 
     /// @notice Deploy the instance at `predict(member, params, salt)`; reverts if that address has code.
-    function deploy(address member, bytes calldata params, bytes32 salt) external returns (address);
+    function deploy(address member, bytes calldata params, bytes32 salt, TreasuryLedger ledger_) external returns (address);
 }
 
 /// @dev Shared CREATE2 plumbing; each concrete deployer supplies the template's init code.
@@ -43,18 +45,18 @@ abstract contract TemplateDeployer is ITemplateDeployer {
     }
 
     /// @inheritdoc ITemplateDeployer
-    function initCode(address member, bytes calldata params) public view virtual returns (bytes memory);
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) public view virtual returns (bytes memory);
 
     /// @inheritdoc ITemplateDeployer
-    function predict(address member, bytes calldata params, bytes32 salt) external view returns (address) {
-        return Create2.computeAddress(salt, keccak256(initCode(member, params)), address(this));
+    function predict(address member, bytes calldata params, bytes32 salt, TreasuryLedger ledger_) external view returns (address) {
+        return Create2.computeAddress(salt, keccak256(initCode(member, params, ledger_)), address(this));
     }
 
     /// @inheritdoc ITemplateDeployer
     /// @dev CREATE2 in assembly so a constructor revert (e.g. a template's ZeroAmount) bubbles up
     /// with its own data instead of a generic "failed on deploy".
-    function deploy(address member, bytes calldata params, bytes32 salt) external returns (address instance) {
-        bytes memory code = initCode(member, params);
+    function deploy(address member, bytes calldata params, bytes32 salt, TreasuryLedger ledger_) external returns (address instance) {
+        bytes memory code = initCode(member, params, ledger_);
         assembly ("memory-safe") {
             instance := create2(0, add(code, 0x20), mload(code), salt)
             if iszero(instance) {
@@ -76,9 +78,9 @@ contract PaymentDeployer is TemplateDeployer {
     }
 
     /// @inheritdoc ITemplateDeployer
-    function initCode(address member, bytes calldata params) public view override returns (bytes memory) {
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) public view override returns (bytes memory) {
         (address[] memory recipients, uint256[] memory amounts) = abi.decode(params, (address[], uint256[]));
-        return abi.encodePacked(type(PaymentProposal).creationCode, abi.encode(safe, settlement, member, recipients, amounts));
+        return abi.encodePacked(type(PaymentProposal).creationCode, abi.encode(safe, settlement, member, ledger_, recipients, amounts));
     }
 }
 
@@ -92,10 +94,10 @@ contract StrategyDeployer is TemplateDeployer {
     }
 
     /// @inheritdoc ITemplateDeployer
-    function initCode(address member, bytes calldata params) public view override returns (bytes memory) {
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) public view override returns (bytes memory) {
         (address venue, address asset, uint256 budget, StrategyProposal.Rule memory rule) =
             abi.decode(params, (address, address, uint256, StrategyProposal.Rule));
-        return abi.encodePacked(type(StrategyProposal).creationCode, abi.encode(safe, settlement, member, venue, asset, budget, rule));
+        return abi.encodePacked(type(StrategyProposal).creationCode, abi.encode(safe, settlement, member, ledger_, venue, asset, budget, rule));
     }
 }
 
@@ -109,9 +111,9 @@ contract ProjectDeployer is TemplateDeployer {
     }
 
     /// @inheritdoc ITemplateDeployer
-    function initCode(address member, bytes calldata params) public view override returns (bytes memory) {
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) public view override returns (bytes memory) {
         (ProjectProposal.Tranche[] memory tranches, uint256 deadline) = abi.decode(params, (ProjectProposal.Tranche[], uint256));
-        return abi.encodePacked(type(ProjectProposal).creationCode, abi.encode(safe, settlement, member, tranches, deadline));
+        return abi.encodePacked(type(ProjectProposal).creationCode, abi.encode(safe, settlement, member, ledger_, tranches, deadline));
     }
 }
 
@@ -131,9 +133,9 @@ contract ConfigDeployer is TemplateDeployer {
     }
 
     /// @inheritdoc ITemplateDeployer
-    function initCode(address member, bytes calldata params) public view override returns (bytes memory) {
+    function initCode(address member, bytes calldata params, TreasuryLedger ledger_) public view override returns (bytes memory) {
         ConfigProposal.Config memory config = abi.decode(params, (ConfigProposal.Config));
-        return abi.encodePacked(type(ConfigProposal).creationCode, abi.encode(safe, settlement, member, baal, config));
+        return abi.encodePacked(type(ConfigProposal).creationCode, abi.encode(safe, settlement, member, ledger_, baal, config));
     }
 }
 
@@ -146,6 +148,8 @@ contract ConfigDeployer is TemplateDeployer {
 /// deploys, the code and the operator (`member`) are fixed by the arguments. The relay sponsors
 /// deployments only for members holding >= sponsorThreshold (relay policy, not code).
 contract TemplateFactory {
+    TreasuryLedger public immutable ledger;
+    mapping(address => bool) public instances;
     address public immutable safe;
     IERC20Minimal public immutable settlement;
     IBaalV3 public immutable baal;
@@ -174,6 +178,7 @@ contract TemplateFactory {
     constructor(address safe_, address settlement_, IBaalV3 baal_, ITemplateDeployer[4] memory deployers_) {
         if (safe_ == address(0) || settlement_ == address(0) || address(baal_) == address(0)) revert ZeroAddress();
         safe = safe_;
+        ledger = new TreasuryLedger(safe_, settlement_, address(this));
         settlement = IERC20Minimal(settlement_);
         baal = baal_;
         string[4] memory names = ["Payment", "Strategy", "Project", "Config"];
@@ -204,7 +209,7 @@ contract TemplateFactory {
 
     /// @notice The instance address for (template, params, member, salt), deployed or not.
     function predict(uint8 template, bytes calldata params, address member, bytes32 salt) public view returns (address) {
-        return deployer(template).predict(member, params, salt);
+        return deployer(template).predict(member, params, salt, ledger);
     }
 
     /// @notice Deploy the instance if absent; returns its address and runtime code hash either way.
@@ -217,15 +222,16 @@ contract TemplateFactory {
     function deploy(uint8 template, bytes calldata params, address member, bytes32 salt) public returns (address instance, bytes32 codeHash) {
         if (member == address(0)) revert ZeroAddress();
         ITemplateDeployer d = deployer(template);
-        instance = d.predict(member, params, salt);
+        instance = d.predict(member, params, salt, ledger);
         if (instance.code.length == 0) {
-            address deployed = d.deploy(member, params, salt);
+            address deployed = d.deploy(member, params, salt, ledger);
             if (deployed != instance) revert AddressMismatch(instance, deployed);
             codeHash = instance.codehash;
             emit InstanceDeployed(template, instance, member, keccak256(params), salt, codeHash);
         } else {
             codeHash = instance.codehash;
         }
+        instances[instance] = true;
     }
 
     /// @notice The exact Baal proposalData (MultiSend calldata) that funds and starts `instance`:

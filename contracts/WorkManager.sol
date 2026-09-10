@@ -11,13 +11,20 @@ import {IBaalV3, INavShareToken} from "./Interfaces.sol";
 /// Kept: verifier != proposer (enforced here, the proposer is msg.sender of submitTask), verifiers
 /// cannot claim, evidence-hash commit/confirm, threshold of named verifiers. Dropped: governor hooks,
 /// tranches, timelocks, sortition, NAV conversion. Baal manager shaman; mints only after verification.
+/// Phase 5: the rewards of Active tasks are a share liability that DepositShaman prices into deposits
+/// (`activeRewardShares`); `expiration` (the Baal proposal expiration, 0 = none) is also the task's
+/// expiration: confirm() reverts after it and anyone may `expireTask` (ruling 4c, W-1). A claim that has
+/// not delivered within CLAIM_TIMEOUT can be taken over by another claim (ruling 10, W-2). The activation
+/// proposal is submitted with baalGas = ACTIVATION_BAAL_GAS (the activation action's need x 1.5 with margin;
+/// ruling 1) so a low-gas processProposal reverts instead of killing the passed proposal.
 contract WorkManager {
     enum Status {
         None,
         Proposed,
         Active,
         Complete,
-        Cancelled
+        Cancelled,
+        Expired
     }
 
     struct Task {
@@ -30,7 +37,14 @@ contract WorkManager {
         uint32 proposalId;
         Status status;
         bytes32 evidenceHash;
+        uint32 expiration;
+        uint64 claimedAt;
     }
+
+    /// @notice Seconds a claim may sit without a delivery before anyone else may claim the task.
+    uint256 public constant CLAIM_TIMEOUT = 7 days;
+    /// @notice baalGas of every activation proposal (Baal refuses processing with less gas available).
+    uint256 public constant ACTIVATION_BAAL_GAS = 500_000;
 
     IBaalV3 public immutable baal;
     address public immutable safe;
@@ -39,6 +53,8 @@ contract WorkManager {
     uint256 public taskCount;
     mapping(uint256 taskId => Task) private _tasks;
     mapping(uint256 taskId => address[]) private _verifiers;
+    uint256[] private _activeTasks;
+    mapping(uint256 taskId => uint256) private _activeIndexPlusOne;
     mapping(uint256 taskId => mapping(address verifier => bool)) public isVerifier;
     mapping(uint256 taskId => mapping(uint32 round => mapping(address verifier => bool))) public confirmedBy;
 
@@ -62,6 +78,8 @@ contract WorkManager {
     error EvidenceHashMismatch(bytes32 expected, bytes32 observed);
     error VerifierAlreadyConfirmed(uint256 taskId, uint32 round, address verifier);
     error NothingDelivered(uint256 taskId);
+    error TaskExpired(uint256 taskId, uint32 expiration);
+    error TaskNotExpired(uint256 taskId, uint32 expiration);
 
     event TaskProposed(
         uint256 indexed taskId,
@@ -73,7 +91,9 @@ contract WorkManager {
     );
     event TaskActivated(uint256 indexed taskId);
     event TaskCancelled(uint256 indexed taskId);
+    event TaskExpiredEvent(uint256 indexed taskId, uint32 expiration);
     event TaskClaimed(uint256 indexed taskId, address indexed worker);
+    event ClaimLapsed(uint256 indexed taskId, address indexed previousWorker, address indexed worker);
     event DeliveryCommitted(uint256 indexed taskId, uint32 indexed round, address indexed worker, bytes32 evidenceHash);
     event DeliveryConfirmed(uint256 indexed taskId, uint32 indexed round, address indexed verifier, uint16 confirmations);
     event TaskVerified(uint256 indexed taskId, address indexed worker, uint256 rewardShares);
@@ -104,7 +124,8 @@ contract WorkManager {
     /// @param verifiers Named verifiers (distinct, non-zero, none equal to the proposer).
     /// @param verifierThreshold Confirmations required (1..verifiers.length).
     /// @param rewardShares Reward in shares (18 decimals), minted exactly as stated on final confirmation.
-    /// @param expiration Baal proposal expiration (0 = none).
+    /// @param expiration Baal proposal expiration and task expiration (0 = none: the liability stays until
+    /// the task is confirmed or cancelled by vote).
     /// @param details Proposal text.
     /// @return taskId Task identifier in this manager.
     /// @return proposalId Baal proposal id that activates the task.
@@ -131,7 +152,7 @@ contract WorkManager {
             _verifiers[taskId].push(verifier);
         }
 
-        proposalId = baal.submitProposal{value: msg.value}(activationData(taskId), expiration, 0, details);
+        proposalId = baal.submitProposal{value: msg.value}(activationData(taskId), expiration, ACTIVATION_BAAL_GAS, details);
         _tasks[taskId] = Task({
             proposer: msg.sender,
             worker: address(0),
@@ -141,7 +162,9 @@ contract WorkManager {
             round: 0,
             proposalId: uint32(proposalId),
             status: Status.Proposed,
-            evidenceHash: bytes32(0)
+            evidenceHash: bytes32(0),
+            expiration: expiration,
+            claimedAt: 0
         });
         emit TaskProposed(taskId, proposalId, msg.sender, verifiers, verifierThreshold, rewardShares);
     }
@@ -154,10 +177,15 @@ contract WorkManager {
     }
 
     /// @notice Executed by the Safe when the task proposal passes.
+    /// @dev An activation processed after the task's expiration reverts (the whole action fails and the
+    /// task stays Proposed): an expired task never enters the liability.
     function activateTask(uint256 taskId) external onlySafe {
         Task storage task = _task(taskId);
         _require(taskId, task, Status.Proposed);
+        if (_expired(task)) revert TaskExpired(taskId, task.expiration);
         task.status = Status.Active;
+        _activeTasks.push(taskId);
+        _activeIndexPlusOne[taskId] = _activeTasks.length;
         emit TaskActivated(taskId);
     }
 
@@ -167,18 +195,56 @@ contract WorkManager {
         if (task.status != Status.Proposed && task.status != Status.Active) {
             revert WrongStatus(taskId, Status.Active, task.status);
         }
+        if (task.status == Status.Active) _removeActive(taskId);
         task.status = Status.Cancelled;
         emit TaskCancelled(taskId);
     }
 
-    /// @notice Claim an active task. Verifiers of the task cannot claim it.
+    /// @notice Anyone: close an Active task whose expiration has passed (its reward can no longer mint).
+    function expireTask(uint256 taskId) external {
+        Task storage task = _task(taskId);
+        _require(taskId, task, Status.Active);
+        if (!_expired(task)) revert TaskNotExpired(taskId, task.expiration);
+        _removeActive(taskId);
+        task.status = Status.Expired;
+        emit TaskExpiredEvent(taskId, task.expiration);
+    }
+
+    /// @notice Claim an active task. Verifiers of the task cannot claim it. A claim that has delivered
+    /// nothing for CLAIM_TIMEOUT lapses: the next claimant takes the task over.
     function claim(uint256 taskId) external nonReentrant {
         Task storage task = _task(taskId);
         _require(taskId, task, Status.Active);
-        if (task.worker != address(0)) revert TaskAlreadyClaimed(taskId, task.worker);
+        if (_expired(task)) revert TaskExpired(taskId, task.expiration);
         if (isVerifier[taskId][msg.sender]) revert VerifierCannotClaim(taskId, msg.sender);
+        address previous = task.worker;
+        if (previous != address(0)) {
+            if (!claimLapsed(taskId)) revert TaskAlreadyClaimed(taskId, previous);
+            emit ClaimLapsed(taskId, previous, msg.sender);
+        }
         task.worker = msg.sender;
+        task.claimedAt = uint64(block.timestamp);
         emit TaskClaimed(taskId, msg.sender);
+    }
+
+    /// @notice True when the current claim has delivered nothing and CLAIM_TIMEOUT has passed since it.
+    function claimLapsed(uint256 taskId) public view returns (bool) {
+        Task storage task = _tasks[taskId];
+        return task.worker != address(0) && task.evidenceHash == bytes32(0) && block.timestamp > uint256(task.claimedAt) + CLAIM_TIMEOUT;
+    }
+
+    /// @notice Sum of rewardShares of every Active task whose expiration has not passed: the shares the
+    /// members already voted away but that are not minted yet (DepositShaman prices them into deposits).
+    function activeRewardShares() external view returns (uint256 total) {
+        for (uint256 i; i < _activeTasks.length; ++i) {
+            Task storage task = _tasks[_activeTasks[i]];
+            if (!_expired(task)) total += task.rewardShares;
+        }
+    }
+
+    /// @notice Ids of every task currently Active (expired ones included until `expireTask`).
+    function activeTasks() external view returns (uint256[] memory) {
+        return _activeTasks;
     }
 
     /// @notice Commit a delivery evidence hash. Re-delivery opens a new confirmation round.
@@ -194,9 +260,11 @@ contract WorkManager {
     }
 
     /// @notice Confirm the current delivery; at threshold, mint exactly `rewardShares` to the worker.
+    /// @dev Reverts after the task's expiration: the liability expires with the task.
     function confirm(uint256 taskId, bytes calldata evidence) external nonReentrant {
         Task storage task = _task(taskId);
         _require(taskId, task, Status.Active);
+        if (_expired(task)) revert TaskExpired(taskId, task.expiration);
         if (!isVerifier[taskId][msg.sender]) revert OnlyVerifier(taskId, msg.sender);
         if (task.evidenceHash == bytes32(0)) revert NothingDelivered(taskId);
         bytes32 observed = keccak256(evidence);
@@ -209,6 +277,7 @@ contract WorkManager {
         emit DeliveryConfirmed(taskId, round, msg.sender, count);
 
         if (count == task.verifierThreshold) {
+            _removeActive(taskId);
             task.status = Status.Complete;
             address[] memory to = new address[](1);
             uint256[] memory amounts = new uint256[](1);
@@ -234,5 +303,21 @@ contract WorkManager {
 
     function _require(uint256 taskId, Task storage task, Status expected) internal view {
         if (task.status != expected) revert WrongStatus(taskId, expected, task.status);
+    }
+
+    /// @dev True when the task carries an expiration that has passed.
+    function _expired(Task storage task) internal view returns (bool) {
+        return task.expiration != 0 && block.timestamp > task.expiration;
+    }
+
+    /// @dev Remove `taskId` from the active set (swap-and-pop).
+    function _removeActive(uint256 taskId) internal {
+        uint256 index = _activeIndexPlusOne[taskId];
+        if (index == 0) return;
+        uint256 last = _activeTasks[_activeTasks.length - 1];
+        _activeTasks[index - 1] = last;
+        _activeIndexPlusOne[last] = index;
+        _activeTasks.pop();
+        delete _activeIndexPlusOne[taskId];
     }
 }

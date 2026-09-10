@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TreasuryLedger} from "./TreasuryLedger.sol";
 import {ProposalBase} from "./ProposalBase.sol";
 
 /// @notice Payment template (DESIGN.md §7.1): on start(), transfer the listed amounts of settlement
@@ -22,8 +23,8 @@ contract PaymentProposal is ProposalBase {
     /// @param operator_ The proposer (recorded; no role).
     /// @param recipients Payees.
     /// @param amounts Settlement units per payee (same length).
-    constructor(address safe_, address settlement_, address operator_, address[] memory recipients, uint256[] memory amounts)
-        ProposalBase(safe_, settlement_, operator_)
+    constructor(address safe_, address settlement_, address operator_, TreasuryLedger ledger_, address[] memory recipients, uint256[] memory amounts)
+        ProposalBase(safe_, settlement_, operator_, ledger_)
     {
         _set(recipients, amounts);
     }

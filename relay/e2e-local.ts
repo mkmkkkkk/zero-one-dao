@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /**
  * Mirror E2E through the relay (docs/TESTNET_PLAN.md cold-start): fresh anvil + deploy + genesis
  * (50 USDC founder), a sponsor float, the relay against it, the beacon built and validated, then a
@@ -16,17 +17,22 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAddress, keccak256, type Address, type Hex } from "viem";
+import { encodeErrorResult, encodeFunctionData, getAddress, keccak256, type Address, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import { loadLocalArtifact } from "../src/baal.js";
+import { encodeProposalData, loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 import { chooseFreePort, startDevnet, stopDevnet } from "../src/devnet.js";
 import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
 import { buildBeacon } from "../beacon/scripts/build.js";
-import { validateBeacon } from "../beacon/scripts/validate.js";
+
 import { decodeProposeIntentData, encodeParams } from "../src/proposals.js";
+import { encodeGovernanceConfig } from "../src/baal.js";
+import { passEntropyBits } from "./pass.js";
 import { hardening } from "./e2e-hardening.js";
+import { ledgerHttp } from "./e2e-ledger.js";
+import { connect as connectRelay } from "./common.js";
+import { decodeRevert } from "./errors.js";
 import { INTENT_TYPES, intentDomain } from "./intents.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -147,6 +153,7 @@ async function main(): Promise<void> {
       depositShaman: dao.depositShaman,
       workManager: dao.workManager,
       templateFactory: dao.templateFactory,
+      treasuryLedger: dao.treasuryLedger,
       templateDeployers: dao.templateDeployers,
       intentAccount: dao.intentAccount,
       constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" },
@@ -156,13 +163,18 @@ async function main(): Promise<void> {
     const deploymentFile = path.join(devnet.stateDir, "deployment.json");
     writeFileSync(deploymentFile, `${JSON.stringify(record, null, 2)}\n`, { mode: 0o600 });
     console.log(`   deployment record ${deploymentFile}`);
+    const refusal = decodeRevert(connectRelay(record), encodeErrorResult({ abi: loadLocalArtifact("DepositShaman").abi, errorName: "TreasuryNotSettled" }));
+    assert(refusal?.name === "TreasuryNotSettled" && refusal.text.includes("settles the registered assets to USDC"), "relay decodes TreasuryNotSettled with the settlement-vote recovery reason");
 
-    step("start the relay against the mirror (sponsor = anvil account 15)");
+    step("start the relay against the mirror (sponsor = anvil account 15); the relay also serves the beacon files (RELAY_BEACON_DIR)");
     const port = chooseFreePort(18_751);
     const origin = `http://127.0.0.1:${port}`;
+    // The relay IS the beacon (decision.md 2026-09-10): it must serve the directory this run builds,
+    // because beacon:validate now fetches every URL the README advertises from the origin it names.
+    const beacon = path.join(devnet.stateDir, "beacon");
     relay = spawn(process.execPath, ["--import", "tsx", path.join(ROOT, "relay", "server.ts")], {
       cwd: ROOT,
-      env: { ...NO_PROXY, ZERO_ONE_DEPLOYMENT: deploymentFile, RELAY_SPONSOR_KEY: sponsorKey, RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(devnet.stateDir, "relay"), RELAY_LOG: "1", RELAY_RATE_ADDRESS: "1000", RELAY_RATE_IP: "10000" },
+      env: { ...NO_PROXY, ZERO_ONE_DEPLOYMENT: deploymentFile, RELAY_SPONSOR_KEY: sponsorKey, RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(devnet.stateDir, "relay"), RELAY_BEACON_DIR: beacon, RELAY_LOG: "1", RELAY_RATE_ADDRESS: "1000", RELAY_RATE_IP: "10000" },
       stdio: ["ignore", "inherit", "inherit"],
     });
     await waitForRelay(origin, relay);
@@ -170,11 +182,16 @@ async function main(): Promise<void> {
     console.log(`   health: ${JSON.stringify(healthBody).slice(0, 600)}`);
     assert(healthBody.alive === true && healthBody.adapter === dao.intentAccount, "relay is alive on the mirror with the deployed adapter");
 
-    step("build and validate the beacon (README <= 44 lines, every address has code)");
-    const beacon = path.join(devnet.stateDir, "beacon");
+    step("build and validate the beacon (README <= 44 lines, every address has code, every advertised URL answers 200 from the relay)");
     await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
-    const validation = await validateBeacon({ deployment: deploymentFile, out: beacon });
-    console.log(`   validate: ${JSON.stringify(validation)}`);
+    const validation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beacon], { encoding: "utf8", env: NO_PROXY });
+    const count = spawnSync("wc", ["-l", path.join(beacon, "README.txt")], { encoding: "utf8" });
+    const receipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>\n${validation.stdout}${validation.stderr}$ wc -l README.txt\n${count.stdout}`;
+    mkdirSync(path.join(ROOT, "evidence/phase4"), { recursive: true });
+    writeFileSync(path.join(ROOT, "evidence/phase4/beacon-validate.log"), receipt);
+    console.log(receipt);
+    assert(validation.status === 0 && JSON.parse(validation.stdout).result === "PASS", "beacon validator CLI produced PASS");
+    assert(count.status === 0, "README line count command succeeds");
     const readme = readFileSync(path.join(beacon, "README.txt"), "utf8");
     console.log(`\n----- README.txt (${readme.trimEnd().split("\n").length} lines) -----\n${readme}----- end README.txt -----`);
     assert(readme.trimEnd().split("\n").length <= 44, "README.txt is at most 44 lines");
@@ -215,6 +232,10 @@ async function main(): Promise<void> {
     console.log(`   /me: shares ${me2.sharesFormatted} (${me2.percent}%) nav ${me2.navUsdcPerShare} exitValue ${me2.exitValueUsdc} usdc ${me2.usdcFormatted} nonce ${me2.nonce}`);
     assert(me2.sharesFormatted === "100" && me2.navUsdcPerShare === "1" && me2.exitValueUsdc === "100" && me2.nonce === "1", "/me: 100 shares, NAV 1 USDC/share, exit value 100 USDC, nonce 1");
 
+    const state2 = (await (await fetch(`${origin}/state.json`)).json()) as { treasury: { settled: boolean; depositTreasury: string } };
+    assert(me2.settled === true && me2.depositTreasury === (150n * SETTLEMENT_UNIT).toString(), "/me exposes settled and depositTreasury at the state block");
+    assert(state2.treasury.settled === me2.settled && state2.treasury.depositTreasury === me2.depositTreasury, "/state.json exposes the same ledger deposit NAV as /me");
+
     step("founder: join via the relay (python3 snippet.py) before any proposal exists");
     await get(snippet("python", beacon, ["join", "--key", founderFile]));
 
@@ -247,6 +268,7 @@ async function main(): Promise<void> {
     step("warp past voting + grace (12 h); T1 agent executes #1 via the relay (explicit 5,000,000 gas)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
+    await settleRetention(F, dao.shares, 1);
     const executed = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "1"]));
     const processed = executed.processed as { passed: boolean; actionFailed: boolean };
     assert(processed.passed === true && processed.actionFailed === false, "proposal #1 passed and its action executed (fund + start)");
@@ -267,6 +289,7 @@ async function main(): Promise<void> {
     assert(agentVote2.waitedBlocks === 0, "a vote after a later block exists is sent at once (waitedBlocks 0)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
+    await settleRetention(F, dao.shares, 2);
     const activated = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "2"]));
     assert((activated.processed as { passed: boolean; actionFailed: boolean }).passed === true && (activated.processed as { actionFailed: boolean }).actionFailed === false, "task proposal executed: task #1 active");
 
@@ -351,6 +374,82 @@ async function main(): Promise<void> {
     const badQuote = await get(`${origin}/relay?op=quote&member=${F.account.address}&template=Payment&params=${encodeURIComponent(JSON.stringify({ recipients: [F.account.address], amounts: ["0"] }))}`, false);
     assert((badQuote.error as { name: string })?.name === "ZeroAmount", "quote with a zero payment -> the template constructor's ZeroAmount decoded from the factory dry run");
 
+    step("phase 5 stage C: /pending.json, allowance + delegatecall counted in the treasury effect, an instance name no call touches, Config flags, the T0 entropy floor, the persisted rate counter");
+    const pendingBody = (await (await fetch(`${origin}/pending.json`)).json()) as { inFlight: unknown[]; journal: unknown; note: string };
+    console.log(`   /pending.json: ${JSON.stringify(pendingBody).slice(0, 500)}`);
+    assert(Array.isArray(pendingBody.inFlight) && pendingBody.inFlight.length === 0 && pendingBody.journal === null, "/pending.json shows nothing in flight once every intent has settled (ruling 7)");
+    assert(pendingBody.note.includes("delay or drop your intents"), "/pending.json states what a T0 member is trusting the operator with (A5-10)");
+    // A5-10 / ruling 7: ok comes from the receipt, never from the dedupe map. The agent deposits 1 USDC,
+    // the same signed URL is replayed (answered from the real receipt), then the recorded hash is
+    // rewritten to a transaction that does not exist, as a lying operator would: the relay must refuse
+    // to report that fabricated hash as success.
+    const relayDb = path.join(devnet.stateDir, "relay", "db.json");
+    const depositUrl = snippet("node", beacon, ["deposit", "--key", agentFile, "--usdc", "1"]);
+    const firstSend = await get(depositUrl);
+    const realHash = String(firstSend.hash);
+    const honestReplay = await get(depositUrl);
+    assert(honestReplay.replayed === true && honestReplay.hash === realHash && typeof honestReplay.blockNumber === "string", "an identical envelope is answered from the recorded receipt (replayed, same hash, with the block it is in)");
+    const seededDb = JSON.parse(readFileSync(relayDb, "utf8")) as { requests: Record<string, { hash: Hex; member: Address; op: number; status: string }> };
+    const rowKey = Object.entries(seededDb.requests).find(([, row]) => row.hash === realHash)![0];
+    const fabricated = `0x${"ab".repeat(32)}` as Hex;
+    seededDb.requests[rowKey] = { ...seededDb.requests[rowKey]!, hash: fabricated };
+    writeFileSync(relayDb, `${JSON.stringify(seededDb, null, 2)}\n`, { mode: 0o600 });
+    console.log(`   db.json requests["${rowKey.slice(0, 14)}..."].hash rewritten to ${fabricated} (no such transaction)`);
+    const lying = await get(depositUrl, false);
+    assert(lying.hash !== fabricated && lying.replayed === undefined, `a recorded hash that is on no block is never reported as success: ${String(lying.reason).slice(0, 120)}`);
+    const cleaned = JSON.parse(readFileSync(relayDb, "utf8")) as { requests: Record<string, { hash: Hex }> };
+    assert(cleaned.requests[rowKey] === undefined, "the unbacked row is dropped and the intent is broadcast again instead (it then fails on its real reason: the nonce is spent)");
+
+    // ECO-06 / A5-11: one hostile proposalData submitted by an address holding no shares, so Baal never
+    // sponsors it and it blocks no execution order: an unbounded USDC allowance, a delegatecall as the
+    // Safe, and a details JSON naming the benign Payment instance of proposal #1.
+    const stranger = chain.contexts[9]!;
+    const baalAbi = loadBaalArtifact("Baal").abi;
+    const hostile = encodeProposalData([
+      { to: dao.settlement, data: encodeFunctionData({ abi: settlementAbi, functionName: "approve", args: [v1, 2n ** 128n] }) },
+      { to: dao.settlement, data: encodeFunctionData({ abi: settlementAbi, functionName: "transfer", args: [v1, 140n * SETTLEMENT_UNIT] }), operation: 1 },
+    ]);
+    await writeAndWait(stranger, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [hostile, 0, 0n, `routine top-up {"instance":"${String(proposed.instance)}"}`] });
+    const configData = encodeProposalData([{ to: dao.baal, data: encodeFunctionData({ abi: baalAbi, functionName: "setGovernanceConfig", args: [encodeGovernanceConfig({ votingPeriod: 4, gracePeriod: 1, proposalOffering: 0n, quorumPercent: 101n, sponsorThreshold: UNIT, minRetentionPercent: 66n })] }) }]);
+    await writeAndWait(stranger, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [configData, 0, 0n, "administrative: refresh governance parameters"] });
+    await sleep(3_200);
+    const afterProbe = (await (await fetch(`${origin}/proposals.json`)).json()) as { proposals: Array<Record<string, unknown>> };
+    // packMultiSend keeps the checksum case of the addresses it concatenates; the chain returns the same
+    // bytes in lower case, so the lookup compares the lower-cased hex.
+    const spoof = afterProbe.proposals.find((p) => String(p.proposalData).toLowerCase() === hostile.toLowerCase())!;
+    const configProposal = afterProbe.proposals.find((p) => String(p.proposalData).toLowerCase() === configData.toLowerCase())!;
+    assert(spoof !== undefined && configProposal !== undefined, `both probe proposals are indexed (#${spoof?.id}, #${configProposal?.id} of ${afterProbe.proposals.length})`);
+    const effect = spoof.treasuryEffect as { usdcOut: string; usdcApproved: string; usdcAtRisk: string; summary: string };
+    console.log(`   hostile #${spoof.id}: effect ${JSON.stringify(effect)}`);
+    console.log(`   hostile #${spoof.id} flags: ${JSON.stringify(spoof.flags)}`);
+    assert(effect.usdcApproved === (2n ** 128n).toString() && effect.usdcAtRisk === (2n ** 128n + 140n * SETTLEMENT_UNIT).toString() && effect.summary.includes("allowance"), "an approve of 2^128 USDC is counted as treasury effect, not as 0, and adds to the transfer in usdcAtRisk (ruling 6, ECO-06)");
+    const spoofFlags = spoof.flags as string[];
+    assert(spoofFlags.some((flag) => flag.startsWith("allowance:")) && spoofFlags.some((flag) => flag.startsWith("delegatecall:")) && spoofFlags.some((flag) => flag.startsWith("details:")), "the proposal carries the allowance, delegatecall and spoofed-instance-name flags");
+    assert(spoof.instance === undefined, "the instance panel is bound to the decoded calls: a details JSON naming a benign instance no call touches shows no panel (A5-11)");
+    assert((spoof.calls as Array<{ operation: number; label: string }>).some((call) => call.operation === 1 && call.label.startsWith("DELEGATECALL ")), "the delegatecall entry is labelled as one (operation 1 is never a bare field)");
+    const configFlags = configProposal.flags as string[];
+    console.log(`   config #${configProposal.id} flags: ${JSON.stringify(configFlags)}`);
+    assert(configFlags.some((flag) => flag.includes("below the 3600 s poll cadence")) && configFlags.some((flag) => flag.includes("TERMINAL")), "a Config cutting voting+grace to 5 s and quorum to 101 is flagged as both unpollable and terminal (ECO-04, T-9b)");
+    const founderMeFlagged = (await (await fetch(`${origin}/me/${F.account.address}.json`)).json()) as { warnings: string[]; shareLiability: string; depositTreasury: string; settled: boolean };
+    console.log(`   /me warnings (${founderMeFlagged.warnings.length}): ${JSON.stringify(founderMeFlagged.warnings).slice(0, 700)}`);
+    assert(founderMeFlagged.warnings.some((warning) => warning.includes("delegatecall:")) && founderMeFlagged.warnings.some((warning) => warning.includes("poll cadence")), "/me carries the same flags as warnings, one line per open proposal (ruling 10)");
+    assert(/^\d+$/u.test(founderMeFlagged.shareLiability), `/me exposes the share liability of Active tasks (${founderMeFlagged.shareLiability})`);
+    const stateLiability = (await (await fetch(`${origin}/state.json`)).json()) as { treasury: { shareLiability: string; depositTreasury: string; settled: boolean } };
+    assert(stateLiability.treasury.shareLiability === founderMeFlagged.shareLiability && stateLiability.treasury.depositTreasury === founderMeFlagged.depositTreasury && stateLiability.treasury.settled === founderMeFlagged.settled, "/state.json and /me report the same settled, depositTreasury and shareLiability");
+
+    // A5-08: the entropy floor. The audit's own vector is a 44-character sentence.
+    const weak = "correct horse battery staple correct horse!";
+    const refusedPass = await get(`${origin}/relay?op=identity&pass=${encodeURIComponent(weak)}`, false);
+    assert(refusedPass.status === 400 && /bits of entropy, below the 128-bit floor/u.test(String(refusedPass.reason)), `a 44-character sentence is refused before any address is revealed: ${String(refusedPass.reason).slice(0, 120)}`);
+    assert(passEntropyBits(weak) < 128 && passEntropyBits(pass) >= 128, `the estimator scores the sentence ${passEntropyBits(weak).toFixed(0)} bits and the E2E's 32 random bytes ${passEntropyBits(pass).toFixed(0)} bits`);
+    // A5-09: the counter is on disk before the rejection, so the limiter is not reset by the next reload.
+    const bucket = () => (JSON.parse(readFileSync(relayDb, "utf8")) as { rates: Record<string, { n: number }> }).rates["ip:127.0.0.1"]?.n ?? 0;
+    const countedBefore = bucket();
+    for (let attempt = 0; attempt < 5; attempt += 1) await fetch(`${origin}/relay?op=quote`);
+    const countedAfter = bucket();
+    console.log(`   persisted per-IP counter: ${countedBefore} -> ${countedAfter} after 5 rejected requests`);
+    assert(countedAfter >= countedBefore + 5, "every rejected request is counted on disk before it is rejected (A5-09)");
+
     step("cross-check: node, python and viem produce byte-identical signatures for the same intent (deterministic RFC 6979)");
     const founderMe = (await (await fetch(`${origin}/me/${F.account.address}.json`)).json()) as { nonce: string; chainTime: number };
     const deadline = String(founderMe.chainTime + 600);
@@ -364,6 +463,30 @@ async function main(): Promise<void> {
 
     step("phase 3 two-process concurrency, duplicate intents, restart cursor and killed broadcaster recovery");
     await hardening({ deploymentFile, stateDir: path.join(devnet.stateDir, "relay"), sponsorKey, origin, client: chain.publicClient, adapter: dao.intentAccount, settlement: dao.settlement, safe: dao.safe, shares: dao.shares, chainId: devnet.chainId });
+    step("phase 4 ledger HTTP: open-budget NAV, actual unsettled deposit refusals, and settlement recovery");
+    // Finish the cold-start's last Payment before submitting later sponsored proposals.
+    await increaseTime(F, 12 * HOUR + 5);
+    const pendingData = await chain.publicClient.readContract({ address: dao.templateFactory, abi: loadLocalArtifact("TemplateFactory").abi, functionName: "proposalData", args: [0, encodeParams({ template: "Payment", params: { recipients: [t0Address], amounts: [SETTLEMENT_UNIT] } }), getAddress(String(proposed2.instance))] });
+    await settleRetention(F, dao.shares, 3);
+    const pendingReceipt = await writeAndWait(F, { address: dao.baal, abi: loadBaalArtifact("Baal").abi, functionName: "processProposal", args: [3, pendingData], gas: 5_000_000n });
+    console.log(`   completed prior sponsored proposal #3: ${pendingReceipt.hash}`);
+    await ledgerHttp(origin, F, dao);
+
+    step("rebuild and revalidate the beacon on the finished DAO: the published state.json carries the ledger, the liability and every proposal flag");
+    const beaconFinal = path.join(devnet.stateDir, "beacon-final");
+    const finalState = await buildBeacon({ deployment: deploymentFile, origin, out: beaconFinal });
+    // The validator fetches the README from the origin and requires it to be the one just built, so the
+    // directory the relay serves is refreshed from the same state.
+    await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
+    const finalValidation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal], { encoding: "utf8", env: NO_PROXY });
+    const finalCount = spawnSync("wc", ["-l", path.join(beaconFinal, "README.txt")], { encoding: "utf8" });
+    const finalReceipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>\n${finalValidation.stdout}${finalValidation.stderr}$ wc -l README.txt\n${finalCount.stdout}`;
+    console.log(finalReceipt);
+    writeFileSync(path.join(ROOT, "evidence/phase5/beacon-validate-stageC.log"), finalReceipt);
+    assert(finalValidation.status === 0 && JSON.parse(finalValidation.stdout).result === "PASS", `beacon validator PASS over ${finalState.proposals.length} proposals (${JSON.parse(finalValidation.stdout || "{}").readmeLines} README lines)`);
+    const publishedSpoof = finalState.proposals.find((proposal) => proposal.proposalData.toLowerCase() === hostile.toLowerCase())!;
+    assert(publishedSpoof.flags.length === 3 && publishedSpoof.instance === undefined && publishedSpoof.treasuryEffect.usdcApproved === (2n ** 128n).toString(), "the published state.json carries the hostile proposal's three flags, no instance panel and its allowance");
+    assert(/^\d+$/u.test(finalState.treasury.shareLiability) && finalState.treasury.settled === true, `the published treasury carries settled=${finalState.treasury.settled} and shareLiability=${finalState.treasury.shareLiability}`);
     passed = true;
   } finally {
     console.log(`\n=== RELAY E2E: ${passed ? "PASS" : "FAIL"} ===\n`);

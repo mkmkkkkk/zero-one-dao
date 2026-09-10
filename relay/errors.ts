@@ -84,6 +84,7 @@ export function decodeRevert(env: Env, data: Hex): { name: string; args: Record<
       const message = decoded.args[0];
       return { name: "Error", args: { message }, text: BAAL_REASONS[message] ?? message };
     }
+    if (decoded.errorName === "TreasuryNotSettled") return { name: decoded.errorName, args, text: "TreasuryNotSettled(): deposits resume after a vote settles the registered assets to USDC" };
     return { name: decoded.errorName, args, text: `${decoded.errorName}(${Object.entries(args).map(([key, value]) => `${key}=${value}`).join(", ")})` };
   } catch {
     return { name: "unknown", args: { selector: data.slice(0, 10) }, text: `revert ${data.slice(0, 10)} (unknown selector)` };

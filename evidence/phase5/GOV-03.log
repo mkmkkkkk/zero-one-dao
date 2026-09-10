@@ -1,0 +1,28 @@
+# GOV-03 — phase 5 stage A, key output lines of evidence/phase5/run-t03-retention-bypass-deposit-at-processing.log (full run); docs/SECURITY_AUDIT.md row GOV-03
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: attacker M = a contract member: D funds it with 2000 USDC, it deposits 1000 USDC at NAV
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+== step 5: M proposes 'Safe pays M 2000 USDC' (self-sponsored) and votes YES; nobody votes NO
+   #1: yes 1000 no 0; supply at votingStarts 4050 shares; 34% = 1377 may exit
+== step 6: B and C disagree with their feet: both ragequit during grace (2000 of 4050 shares = 49.4% > 34%)
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   ok: exits exceed 34% of the high-water mark
+   ok: state is Ready (yes > no); retention is checked inside processProposal
+== step 7: control (snapshot): plain processProposal -> passed = false, nothing moves
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   ok: control: minRetention defeats the proposal
+== step 8: attack: M deposits what would have lifted supply back to 66% of the old HWM and processes in the SAME transaction
+   exitedSince(#1) = 2000 of 4050 shares at votingStarts (49.38% > 34%)
+   one tx 0x9cfbed125989d2d1fa71aafa85d3a6f22a0a80cd6a4ad1d2239ea23c3b883591: processed=true passed=false actionFailed=false; Safe 2050 -> 2673.000001 USDC; M USDC 1000 -> 376.999999 (net -623.000001; holds 1623.000001 shares)
+   ok: the proposal was processed as not passed: > 34% of the shares at votingStarts had exited and the deposit changes nothing
+   ok: M's deposit went into the Safe at NAV and no payment left it
+   sleeping F: 50 shares worth 50 -> 50 USDC
+   ok: F (asleep) lost nothing beyond rounding
+   sleeping A: 1000 shares worth 1000 -> 1000 USDC
+   ok: A (asleep) lost nothing beyond rounding
+=== SCENARIO GOV-03 minRetention cannot be bypassed by deposit + process in one transaction (phase 5 retention rule; fixed): PASS ===
+EXIT 0

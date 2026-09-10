@@ -18,6 +18,9 @@ import {
   type WriteContext,
 } from "./baal.js";
 
+/** Loopback JSON-RPC timeout in milliseconds; generous because a forked Anvil waits on the upstream RPC. */
+export const LOOPBACK_TIMEOUT_MS = 300_000;
+
 export interface LocalChain {
   chain: ReturnType<typeof defineChain>;
   publicClient: ReturnType<typeof createPublicClient>;
@@ -32,7 +35,12 @@ export function connectDevnet(devnet: Devnet): LocalChain {
     nativeCurrency: { name: "Zero-value test ETH", symbol: "TETH", decimals: 18 },
     rpcUrls: { default: { http: [devnet.rpcUrl] } },
   });
-  const publicClient = createPublicClient({ chain, transport: http(devnet.rpcUrl), cacheTime: 0 });
+  // A forked Anvil blocks on upstream archive reads (a 25% pool print crosses hundreds of ticks, each a
+  // separate eth_getStorageAt against the fork RPC), so loopback calls need far more than viem's 10 s default.
+  const transport = http(devnet.rpcUrl, { timeout: LOOPBACK_TIMEOUT_MS });
+  // Nonfork Anvil mines immediately. Fork mining can wait on upstream state, so keep its
+  // normal cadence; eager block watching can race viem's replacement lookup on a cold fork.
+  const publicClient = createPublicClient({ chain, transport, cacheTime: 0, pollingInterval: devnet.chainId === 8453 ? 4_000 : 100 });
   const accounts = devnet.privateKeys.map((key, index) => {
     const account = privateKeyToAccount(key);
     if (getAddress(account.address) !== getAddress(devnet.addresses[index]!)) {
@@ -44,7 +52,7 @@ export function connectDevnet(devnet: Devnet): LocalChain {
     chain,
     publicClient,
     account,
-    walletClient: createWalletClient({ account, chain, transport: http(devnet.rpcUrl) }),
+    walletClient: createWalletClient({ account, chain, transport }),
   })) as WriteContext[];
   return { chain, publicClient, contexts, accounts };
 }
@@ -59,6 +67,16 @@ export async function deployLocal(
   return { ...deployment, artifact };
 }
 
+/**
+ * Send one transaction and wait for it. A reverted transaction is replayed as an `eth_call` at the
+ * parent block so the thrown message carries the decoded revert instead of only a hash (anvil mines one
+ * transaction per block here, so the parent block is exactly the state the transaction ran on).
+ *
+ * @param context Signer context.
+ * @param request The writeContract request.
+ * @returns The hash and receipt of a successful transaction.
+ * @throws Error naming the hash, the gas used against the gas supplied, and the replayed revert.
+ */
 export async function writeAndWait(
   context: WriteContext,
   request: Record<string, unknown>,
@@ -69,8 +87,33 @@ export async function writeAndWait(
     chain: context.chain,
   } as never);
   const receipt = await context.publicClient.waitForTransactionReceipt({ hash });
-  if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
+  if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash} ${await revertReason(context, hash, receipt)}`);
   return { hash, receipt };
+}
+
+/**
+ * Describe why a mined transaction reverted.
+ *
+ * @param context Signer context (its public client replays the call).
+ * @param hash The reverted transaction.
+ * @param receipt Its receipt.
+ * @returns A one-line description: gas used against gas supplied plus the replayed revert, or the
+ *   reason the replay itself could not be made.
+ */
+async function revertReason(context: WriteContext, hash: Hex, receipt: TransactionReceipt): Promise<string> {
+  try {
+    const tx = await context.publicClient.getTransaction({ hash });
+    const gas = `gas=${receipt.gasUsed}/${tx.gas}${receipt.gasUsed === tx.gas ? " (out of gas)" : ""}`;
+    try {
+      await context.publicClient.call({ account: tx.from, to: tx.to ?? undefined, data: tx.input, value: tx.value, gas: tx.gas, blockNumber: receipt.blockNumber - 1n });
+      return `${gas}: the same call succeeds when replayed at the parent block`;
+    } catch (error) {
+      const detail = error as { shortMessage?: string; metaMessages?: string[]; message?: string };
+      return `${gas}: ${detail.shortMessage ?? detail.message ?? String(error)}${detail.metaMessages?.length ? ` | ${detail.metaMessages.join(" | ")}` : ""}`;
+    }
+  } catch (error) {
+    return `revert reason unavailable: ${error instanceof Error ? error.message : String(error)}`;
+  }
 }
 
 /**

@@ -31,6 +31,10 @@ export interface Me extends Identity {
   sharesFormatted: string;
   percent: string;
   navUsdcPerShare: string;
+  settled: boolean;
+  depositTreasury: string;
+  /** Shares already voted to Active, unexpired tasks and not yet minted; deposits are priced including them (phase 5 ruling 4c). */
+  shareLiability: string;
   exitValueUsdc: string;
   usdc: string;
   usdcFormatted: string;
@@ -40,6 +44,8 @@ export interface Me extends Identity {
   myTasks: Array<TaskView & { role: string[]; pending: string[] }>;
   openTasks: number[];
   ragequit: { tokens: Address[]; data: Hex; amountAll: string };
+  /** One line per flag of every open proposal (delegatecall, allowance, terminal or window-shrinking Config, spoofed instance name). */
+  warnings: string[];
   pollSeconds: number;
   polledAt: string;
   blockNumber: string;
@@ -78,8 +84,8 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
   const dao = state ?? (await readDaoState(env));
   const d = env.deployment;
   const [shares, usdc] = await Promise.all([
-    env.publicClient.readContract({ address: d.shares, abi: env.abi.shares, functionName: "balanceOf", args: [address] }) as Promise<bigint>,
-    env.publicClient.readContract({ address: d.settlement, abi: env.abi.settlement, functionName: "balanceOf", args: [address] }) as Promise<bigint>,
+    env.publicClient.readContract({ address: d.shares, abi: env.abi.shares, functionName: "balanceOf", args: [address], blockNumber: BigInt(dao.chain.blockNumber) }) as Promise<bigint>,
+    env.publicClient.readContract({ address: d.settlement, abi: env.abi.settlement, functionName: "balanceOf", args: [address], blockNumber: BigInt(dao.chain.blockNumber) }) as Promise<bigint>,
   ]);
   const totalShares = BigInt(dao.treasury.totalShares);
   const treasury = BigInt(dao.treasury.usdc);
@@ -124,6 +130,9 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
     sharesFormatted: fmtShares(shares),
     percent: percent(shares, totalShares),
     navUsdcPerShare: dao.treasury.navUsdcPerShare,
+    settled: dao.treasury.settled,
+    depositTreasury: dao.treasury.depositTreasury,
+    shareLiability: dao.treasury.shareLiability,
     exitValueUsdc: fmtUsdc(exitValue),
     usdc: usdc.toString(),
     usdcFormatted: fmtUsdc(usdc),
@@ -133,6 +142,7 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
     myTasks,
     openTasks: dao.openTasks,
     ragequit: { tokens, data: ragequitData(tokens), amountAll: shares.toString() },
+    warnings: openProposals.flatMap((proposal) => proposal.flags.map((flag) => `proposal ${proposal.id} (${proposal.state}, grace ends ${proposal.graceEnds}): ${flag}`)),
     pollSeconds: 3600,
     polledAt: new Date().toISOString(),
     blockNumber: dao.chain.blockNumber,

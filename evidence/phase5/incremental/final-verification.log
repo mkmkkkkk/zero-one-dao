@@ -1,0 +1,9 @@
+CLEANUP task state directories moved=104 destination=/Users/michaelmacmini/.Trash/zero-one-retention-states-29608
+CLEANUP active task Anvil/relay/test/acceptance processes=0; pre-existing zero-one-dao relay untouched
+VERIFIED contract diff against 75c9ac6: empty
+VERIFIED evidence/phase5/incremental/acceptance-worktree-summary.json: 40/40 and source log SHA-256 matches
+VERIFIED evidence/phase5/incremental/acceptance-clean-summary.json: 40/40 and source log SHA-256 matches
+VERIFIED exit calldata address zero bytes first=1 clean=0; intrinsic gas delta=12; each run quiet/mid/storm constant
+READBACK docs/RETENTION_MECHANISM.md bytes=13762
+READBACK docs/PARAMETERS.md bytes=33308
+READBACK decision.md bytes=97847

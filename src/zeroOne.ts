@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAddress, keccak256, parseAbiItem, zeroAddress, type Address, type Hex } from "viem";
+import { encodeAbiParameters, getAddress, keccak256, parseAbiItem, zeroAddress, type Address, type Hex } from "viem";
 
 import {
   createBaalProxy,
@@ -81,6 +81,21 @@ export const DEFAULT_PARAMS: Omit<ZeroOneParams, "founder"> = {
   salt: 1n,
 };
 
+/**
+ * CREATE2 salt nonce of the Safe (kind 0) or Baal (kind 1) proxy: bound to the deployer address (phase 5
+ * ruling 8, OPS-04) so two deployers with the same `salt` never predict the same proxy. The factories
+ * themselves do not include msg.sender in the salt, so a front-runner can still create the proxy at the
+ * predicted address; the deployment then aborts before any value moves (griefing only, documented).
+ *
+ * @param deployer The deploying EOA.
+ * @param salt The deployment's salt parameter.
+ * @param kind 0 for the Safe proxy, 1 for the Baal proxy.
+ * @returns The uint256 salt nonce passed to the proxy factory.
+ */
+export function proxySaltNonce(deployer: Address, salt: bigint, kind: 0 | 1): bigint {
+  return BigInt(keccak256(encodeAbiParameters([{ type: "address" }, { type: "uint256" }, { type: "uint8" }], [deployer, salt, kind])));
+}
+
 export interface ZeroOneDao {
   infrastructure: BaalInfrastructure;
   settlement: Address;
@@ -89,6 +104,7 @@ export interface ZeroOneDao {
   shares: Address;
   loot: Address;
   depositShaman: Address;
+  treasuryLedger: Address;
   workManager: Address;
   /** CREATE2 template factory (decision.md phase 2b ruling 2); the intent account's op 0 deploys through it. */
   templateFactory: Address;
@@ -122,7 +138,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   const startBlock = await deployer.publicClient.getBlockNumber();
   const infrastructure = params.infrastructure ?? (await deployBaalInfrastructure(deployer));
   if (params.infrastructure === undefined) {
-    ["Baal", "ModuleProxyFactory", "GnosisSafe", "GnosisSafeProxyFactory", "MultiSend"].forEach((name, index) => {
+    ["Baal", "ModuleProxyFactory", "GnosisSafe", "GnosisSafeProxyFactory", "MultiSendCallOnly"].forEach((name, index) => {
       txHashes[`singleton:${name}`] = infrastructure.deploymentTransactions[index]!;
     });
   }
@@ -136,8 +152,8 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     txHashes["TestToken"] = token.hash;
   }
 
-  const safeProxy = await createSafeProxy(deployer, infrastructure, params.salt * 2n, params.beforeSafeCreate);
-  const baalProxy = await createBaalProxy(deployer, infrastructure, params.salt * 2n + 1n);
+  const safeProxy = await createSafeProxy(deployer, infrastructure, proxySaltNonce(deployer.account.address, params.salt, 0), params.beforeSafeCreate);
+  const baalProxy = await createBaalProxy(deployer, infrastructure, proxySaltNonce(deployer.account.address, params.salt, 1));
   txHashes["SafeProxy"] = safeProxy.hash;
   txHashes["BaalProxy"] = baalProxy.hash;
   const safe = safeProxy.safe;
@@ -145,7 +161,6 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
 
   const shares = await deployLocal(deployer, "NavShareToken", [params.shareName, params.shareSymbol, baal, safe, settlement]);
   const loot = await deployLocal(deployer, "LootToken", [`${params.shareName} Loot`, `${params.shareSymbol}-LOOT`, baal]);
-  const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address]);
   const workManager = await deployLocal(deployer, "WorkManager", [baal, shares.address]);
   const paymentDeployer = await deployLocal(deployer, "PaymentDeployer", [safe, settlement]);
   const strategyDeployer = await deployLocal(deployer, "StrategyDeployer", [safe, settlement]);
@@ -153,6 +168,9 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
   const configDeployer = await deployLocal(deployer, "ConfigDeployer", [safe, settlement, baal]);
   const templateDeployers: [Address, Address, Address, Address] = [paymentDeployer.address, strategyDeployer.address, projectDeployer.address, configDeployer.address];
   const templateFactory = await deployLocal(deployer, "TemplateFactory", [safe, settlement, baal, templateDeployers]);
+  const factoryReceipt = await deployer.publicClient.getTransactionReceipt({ hash: templateFactory.hash });
+  const treasuryLedger = await awaitRead(() => deployer.publicClient.readContract({ address: templateFactory.address, abi: templateFactory.artifact.abi, functionName: "ledger", blockNumber: factoryReceipt.blockNumber }) as Promise<Address>, (value) => value !== zeroAddress);
+  const depositShaman = await deployLocal(deployer, "DepositShaman", [baal, shares.address, treasuryLedger, workManager.address]);
   const intentAccount = await deployLocal(deployer, "ZeroOneIntentAccount", [baal, depositShaman.address, workManager.address, templateFactory.address]);
   txHashes["NavShareToken"] = shares.hash;
   txHashes["LootToken"] = loot.hash;
@@ -198,6 +216,7 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
     shares: shares.address,
     loot: loot.address,
     depositShaman: depositShaman.address,
+    treasuryLedger,
     workManager: workManager.address,
     templateFactory: templateFactory.address,
     templateDeployers,
@@ -213,13 +232,15 @@ export async function deployZeroOne(deployer: WriteContext, params: ZeroOneParam
 
 /**
  * Genesis: the founder deposits `amount` of the settlement asset through the DepositShaman and
- * receives shares at the empty-treasury price (1 USDC -> 1e18 shares). Nothing else is minted.
+ * receives shares at the zero-supply price (1 USDC -> 1e18 shares regardless of what the Safe holds;
+ * phase 5 ruling 8: settlement that landed in the Safe before genesis is a gift to the first depositor,
+ * never a trap). Nothing else is minted.
  *
  * @param founder Signer holding at least `amount` of the settlement asset.
  * @param dao The deployed DAO (from deployZeroOne).
  * @param amount Settlement units to deposit (default GENESIS_DEPOSIT = 50 USDC).
  * @returns The approve and deposit hashes and the shares minted to the founder.
- * @throws Error if the treasury or supply is non-zero before the deposit, or the mint is not exactly amount x 1e18 / 1e6.
+ * @throws Error if the supply is non-zero before the deposit, or the mint is not exactly amount x 1e18 / 1e6.
  */
 export async function genesisDeposit(
   founder: WriteContext,
@@ -234,7 +255,8 @@ export async function genesisDeposit(
     founder.publicClient.readContract({ address: dao.shares, abi: sharesAbi, functionName, args } as never);
 
   assertInvariant((await readShares("totalSupply")) === 0n, "genesis deposit requires totalSupply == 0");
-  assertInvariant((await readShares("treasuryValue")) === 0n, "genesis deposit requires an empty treasury (never pre-fund the Safe)");
+  const preGenesisTreasury = (await readShares("treasuryValue")) as bigint;
+  if (preGenesisTreasury !== 0n) console.log(`   genesis: the Safe already holds ${preGenesisTreasury} settlement units; they accrue to the genesis shares (supply 0 prices 1 USDC = 1e18 shares regardless)`);
 
   const approve = await simulateSettled<{ request: Record<string, unknown> }>(founder, { address: dao.settlement, abi: settlementAbi, functionName: "approve", args: [dao.depositShaman, amount] });
   const { hash: approveHash } = await writeAndWait(founder, approve.request);

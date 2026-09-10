@@ -1,18 +1,19 @@
 /**
- * NAV-01 — deposit NAV ignores settlement held by a running Strategy instance ("hole 1").
+ * NAV-01 (phase 4/5, FLIPPED) — deposit NAV counts the settlement held by a running Strategy ("hole 1"
+ * closed by the TreasuryLedger).
  *
- * Invariant that should hold (DESIGN.md §6): shares = amount x totalShares / treasury, where the
- * treasury is what the members own; nobody can buy shares below NAV and exit above it.
+ * Invariant (DESIGN.md §6): shares = amount x totalShares / treasury, where the treasury is what the
+ * members own; nobody can buy shares below NAV and exit above it.
  *
- * Why it fails on this branch: NavShareToken.treasuryValue() = USDC.balanceOf(Safe). A passed
- * Strategy moves its budget out of the Safe; the instance still belongs to the DAO, but deposits
- * price it at zero. Phase 4 (TreasuryLedger, branch phase4-ledger-twap, not present in this
- * checkout) is the intended fix: depositTreasury = Safe USDC + Σ USDC of open instances.
+ * Fix: DepositShaman prices on TreasuryLedger.depositTreasury() = Safe USDC + Σ USDC of open
+ * instances (decision.md phase 4 rulings; phase 5 ruling 4).
  *
- * Steps: seed (3050 USDC, 3050 shares) → Strategy budget 3000 USDC passes (Safe keeps 50) →
- * D deposits 50 USDC and receives 3050 shares (50% of supply) → the deadline passes, anyone calls
- * run(): the instance returns 3000 USDC → D ragequits 3050 shares (50% of 3100 USDC) for 1550 USDC. Profit 1500 on 50.
+ * Steps: seed (3050 USDC, 3050 shares) → Strategy budget 3000 USDC passes (Safe keeps 50, instance
+ * holds 3000, deposit NAV stays 1 USDC/share) → D deposits 50 USDC and receives 50 shares → the deadline
+ * passes, anyone calls run(): the instance returns 3000 USDC → D ragequits 50 shares of 3100 for exactly
+ * 50 USDC. NAV-05 (exit pro-rata of the Safe only while capital is out) is shown unchanged: accepted.
  */
+import { loadLocalAbi } from "../../../src/baal.js";
 import type { StrategyParams } from "../../../src/proposals.js";
 import { assert, boot, DAY, deployMockMarket, deposit, fmt, fmtS, now, processProposal, proposeTemplate, ragequit, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, shutdown, step, T, usdcOf, verdict, vote, warp, warpPastGrace } from "../../../scenarios/lib.js";
 import { logLine, pct2, revertChain, safeUsdc, snapshotChain, totalShares } from "./audit-lib.js";
@@ -41,9 +42,12 @@ export async function main(): Promise<void> {
     const processed = await processProposal(mirror, "W", proposal);
     assert(processed.info.status.passed && !processed.info.status.actionFailed, "strategy funded and started");
     const instance = proposal.instance.address;
-    logLine(LOG, `   Safe ${fmtS(await safeUsdc(mirror))} USDC; instance ${fmtS(await usdcOf(mirror, instance))} USDC; supply ${fmt(await totalShares(mirror))} shares (true NAV 1 USDC/share, deposit NAV ${fmtS((await safeUsdc(mirror)) * 10n ** 18n / (await totalShares(mirror)))} USDC/share)`);
+    const ledgerAbi = loadLocalAbi("TreasuryLedger");
+    const depositTreasury = (await mirror.chain.publicClient.readContract({ address: mirror.dao.treasuryLedger, abi: ledgerAbi, functionName: "depositTreasury" })) as bigint;
+    logLine(LOG, `   Safe ${fmtS(await safeUsdc(mirror))} USDC; instance ${fmtS(await usdcOf(mirror, instance))} USDC; ledger depositTreasury ${fmtS(depositTreasury)} USDC; supply ${fmt(await totalShares(mirror))} shares (deposit NAV ${fmtS(depositTreasury * 10n ** 18n / (await totalShares(mirror)))} USDC/share)`);
+    assert(depositTreasury === 3_050n * SETTLEMENT_UNIT, "the ledger counts the 3000 USDC held by the open instance");
 
-    step("side finding NAV-05 (snapshot): A ragequits its 1000 shares while the budget is out -> paid pro-rata of the Safe only");
+    step("NAV-05, accepted (snapshot): A ragequits its 1000 shares while the budget is out -> paid pro-rata of the Safe only (exit price <= deposit price; documented)");
     const snap = await snapshotChain(mirror);
     const aExit = await ragequit(mirror, "A");
     logLine(LOG, `   A burned ${fmt(aExit.burned)} shares (32.8% of supply, true value ${fmtS((aExit.burned * (3_050n * SETTLEMENT_UNIT)) / seeded.totalShares)} USDC) and was paid ${fmtS(aExit.paid)} USDC: ${fmtS((aExit.burned * (3_050n * SETTLEMENT_UNIT)) / seeded.totalShares - aExit.paid)} USDC forfeited to the stayers (exit is pro-rata of the Safe, not of the DAO)`);
@@ -53,7 +57,7 @@ export async function main(): Promise<void> {
     const dStart = await usdcOf(mirror, mirror.actors.D.account.address);
     const dep = await deposit(mirror, "D", 50n * SETTLEMENT_UNIT);
     logLine(LOG, `   D paid 50 USDC for ${fmt(dep.sharesMinted)} shares = ${pct2(dep.sharesMinted, await totalShares(mirror))} of supply (fair: ${fmt((50n * SETTLEMENT_UNIT * seeded.totalShares) / seeded.safeSettlement)} shares)`);
-    assert(dep.sharesMinted === 3_050n * 10n ** 18n, "D received 3050 shares for 50 USDC");
+    assert(dep.sharesMinted === 50n * 10n ** 18n, "D received exactly 50 shares for 50 USDC (NAV 1, the instance budget counted)");
 
     step("the deadline passes; anyone calls run(): the instance returns its 3000 USDC to the Safe");
     await warp(mirror, 2 * DAY + 1, "past the strategy deadline");
@@ -63,11 +67,11 @@ export async function main(): Promise<void> {
     step("D ragequits all shares");
     const exit = await ragequit(mirror, "D");
     const dEnd = await usdcOf(mirror, mirror.actors.D.account.address);
-    logLine(LOG, `   D USDC ${fmtS(dStart)} -> ${fmtS(dEnd)}: profit ${fmtS(dEnd - dStart)} USDC on a 50 USDC deposit; F/A/B/C lost ${fmtS(exit.paid - 50n * SETTLEMENT_UNIT)} USDC of their 3050`);
-    assert(exit.paid === 1_550n * SETTLEMENT_UNIT, "D was paid 1550 USDC (half of the 3100 USDC Safe)");
+    logLine(LOG, `   D USDC ${fmtS(dStart)} -> ${fmtS(dEnd)}: net ${fmtS(dEnd - dStart)} USDC on a 50 USDC deposit; F/A/B/C keep their 3050`);
+    assert(exit.paid === 50n * SETTLEMENT_UNIT && dEnd === dStart, "D was paid exactly its 50 USDC back (50 of 3100 shares x 3100 USDC): no round-trip profit");
     passed = true;
   } finally {
-    verdict("NAV-01 hole 1: instance USDC invisible to deposit NAV (finding demonstrated)", passed);
+    verdict("NAV-01 hole 1 closed: instance USDC counted by the TreasuryLedger (phase 4/5; fixed)", passed);
     await shutdown(mirror);
   }
 }

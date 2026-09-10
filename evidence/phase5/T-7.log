@@ -1,0 +1,36 @@
+# T-7 — phase 5 stage A, key output lines of evidence/phase5/run-project-config-edges.log (full run); docs/SECURITY_AUDIT.md rows T-7 (fixed), T-8 / T-9 (documented)
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: T-7: Project P1: tranche 0 = 300 USDC by date (due day 2), tranche 1 = 200 USDC by verifiers B, C; deadline day 3; voted and started
+   ok: P1 funded (500) and Running
+== step 5: T-7: nobody calls release(0) on day 2; the deadline passes; release(0) and confirm(1) revert DeadlinePassed, only end() applies
+   at deadline + 1: release(0) by the operator reverts; confirm(1) by a verifier reverts; end() by anyone succeeds
+   holds [T-7]: after the deadline exactly one of {pay the operator, return to the Safe} is possible for a due tranche (end() only)
+   ok: release(0) after the deadline reverts DeadlinePassed (reverted with DeadlinePassed)
+   ok: confirm(1) after the deadline reverts DeadlinePassed (reverted with DeadlinePassed)
+   end(): 500 USDC (both unreleased tranches) back to the Safe; operator A received 0 USDC after the deadline; Complete
+   holds [T-7]: no tranche is paid after the project deadline (paid 0 USDC; 500 USDC returned)
+== step 6: T-7: a Project whose deadline has already come cannot start (the funding multicall fails atomically, nothing moves)
+   holds [T-7]: a Project started after its deadline reverts DeadlinePassed inside start(): actionFailed, the Safe keeps the budget
+== step 7: T-8: a Pending Project cannot be amended by the Safe (eth_call from the Safe): Overcommitted(scheduled, held = 0)
+   Safe -> amend(Pending P2 @ 0xe9ada2134a54Cc9f6dd07B852Ef6AD9c310B5a0E) : Overcommitted
+   holds [T-8]: Project amend while Pending reverts Overcommitted (a Pending instance holds 0): documented in TEMPLATES.md (Project amend: Running); observed Overcommitted
+== step 8: T-9a: Config with gracePeriod 0: Baal keeps the old value, start() reverts NotApplied, the whole action fails; nothing applied
+   baalGas: the action fails at every gas limit (meant to fail?); using the fallback 2000000
+   holds [T-9]: grace 0 -> actionFailed=true, gracePeriod still 21600 (documented; holds)
+== step 9: T-9b: Config with quorumPercent 101 (Baal only checks minRetention <= 100): A and B vote YES; it applies
+   quorumPercent now 101; Config instance Complete
+   holds [T-9]: Baal accepts a quorum above 100% (applied quorumPercent = 101): no on-chain cap by ruling; disclosed in PARAMETERS and flagged by the relay's /me
+== step 10: T-9b: a Payment (10 USDC to O) with 100% of shares voting YES is processed as not passed; a repair Config (quorum 0) with 100% YES fails the same way
+   payment: yes 3050 of 3050 shares (100%), passed=false, state Processed, O got 10000 USDC
+   holds [T-9]: with quorum 101% a proposal approved by 100% of shares is processed as not passed (yes*100 < 101*supply for every vote): terminal for collective action, documented
+   holds [T-9]: a unanimous repair proposal cannot pass either (passed=false; quorumPercent still 101): the documented terminal shape; exit is the remedy
+== step 11: T-9b: exit still works: C ragequits 1000 shares and is paid pro-rata (the constitution's remedy survives the terminal config)
+   holds [T-9]: C exited with 1000 USDC (expected pro-rata 1000): exit protects every member; only collective action is dead
+   ok: C address present
+=== AUDIT TEST project-config-edges: ALL INVARIANTS HOLD ===
+EXIT 0

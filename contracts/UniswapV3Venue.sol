@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {TickMath} from "./TickMath.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20Minimal, IERC20Metadata} from "./Interfaces.sol";
@@ -10,7 +11,14 @@ interface IV3Factory {
     function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address);
 }
 interface IV3Pool {
-    function slot0() external view returns (uint160, int24, uint16, uint16, uint16, uint8, bool);
+    function observe(uint32[] calldata secondsAgos) external view returns (int56[] memory, uint160[] memory);
+    function slot0() external view returns (
+        uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality,
+        uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked
+    );
+    function observations(uint256 index) external view returns (
+        uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, bool initialized
+    );
 }
 interface IV3Router {
     struct ExactInputSingleParams {
@@ -40,11 +48,18 @@ interface IV3Quoter {
         external returns (uint256, uint160, uint32, uint256);
 }
 
-/// @notice Stateless single-pool venue dependency. No owner, administrator or mutable configuration.
-/// @dev Holdings belong to the calling Strategy, not this venue. QuoterV2 and execution occur in
-/// one transaction; the voted tolerance bounds execution against that quote, not against an oracle
-/// or an earlier block. price() is the current slot0 spot price, not a manipulation-resistant oracle.
+/// @notice Stateless single-pool Strategy venue on Uniswap v3 (phase 4 ruling "Hole 2"). No owner,
+/// administrator or mutable configuration; holdings belong to the calling Strategy.
+/// @dev `price()` is the pool's own 30-minute arithmetic-mean tick (`observe`), never `slot0`. Every
+/// swap must return at least the TWAP-implied output x (10_000 - slippageBps) / 10_000 and at least the
+/// same-transaction QuoterV2 quote discounted the same way, so a same-block spot move (flash swap,
+/// sandwich) makes the swap revert instead of filling at the printed price. Thin pools therefore refuse
+/// large runs; `maxPerRun` is the voted chunk size. The constructor refuses a pool whose stored
+/// observation history does not already cover the window. No asset valuation is used for deposits.
 contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
+    /// @notice Fixed TWAP window in seconds (docs/PARAMETERS.md "Phase 4 venue pricing", IMMUTABLE).
+    uint32 public constant TWAP_WINDOW = 30 minutes;
+
     address public immutable safe;
     IERC20Minimal public immutable settlement;
     IERC20Minimal public immutable asset;
@@ -57,14 +72,28 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
     uint8 public immutable settlementDecimals;
 
     error InvalidDependency();
+    error WindowUnavailable(uint16 observationCardinality, uint32 oldestObservationAge);
     error InvalidAmount();
     error BadSlippage();
     error TransferFailed();
     error InexactTransfer();
     error ResidualHoldings();
+    error TwapBoundExceeded(uint256 output, uint256 minimum);
 
     event Swapped(address indexed strategy, address indexed tokenIn, uint256 amountIn, uint256 quoted, uint256 minimum, uint256 amountOut);
 
+    /// @notice Bind the venue to one Safe, one pair, one fee tier and the published router / quoter / factory.
+    /// @dev Reverts `InvalidDependency` on a zero Safe, an identical pair, a code-less dependency, a router or
+    /// quoter that does not report `factory_`, or a pair/fee with no pool. Reverts `WindowUnavailable` when the
+    /// pool's oldest stored observation is younger than `TWAP_WINDOW` (its history cannot serve the window), and
+    /// bubbles the pool's own `OLD` revert if `observe(TWAP_WINDOW)` still fails.
+    /// @param safe_ The treasury Safe (immutable sweep sink).
+    /// @param settlement_ The settlement ERC-20 (USDC).
+    /// @param asset_ The traded ERC-20 (e.g. WETH).
+    /// @param router_ Uniswap SwapRouter02.
+    /// @param quoter_ Uniswap QuoterV2.
+    /// @param factory_ Uniswap v3 factory.
+    /// @param fee_ Pool fee tier (e.g. 500 = 0.05%).
     constructor(address safe_, address settlement_, address asset_, address router_, address quoter_, address factory_, uint24 fee_) {
         if (safe_ == address(0) || settlement_ == asset_ || settlement_.code.length == 0 || asset_.code.length == 0 ||
             router_.code.length == 0 || quoter_.code.length == 0 || factory_.code.length == 0) revert InvalidDependency();
@@ -82,11 +111,44 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
         // Read metadata through the token address (USDC is a proxy).
         settlementDecimals = IERC20Metadata(settlement_).decimals();
         assetUnit = 10 ** uint256(IERC20Metadata(asset_).decimals());
+        _requireWindow(pool_);
+        // The pool itself must already serve the fixed window (reverts "OLD" otherwise).
+        _meanTick();
     }
 
-    /// @notice Settlement base units per whole asset token, for Strategy's spot-value rule.
-    function price() external view returns (uint256) {
-        (uint160 sqrtPriceX96,,,,,,) = IV3Pool(pool).slot0();
+    /// @dev Refuse a pool whose stored observation history is shorter than the window. The oldest stored
+    /// observation is the slot after the current index (or slot 0 while the ring is not yet full).
+    /// @param pool_ The pool under inspection.
+    function _requireWindow(address pool_) private view {
+        (,, uint16 index, uint16 cardinality,,,) = IV3Pool(pool_).slot0();
+        if (cardinality == 0) revert WindowUnavailable(0, 0);
+        (uint32 oldest,,, bool initialized) = IV3Pool(pool_).observations((uint256(index) + 1) % cardinality);
+        if (!initialized) (oldest,,,) = IV3Pool(pool_).observations(0);
+        uint32 age = uint32(block.timestamp) - oldest;
+        if (age < TWAP_WINDOW) revert WindowUnavailable(cardinality, age);
+    }
+
+    /// @dev Arithmetic-mean tick of the pool over the last `TWAP_WINDOW` seconds.
+    /// @return tick The mean tick, rounded toward negative infinity like Uniswap's OracleLibrary.
+    function _meanTick() private view returns (int24 tick) {
+        uint32[] memory secondsAgos = new uint32[](2);
+        secondsAgos[0] = TWAP_WINDOW;
+        (int56[] memory cumulatives,) = IV3Pool(pool).observe(secondsAgos);
+        int56 delta;
+        // V3 tick cumulatives intentionally wrap int56.
+        unchecked { delta = cumulatives[1] - cumulatives[0]; }
+        int56 window = int56(uint56(TWAP_WINDOW));
+        tick = int24(delta / window);
+        // Solidity rounds toward zero; an arithmetic mean tick rounds toward negative infinity.
+        if (delta < 0 && delta % window != 0) tick--;
+    }
+
+    /// @notice 30-minute TWAP in settlement base units per whole asset token (`assetUnit`).
+    /// @dev Converts the mean tick to sqrtPriceX96 and squares it; the second branch avoids overflow for
+    /// sqrt prices above uint128 (exotic pairs only).
+    /// @return Settlement base units per `assetUnit` asset units.
+    function price() public view returns (uint256) {
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_meanTick());
         if (sqrtPriceX96 <= type(uint128).max) {
             uint256 ratioX192 = uint256(sqrtPriceX96) * sqrtPriceX96;
             return address(asset) < address(settlement)
@@ -99,16 +161,24 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
             : Math.mulDiv(1 << 128, assetUnit, ratioX128);
     }
 
+    /// @notice Swap `amount` settlement units (pre-approved by the caller) into the asset, delivered to the caller.
+    /// @param amount Settlement base units to spend.
+    /// @param slippageBps Voted tolerance (0..10_000) applied to the TWAP-implied output and to the quote.
+    /// @return Asset base units received by the caller.
     function buy(uint256 amount, uint256 slippageBps) external nonReentrant returns (uint256) {
         return _swap(settlement, asset, amount, slippageBps);
     }
 
+    /// @notice Swap `amount` asset units (pre-approved by the caller) into settlement, delivered to the caller.
+    /// @param amount Asset base units to sell.
+    /// @param slippageBps Voted tolerance (0..10_000) applied to the TWAP-implied output and to the quote.
+    /// @return Settlement base units received by the caller.
     function sell(uint256 amount, uint256 slippageBps) external nonReentrant returns (uint256) {
         return _swap(asset, settlement, amount, slippageBps);
     }
 
     /// @notice Anyone may return unsolicited pair-token dust to the immutable treasury.
-    /// The caller can neither choose a recipient nor touch holdings in a Strategy instance.
+    /// @dev The caller can neither choose a recipient nor touch holdings in a Strategy instance.
     function sweep() external nonReentrant {
         uint256 settlementHeld = settlement.balanceOf(address(this));
         uint256 assetHeld = asset.balanceOf(address(this));
@@ -116,6 +186,15 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
         if (assetHeld != 0 && !asset.transfer(safe, assetHeld)) revert TransferFailed();
     }
 
+    /// @dev Exact-input swap bounded by the TWAP and by the same-transaction quote.
+    /// Reverts `InvalidAmount` (zero amount, zero quote or zero TWAP), `BadSlippage`, `ResidualHoldings` (the
+    /// venue must be empty before and after), `TwapBoundExceeded` (quote below the TWAP-implied minimum),
+    /// `InexactTransfer` (token deltas differ from the amounts) and `TransferFailed`.
+    /// @param tokenIn Token pulled from the caller.
+    /// @param tokenOut Token delivered to the caller.
+    /// @param amount Exact input in `tokenIn` base units.
+    /// @param slippageBps Voted tolerance in basis points.
+    /// @return out `tokenOut` base units delivered to the caller.
     function _swap(IERC20Minimal tokenIn, IERC20Minimal tokenOut, uint256 amount, uint256 slippageBps) private returns (uint256 out) {
         if (amount == 0) revert InvalidAmount();
         if (slippageBps > 10_000) revert BadSlippage();
@@ -123,7 +202,14 @@ contract UniswapV3Venue is IStrategyVenue, ReentrancyGuard {
         if (tokenIn.balanceOf(address(this)) != 0 || tokenOut.balanceOf(address(this)) != 0) revert ResidualHoldings();
         (uint256 quoted,,,) = quoter.quoteExactInputSingle(IV3Quoter.QuoteExactInputSingleParams(address(tokenIn), address(tokenOut), amount, fee, 0));
         if (quoted == 0) revert InvalidAmount();
-        uint256 minimum = Math.mulDiv(quoted, 10_000 - slippageBps, 10_000);
+        uint256 twapPrice = price();
+        if (twapPrice == 0) revert InvalidAmount();
+        uint256 implied = address(tokenIn) == address(settlement)
+            ? Math.mulDiv(amount, assetUnit, twapPrice)
+            : Math.mulDiv(amount, twapPrice, assetUnit);
+        uint256 twapMinimum = Math.mulDiv(implied, 10_000 - slippageBps, 10_000);
+        if (quoted < twapMinimum) revert TwapBoundExceeded(quoted, twapMinimum);
+        uint256 minimum = Math.max(twapMinimum, Math.mulDiv(quoted, 10_000 - slippageBps, 10_000));
         uint256 inputBefore = tokenIn.balanceOf(msg.sender);
         uint256 outputBefore = tokenOut.balanceOf(msg.sender);
         if (!tokenIn.transferFrom(msg.sender, address(this), amount)) revert TransferFailed();

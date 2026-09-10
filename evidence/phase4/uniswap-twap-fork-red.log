@@ -1,0 +1,45 @@
+
+> zero-one-dao@0.1.0 scenario:K
+> tsx scenarios/K-uniswap-v3-fork.ts
+
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 loopback=http://127.0.0.1:11545
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x8E37ed86a27eBBA9937C5888E7EC2Bda21f290E4 tx=0xd7caa85cd981221eeaa8e127b35d3e853442cbc7db91111bf6c274e93d203a6a
+tx deploy singleton:Baal 0xc46cef489e2a9cf0568526b06b5fc60da8ff0057787995ffdb5a50620659e43b
+tx deploy singleton:ModuleProxyFactory 0x6ffbd0be5456f89a1c1729d3b647e0dc563c124b1345898674eb6910628be1e9
+tx deploy singleton:GnosisSafe 0x548d6d4d586e06f24509efaa98c8f5211b4524769e1db87b2e7bd8411393bdbb
+tx deploy singleton:GnosisSafeProxyFactory 0x925630b90ae063bc10d16095ac9f6071ccb0459295e28aa4798de10fd70a3886
+tx deploy singleton:MultiSend 0xc5acd423932a6b540cd1d5a227de13b6d14596b421019b4b1ee55461a35f7ee7
+tx deploy SafeProxy 0xf867b1b597e55cc23d7930e4ad2f97182a3c1b46fcc540c934f0c1ce97c182e9
+tx deploy BaalProxy 0xca71476d3fc4ae5e6a9cb4c419209f96dea5d1ba6e37f1ca95c46c49da8c2b63
+tx deploy NavShareToken 0x83061b14aa770dff3a1582cd5426f659bbb1d8c62989cf420d634e54db35c06c
+tx deploy LootToken 0xa5a71eca1596ef1705fd8ed192539d4ecf066771d7b90d62a7be3d4245206ad4
+tx deploy DepositShaman 0xf4b6970ca1b98e801dcdf6b1ff1341453ee3aa835bfbaaf2b74d5d61d3682f4f
+tx deploy WorkManager 0xa0c637669a79956b25a47043e26068c00e53bba935f6235efb3a264334d62f1b
+tx deploy PaymentDeployer 0x6d0ee5440ac58efdba71b76977bf309ff09f52fb90f8358167a9afffdc3ca4d8
+tx deploy StrategyDeployer 0x75c534a88c57c5e40391cefebdde52624440d725d41479e2c6353fcc3eeffe95
+tx deploy ProjectDeployer 0xa382fbc18fb959f462e51cb1f7c7a9a1ffb2cfdfd627d1a804c0968c3d9a9cae
+tx deploy ConfigDeployer 0x5b2d3c64cb5c00cc4572eed938b797a995dadc04a91d22ade12ccd0be7327f63
+tx deploy TemplateFactory 0x4304911c57c2f7d0f6914c55ba58ce2fcebe98e210df8befc781e5f7a075cb02
+tx deploy ZeroOneIntentAccount 0x2d7e1ed63789bce13c838c48584716bc5e93d06e5f7c4b67c3effa147e50877f
+tx deploy Constitution 0x1d46255eb9426bff3fa9ae37433e1115721d71592799953969f148745e0eaf4b
+tx deploy Safe.setup 0xdd4548f9dbc44280db4c4e6653e558325abfbeb8729c7bd51252b344769110a7
+tx deploy Baal.setUp 0xc0d5e1dde50406101f404485cc630cd1faccfd7d16ffe840121588a536acb282
+tx genesis 0x2115e692421b1d21050738d5e3f93b420043a471ee49887cf0413b07e7570b15 shares=50000000000000000000
+   ok: K settlement is real Base USDC proxy
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Base router 0x2626664c2603336E57B271c5C0b26F421741e481 code bytes=24497
+   ok: published Base quoter 0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a code bytes=8273
+   ok: published Base factory 0x33128a8fC17869897dcE68Ed026d694621f6FDfD code bytes=24535
+   ok: router.factory selector responds with published factory
+   ok: router.WETH9 selector responds with Base WETH
+   ok: quoter.factory selector responds with published factory
+   ok: quoter.WETH9 selector responds with Base WETH
+   ok: factory feeAmountTickSpacing(500)=10
+   ok: USDC decimals read through proxy = 6
+Error: Deployment failed for UniswapV3Venue: 0x6d33846219046492305afe5bc83b5cdcaf4eaefee2ae0b41fdef99173690ffec
+    at deployArtifact (/Users/michaelmacmini/srv/zero-one-phase4/src/baal.ts:151:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async deployLocal (/Users/michaelmacmini/srv/zero-one-phase4/src/onchain.ts:58:22)
+    at async runUniswapFork (/Users/michaelmacmini/srv/zero-one-phase4/scenarios/K-uniswap-v3-fork.ts:74:17)
+    at async main (/Users/michaelmacmini/srv/zero-one-phase4/scenarios/K-uniswap-v3-fork.ts:138:5)

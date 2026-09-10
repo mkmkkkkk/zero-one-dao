@@ -13,6 +13,7 @@
 import {
   decodeAbiParameters,
   decodeEventLog,
+  decodeFunctionResult,
   encodeAbiParameters,
   encodeFunctionData,
   getAddress,
@@ -58,7 +59,7 @@ export interface StrategyRule {
   deadline: bigint;
   takeProfitBps: bigint;
   stopLossBps: bigint;
-  /** Quote-to-execution tolerance; omitted mirror rules use exact output (0 bps). */
+  /** TWAP and quote execution tolerance; omitted mirror rules use exact output (0 bps). */
   slippageBps?: bigint;
 }
 
@@ -322,7 +323,9 @@ function transferCall(dao: DaoAddresses, to: Address, amount: bigint): PackedCal
 }
 
 function instanceCall(instance: Address, functionName: string, args: readonly unknown[] = []): PackedCall {
-  return { to: instance, data: encodeFunctionData({ abi: proposalAbi(), functionName, args }) };
+  // unwind() is Strategy-only (phase 5 ruling 4b); everything else is the common IProposalContract surface.
+  const abi = functionName === "unwind" ? loadLocalArtifact("StrategyProposal").abi : proposalAbi();
+  return { to: instance, data: encodeFunctionData({ abi, functionName, args }) };
 }
 
 /**
@@ -368,6 +371,16 @@ export function amendCalls(instance: Address, params: Hex): PackedCall[] {
 }
 
 /** Multicall for a later proposal: `stop()` (everything returns to the Safe). */
+export function unwindCalls(instance: Address): PackedCall[] {
+  return [instanceCall(instance, "unwind")];
+}
+
+/** Multicall for a Safe stop() of a Strategy followed by unwind() in the same vote: sells the asset on the venue and closes the ledger entry. */
+export function stopAndUnwindCalls(instance: Address): PackedCall[] {
+  return [instanceCall(instance, "stop"), instanceCall(instance, "unwind")];
+}
+
+/** Multicall for a Safe stop(): everything back to the Safe (a Strategy keeps its asset and stays open in the ledger until unwind/migrate). */
 export function stopCalls(instance: Address): PackedCall[] {
   return [instanceCall(instance, "stop")];
 }
@@ -405,6 +418,56 @@ export function proposalDetails(instance: TemplateInstance, summary: string): st
   })}`;
 }
 
+/** Baal's submitProposal cap on baalGas (Zero One fork; the relay's sponsor maximum, under Base's EIP-7825 tx cap). */
+export const BAAL_GAS_CAP = 8_000_000n;
+/** baalGas used when the action cannot be simulated (an action meant to fail): still enough for any template start. */
+export const BAAL_GAS_FALLBACK = 2_000_000n;
+
+/**
+ * baalGas for a proposal (decision.md phase 5 ruling 1): the voted action's simulated need x 1.5, capped
+ * at BAAL_GAS_CAP. The action is simulated exactly as Baal runs it: the Safe executing the multisend
+ * library by delegatecall from its module (`execTransactionFromModuleReturnData`, eth_call with `from` =
+ * Baal, no signature needed). Because the Safe reports an inner failure as `success == false` instead of
+ * reverting, eth_estimateGas would return the gas at which the action runs OUT of gas; the need is
+ * therefore found by binary search over the eth_call gas limit for the smallest limit at which the
+ * action succeeds. A processProposal sent with less gas than the result then reverts "not enough gas"
+ * instead of recording a passed proposal as actionFailed.
+ *
+ * @param context Any connected client (the from address is Baal, not the signer).
+ * @param dao The deployed DAO.
+ * @param proposalData The exact multisend calldata the proposal will carry.
+ * @returns The baalGas to submit with (BAAL_GAS_FALLBACK when the action fails at every gas limit).
+ */
+export async function baalGasFor(context: WriteContext, dao: DaoAddresses, proposalData: Hex): Promise<bigint> {
+  const baalAbi = loadBaalArtifact("Baal").abi;
+  const safeAbi = loadBaalArtifact("GnosisSafe").abi;
+  const multisend = (await context.publicClient.readContract({ address: dao.baal, abi: baalAbi, functionName: "multisendLibrary" })) as Address;
+  const data = encodeFunctionData({ abi: safeAbi, functionName: "execTransactionFromModuleReturnData", args: [multisend, 0n, proposalData, 1] });
+  const succeeds = async (gas: bigint): Promise<boolean> => {
+    try {
+      const { data: out } = await context.publicClient.call({ account: dao.baal, to: dao.safe, data, gas });
+      if (out === undefined) return false;
+      const [ok] = decodeFunctionResult({ abi: safeAbi, functionName: "execTransactionFromModuleReturnData", data: out }) as [boolean, Hex];
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+  if (!(await succeeds(BAAL_GAS_CAP))) {
+    console.log(`   baalGas: the action fails at every gas limit (meant to fail?); using the fallback ${BAAL_GAS_FALLBACK}`);
+    return BAAL_GAS_FALLBACK;
+  }
+  let low = 30_000n;
+  let high = BAAL_GAS_CAP;
+  while (high - low > 4_000n) {
+    const mid = (low + high) / 2n;
+    if (await succeeds(mid)) high = mid;
+    else low = mid;
+  }
+  const need = (high * 3n) / 2n;
+  return need > BAAL_GAS_CAP ? BAAL_GAS_CAP : need;
+}
+
 export interface SubmittedProposal {
   instance: TemplateInstance;
   id: number;
@@ -434,7 +497,8 @@ export async function submitCalls(
   const baalAbi = loadBaalArtifact("Baal").abi;
   const data = encodeProposalData(calls);
   const before = (await proposer.publicClient.readContract({ address: dao.baal, abi: baalAbi, functionName: "proposalCount" })) as number | bigint;
-  const simulation = await simulateSettled<{ request: Record<string, unknown> }>(proposer, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [data, expiration, 0n, details] });
+  const baalGas = await baalGasFor(proposer, dao, data);
+  const simulation = await simulateSettled<{ request: Record<string, unknown> }>(proposer, { address: dao.baal, abi: baalAbi, functionName: "submitProposal", args: [data, expiration, baalGas, details] });
   const { hash, receipt } = await writeAndWait(proposer, simulation.request);
   // The id comes from the receipt's SubmitProposal event (a lagging node could still report the old count).
   let id: number | undefined;

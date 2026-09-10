@@ -14,3 +14,27 @@
    sleeping F: 50 shares worth 50 -> 12.588851 USDC (74.82% lost)
    sleeping A: 1000 shares worth 1000 -> 251.777029 USDC (74.82% lost)
    attacker cost: gas + 623.000001 USDC inside one transaction (flash-loanable); the payment repays it
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+   #1: yes 1000 no 0; supply at votingStarts 4050 shares; 34% = 1377 may exit
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   exitedSince(#1) = 2000 of 4050 shares at votingStarts (49.38% > 34%)
+   one tx 0x9cfbed125989d2d1fa71aafa85d3a6f22a0a80cd6a4ad1d2239ea23c3b883591: processed=true passed=false actionFailed=false; Safe 2050 -> 2673.000001 USDC; M USDC 1000 -> 376.999999 (net -623.000001; holds 1623.000001 shares)
+   sleeping F: 50 shares worth 50 -> 50 USDC
+   sleeping A: 1000 shares worth 1000 -> 1000 USDC
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+   #1: yes 1000 no 0; supply at votingStarts 4050 shares; 34% = 1377 may exit
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   exitedSince(#1) = 2000 of 4050 shares at votingStarts (49.38% > 34%)
+   one tx 0x7e8a1aaa0c677be43cd6de82c33c2ea1c6d81932bdc3d9d307771560ff42710c: processed=true passed=false actionFailed=false; Safe 2050 -> 2673.000001 USDC; M USDC 1000 -> 376.999999 (net -623.000001; holds 1623.000001 shares)
+   sleeping F: 50 shares worth 50 -> 50 USDC
+   sleeping A: 1000 shares worth 1000 -> 1000 USDC
+   M shares 1000 of 4050; Safe 4050 USDC; M USDC 1000
+   #1: yes 1000 no 0; supply at votingStarts 4050 shares; 34% = 1377 may exit
+   supply 2050 < 2673 (66% of HWM): the proposal should now fail; Safe 2050 USDC
+   control: passed=false actionFailed=false Safe 2050 M USDC 1000
+   exitedSince(#1) = 2000 of 4050 shares at votingStarts (49.38% > 34%)
+   one tx 0xe00dda29f7aaa5d7437c87a2cf6fe752497e1f88b0f2c71ed603194db105f271: processed=true passed=false actionFailed=false; Safe 2050 -> 2673.000001 USDC; M USDC 1000 -> 376.999999 (net -623.000001; holds 1623.000001 shares)
+   sleeping F: 50 shares worth 50 -> 50 USDC
+   sleeping A: 1000 shares worth 1000 -> 1000 USDC

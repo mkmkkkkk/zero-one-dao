@@ -184,6 +184,13 @@ Threats found and the one-contract answer, kept deliberately small:
 
 User 2026-09-09: PARAMETERS.md lines 1-7 confirmed ("lgtm"); phase 4 rulings (ledger + TWAP) confirmed ("lgtm"). Mainnet proceeds after phase 4 is merged and proven; the 50 USDC genesis is the only user action.
 
+## 2026-09-09 phase 4 designQuestions — provisional implementation interpretations for Fable
+These are implementation interpretations, not new Fable rulings. The phase 4 rulings above remain the authority.
+1. Immutable factory/ledger binding: the TemplateFactory constructor creates its TreasuryLedger with this Safe, settlement and factory address. The factory supplies that ledger to template creation code and records the deployed instances. No bootstrap setter, registry administrator or deployment nonce prediction is needed. The ledger checks the factory record, not a caller's claimed Safe or asset.
+2. Lifecycle wording: the ruling says open/close are on onlySafe paths, while the accepted templates also complete through permissionless Strategy.run(), Project.end()/release() and verifier confirm(). Start, stop and migrate remain onlySafe. Completion from that already-voted template code also closes the recorded instance; removing those existing operational paths would contradict the requirement to preserve A–K. The ledger validates Running at open and terminal status at close. This interpretation of close authorization is explicitly provisional for Fable.
+3. Empty-treasury wording: the task says both "unchanged" and "when totalShares == 0". The existing contract's fallback is treasury == 0; a nonempty treasury with zero shares quotes zero and reverts ZeroShares. Preserve that behavior with depositTreasury replacing Safe-only treasury, including genesis preconditions, instead of silently reopening the previously documented zero-supply trap. Fable can clarify whether a different supply-zero fallback was intended.
+4. No-admin grep scope: existing NavShareToken/LootToken have permanently reverting pause/unpause compatibility methods required by Baal; TestToken mentions pause only in a comment. They are unchanged. The receipt reports their full-source matches honestly and verifies that new ledger/venue sources and all added Solidity lines contain no onlyOwner, Ownable or pause match; their ABIs expose no management setter.
+
 ## 2026-09-09 known unsolvable: off-chain revenue is an oracle problem (user + Fable, not scheduled)
 An executor funded by proposal can hide revenue that arrives off-chain (Stripe). No contract can see it; not built for.
 Mitigations that cost nothing in code: prefer Work (verifiable deliverable, verifier ≠ proposer) over funding ventures;
@@ -231,3 +238,329 @@ Principle kept: no caps on what may be proposed; fixes below are accounting/live
 Rejected: any lock or cooldown on deposits/exits; any on-chain cap on Config values; per-voter vote retraction on exit.
 Sequence: phase 4 (ledger + TWAP) finishes on branch phase4-ledger-twap → phase 5 implements 1-10 on the same branch with the
 audit's tests flipped green → clean-clone acceptance → Base fork rehearsal → mainnet.
+
+## 2026-09-09 phase 5 stage A designQuestions — provisional implementation interpretations for Fable
+These are implementation interpretations of the phase 5 rulings (DW worker, branch phase4-ledger-twap); the rulings remain the authority.
+1. Ruling 2, literal formula `burned(now) − burned(votingStarts)` does not close GOV-04: a flash deposit followed by a ragequit of the same shares is itself a burn above 34%, so the veto would survive. Implemented instead the rule the sentence means ("deposits move neither side"): exits = Σ over accounts of max(0, balance at votingStarts − balance now), computed exactly with per-account mint lots stamped by registration epoch (burns consume newest lots first) and a Fenwick tree over epochs on NavShareToken. Baal's diff stays a few lines (`registerProposal` at sponsorship, `exitedSince` at processing). t03 and t07 flip; Fable to confirm the accounting.
+2. Ruling 1, "simulated need × 1.5" on the two on-chain submit paths: WorkManager uses a constant (`ACTIVATION_BAAL_GAS` = 500,000; the activation action is fixed and needs < 100k). ZeroOneIntentAccount op 0 reads the baalGas from the intent's otherwise-unused `proposalId` field (the relay's simulation; stage C) and uses `DEFAULT_BAAL_GAS` = 2,000,000 when it is 0 (covers every measured template start × 1.5). The EIP-712 struct is unchanged so existing signers keep working.
+3. Ruling 4c, "the task's expiration": taken as the `expiration` argument of `submitTask` (already the Baal expiration; 0 = none). A task with expiration 0 stays a liability until confirmed or cancelled by vote — visible in the vote, no cap added. `expireTask()` (anyone) closes an expired Active task so the liability loop stays bounded.
+4. Ruling 10, W-2 claim timeout: `CLAIM_TIMEOUT` = 7 days, lapsing only a claim that delivered nothing (a delivered-but-unconfirmed claim is the verifiers' call; a garbage delivery still needs a cancel vote).
+5. Ruling 10, T-7: after the deadline `release()` and `confirm()` revert and `start()` refuses; a Date tranche dated at or after the deadline is therefore unpayable (amend before the deadline).
+6. Ruling 8, "proxy salts bound to the deployer address": implemented as `keccak256(deployer, salt, kind)` nonces. The vendored factories do not include msg.sender in the CREATE2 salt, so front-running the proxy creation remains possible and remains griefing-only (deployment aborts, nothing moves). T03(b) shows it, not as a finding.
+7. Ruling 4a: `TreasuryLedger.assets` (append-only registry) is kept as information only; `settled()` reads open instances alone.
+8. Audit rows in the flipped test files that the rulings accepted or rejected (W-3 proposer as worker; W-4 dead task id; T-8 amend-while-Pending; T-9 Config values above 100, rejected cap) are asserted as the documented behaviour so the files exit 0; no code was added for them.
+
+
+## 2026-09-10 phase 5 stage B designQuestions — TWAP venue + scenario K on a Base fork
+These are implementation interpretations of phase 5 ruling 5 (DW worker, branch phase4-ledger-twap); the rulings remain the authority. No contract changed in stage B: `UniswapV3Venue` already prices and bounds on the pool's own 30-minute `observe` TWAP, and the fork run confirms it.
+1. Ruling 5, "the spot venue never ships; scenario K on the fork is the fix": the oracle for audit rows T-4 and T-5 moved from the mirror onto the shipped venue. `evidence/audit/work-templates/strategy-price-reference.ts` now boots its own Base fork, deploys the venue on the real WETH/USDC 0.05% pool and asserts the invariants on the numbers scenario K's `proveSandwiches` reports from inside the attacker's transaction. Its MockDex section is kept as the printed record of what a spot reference does but carries no invariant, because MockDex (settable price, `contracts/MockDex.sol`) is mirror-only and never deployed — asserting a shipped-system invariant against a mock would assert nothing.
+2. Audit row T-6 (donation fires take-profit) is Low and in no ruling; asserted as the documented behaviour its own row states — the donation lands in the Safe, so the treasury does not lose and the donor pays; the cost is that the voted strategy never traded. Same treatment as stage A items W-3 / W-4 / T-8 / T-9.
+3. Fork determinism (test harness only, no contract effect): `src/baseFork.ts` pins Base block 51,000,000 (`BASE_FORK_BLOCK`, overridable by `FORK_BLOCK`, `latest` opts out) and `warmUniswapPool()` pre-reads the 1,547 ticks / tickBitmap / observations slots a 25% print crosses. Without both, a fork fetches cold storage from upstream one slot at a time (~0.5 s per round trip here) and the print simulation outlives every RPC timeout — codex's earlier red. `src/onchain.ts` raises the loopback JSON-RPC timeout to 300 s for the same reason.
+4. Gas on the fork: transactions other than the permissionless `run()` are sent with estimate × 1.5 capped below the block limit, because anvil returns the binary-search minimum and one sandwich burned 9,593,133 of 9,627,729 gas and reverted while the identical call replayed clean. `run()` keeps a fixed 2,000,000 so the scenario still proves a normal caller's budget suffices. `writeAndWait` now replays a reverted transaction as `eth_call` at the parent block and throws the decoded revert with gas used / gas supplied.
+5. Not built in stage B: audit row T-12's own suggested edges (warp 31 min, move spot 1%, assert `run()` and the deadline unwind revert on the bound). T-12 is Medium and argued, not in the must-fix list; what the fork does prove is the T-12(c) direction — a print inside the window cannot steer the TWAP, and the deadline unwind refuses rather than dumps. The T-12(a) liveness cost (with slippageBps 50, any spot/TWAP divergence above 0.5% refuses the run until a vote stops the strategy) remains a disclosure for stage C, not a code change.
+
+## 2026-09-10 phase 5 stage C designQuestions — relay, beacon and docs
+These are implementation interpretations of phase 5 rulings 6, 7, 9 and 10 (DW worker, branch phase4-ledger-twap); the rulings remain the authority. Nothing in `contracts/` changed in stage C.
+1. Ruling 9, "128-bit entropy floor on pass": the ruling gives the number, not the estimator. `relay/pass.ts` takes the minimum of a character model (length x log2 of the classes used, after collapsing a repeated character or a repeated short block) and, only when the pass IS a phrase (letters-only words, one case each, single ordinary separators), a word model of at most 12.9 bits per distinct word (the EFF list is 7776 words). The audit's own vector scores 51.7 bits and is refused; 32 random bytes as base64url score ~250, 32 hex characters 165, ten random words 129. The word model is gated on the phrase shape on purpose: applied to every pass it rejected roughly 1 in 1,700 genuinely random base64url passes (a letters-only chunk read as a dictionary word), and a false rejection pushes agents towards weaker passes. Not caught, because no dictionary is shipped: dictionary words concatenated without separators beyond ~28 characters ("correcthorsebatterystaplecorrect" = 150 bits). Recorded in PARAMETERS and RELAY.md.
+2. Ruling 6, "count approve/increaseAllowance as treasury effect": an allowance is not a transfer, so it is reported as its own number (`treasuryEffect.usdcApproved`) plus the sum (`usdcAtRisk`) rather than folded into `usdcOut`; the summary says the spender may pull it at any later time. `transferFrom` out of the Safe is counted as `usdcOut`. A delegatecall entry that carries transfer calldata is counted as `usdcOut` too, which over-counts on purpose (the code runs in the Safe's context, so its real effect is unbounded) and is flagged as a delegatecall.
+3. Ruling 6, "bind the instance panel to decoded calls": implemented by deriving the candidates from the calls themselves (the non-DAO addresses the multicall calls that answer `describe()`); the details JSON can only select among them, and a name no call touches becomes a flag. Consequence, deliberately kept: a proposal whose management call touches two instances (migrate) shows the first one it calls, and a proposal with no call into an instance shows no panel even when its details name one.
+4. Ruling 4c / 10, what `/me` publishes: `shareLiability` = `WorkManager.activeRewardShares()`, and `navUsdcPerShare` now divides deposit NAV by shares + that liability, so the published NAV per share is the price a deposit actually pays. Previously it divided by shares alone and drifted from `DepositShaman.quote()` as soon as a task was Active.
+5. Ruling 10, "a /me flag for Config proposals that cut voting+grace below the hourly poll cadence": implemented as `flags[]` per proposal and `warnings[]` per member, and extended to the terminal shapes the audit found (quorum > 100 = T-9b, sponsorThreshold >= supply = T-9c, votingPeriod overflowing uint32(now)+votingPeriod = GOV-07b, either period 0 = NotApplied). No on-chain cap was added (ruling 10 rejects it).
+6. Ruling 7, "answers ok only after broadcast": the hole was the dedupe map, which answered `{ok:true, replayed:true, hash}` from `db.requests` with no chain read, so an operator could seed it. A replay now reads the receipt for the recorded hash and answers from it; a row whose transaction is on no block is deleted and the intent is broadcast again (it then fails on its real reason, usually a spent nonce). `/pending.json` publishes the journal and the unfinished requests. What is NOT fixed, because no code can: an operator that simply never broadcasts. That is the README line, and it is why T0 is documented as a liveness trust.
+7. Ruling 9, "persist the counter before rejecting": done inside `rate()`, which also means `persist()` now runs on every rejected `/relay` request (one small atomic write). The bucket key remains the `cf-connecting-ip` header, so the relay must sit behind Cloudflare or answer only on loopback; that is a deployment constraint recorded in PARAMETERS and RELAY.md, not a code fix, and the flipped F1 probe asserts the bucket rotation as documented behaviour.
+8. Audit rows flipped in stage C: A5-08 and A5-09 (`evidence/audit/account-relay/relay-adversarial.test.ts` F1, F2). A5-07 (F4) is asserted as the documented custody trade-off, like stage A's W-3 / W-4 / T-8 / T-9. A5-10's provable half (the fabricated success) is asserted in `npm run e2e:relay` step 18; the unprovable half (an operator that drops intents) is the README disclosure.
+9. Docs: DESIGN §6c rewritten to the phase 5 rule (open instances alone pause deposits; a stopped Strategy keeps its asset and stays open; the deposit price counts the task liability) and kept at 8 lines. The beacon README is exactly 44 lines. The repo README is 44 lines and now carries the settlement line, the retention rule and the T0 line. Disclosures OPS-05, NAV-05, ECO-08, NAV-02, NAV-06, ECO-05, ECO-09, A5-13, A5-14, A5-07, T-12(a) and GOV-02 are one line each in PARAMETERS under "Disclosures".
+
+## 2026-09-10 phase 5 stage D — clean-clone acceptance (reviewer pass, DW worker; the rulings remain the authority)
+Method: `git clone` of the branch into a scratchpad temp dir, `npm ci`, then every gate re-run there and nothing trusted from
+the stage A-C reports. Receipt: `evidence/phase5/acceptance-rerun.log` (37 steps, all EXIT 0) with the full output of each step
+under `evidence/phase5/stage-d/`. Covered: typecheck, compile (47 artifacts), scenarios A-L, scenario K on a Base fork
+(`FORK_RPC=https://base.drpc.org`, pinned block 51,000,000), `npm run e2e:relay` (beacon rebuilt and revalidated, README 44
+lines), the 11 flipped audit tests, the 20 remaining audit tests, the no-admin grep, the Baal fork diff (24 lines), the two
+verbatim vendored files, and `git diff 10923ea..HEAD -- docs/CONSTITUTION.md CLAUDE.md` (empty).
+1. Red on the first clean-clone run, fixed in `src/devnet.ts` (harness, no contract effect): a fresh `npm ci` leaves no
+   `node_modules/.bin/anvil`, because `@foundry-rs/anvil` and `@foundry-rs/anvil-darwin-arm64` both declare the bin name
+   `anvil` and npm links neither on a collision. Every scenario died with `spawn .../node_modules/.bin/anvil ENOENT`. The
+   existing checkout only worked because an older `npm install` had left the shim behind. `anvilBinary()` now resolves the
+   executable itself (`ANVIL_BIN`, shim, platform package, wrapper fallback) and never consults `PATH`. Recorded in PARAMETERS.
+2. Six audit tests outside the flipped set were red on the branch; stages A-C never ran them. All six are tests asserting
+   pre-phase-4/5 behaviour or signatures, and all six were changed on the test side, with the findings preserved:
+   (a) `t11-same-tx-roundtrip` (NAV-04) predicted the mint with `amount x supply / SafeUSDC`. Phase 5 prices the mint on the
+   ledger (Safe + open instances, plus the task liability), so it now asks `DepositShaman.quote()`. The invariant is restated
+   honestly: with the whole treasury in the Safe the round trip nets 0/-1 as before, but while a 3,000 USDC budget is out it
+   nets -48.39 on 50 USDC and -1,176.84 on 2,000 USDC, because the burn leg is still pro-rata of the Safe alone. Deposit-then-
+   exit inside one transaction never profits; the ECO-08 / NAV-05 asymmetry is what it loses to.
+   (b) `factory-create2-onlysafe` (T-1) called `deployer.initCode(member, params)`; the phase 4 factory takes the ledger as a
+   third argument.
+   (c-e) `T06-capture-small-treasury` (ECO-01/02/03), `T07-config-shortening` (ECO-04) and `T11-exit-cost-deployed-capital`
+   (ECO-08) expressed "pay the attacker whatever the Safe holds at execution" with a delegatecall Drainer, which ruling 6's
+   MultiSendCallOnly now refuses (the action fails, the Safe keeps its USDC). The capture itself is untouched, so each test now
+   votes one call-only `USDC.approve(attacker, 2**128)` and pulls with `transferFrom` in a second transaction: same money, same
+   conclusions (W still takes 2,050 USDC of other members' deposits; A still drains 3,050 USDC 6 s after submitting under a
+   4 s / 1 s Config; C's exit still costs it 65.6%). The relay reports that allowance as `usdcApproved` / `usdcAtRisk` with a
+   flag — a disclosure, not a defence.
+   (f) `T08-spam-economics` (ECO-05) submitted at `baalGas = 20,000,000`, which ruling 1 now refuses. It spams at the 8,000,000
+   ceiling instead; clearing still needs a self-paid gas limit above the relay's 8,000,000 execute cap, and the point of the cap
+   holds: one Base block (16,777,216) now clears two such proposals, so the queue can never be permanently stuck.
+3. `T09-hidden-treasury-effect` (ECO-06 / OPS-07) was red for the right reason and is now a flipped test: (1) the approve drain
+   still shows `usdcOut = 0` but is reported as `usdcApproved` / `usdcAtRisk` with an `allowance:` flag and the pull still works
+   (finding retained as a disclosure); (2) the delegatecall entry is flagged `delegatecall:`, labelled `DELEGATECALL ...` in the
+   decoded calls, and refused on chain — passed = true, actionFailed = true, Safe unchanged at 3,050 USDC (ruling 6 / A3 proven
+   end to end for the first time); (3) the details JSON naming an untouched instance now gets no panel and a `details:` flag
+   (A5-11). The reorg step is unchanged.
+4. Rulings the code still does not honour verbatim (all previously recorded, re-verified here, none newly introduced): ruling 2's
+   literal `burned(now) - burned(votingStarts)` formula (stage A item 1, exits are counted per account instead, at ~709k gas per
+   ragequit); ruling 1's "simulated x 1.5" on the two on-chain submit paths, which use constants (stage A item 2); ruling 8's
+   "salts bound to the deployer", which the vendored factories cannot enforce against a front-runner, leaving griefing-only
+   (stage A item 6); ruling 6's "count approve as treasury effect", reported as its own field rather than folded into `usdcOut`
+   (stage C item 2); ruling 9's 128-bit floor, whose estimator is this repo's and is dictionary-blind (stage C item 1); ruling 7,
+   whose "never broadcasts" half no code can close (stage C item 6). Everything else in rulings 1-10 is implemented and proven by
+   a green test named in the acceptance log.
+5. Not part of stage D and still open: the Base fork rehearsal of a whole deployment (`npm run e2e:base-fork`) and the mainnet
+   sequence. `evidence/phase4/beacon-validate.log` is still rewritten by `e2e:relay` (path and run id only); it is restored after
+   each run, and stage D's own beacon receipt is in `evidence/phase5/stage-d/e2e-relay.log`.
+
+## 2026-09-10 phase 5 stages B/C/D review (Fable) — accepted, with these rulings on the deviations
+- Stage B: TWAP venue proven on a pinned Base fork (block 51,000,000); a 25% same-block print moves neither price() nor
+  value() and the run refuses on the bound; the fresh-pool constructor refusal is proven. Accepted. The two reds were test
+  infrastructure (anvil's zero-margin gas estimate; cold fork storage), not contract defects: correct call.
+  T-12(a) liveness (a strategy with slippageBps 50 refuses runs while spot and TWAP diverge by more than 0.5%) is accepted
+  and disclosed; the bound is voted per strategy, so a volatile pair votes a wider one.
+- Stage C: accepted, including the two deliberate departures. `usdcApproved` / `usdcAtRisk` reported next to `usdcOut`
+  rather than folded into it is the better disclosure (an allowance is not a transfer, and it is flagged). The entropy
+  estimator being this repo's own and dictionary-blind is accepted: the floor exists to stop a sentence, not to certify a
+  pass. Ruling: `navUsdcPerShare` published by the relay divides by shares + active task liability, so the published number
+  is what a deposit actually pays; the exit number is separate and lower, and both are named in /me.
+- Stage D (reviewer): accepted and valued. It found that the clean clone never ran at all (npm ci links no anvil shim
+  because two packages declare the same bin) and that six audit tests outside the flipped set were red against the new
+  signatures. This is why a reviewer re-runs from a clean clone instead of trusting reports.
+  NAV-04 consequence recorded as a disclosure, not a defect: a deposit made while capital is deployed prices on the ledger
+  while an immediate exit pays pro-rata of the Safe alone, so a same-window round trip loses money. Deposit price >= exit
+  price is the property that keeps the round trip unprofitable; it is stated in the README and PARAMETERS.
+  Ruling 6's consequence stands: a passed proposal that grants an allowance is disclosed and flagged, never blocked. Any
+  member may propose anything; the remedy is NO or exit.
+- Open: the retention accounting (ruling 2's implementation) is under a second review by gpt-6-astra against the code, on
+  the decisive sequence "hold 100 at votingStarts, burn 40, mint 40". The design authority's answer: the per-account deficit
+  (0) is correct; permanent cohort accounting would give any 34% holder a free veto while it keeps its stake. If the code
+  reports 40, it is a defect and the deficit semantics win.
+
+## 2026-09-10 the agent entry point must not sit behind a bot challenge (Fable, found by a false alarm)
+A beacon watch reported the state feed unparseable. The service was healthy: the same URL answers 200 from the Mac mini's
+egress and 403 `x-vercel-mitigated: challenge` (Vercel Security Checkpoint HTML) from the main Mac's egress; api.vercel.com
+challenges that IP too, so this is IP reputation on our side, not a project setting. Consequence for the design, which is the
+part that matters: Zero One's whole promise is that one plain GET is the onboarding, and Vercel challenges plain GETs from
+datacenter and VPN addresses — exactly where agents live. Ruling: the canonical entry point moves to a host we control that
+never challenges a fetch (the mini behind its own cloudflared tunnel, which already serves the relay); the Vercel beacon
+stays as a mirror, and the README names the controlled origin. The Leviathan beacon watch is stopped: that project is
+abandoned, so its feed produces only noise (its treasury is on chain and unaffected).
+
+## 2026-09-10 phase 5 Base fork rehearsal review (Fable) — accepted; two bugs it caught, one parameter changed
+The rehearsal was not a formality. On the phase 5 code the shared deployment module could not finish: it built the
+DepositShaman verification arguments with three arguments after phase 5 gave the constructor a fourth, and it threw after
+the genesis deposit had already run, i.e. a mainnet attempt would have stranded a half-built deployment with 50 real USDC
+inside it. Second bug: the verification input listed only the top-level contracts, so the vendored Baal fork and
+MultiSendCallOnly were absent and could never have been verified on Basescan. Both fixed in code, both proven.
+Measurements accepted: deployment plus genesis 24,778,573 gas over 22 transactions (0.00124 ETH at 0.05 gwei), Baal fork
+runtime 19,497 bytes (5,079 under the limit), MultiSendCallOnly wired as the multisend library.
+Ruling on the deployer balance gate: the 0.005 ETH constant is replaced by a computed requirement, measured deployment gas
+times the live base fee times a factor of five, with a 0.02 ETH floor. A constant rots; the failure it guards against is a
+deployment that stops half-built on mainnet, so the gate must read the chain it is about to deploy to.
+Ruling on exit gas: accepted as measured. The first exit writes the retention tree and costs about 683k to 796k gas,
+later single-lot exits about 282k to 318k, against roughly 120k before phase 5. On Base that is a fraction of a cent, and
+the first member to exit paying for the structure everyone else uses is acceptable. If the retention review recommends a
+simpler equivalent design, this number is one of the reasons to take it.
+Accepted as written: the fork-only genesis-commit override (refused without a fork, must be a pushed ancestor, constitution
+bytes identical, production still pins its own pushed HEAD), and scenario K behind its own flag.
+
+## 2026-09-10 retention accounting is WRONG in the code (gpt-6-astra confirmed by running it) — ruling and redesign
+Executed counterexample: an account holds 100 shares when voting starts, exits 40, then deposits 40 again; the balance is
+100 and `exitedSince(1)` returns 40, so the proposal is judged failed. The implementation records a permanent cohort
+departure, not the current deficit. Every existing test passes because none of them covers the same account coming back.
+Ruling: the deficit is the rule. A member who left and returned has not voted with its feet, and permanent cohort
+accounting hands any holder of 34% a free veto over every proposal while it keeps its whole stake, which is the GOV-04 hole
+under another name. The quantity to compute for proposal p is exactly
+  deficit(p) = Σ over accounts of max(0, balance at votingStarts(p) − balance now)
+and the proposal fails when deficit(p) × 100 > (100 − minRetention) × supply at votingStarts(p).
+Constraint hierarchy for the mechanism, in this order: (1) exactly that quantity, no approximation; (2) leaving is always
+cheap, because the constitution promises exit at any time and proposal volume is not capped, so nobody may make exits
+expensive by spamming proposals; (3) no cap, cooldown or lock anywhere; (4) simplicity, then gas.
+Useful identity for the implementer, so nobody rediscovers it: with A = supply at votingStarts and S = supply now,
+  deficit(p) = (A − S) + growth(p),  growth(p) = Σ over accounts of max(0, balance now − balance at votingStarts(p)).
+A and S are O(1) reads, so the whole problem reduces to tracking growth, which only accounts that received shares inside the
+window can have. An account whose last mint predates the oldest open window contributes zero growth to every open proposal,
+so a plain exit can stay O(1) behind a single timestamp comparison. Mechanism choice goes to gpt-6-astra with this identity.
+
+## 2026-09-10 entry point designQuestions — the relay serves the beacon (DW worker, branch phase4-ledger-twap)
+These are implementation interpretations of the entry-point ruling above; the ruling remains the authority. No contract
+changed. New: `relay/static.ts`, `relay/e2e-entry-point.ts` (`npm run e2e:entry-point`), receipts in
+`evidence/phase5/entry-point/`.
+1. What the relay serves, and what it deliberately does not. The static table is exactly `/README.txt`, `/llms.txt`,
+   `/robots.txt`, `/snippet.js`, `/snippet.py`, `/CONSTITUTION.md`, `/index.html` and `/`, each with one fixed content
+   type, exact path match, no traversal, no redirect (`/` returns the dashboard body) and no request header read at all.
+   `state.json` and `proposals.json` are NOT in the table even though the build writes them: those two paths are live
+   answers, and a build-time snapshot silently taking them over is the worst failure available here (an agent would price
+   a deposit off an old NAV). The "dynamic first" rule is compiled, not documented: the router matches every dynamic
+   route before the table, and `assertNoDynamicCollision` throws at startup if a static path is ever added that a
+   dynamic route owns. Proved by overwriting the build's `state.json` with a sentinel and reading the live answer back.
+2. Files are read from disk per request rather than cached. They are a few KB, and the alternative (cache with mtime
+   checks) buys nothing at this traffic while making a rebuild require a restart. Consequence recorded in RELAY.md:
+   a rebuild is live immediately, so a published README can change under an agent that cached it.
+3. The dashboard gets a CSP that actually lets it work (`connect-src 'self'`, inline style and script only). The Vercel
+   mirror's `default-src 'none'` header blocks the dashboard's own `state.json` fetch; that is the mirror's existing
+   behaviour and was not touched, because the ruling says the Vercel build stays unchanged.
+4. Which README line paid for the mirror line. The README was exactly 44 lines with one blank separator between the
+   intent-format block and the T1/T0 block; the blank line was spent and the mirror sentence took its place next to the
+   origin line, so no content was dropped to stay at 44. The alternative considered and rejected was deleting the
+   share-checkpoint line (line 40), which is the one line that explains why a vote can be refused right after a
+   submission. The mirror is named in one line of `README.txt` and one line of `llms.txt`, both saying plainly that a
+   mirror can answer a plain GET with a challenge page.
+5. `--origin` now defaults to `CANONICAL_ORIGIN` (`https://relay-zero.mkyang.ai`, `ZERO_ONE_ORIGIN` overrides) instead of
+   `http://127.0.0.1:18751`. The mini therefore builds the canonical beacon with no flag, and the mirror is the same
+   builder with `--origin <mirror>`, which is what keeps the Vercel deployment working unchanged. The cost is that a
+   local build that forgets `--origin` now advertises the production hostname; the new validator catches it immediately,
+   because it fetches from the origin the README names.
+6. What the validator now proves, and the one thing it cannot. It fetches every URL the README advertises on the origin
+   under test (13 probes for this README, including a read-only `/relay?op=quote` and `/me/<a member>.json`) and requires
+   200, the expected content type, a parseable JSON body, no bot-mitigation header and no challenge page; the served
+   `README.txt` must be byte-identical to the build and the served `CONSTITUTION.md` bytes must hash to the on-chain
+   hash. A path the README advertises that the probe table does not cover is itself a failure, so the table cannot fall
+   behind the README. Negative control in the E2E: against a stub that answers Vercel's `403
+   x-vercel-mitigated: challenge` Security Checkpoint page, validate exits 1 naming the header. What it cannot prove is
+   that the origin answers the same way from an address that is not ours: the challenge is IP-reputation based, so a
+   validate run from the mini says nothing about what an agent on a datacenter address sees. That is the argument for
+   owning the origin rather than for a better probe.
+7. The constitution URL is fetched wherever it points, including the pinned GitHub raw URL of a real deployment, and its
+   bytes are hashed against the chain. Consequence accepted: a validate run fails if GitHub is unreachable from the
+   operator's network. The failure is loud and names the host, which is better than not checking the one document whose
+   authority is a hash (A5-14).
+8. Off-origin URLs the README names are listed in the summary (`offOriginUrls`) and not probed, the mirror included.
+   Validating the mirror is `--origin mirror`, and it is EXPECTED to fail from a datacenter or VPN address: that is the
+   finding restated as a test, not a regression. One real gap it exposes in the mirror was fixed in `beacon/vercel.json`:
+   `/pending.json` had no rewrite, so the mirror answered nothing on a path the README advertises. It now forwards to the
+   relay like the other four. Nothing was deployed; the file is ready for the next `vercel.ts` run.
+9. Not done here, because the orchestrator reviews first: nothing was deployed to the mini or to Vercel and no launchd
+   service was restarted. Going live needs `RELAY_BEACON_DIR` added to `ai.mkyang.zero-one-relay` and a canonical build
+   present in that directory; until then `https://relay-zero.mkyang.ai/README.txt` still 404s with the JSON reason,
+   which is the correct answer for a relay with no build.
+10. `npm run e2e:relay` needed one change to stay green: the relay it starts now runs with `RELAY_BEACON_DIR` at the
+   directory that run builds, and the final rebuild refreshes that directory too. Without it the validator correctly
+   refused, because the origin the README named served no README. It found the bug it exists to find on its first run.
+
+## 2026-09-10 entry point review (Fable) — accepted; going live is gated on the retention fix
+Accepted as built. The relay now serves the entry files itself on exact paths, reads no request header at all (so no
+user-agent sniffing and nothing to sniff for), refuses to start if a future edit makes a static path shadow a dynamic one,
+and answers a JSON 404 naming the rebuild command when no build is present. The canonical origin is the relay's own
+hostname and the Vercel build is the same builder with a mirror flag, so the mirror keeps working unchanged.
+The part that matters most is the validator: it derives the origin from the README's own text, fetches every path the README
+advertises, and fails if any answer is not a 200 of the expected type, if a bot-mitigation header appears, or if a path the
+README advertises has no probe. Its negative control fails against a captured challenge page. Today's outage passed every
+old check precisely because nothing tested the entry point the way an agent uses it.
+Two defects it found on its first run are the evidence that it works: the relay started by the end-to-end suite served no
+README at the origin its own README named, and the Vercel mirror had no route for a path the README advertises.
+Ruling on sequencing: the mini relay is not switched to this code yet. The branch is mid-redesign on the retention rule, and
+the live Sepolia relay must not run a half-finished branch. Order: retention mechanism lands, full acceptance re-runs, the
+branch merges, then the mini relay gets the beacon directory and the canonical build, then the mirror is rebuilt.
+Consequence accepted meanwhile: the canonical URL answers its JSON 404 and the mirror still challenges some addresses.
+Sepolia has no external members, so nothing is lost.
+Noted as true and not fixable by a probe: a validator run from our own address cannot tell what an agent on a datacenter
+address sees, because the challenge is IP reputation. That is an argument for owning the origin, which is what we did.
+
+## 2026-09-10 retention mechanism
+
+**Recommend (c), the append-only mint journal with lazy growth settlement at processing, because it computes the exact ruled deficit and keeps every exit independent of proposal count and mint history.**
+
+Authority: Fable's 2026-09-10 ruling supplied in the task: `deficit(p) = Σ_accounts max(0, balance_at_votingStarts(p) − balance_now)`; retention fails iff `deficit × 100 > (100 − minRetentionPercent) × supply_at_votingStarts`. This supersedes earlier permanent-cohort/burn interpretations in this file and the README/PARAMETERS. Same-account returns restore retention; another member's deposit cannot mask exits. Timestamp baselines are end-of-timestamp balances and supply, consistent with Baal's historical voting checkpoints, including multiple proposals/mints within one transaction.
+
+Implemented in `contracts/NavShareToken.sol`: register the start timestamp; record supply at each registration and balance change in a timestamp mapping; append every positive mint's recipient and timestamp; retain its latest journal index. At processing, binary-search the first strictly post-start mint, scan the suffix, count each recipient only at its latest index and compute `growth = Σ max(0, currentBalance − pastBalance)`, then return `A + growth − S`. A contributing account must have received a positive post-start mint, and all balance increases go through the journaled mint function, so none can be omitted. Mint and burn never scan proposals, accounts, journal history or lots. `ragequit(0)` leaves token checkpoints and balances unchanged. No cap, cooldown or exit lock is added; the old MAX_EPOCHS restriction and lots/tree are removed.
+
+Baal fork: preserve every ZERO ONE marker location and both existing sponsorship hooks; remove the obsolete registration return type and bound the accounting subcall by nonzero `prop.baalGas` (zero retains upstream caller-gas semantics). Gas exhaustion reverts atomically without recording a partial deficit or marking the proposal processed. **Accepted hierarchy tradeoff:** permissionless mint spam can exceed a fixed proposal budget, permanently grief processing and block later Ready proposals in Baal's ordered queue. This does not make exits expensive. No cap/lock is introduced to mask that processing-side risk. Historical `yesVotes` is unchanged: a YES voter leaving is counted in the exact deficit, and above the threshold that departure defeats the proposal (the existing GOV-02 interpretation), rather than inventing a new dynamic-majority rule.
+
+Rejected (a): the frozen epoch-lots/Fenwick implementation reports exited=40 after an account exits 40 and returns to balance 100, instead of zero. It also caps lifetime registrations, and its whole exit is O(consumed lots × tree height), not O(log n). FIFO/LIFO changes cannot restore balances after a completed burn; no exact repair preserving its aggregate-tree operations and logarithmic whole-exit cost was established. Rejected (b): eager per-account positive-growth contributions are exact and the last-mint shortcut protects old holders, but recipients of mints inside an open window still have O(open proposals) exits. Lifecycle cleanup also requires Baal process/cancel hooks (and retirement of naturally defeated windows for a production version). It fails the unconditional cheap-exit priority.
+
+Measured transaction gas, from the installed compiler and owned local Anvil; quiet=1 open proposal, storm=100. Deposit excludes approval. Partial exit burns 40 shares; after-mint exit returns the 40 newly minted shares; processing has one mint in the journal window and the same zero-value transfer action. Snapshot/revert isolates operations. Full exit interleaves 100 actual submissions and 100 deposits and then burns all 200 shares.
+
+| Mechanism | Open | Deposit | Ordinary exit | Exit after mint | Process | Full exit after 100 interleavings |
+|---|---:|---:|---:|---:|---:|---:|
+| (a) lots/Fenwick | 1 | 178451 | 739912 | 715918 | 143506 | — |
+| (a) lots/Fenwick | 100 | 178451 | 739912 | 671160 | 143506 | 4005196 |
+| (b) eager + shortcut | 1 | 231696 | 203005 | 212976 | 190383 | — |
+| (b) eager + shortcut | 100 | 5546808 | 203005 | 1720345 | 194891 | 2208777 |
+| (c) mint journal | 1 | 201269 | 194736 | 194736 | 163106 | — |
+| (c) mint journal | 100 | 201269 | 194736 | 194736 | 163106 | 140536 |
+
+Whole-token physical/noncomment nonblank lines: (a) 339/234, (b) 290/211, (c) 289/208. The production Baal delta changes three executable lines and four comment lines, including a one-line zero-exit return before treasury division. Specification, invariants, completeness proof, benchmark limitations and exact replay commands: `docs/RETENTION_MECHANISM.md`.
+
+Receipts: `evidence/phase5/retention-mechanism.log` and full runs in `evidence/phase5/retention/`; tests and frozen comparison implementations in `evidence/audit/governance-nav/`. The same new t16 counterexample is RED against the original runtime (`40 != 0`) and GREEN against the replacement (`0 == 0`). GOV-03 still processes as failed after another member deposits in the same transaction; GOV-04 still passes despite flash deposit/vote/exit; YES departure, overlapping windows, same-timestamp snapshots, zero exit, registration authorization and 36-step independent multi-account oracle pass. The new t17 empty-DAO zero-exit test is independently RED (division by zero) then GREEN after the Baal early return. A 100-mint/50,000-baalGas test confirms accounting exhaustion reverts without processing. Typecheck, compile, scenarios A–J/L and relay E2E pass. The initial local H seed-deposit revert is retained in `scenarios-red.log`; local scenario sends now leave 120,000 gas for checkpoint append-versus-overwrite variation when estimation and mining cross a second, and the complete local run is green.
+
+**Remaining acceptance: K BLOCKED, not PASS.** `npm run scenarios` only adds K when FORK_RPC is set. K requires the real Base fork at block 51,000,000; that block is absent from the local Anvil cache. With the no-network red line and no answer to the requested read-only-RPC clarification, no upstream access or K transaction was attempted. Thus A–L acceptance is not claimed complete. All performed transactions were on owned local Anvil. No public-network transaction, fetch, push, hook bypass, constitution change or CLAUDE.md change.
+
+## 2026-09-10 retention mechanism accepted (mint journal), and the one hazard it left open is now ruled
+Accepted: the append-only mint journal with growth settled at processing. The measured table decides it — deposit, exit and
+processing are constant whether one proposal is open or a hundred (about 201k, 195k and 163k), while the eager variant costs
+5.5M for a deposit during a storm and the old lots-and-tree costs 740k for an ordinary exit and computes the wrong number.
+The counterexample is red against the old runtime and green against the replacement. GOV-03 and GOV-04 stay closed. The
+report is honest about what it did not run, which is the right behaviour.
+The hazard it declined to mask, correctly, is now mine to close: minting is permissionless, so an attacker can put enough
+records inside a window that settling the growth exceeds the proposal's gas budget, and because Baal processes in
+sponsorship order that griefs every later proposal in the queue. That is the same shape as the capped-gas defect the audit
+found, which we ruled must never be possible. It cannot stand.
+Ruling: bound the work per transaction instead of capping anything. Settlement becomes incremental and permissionless —
+anyone may advance a cursor over the journal window in chunks, and processing requires the cursor to have reached the end.
+No single transaction ever scans an unbounded range, and no deadline is introduced, so a proposal cannot be lost by being
+too expensive to settle at one moment. Add append-time deduplication if it stays simple: an account already recorded inside
+the oldest open window need not be recorded again, which forces an attacker onto fresh addresses. The economics then run our
+way: each spam record costs the attacker a whole deposit while it costs a settler a few thousand gas.
+Exits and deposits must stay constant, which is the property that made this design win; settlement work moves to whoever
+wants the proposal processed. Permission granted explicitly for the blocked test: reading Base mainnet through a public RPC
+to run a local fork is allowed and is not a public-network transaction.
+
+## 2026-09-10 incremental settlement
+
+Implement Fable's ruling immediately above; it supersedes the earlier acceptance of permanent processing grief and the old K-blocked note. Keep exact live per-account deficits and constant-cost deposit/exit hooks; move arbitrary backlog work into permissionless, resumable transactions, with no new cap, cooldown, lock, minimum deposit or deadline.
+
+`NavShareToken.balanceJournal` records immutable before/after balance transitions for every positive mint **and burn**. Each proposal stores `{cursor,growth}` from registration. `settleRetention(id,maxRecords)` consumes at most the requested record count and telescopes each account's positive-growth delta against its end-of-votingStarts-timestamp balance. Burn transitions are necessary because a previously settled mint's growth can disappear before the next chunk; a mint-only frozen partial sum would be incorrect. Same-timestamp records after registration are consumed but are part of the baseline, not growth. New changes append a suffix; previously settled work is never restarted. Exits and deposits append one record and never visit proposals or history.
+
+`exitedSince` now requires the cursor to equal the **current** journal length before returning `A + growth − S`. Baal checks it before setting any proposal verdict, including failures for quorum/expiration. Its sole executable delta is relocating that call and removing the old per-proposal gas forwarding. All existing ZERO ONE markers, sponsorship hooks, action-gas protections and the zero-exit no-op remain. Processing an unsettled or partially settled window reverts atomically, marks nothing and executes nothing. A completed settlement is a no-op until another positive change arrives. Any caller can batch the final chunk with processing, so the expensive part does not have to fit into `baalGas` and a finite backlog cannot permanently block sponsorship order.
+
+Append-time per-account deduplication is omitted under “if it stays simple”: suppressing or mutating a record that one window has already consumed loses that window's subsequent growth change. Repairing all affected windows would make balance hooks depend on proposal count. The economic test deliberately uses one repeated account, with 0.000001 USDC per deposit, so its result assumes neither fresh addresses nor a deposit minimum. The USDC is recoverable principal, not a fee; local gas units do not imply a known public-chain USD cost.
+
+`src/retention.ts` supplies the explicit permissionless client, defaulting to 128 records per call (a client choice, not a protocol cap). Scenario processing and relay E2E preparation call it. The signed relay execute protocol is unchanged; callers settle before execution, and a new suffix safely refuses stale execution.
+
+Verification: `t18 --legacy` is RED against the frozen previous token because it permits unsettled processing; normal deployment is GREEN only after asserting atomic refusal, mutations between chunks, returned-member zero deficit, no-op completion and a real 5,000-deposit storm followed by both its proposal and its queue successor processing. t16 retains the independent 36-change/6-window oracle and the exit40-return40 counterexample. GOV-03 includes deposit + settle + process in one transaction; GOV-04 retains flash-deposit/vote/exit economics. `scripts/acceptance-retention.py` runs compile/typecheck, scenarios A–L including the warmed Base fork at block 51,000,000, both E2Es, deployment refusals, and all 34 maintained audit tests sequentially with full output and failure propagation.
+
+Completed continuation receipts: `d776548` finishes the storm and strengthens the between-chunk cursor/growth readback; `47ed12c` records independently summed writer/settler economics; `1454d5c` records the worktree's 40/40 acceptance; `48f13ad` records the fresh-clone rerun of `753b470`, also 40/40. The clone starts with empty tracked status, installs via `npm ci`, preserves the canonical origin and moves itself to Trash when finished. Its full output and independently checked receipt sums are committed, not inferred from the process exit code.
+
+Measured storm: 5,000 real deposit records, 40 settlement calls, 41,263,129 total settlement gas (8,252.6258 per record), successful processing and a successful queue successor. Between chunks, burns and the returning deposit advance cursor 4 to tail 8, consume all four pending records and produce growth 1e18 / deficit zero. Partial/unsettled processing changes no flags; a failed chunk preserves its saved progress; completion is a no-op until another change appends work.
+
+Economics: the first completed storm used 487,702,824 writer gas; the independent clone used 484,317,537 (96,863.5074 per record, 11.737295 times the settler's gas). Both contributed 0.005 USDC total, 0.000001 per record, as recoverable principal. In the clone, deposit was 245,235 gas and exit 249,636 gas at quiet / 2,500 / 5,000 records. The first run's exit was 249,624 at all three points; its address arguments contain one extra zero calldata byte, accounting for the 12-gas difference between deployments. Batched writer gas also varies with timestamp checkpoint boundaries. Public gas price, L1 data fees and USD cost remain unknown.
+
+Acceptance output from the independent clone:
+
+```text
+K: PASS
+=== RELAY E2E: PASS ===
+=== ENTRY POINT E2E: PASS ===
+ACCEPTANCE RESULT npm run test:deploy-refusals exit=0
+STORM records=5000 settle_calls=40 settle_total_gas=41263129 settle_gas_per_record=8252.6258 process_gas=147373 processed=true passed=true actionFailed=false
+ACCEPTANCE TOTAL jobs=40 green=40 red=0
+```
+
+All A-L scenarios ran; K and the price-reference audit used owned Base forks pinned at 51,000,000, with actual pool warming (1,627 reads in the final run). The 34 maintained audits include governance/NAV, economic, work-template and account/relay tests. Historical t15 is a tracked lotCount/epoch research prototype targeting removed interfaces; its deficit cases are superseded by t16, and its exclusion is explicit in the runner and logs.
+
+Failures were preserved and fixed in the test/devnet workflow: a cold-fork funding receipt wait timed out despite successful local mining; fork polling and replacement detection were adjusted and failed setup now cleans up its Anvil. The first clone used a local-directory origin and correctly hit the deployment origin gate; the clone workflow now retains the official origin without weakening that gate. The clone also exposed an unchecked T08 submit followed by `!voting`; the fixture now supplies timestamp-boundary gas headroom and verifies every receipt and proposal count. T08's unmeasured dollar-cost assertion was changed to unknown. Targeted reruns and the final fresh-clone suite are green. Contracts remain byte-for-byte unchanged from `75c9ac6` in this continuation.
+
+Specification and proof: `docs/RETENTION_MECHANISM.md`; economics and red/green evidence: `evidence/phase5/incremental/`; independent acceptance receipt: `evidence/phase5/acceptance-rerun-retention.log`, SHA-256 `3e0c8a6b2dd0b9ecd64663e895cc7945fb84df80a0b1714d96d6844670bf14f2`. Reproduce with `python3 scripts/acceptance-clean-retention.py` (authorized read-only fork RPC/proxy settings as documented). No public-chain transaction, push, credential/state commit, hook bypass or live-service change was performed.
+
+## 2026-09-11 incremental settlement accepted; phase 4 + 5 merged to main
+Verified from the committed clean-clone log, not from the report: 40 jobs green, including scenario K actually run on a Base
+fork, both end-to-end suites, the deployment refusals and 34 audit tests. The storm proof holds: with 5,000 records inside
+one window the deposit costs 245,235 gas and the exit 249,636, identical to a quiet chain and to the 2,500-record midpoint,
+and the window settles in bounded batches after which the proposal processes.
+The economics are the answer to the grief: a record costs its writer 96,863 gas and costs a settler 8,252, a ratio of 11.7
+to one in the defenders' favour, and the USDC the attacker parks is recoverable only by exiting, which is itself counted.
+Nothing can be stuck, because settlement is chunked and has no deadline; spam only makes someone pay to clear it, at a
+twelfth of what it cost to create.
+Merged to main. What ships is the code that earned this acceptance.
+Next, in order: redeploy Base Sepolia from the merge commit (the live testnet deployment predates phases 4 and 5, so its
+receipts describe code we do not ship), switch the mini relay to serve the canonical entry point, earn the testnet
+acceptance again on the real chain including two cold starts, and only then the mainnet sequence.

@@ -1,0 +1,37 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x58D03Ae8DE0a7B745222dbA9Db2622D1222201CE baal 0x608064778fD7Ecf3931DAFe6C78Cacb05bBEb6eA shares 0x348e68Dae66874572936e63b3deef9A74b14361E settlement 0xe2c9B446DBdA5f4ceeA6D03B27F6b50CDC5B3397
+          depositShaman 0x31f3FcA0ba53256aA2cB837355B1376fA626a653 workManager 0x2a9F5f063Fd2b8eABC35Aa252A0B46cecafa3B3d constitution 0x08872796B171B63c178002cCcFd4f73465376c2a
+          templateFactory 0xB1F6876565b8856d39E67BB64105c120B3482931 deployers 0x5B615D8ffC5406d40Fa6657945dB1B15FB3e3E39 0xE6160e26be55E9D30bdD8d8D5460a629d6CeE221 0x3D321830AE65e4f8817Ae3693502aC6b31dA3875 0x6De58A3EcC7F4c2e9f12878960c026cEA2d21147 intentAccount 0x58f47C117BC110c2608E76a9b1555D8d511448e5
+   F = 0xCcAa174CCdAadfE5F7016c4381EfCa830FE2bd6B  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x4238807e203a9AD7Bc7D25136e0Ae25A88118417  member agent A
+   B = 0x13176822931a98F1E7f66073999a39c419F2c65e  member agent B
+   C = 0xce9712Ae703b6A5845925Cc6961de0b452b597Eb  member agent C
+   D = 0x911fE9287A2F9D14545cC0d99663631B15397D16  depositor D (joins later)
+   O = 0xd72E567b0E523021F5D9A52719E591507EdD6d1A  operator O (mandate recipient)
+   W = 0x09C2a87415990AfA98e344E860C568F6714bABC1  worker W (task deliverer)
+   shaman 0x31f3FcA0ba53256aA2cB837355B1376fA626a653 permission 2 (DepositShaman)
+   shaman 0x2a9F5f063Fd2b8eABC35Aa252A0B46cecafa3B3d permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x5B615D8ffC5406d40Fa6657945dB1B15FB3e3E39
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xE6160e26be55E9D30bdD8d8D5460a629d6CeE221
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x3D321830AE65e4f8817Ae3693502aC6b31dA3875
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x6De58A3EcC7F4c2e9f12878960c026cEA2d21147
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+ASSERT empty-DAO ragequit(0): status=reverted gas=55048 hash=0xfeea0d453f040be3de7e7fa094ac2f45c83d5b877be76274f4c75bbddda269c3
+anvil stopped (http://127.0.0.1:11545)
+Error: zero exit must not divide by zero
+    at main (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t17-zero-empty.ts:12:34)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)

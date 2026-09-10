@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /**
  * Shared mirror harness for DESIGN.md §11 scenarios: boots one anvil, deploys Zero One, asserts
  * that DepositShaman and WorkManager are the only mint paths, seeds members through the design's
@@ -25,7 +26,7 @@ import { encodeProposalData, loadBaalArtifact, loadLocalAbi, loadLocalArtifact, 
 import { startDevnet, stopDevnet, type Devnet } from "../src/devnet.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
 import { connectDevnet, deployLocal, increaseTime, simulateSettled, type LocalChain } from "../src/onchain.js";
-import { describe, factoryAbi, submitTemplateProposal, TEMPLATE_NAMES, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
+import { baalGasFor, describe, factoryAbi, submitTemplateProposal, TEMPLATE_NAMES, type Description, type SubmittedProposal, type TemplateSpec } from "../src/proposals.js";
 import { constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, HOUR, INITIAL_GOVERNANCE, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 
 export { GENESIS_DEPOSIT, HOUR, SETTLEMENT_UNIT, UNIT };
@@ -439,7 +440,10 @@ async function write(context: WriteContext, request: { address: Address; abi: Ab
   const simulation = LIVE
     ? await simulateSettled<{ request: Record<string, unknown> }>(context, { ...call, ...(mirror ? { blockNumber: mirror.head } : {}) })
     : await context.publicClient.simulateContract({ ...call, account: context.account } as never);
-  const hash = await context.walletClient.writeContract({ ...simulation.request, ...(gas === undefined ? {} : { gas }), account: context.account, chain: context.chain } as never);
+  // Local Anvil can cross a second after estimation: both account and supply checkpoints then append
+  // instead of overwriting. Leave room for those storage writes; gasUsed remains the measured cost.
+  const sendGas = gas ?? (!LIVE ? await context.publicClient.estimateContractGas({ ...call, account: context.account } as never) + 120_000n : undefined);
+  const hash = await context.walletClient.writeContract({ ...simulation.request, ...(sendGas === undefined ? {} : { gas: sendGas }), account: context.account, chain: context.chain } as never);
   const receipt = await context.publicClient.waitForTransactionReceipt({ hash, timeout: 180_000 });
   if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
   if (mirror !== undefined) bump(mirror, receipt.blockNumber);
@@ -652,13 +656,14 @@ export interface Proposal {
   submit: Receipt;
 }
 
-/** Submit a Baal proposal (self-sponsored when the submitter holds >= sponsorThreshold). */
+/** Submit a Baal proposal (self-sponsored when the submitter holds >= sponsorThreshold) with baalGas = simulated need x 1.5 (src/proposals.ts baalGasFor). */
 export async function propose(mirror: Mirror, actor: ActorName, calls: readonly PackedCall[], details: string): Promise<Proposal> {
   const data = encodeProposalData(calls);
   const before = await read<number>(mirror, "baal", "proposalCount");
-  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 0n, details] }, mirror);
+  const baalGas = await baalGasFor(mirror.actors[actor], mirror.dao, data);
+  const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, baalGas, details] }, mirror);
   const id = Number(before) + 1;
-  printReceipt(`${actor} submitProposal #${id} "${details}"`, receipt);
+  printReceipt(`${actor} submitProposal #${id} "${details}" (baalGas ${baalGas})`, receipt);
   await warp(mirror, 1, "let votingStarts become past");
   console.log(`   proposal #${id} state = ${await stateOf(mirror, id)}`);
   return { id, data, submit: receipt };
@@ -732,6 +737,7 @@ export const PROCESS_GAS = 5_000_000n;
 
 /** Process (execute) a Ready proposal with an explicit gas limit; returns the resulting flags. */
 export async function processProposal(mirror: Mirror, actor: ActorName, proposal: Proposal): Promise<{ receipt: Receipt; info: ProposalInfo }> {
+  await settleRetention(mirror.actors[actor], mirror.dao.shares, proposal.id);
   const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [proposal.id, proposal.data], gas: PROCESS_GAS }, mirror);
   const info = await proposalInfo(mirror, proposal.id);
   printReceipt(`${actor} processProposal #${proposal.id} -> passed=${info.status.passed} actionFailed=${info.status.actionFailed} state=${await stateOf(mirror, proposal.id)}`, receipt);

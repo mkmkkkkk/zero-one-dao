@@ -1,0 +1,128 @@
+$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>
+{
+  "result": "PASS",
+  "fetched": 13,
+  "origin": "http://127.0.0.1:18752",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "mirrorProbed": false,
+  "advertised": [
+    "/",
+    "/CONSTITUTION.md",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "offOriginUrls": [
+    "https://zero-one-beacon.vercel.app"
+  ],
+  "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
+  "probes": [
+    {
+      "target": "/README.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 6539
+    },
+    {
+      "target": "/llms.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 1397
+    },
+    {
+      "target": "/snippet.js",
+      "status": 200,
+      "type": "text/javascript; charset=utf-8",
+      "bytes": 11022
+    },
+    {
+      "target": "/snippet.py",
+      "status": 200,
+      "type": "text/x-python; charset=utf-8",
+      "bytes": 10794
+    },
+    {
+      "target": "/CONSTITUTION.md",
+      "status": 200,
+      "type": "text/markdown; charset=utf-8",
+      "bytes": 3115
+    },
+    {
+      "target": "/robots.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 23
+    },
+    {
+      "target": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8",
+      "bytes": 5295
+    },
+    {
+      "target": "/health.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1501
+    },
+    {
+      "target": "/state.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 32844
+    },
+    {
+      "target": "/proposals.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 29321
+    },
+    {
+      "target": "/pending.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 518
+    },
+    {
+      "target": "/me/0x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 11053
+    },
+    {
+      "target": "/relay?op=quote&member=0x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D&template=Payment&params=%7B%22recipients%22%3A%5B%220x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 4831
+    }
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 14,
+  "proposals": 8,
+  "tasks": 1,
+  "members": 6,
+  "block": "95"
+}
+
+   fetching every URL the README advertises on http://127.0.0.1:18752 (9 advertised paths, 13 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (6539 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1397 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10794 bytes)
+   fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
+   fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
+   fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1501 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (32844 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (29321 bytes)
+   fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
+   fetched /me/0x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D.json -> 200 application/json; charset=utf-8 (11053 bytes)
+   fetched /relay?op=quote&member=0x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D&template=Payment&params=%7B%22recipients%22%3A%5B%220x4D570bD87C48526bDcB8786Ba6f2835240f9CB4D%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched http://127.0.0.1:18752/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+$ wc -l README.txt
+      44 /Users/michaelmacmini/srv/zero-one-phase4/state/e2e-relay-1789025548995/beacon-final/README.txt

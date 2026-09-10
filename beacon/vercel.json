@@ -16,7 +16,7 @@
       ]
     },
     {
-      "source": "/(relay|me/.*|health.json|state.json|proposals.json)",
+      "source": "/(relay|me/.*|health.json|state.json|proposals.json|pending.json)",
       "headers": [{ "key": "Cache-Control", "value": "no-store, private" }]
     }
   ],
@@ -25,6 +25,7 @@
     { "source": "/me/:path*", "destination": "https://relay-zero.mkyang.ai/me/:path*" },
     { "source": "/health.json", "destination": "https://relay-zero.mkyang.ai/health.json" },
     { "source": "/state.json", "destination": "https://relay-zero.mkyang.ai/state.json" },
-    { "source": "/proposals.json", "destination": "https://relay-zero.mkyang.ai/proposals.json" }
+    { "source": "/proposals.json", "destination": "https://relay-zero.mkyang.ai/proposals.json" },
+    { "source": "/pending.json", "destination": "https://relay-zero.mkyang.ai/pending.json" }
   ]
 }

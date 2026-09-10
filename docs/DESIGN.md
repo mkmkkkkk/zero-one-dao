@@ -31,13 +31,22 @@ A member that does not vote and does not leave is exposed to a passed proposal. 
 
 ## 6. Founder and capital
 - Founder grant: NONE. There is no founder stream, no founder allocation, no privileged issuance of any kind. The founder is a member like any other: shares come from depositing USDC at NAV or from work paid by vote. The founder's creation of the DAO is compensated by holding 100% at genesis and being diluted at NAV by everyone who joins later. Operating work (relay, verification, upkeep) is paid through ordinary task proposals that the members vote on.
-- Settlement asset: USDC on Base (6 decimals). Deposits: anyone may deposit USDC and receive shares = amount × totalShares / treasury when the treasury holds assets; when the treasury is empty, 1 share per 1 USDC. The genesis deposit is made before any founder claim, so the first depositor holds 100% of what exists. Exit is always at NAV. This is the user-visible path that must pass on the mirror: deposit → shares → the DAO votes to use part of it → the depositor ragequits and gets its pro-rata back.
+- Settlement asset: USDC on Base (6 decimals). Deposits: anyone may deposit USDC and receive shares = amount × totalShares / treasury when the treasury holds assets; when the treasury is empty, 1 share per 1 USDC. The genesis deposit is made before any founder claim, so the first depositor holds 100% of what exists. Exit is pro-rata of the Safe only (§6b–6c). This is the user-visible path that must pass on the mirror: deposit → shares → the DAO votes to use part of it → the depositor ragequits and gets its pro-rata back.
 - Genesis: the founder deposits 50 USDC (user's decision 2026-09-08) → 50 shares = 100% of supply. Nothing else is minted at genesis. Work-for-shares functions at any treasury size because rewards are in shares.
 
-## 6b. Capital, the whole of it (user 2026-09-08: a decision system, no tokenomics)
-- In: send USDC, get shares at NAV (1 share per USDC when empty). Anything else anyone wants (another asset, a different price, a grant) is an ordinary proposal that the members vote on.
-- Out: ragequit any time, pro-rata of what the treasury holds, same block.
-- That is all. No price lists, no pauses, no classes of shares, no special paths.
+## 6b. Capital, the whole of it (phase 4 rulings, 2026-09-09)
+- In: deposit USDC at settled NAV, counting Safe USDC plus USDC held by open instances; 1 share per USDC when empty.
+- Anything else (another asset, a different price, a grant) is an ordinary proposal that members vote on.
+- Out: ragequit any time, in the same block, pro-rata of the Safe only; funds in open instances stay with remaining members.
+
+## 6c. Settlement rule (phase 5 rulings 4a-4c amend this section)
+- TreasuryLedger has immutable Safe, settlement and factory bindings, with no administrator.
+- Factory-recorded instances enter the active set on voted start and leave on completion, stop or migration; a stopped Strategy stays in it while it still holds its asset.
+- Strategy assets register once on open and remain registered forever; defeated or action-failed starts never enter.
+- Deposits revert TreasuryNotSettled while an OPEN instance holds its asset. Safe balances are never consulted: dust on the Safe never pauses deposits (it is shared by exit only).
+- A later vote clears it: migrate() moves the raw holdings, unwind() sells them on the venue under the voted slippage bound; deposits then resume by themselves at Safe plus open-instance USDC NAV.
+- Deposit price = amount x (shares + the rewardShares of Active tasks) / that NAV: shares already voted away are priced in before they are minted.
+- Assets are never valued for deposits. Ragequit remains pro-rata of the Safe only.
 
 ## 7. Proposal contracts and templates (user 2026-09-08: the vote is on the contract)
 - Any contract can be a proposal, but agents should not hand-write one each time. Zero One ships templates; a proposer instantiates a template with parameters, and voters see template + parameters + code hash + verified source:

@@ -1,0 +1,31 @@
+# NAV-07 — phase 5 stage A, key output lines of evidence/phase5/run-t14-nav07-safe-dust-does-not-pause-deposits.log (full run); docs/SECURITY_AUDIT.md row NAV-07
+== step 1: seed: fund actors with USDC-mock
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+== step 4: a Strategy on MOCK (budget 100 USDC, 1 day) passes: MOCK is registered forever; it completes at its deadline and closes
+   A deployed StrategyProposal @ 0x29DcAe8b476b6242767F6D825868a626263Eeb5a via TemplateFactory (tx 0x4693a8c8a8d9230c03c0f4162ce7a5f82e50529525644511ca6aac10223882c7, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0x701bbd3728ad3503034698e3dc96ea649b10fdf71855b71357b07c544d55796b codeHash 0xbea36f58410be81df33cee9ec31a853deaef55168fcba428b5682bf29397d547
+   ok: strategy funded and started
+   ok: MOCK is a registered asset
+   ok: no open instance; settled
+== step 5: W (stranger) sends 1 raw unit of MOCK to the Safe: deposits stay open
+   Safe MOCK = 1 raw units (registered asset); ledger.settled() = true
+   ok: settled() ignores Safe balances
+   D deposited 100 USDC -> 100 shares at NAV 3050 / 3050 (dust ignored, shared by exit only)
+   ok: the deposit succeeded at NAV with dust on the Safe
+   ok: a closed instance's balance is never consulted either
+== step 6: what does pause deposits: an OPEN instance holding its asset (created by a vote, ended by a vote or by its rule)
+   A deployed StrategyProposal @ 0x5d5fdB77eF6730c5dFdD119C4D302E3d5630DfEa via TemplateFactory (tx 0xeb6a38c48104f6f64c82bf4be7970940f4c94d236860b966d52f358f98737c6f, salt 0x0000000000000000000000000000000000000000000000000000000000000005) paramsHash 0x01551f00842fdc3a89c5a21959e8253510cc580d338fdcf20b7e29d7a56550a5 codeHash 0xbea36f58410be81df33cee9ec31a853deaef55168fcba428b5682bf29397d547
+   ok: second strategy started (open, holds only USDC)
+   ok: open instance holding only USDC: settled
+   open instance MOCK = 50000000; ledger.settled() = false
+   ok: an open instance holding its asset pauses deposits (by design: the members voted that capital out)
+   ok: deposit refused while the voted strategy holds MOCK (reverted with TreasuryNotSettled)
+   ok: stop + unwind executed by the Safe
+   after the unwind vote: open instances 0, Safe USDC 3150, Safe MOCK dust still 1; ledger.settled() = true
+   ok: the vote reopened deposits; the Safe dust never mattered
+   ok: deposits open again
+   NAV-07 closed: a stranger's dust on the Safe cannot pause deposits; only a voted instance holding its asset does, and only until the vote or the rule ends it
+=== SCENARIO NAV-07 Safe dust does not pause deposits (phase 5 ruling 4a; fixed): PASS ===
+EXIT 0

@@ -1,0 +1,358 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x9f1eadAcf6C873eDc8d7f696df9b762f3f21675D baal 0x1a29f59B1C0dBca05CfFE171Abff40517509EE53 shares 0x9430E4b9dF8670B6894A8f769F4e39AEa78b0C96 settlement 0x1105bB50e1d4dCA3d60Bf038a86C6A5221613c16
+          depositShaman 0x24521C593B146Fdb627564061FDE3cf74C945cD6 workManager 0x6cE02050E1A6890E8c3851E3622f9f174A39b62d constitution 0x35eC305aE5ce753Ae0d5eF10CF75Fc1300188B93
+          templateFactory 0xa55B288977c18C3a76170a76b9ea06Be202af5D2 deployers 0xab80F0480a660209439Fa2e640bCB65bB09d1186 0x2FAB6bBb5F71Faf466F8a89026F7088431a26b11 0x2Ef85960cCFe8939716a2daeF32f1deFe1F7F715 0xc9Ed431604c8D0f2D4436d6bDf5D148c79087895 intentAccount 0x0DADFA935fD7099eF99037300fCE8F46EA9a6CE6
+   F = 0xab662B2E1Ee240e2aD9C39C2CF21246a2bf5D726  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x46dD171C119C1EEa81678A198cE7Fe42e1977967  member agent A
+   B = 0xaFA0DEf6CcE32dcAbec37B1ecBe183d2a662ec3a  member agent B
+   C = 0x249812A466FaEC88a40ccAf41C9C7F677352Bb05  member agent C
+   D = 0x8398883c3CB2449A240E688e2A953EdE0FFF5D0b  depositor D (joins later)
+   O = 0xEA8d46921fBCd4678b702DdDe973463822bF376D  operator O (mandate recipient)
+   W = 0xb02DCB4CeEE181d8ce817D39abBBD3159d54A2db  worker W (task deliverer)
+   shaman 0x24521C593B146Fdb627564061FDE3cf74C945cD6 permission 2 (DepositShaman)
+   shaman 0x6cE02050E1A6890E8c3851E3622f9f174A39b62d permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xab80F0480a660209439Fa2e640bCB65bB09d1186
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x2FAB6bBb5F71Faf466F8a89026F7088431a26b11
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x2Ef85960cCFe8939716a2daeF32f1deFe1F7F715
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xc9Ed431604c8D0f2D4436d6bDf5D148c79087895
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+FIXTURE a: real compiled runtime installed in EMPTY local DAO; receipt=0xb7bce2df885142ca12c239840cf4614c2afe2f6208d3529a128b032ee859e32c
+   tx fund A with 100000 USDC: 0x8e91f884ba3b4702383f5be2d6cdb774924a2a2bd5eb72f702c93b89a4a89ede (block 23, gas 51250)
+   tx fund B with 100000 USDC: 0xb9ad207bf76c1fb238c56d8b09450243ad6ff47face2583ef5205a2218432f94 (block 24, gas 51250)
+   tx fund C with 100000 USDC: 0x96e6bbdb9b8b45f42c63c7ee2a0081150569553ff847db6e6e75dd4c403bf099 (block 25, gas 51250)
+   tx A approve deposit shaman: 0x0e9f0149c2664164e6a6c3c704eb3ab5bd1d4cde42bc60948353778bde821d53 (block 26, gas 45889)
+   tx A deposit 100 USDC -> 100 shares (quoted 100): 0x2d0a6ea6167e5593c2bc6a8a88fddf4216668c456d8b1486c80138827b82fa22 (block 27, gas 259000)
+   warp +2s -> block 28 timestamp 1788994550
+   warp +2s -> block 30 timestamp 1788994552
+   tx A votes YES on #1 -> yes 100 / no 0: 0x2d14445ae21a55585f2826f0b6eaf1598892e4dbe591681af8971e34ca5f935d (block 31, gas 117190)
+   warp +2s -> block 32 timestamp 1788994554
+   warp +2s -> block 32 timestamp 1788994554
+   warp +2s -> block 35 timestamp 1788994556
+   warp +43197s (past grace of #1) -> block 35 timestamp 1789037751
+   proposal #1 state = Ready
+GAS a open=1 deposit=178451 exit_ordinary=739912 exit_after_mint=715918 process=143506
+   warp +2s -> block 30 timestamp 1788994552
+   warp +2s -> block 32 timestamp 1788994554
+   warp +2s -> block 34 timestamp 1788994556
+   warp +2s -> block 36 timestamp 1788994558
+   warp +2s -> block 38 timestamp 1788994560
+   warp +2s -> block 40 timestamp 1788994562
+   warp +2s -> block 42 timestamp 1788994564
+   warp +2s -> block 44 timestamp 1788994566
+   warp +2s -> block 46 timestamp 1788994568
+   warp +2s -> block 48 timestamp 1788994570
+   warp +2s -> block 50 timestamp 1788994572
+   warp +2s -> block 52 timestamp 1788994574
+   warp +2s -> block 54 timestamp 1788994576
+   warp +2s -> block 56 timestamp 1788994578
+   warp +2s -> block 58 timestamp 1788994580
+   warp +2s -> block 60 timestamp 1788994582
+   warp +2s -> block 62 timestamp 1788994584
+   warp +2s -> block 64 timestamp 1788994586
+   warp +2s -> block 66 timestamp 1788994588
+   warp +2s -> block 68 timestamp 1788994590
+   warp +2s -> block 70 timestamp 1788994592
+   warp +2s -> block 72 timestamp 1788994594
+   warp +2s -> block 74 timestamp 1788994596
+   warp +2s -> block 76 timestamp 1788994598
+   warp +2s -> block 78 timestamp 1788994600
+   warp +2s -> block 80 timestamp 1788994602
+   warp +2s -> block 82 timestamp 1788994604
+   warp +2s -> block 84 timestamp 1788994606
+   warp +2s -> block 86 timestamp 1788994608
+   warp +2s -> block 88 timestamp 1788994610
+   warp +2s -> block 90 timestamp 1788994612
+   warp +2s -> block 92 timestamp 1788994614
+   warp +2s -> block 94 timestamp 1788994616
+   warp +2s -> block 96 timestamp 1788994618
+   warp +2s -> block 98 timestamp 1788994620
+   warp +2s -> block 100 timestamp 1788994622
+   warp +2s -> block 102 timestamp 1788994624
+   warp +2s -> block 104 timestamp 1788994626
+   warp +2s -> block 106 timestamp 1788994628
+   warp +2s -> block 108 timestamp 1788994630
+   warp +2s -> block 110 timestamp 1788994632
+   warp +2s -> block 112 timestamp 1788994634
+   warp +2s -> block 114 timestamp 1788994636
+   warp +2s -> block 116 timestamp 1788994638
+   warp +2s -> block 118 timestamp 1788994640
+   warp +2s -> block 120 timestamp 1788994642
+   warp +2s -> block 122 timestamp 1788994644
+   warp +2s -> block 124 timestamp 1788994646
+   warp +2s -> block 126 timestamp 1788994648
+   warp +2s -> block 128 timestamp 1788994650
+   warp +2s -> block 130 timestamp 1788994652
+   warp +2s -> block 132 timestamp 1788994654
+   warp +2s -> block 134 timestamp 1788994657
+   warp +2s -> block 136 timestamp 1788994659
+   warp +2s -> block 138 timestamp 1788994661
+   warp +2s -> block 140 timestamp 1788994663
+   warp +2s -> block 142 timestamp 1788994665
+   warp +2s -> block 144 timestamp 1788994667
+   warp +2s -> block 146 timestamp 1788994669
+   warp +2s -> block 148 timestamp 1788994671
+   warp +2s -> block 150 timestamp 1788994673
+   warp +2s -> block 152 timestamp 1788994675
+   warp +2s -> block 154 timestamp 1788994677
+   warp +2s -> block 156 timestamp 1788994679
+   warp +2s -> block 158 timestamp 1788994681
+   warp +2s -> block 160 timestamp 1788994683
+   warp +2s -> block 162 timestamp 1788994685
+   warp +2s -> block 164 timestamp 1788994687
+   warp +2s -> block 166 timestamp 1788994689
+   warp +2s -> block 168 timestamp 1788994691
+   warp +2s -> block 170 timestamp 1788994693
+   warp +2s -> block 172 timestamp 1788994695
+   warp +2s -> block 174 timestamp 1788994697
+   warp +2s -> block 176 timestamp 1788994699
+   warp +2s -> block 178 timestamp 1788994701
+   warp +2s -> block 180 timestamp 1788994703
+   warp +2s -> block 182 timestamp 1788994705
+   warp +2s -> block 184 timestamp 1788994707
+   warp +2s -> block 186 timestamp 1788994709
+   warp +2s -> block 188 timestamp 1788994711
+   warp +2s -> block 190 timestamp 1788994713
+   warp +2s -> block 192 timestamp 1788994715
+   warp +2s -> block 194 timestamp 1788994717
+   warp +2s -> block 196 timestamp 1788994719
+   warp +2s -> block 198 timestamp 1788994721
+   warp +2s -> block 200 timestamp 1788994723
+   warp +2s -> block 202 timestamp 1788994725
+   warp +2s -> block 204 timestamp 1788994727
+   warp +2s -> block 206 timestamp 1788994729
+   warp +2s -> block 208 timestamp 1788994731
+   warp +2s -> block 210 timestamp 1788994733
+   warp +2s -> block 212 timestamp 1788994735
+   warp +2s -> block 214 timestamp 1788994737
+   warp +2s -> block 216 timestamp 1788994739
+   warp +2s -> block 218 timestamp 1788994741
+   warp +2s -> block 220 timestamp 1788994743
+   warp +2s -> block 222 timestamp 1788994745
+   warp +2s -> block 224 timestamp 1788994747
+   warp +2s -> block 226 timestamp 1788994749
+   warp +2s -> block 228 timestamp 1788994751
+   tx A votes YES on #1 -> yes 100 / no 0: 0x0d9bde54071eb435e278e2f02ec0ade3cd0a9ec4e88e8aa2b596f7a7a0b72635 (block 229, gas 117190)
+   warp +2s -> block 230 timestamp 1788994753
+   warp +2s -> block 230 timestamp 1788994753
+   warp +2s -> block 233 timestamp 1788994755
+   warp +42998s (past grace of #1) -> block 233 timestamp 1789037751
+   proposal #1 state = Ready
+GAS a open=100 deposit=178451 exit_ordinary=739912 exit_after_mint=671160 process=143506
+   warp +2s -> block 30 timestamp 1788994552
+   warp +2s -> block 31 timestamp 1788994554
+   warp +2s -> block 35 timestamp 1788994556
+   warp +2s -> block 36 timestamp 1788994558
+   warp +2s -> block 40 timestamp 1788994560
+   warp +2s -> block 41 timestamp 1788994562
+   warp +2s -> block 45 timestamp 1788994564
+   warp +2s -> block 46 timestamp 1788994566
+   warp +2s -> block 50 timestamp 1788994568
+   warp +2s -> block 51 timestamp 1788994570
+   warp +2s -> block 55 timestamp 1788994572
+   warp +2s -> block 56 timestamp 1788994574
+   warp +2s -> block 60 timestamp 1788994576
+   warp +2s -> block 61 timestamp 1788994578
+   warp +2s -> block 65 timestamp 1788994580
+   warp +2s -> block 66 timestamp 1788994582
+   warp +2s -> block 70 timestamp 1788994584
+   warp +2s -> block 71 timestamp 1788994586
+   warp +2s -> block 75 timestamp 1788994588
+   warp +2s -> block 76 timestamp 1788994590
+   warp +2s -> block 80 timestamp 1788994592
+   warp +2s -> block 81 timestamp 1788994594
+   warp +2s -> block 85 timestamp 1788994596
+   warp +2s -> block 86 timestamp 1788994598
+   warp +2s -> block 90 timestamp 1788994600
+   warp +2s -> block 91 timestamp 1788994602
+   warp +2s -> block 95 timestamp 1788994604
+   warp +2s -> block 96 timestamp 1788994606
+   warp +2s -> block 100 timestamp 1788994608
+   warp +2s -> block 101 timestamp 1788994610
+   warp +2s -> block 105 timestamp 1788994612
+   warp +2s -> block 106 timestamp 1788994614
+   warp +2s -> block 110 timestamp 1788994616
+   warp +2s -> block 111 timestamp 1788994618
+   warp +2s -> block 115 timestamp 1788994620
+   warp +2s -> block 116 timestamp 1788994622
+   warp +2s -> block 120 timestamp 1788994625
+   warp +2s -> block 121 timestamp 1788994627
+   warp +2s -> block 125 timestamp 1788994629
+   warp +2s -> block 126 timestamp 1788994631
+   warp +2s -> block 130 timestamp 1788994633
+   warp +2s -> block 131 timestamp 1788994635
+   warp +2s -> block 135 timestamp 1788994637
+   warp +2s -> block 136 timestamp 1788994639
+   warp +2s -> block 140 timestamp 1788994641
+   warp +2s -> block 141 timestamp 1788994643
+   warp +2s -> block 145 timestamp 1788994645
+   warp +2s -> block 146 timestamp 1788994647
+   warp +2s -> block 150 timestamp 1788994649
+   warp +2s -> block 151 timestamp 1788994651
+   warp +2s -> block 155 timestamp 1788994653
+   warp +2s -> block 156 timestamp 1788994655
+   warp +2s -> block 160 timestamp 1788994657
+   warp +2s -> block 161 timestamp 1788994659
+   warp +2s -> block 165 timestamp 1788994661
+   warp +2s -> block 166 timestamp 1788994663
+   warp +2s -> block 170 timestamp 1788994665
+   warp +2s -> block 171 timestamp 1788994667
+   warp +2s -> block 175 timestamp 1788994669
+   warp +2s -> block 176 timestamp 1788994671
+   warp +2s -> block 180 timestamp 1788994673
+   warp +2s -> block 181 timestamp 1788994675
+   warp +2s -> block 185 timestamp 1788994677
+   warp +2s -> block 186 timestamp 1788994679
+   warp +2s -> block 190 timestamp 1788994681
+   warp +2s -> block 191 timestamp 1788994683
+   warp +2s -> block 195 timestamp 1788994685
+   warp +2s -> block 196 timestamp 1788994687
+   warp +2s -> block 200 timestamp 1788994689
+   warp +2s -> block 201 timestamp 1788994691
+   warp +2s -> block 205 timestamp 1788994693
+   warp +2s -> block 206 timestamp 1788994695
+   warp +2s -> block 210 timestamp 1788994697
+   warp +2s -> block 211 timestamp 1788994699
+   warp +2s -> block 215 timestamp 1788994701
+   warp +2s -> block 216 timestamp 1788994703
+   warp +2s -> block 220 timestamp 1788994705
+   warp +2s -> block 221 timestamp 1788994707
+   warp +2s -> block 225 timestamp 1788994709
+   warp +2s -> block 226 timestamp 1788994711
+   warp +2s -> block 230 timestamp 1788994713
+   warp +2s -> block 231 timestamp 1788994715
+   warp +2s -> block 235 timestamp 1788994717
+   warp +2s -> block 236 timestamp 1788994719
+   warp +2s -> block 240 timestamp 1788994721
+   warp +2s -> block 241 timestamp 1788994723
+   warp +2s -> block 245 timestamp 1788994725
+   warp +2s -> block 246 timestamp 1788994727
+   warp +2s -> block 250 timestamp 1788994729
+   warp +2s -> block 251 timestamp 1788994731
+   warp +2s -> block 255 timestamp 1788994733
+   warp +2s -> block 256 timestamp 1788994735
+   warp +2s -> block 260 timestamp 1788994737
+   warp +2s -> block 261 timestamp 1788994739
+   warp +2s -> block 265 timestamp 1788994741
+   warp +2s -> block 266 timestamp 1788994743
+   warp +2s -> block 270 timestamp 1788994745
+   warp +2s -> block 271 timestamp 1788994747
+   warp +2s -> block 275 timestamp 1788994749
+   warp +2s -> block 276 timestamp 1788994751
+   warp +2s -> block 280 timestamp 1788994753
+   warp +2s -> block 281 timestamp 1788994755
+   warp +2s -> block 285 timestamp 1788994757
+   warp +2s -> block 286 timestamp 1788994759
+   warp +2s -> block 290 timestamp 1788994761
+   warp +2s -> block 291 timestamp 1788994763
+   warp +2s -> block 295 timestamp 1788994765
+   warp +2s -> block 296 timestamp 1788994767
+   warp +2s -> block 300 timestamp 1788994769
+   warp +2s -> block 301 timestamp 1788994771
+   warp +2s -> block 305 timestamp 1788994773
+   warp +2s -> block 306 timestamp 1788994775
+   warp +2s -> block 310 timestamp 1788994777
+   warp +2s -> block 311 timestamp 1788994780
+   warp +2s -> block 315 timestamp 1788994782
+   warp +2s -> block 316 timestamp 1788994784
+   warp +2s -> block 320 timestamp 1788994786
+   warp +2s -> block 321 timestamp 1788994788
+   warp +2s -> block 325 timestamp 1788994790
+   warp +2s -> block 326 timestamp 1788994792
+   warp +2s -> block 330 timestamp 1788994794
+   warp +2s -> block 331 timestamp 1788994796
+   warp +2s -> block 335 timestamp 1788994798
+   warp +2s -> block 336 timestamp 1788994800
+   warp +2s -> block 340 timestamp 1788994802
+   warp +2s -> block 341 timestamp 1788994804
+   warp +2s -> block 345 timestamp 1788994806
+   warp +2s -> block 346 timestamp 1788994808
+   warp +2s -> block 350 timestamp 1788994810
+   warp +2s -> block 351 timestamp 1788994812
+   warp +2s -> block 355 timestamp 1788994814
+   warp +2s -> block 356 timestamp 1788994816
+   warp +2s -> block 360 timestamp 1788994818
+   warp +2s -> block 361 timestamp 1788994820
+   warp +2s -> block 365 timestamp 1788994822
+   warp +2s -> block 366 timestamp 1788994824
+   warp +2s -> block 370 timestamp 1788994826
+   warp +2s -> block 371 timestamp 1788994828
+   warp +2s -> block 375 timestamp 1788994830
+   warp +2s -> block 376 timestamp 1788994832
+   warp +2s -> block 380 timestamp 1788994834
+   warp +2s -> block 381 timestamp 1788994836
+   warp +2s -> block 385 timestamp 1788994838
+   warp +2s -> block 386 timestamp 1788994840
+   warp +2s -> block 390 timestamp 1788994842
+   warp +2s -> block 391 timestamp 1788994844
+   warp +2s -> block 395 timestamp 1788994846
+   warp +2s -> block 396 timestamp 1788994848
+   warp +2s -> block 400 timestamp 1788994850
+   warp +2s -> block 401 timestamp 1788994852
+   warp +2s -> block 405 timestamp 1788994854
+   warp +2s -> block 406 timestamp 1788994856
+   warp +2s -> block 410 timestamp 1788994858
+   warp +2s -> block 411 timestamp 1788994860
+   warp +2s -> block 415 timestamp 1788994862
+   warp +2s -> block 416 timestamp 1788994864
+   warp +2s -> block 420 timestamp 1788994866
+   warp +2s -> block 421 timestamp 1788994868
+   warp +2s -> block 425 timestamp 1788994870
+   warp +2s -> block 426 timestamp 1788994872
+   warp +2s -> block 430 timestamp 1788994874
+   warp +2s -> block 431 timestamp 1788994876
+   warp +2s -> block 435 timestamp 1788994879
+   warp +2s -> block 436 timestamp 1788994881
+   warp +2s -> block 440 timestamp 1788994883
+   warp +2s -> block 441 timestamp 1788994885
+   warp +2s -> block 445 timestamp 1788994887
+   warp +2s -> block 446 timestamp 1788994889
+   warp +2s -> block 450 timestamp 1788994891
+   warp +2s -> block 451 timestamp 1788994893
+   warp +2s -> block 455 timestamp 1788994895
+   warp +2s -> block 456 timestamp 1788994897
+   warp +2s -> block 460 timestamp 1788994899
+   warp +2s -> block 461 timestamp 1788994901
+   warp +2s -> block 465 timestamp 1788994903
+   warp +2s -> block 466 timestamp 1788994905
+   warp +2s -> block 470 timestamp 1788994907
+   warp +2s -> block 471 timestamp 1788994909
+   warp +2s -> block 475 timestamp 1788994911
+   warp +2s -> block 476 timestamp 1788994913
+   warp +2s -> block 480 timestamp 1788994915
+   warp +2s -> block 481 timestamp 1788994917
+   warp +2s -> block 485 timestamp 1788994919
+   warp +2s -> block 486 timestamp 1788994921
+   warp +2s -> block 490 timestamp 1788994923
+   warp +2s -> block 491 timestamp 1788994925
+   warp +2s -> block 495 timestamp 1788994927
+   warp +2s -> block 496 timestamp 1788994929
+   warp +2s -> block 500 timestamp 1788994931
+   warp +2s -> block 501 timestamp 1788994933
+   warp +2s -> block 505 timestamp 1788994935
+   warp +2s -> block 506 timestamp 1788994937
+   warp +2s -> block 510 timestamp 1788994939
+   warp +2s -> block 511 timestamp 1788994941
+   warp +2s -> block 515 timestamp 1788994943
+   warp +2s -> block 516 timestamp 1788994945
+   warp +2s -> block 520 timestamp 1788994947
+   warp +2s -> block 521 timestamp 1788994949
+   warp +2s -> block 525 timestamp 1788994951
+   warp +2s -> block 526 timestamp 1788994953
+   warp +2s -> block 529 timestamp 1788994955
+GAS a open=100 interleaved_mints=100 full_exit=4005196
+GREEN retention a gas comparison
+anvil stopped (http://127.0.0.1:11545)

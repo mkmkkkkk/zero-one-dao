@@ -3,3 +3,13 @@
    quote(999 USDC) = 0 shares; quote(1500 USDC) = 1 shares
    D paid 1500 USDC for 1 wei-share(s) of 2; D's exit value 1250 USDC (loss 250); F's 1 wei-share now worth 1250 USDC after donating 1000
    D USDC 10000 -> 9750 after deposit + exit (paid 1250)
+   supply 1 wei-shares (F), Safe 1 units
+   Safe 1000.000001 USDC, supply 1 wei-shares -> NAV per wei-share 1000.000001 USDC
+   quote(999 USDC) = 0 shares; quote(1500 USDC) = 1 shares
+   D paid 1500 USDC for 1 wei-share(s) of 2; D's exit value 1250 USDC (loss 250); F's 1 wei-share now worth 1250 USDC after donating 1000
+   D USDC 10000 -> 9750 after deposit + exit (paid 1250)
+   supply 1 wei-shares (F), Safe 1 units
+   Safe 1000.000001 USDC, supply 1 wei-shares -> NAV per wei-share 1000.000001 USDC
+   quote(999 USDC) = 0 shares; quote(1500 USDC) = 1 shares
+   D paid 1500 USDC for 1 wei-share(s) of 2; D's exit value 1250 USDC (loss 250); F's 1 wei-share now worth 1250 USDC after donating 1000
+   D USDC 10000 -> 9750 after deposit + exit (paid 1250)

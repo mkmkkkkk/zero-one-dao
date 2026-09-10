@@ -1,0 +1,199 @@
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 block=51000000 loopback=http://127.0.0.1:11545
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x994Ee5258CedEcaB3F73327585eAEBB353999633 tx=0x7dc30bc4ed4d78fa6f19f5f8700832cb964007ac84df7d1a3f510d9082babd68
+tx deploy singleton:Baal 0x55afc5039830c7b05af4c7e99a4b62bdbe332c4559ab3c2ddd55046947f23d8c
+tx deploy singleton:ModuleProxyFactory 0x5817784062404cf14721fe1022ddad299677e1c8160b5150fa2bff213df9c946
+tx deploy singleton:GnosisSafe 0x72c7392c461b90b20bb182d09e225810d464a6b276f26ed678b81af7211cc27c
+tx deploy singleton:GnosisSafeProxyFactory 0xa8258f55eb6b82ed7f5157566318f71f80c2f04f9145d5e52d47401f55d1b1f4
+tx deploy singleton:MultiSendCallOnly 0xc17366caf30e9dcad9d8fb3a587b8855a8b509c8d9f3059b3eea1044a94d334b
+tx deploy SafeProxy 0x82348ddbbaea368bbcd1604afb72d000dc0ac12747cda93ef87058fef0516157
+tx deploy BaalProxy 0xa8fab3f3a89e2d09c1fe10bb120335a6564d92c0d2d6c41eca1d89e80154d33e
+tx deploy NavShareToken 0x6472fa75caa2c398f9bad0709b27bb82a3f0c0ab816a027c29b6c6bddada045b
+tx deploy LootToken 0x0347553bf9e5f3d545fc40811d3aee9caabd1515c557071716af53ea2d47f563
+tx deploy DepositShaman 0xe0333d4cb9016839b2ce918911461c049c761515ba19ead60f128e63728c4354
+tx deploy WorkManager 0x5049bd7f60728a87c2310798b7e46a20be25222527ce06e99f76b2d9f37cd466
+tx deploy PaymentDeployer 0xbc19986a6b201c03b997b9fc90265b1f58021316ebe66a90b6dcbfc4d986a4e0
+tx deploy StrategyDeployer 0x8dcb52352bfe9b6a3ad5c64e0fb9dd3814c2e02b3e13d005db0eb919e9b9fd95
+tx deploy ProjectDeployer 0x488d0c53f2d28b5e926e6c817cc03cfbddf2cb6019020831f2ba7a2203ec13cb
+tx deploy ConfigDeployer 0x21c0e4b4ed5c1b6f7964e5ac5626731df16136ac73f6c0c8951591d9cd426906
+tx deploy TemplateFactory 0x198293abb7bd11fb9bf6e2e0ff4f6e86c7cb3bc055b12f260db1ca8bc50050e5
+tx deploy ZeroOneIntentAccount 0x8e5fb555ab05719824672dafb79b9838d49362fc07c1be6fc21dc99b3549de61
+tx deploy Constitution 0x3d0ce886b4fb3bfa2a911ae60cb9a39ad19619fa1ba7d1fcebcb0374a1d399e1
+tx deploy Safe.setup 0xa23902c5f18e6db144b1698ef731ed1dac9f14741ce9f0dd03e8783ddee57ae7
+tx deploy Baal.setUp 0x5b7435de3d738c28a8b6ff95c47391e10c9cb2c23bb387fe16096b5d14af7586
+tx genesis 0xa442593ed56b93cfdd1aeb24e553c1f62dfebce51290d3b030530395abd13d4e shares=50000000000000000000
+   ok: K settlement is real Base USDC proxy
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Base router 0x2626664c2603336E57B271c5C0b26F421741e481 code bytes=24497
+   ok: published Base quoter 0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a code bytes=8273
+   ok: published Base factory 0x33128a8fC17869897dcE68Ed026d694621f6FDfD code bytes=24535
+   ok: router.factory selector responds with published factory
+   ok: router.WETH9 selector responds with Base WETH
+   ok: quoter.factory selector responds with published factory
+   ok: quoter.WETH9 selector responds with Base WETH
+   ok: factory feeAmountTickSpacing(500)=10
+   ok: USDC decimals read through proxy = 6
+tx fresh pool create 0x94059693bcb0383a1aa7d5c3e7271c3fde9cf9d9fc23dd4175a761dd1d7c2670 initialize 0x1ba316858b061b7e7707d8d39a344f9e8b546ba981f726b108e25f24fa33af8a pool=0x74fb2Fc00DeDf908762A476FcAE6C2b35CB6fE97
+ASSERT fresh pool cardinality=1 oldest observation age=0s (< 1800)
+   ok: constructor refuses the fresh pool: WindowUnavailable(cardinality=1, oldestObservationAge=0)
+ASSERT real fork pool=0xd0b53D9277642d899DF5C87A3966A349A798F224 slot0=["3962392616713554227206705",-198075,4614,5000,5000,68,true] oldest observation age=167678s cardinality=5000
+ASSERT upstream pool already serves observe([1800,0])
+ASSERT real observe([1800,0]) after local 1801s warm-up=-18724193097484,-18724549632484
+tx UniswapV3Venue deploy 0x9417bd9969038cc6f38489b71d70b5ed9d19ccb595524dac60dc26ce2eb576fa address=0x8BF96202351D71d6db48fa56e08eFB5887EF163C
+   ok: venue ABI has no owner/admin or mutable fee setter
+   ok: WETH accounting uses 18 decimals
+   ok: TWAP_WINDOW = 1800 s
+tx Strategy deploy 0x16114d6a9a92b8853c54c421b1f4415cf4b992d74f83d4a1a1576504792b76e8 address=0x4C24A458c44f54d4e7EB27Df9112b932462cfC86
+tx proposal #1 submit 0x21622ea11aa30d793b459e8e32cc2869e09136e102fe191c2338ed42b688c8c9
+tx vote #1 0x82fdc5b3d34d01c6001eb42a3229598bbaf119ccae48a1d4bd39bc834677ce2d block=51000032 gas=117190
+tx execute #1 0x96465cfe83bddd28458b44b407a8ea2c7889faa6ff4236a0044cd857eba2ba99 block=51000034
+   ok: proposal #1 processed passed=true actionFailed=false
+   ok: started Strategy is open in the ledger; USDC-only holdings keep the treasury settled
+tx stranger run #1 0xc92448cc829c6d55a837b0b14f1d8baabd1978d9c2113c948908dee4adcf1d92 block=51000035 gas=361766
+   ok: swap bounded amountIn=2000000 quoted=799202682042586 minimum=795629616909476 actual=799202682042586
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx stranger run #2 0xde259c6764c2ee19817e086445029b96b83a1217eda549ee77519cf1ea18bedf block=51000036 gas=310488
+   ok: swap bounded amountIn=2000000 quoted=799202617778560 minimum=795629616909476 actual=799202617778560
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: two exact 2 USDC swaps acquired WETH; raw holdings remain in Strategy
+   ok: the open instance's WETH keeps the treasury unsettled
+   ok: deposits are refused while the running Strategy holds WETH (reverted with TreasuryNotSettled)
+tx proposal #2 submit 0x1fc245c8b169dba2178591eb5c691b7a1220f4098dc5ba9a7587e2b75fbca061
+tx vote #2 0x319c89f3d8287e5aec094b3034e4b06432fbb7a6d53533557bbee210d2e90ccd block=51000039 gas=117190
+tx execute #2 0x66dc859771f09b0f5aaff49b7a41170c5d6eeab963d100882baf8b9e0ac1605e block=51000041
+   ok: proposal #2 processed passed=true actionFailed=false
+   ok: stopped instance holds no USDC and all of its WETH
+   ok: stop returned exact raw USDC to the Safe and no WETH (phase 5 ruling 4b)
+   ok: stopped instance stays open in the ledger; treasury unsettled
+   ok: deposits stay refused while the stopped Strategy holds WETH (reverted with TreasuryNotSettled)
+tx proposal #3 submit 0x3232da431f699cc47d80a255b4fc03590aaf16a296f37846431fcc6cb731e3aa
+tx vote #3 0x097eabb0ce41c551aa640b2f722b9bfddfc86d568171d67f3866d7886bc1fc74 block=51000044 gas=117190
+tx execute #3 0x73cf89c13dd029d51a757ef30e74cf8a40df71cbd8bd66e0728ea8942d7090f1 block=51000046
+   ok: proposal #3 processed passed=true actionFailed=false
+   ok: swap bounded amountIn=1598405299821146 quoted=3996001 minimum=3977883 actual=3996001
+   ok: voted unwind sold 1598405299821146 wei WETH for 3996001 USDC units, proceeds in the Safe
+   ok: unwound instance is empty and closed; treasury settled; deposits reopen
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx Strategy deploy 0x3d7401444e908ffdd736faf03482fc06bb443dd93a47248c360a70c2ccdda547 address=0x92A63d0e40a172E683C0Af7dCdfd3e93A7d7784B
+tx proposal #4 submit 0x00c02a6256c831e09b2e9c994d107e0ebed633b7add85b3920cd459ec87867be
+tx vote #4 0x2affd5632c8fa9cb8c1376af22e57717d3908bb5c157f684a229f3a3d56e56a6 block=51000050 gas=117190
+tx execute #4 0x3ccc5736d66809e0a52995ff2057b7ac9155a4c259c50faa0527710f4d5f1ae9 block=51000052
+   ok: proposal #4 processed passed=true actionFailed=false
+tx old Strategy run before migration 0x7657819d4447fad3ff3a0a9f5976042c58f947e609005482d50337a728e495f2 block=51000053 gas=361766
+   ok: swap bounded amountIn=2000000 quoted=799202681978322 minimum=795629616909476 actual=799202681978322
+tx successor deploy 0x3cc339783f956c6b9267542479caa3f6e4747df3e991fd527fb28ed5663400e0 address=0xC5A2bE5EF367198E39395A0D487fff4aFA0155B8
+tx proposal #5 submit 0x985624f6e1dddb4df43d09427a534761236b9a8258648cdd549824faf508a026
+tx vote #5 0x64a02d8b2968e34d6d0da15535845281a035693f5f36a97c7bd579bfbdad75cb block=51000057 gas=117190
+tx execute #5 0xaa3da2c10f3260a8fa8bebb541493e89b2b58c658e68db91e77f3cd970a05663 block=51000059
+   ok: proposal #5 processed passed=true actionFailed=false
+   ok: old Migrated; successor Running
+   ok: migrated instance empty
+   ok: migration preserved both raw token quantities
+   ok: ledger: old closed by migrate, successor opened by start
+tx successor runs on migrated holdings 0x86326e3486aeacd91614e6cb98efa6ec53423377e6ee3c0db2fdbe52166308ad block=51000060 gas=344666
+   ok: swap bounded amountIn=2000000 quoted=799202617714296 minimum=795629616909476 actual=799202617714296
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx proposal #6 submit 0x5a82a7a23ed5045de47c4164dfa5817c79bdaf21169c980d31083ea330acfe36
+tx vote #6 0x53e20bba31ccd2ad9993a70bfb7dbed34ed90241ad749bd3e41da0f7d032c81f block=51000063 gas=117190
+tx execute #6 0x9b829eb767c31f9e45b61a68bdd38aae5fa595596a49a19af867898dd49f0fe9 block=51000065
+   ok: proposal #6 processed passed=true actionFailed=false
+tx take-profit unwinds WETH through real router 0x8ad44076c361d6e5ad8bf891c032393dae8b5d21b9b1eb7d0ba46ae54af3c36c block=51000066 gas=312092
+   ok: swap bounded amountIn=1598405299692618 quoted=3996001 minimum=3977883 actual=3996001
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: take-profit sold WETH and returned all proceeds to Safe
+tx Strategy deploy 0x9fc6a5ac86d8efed3b5a94c6ea15eeb83392c7b417727e20e7b2e0f56ec95b1a address=0xee80FFE63FbE07C5416F836c661FaC7D4747980C
+tx proposal #7 submit 0x02a37873535a50da25475275a53f5fa7c67f5398ed1a902f555df4ae6c3c92bf
+tx vote #7 0x6f315ba23100ad0deea1cc08fb8723309e0e0c8fda2e4f54959b0d07fcbd2c2a block=51000070 gas=117190
+tx execute #7 0x56c2cad19aee3034e7de9b96f96150edbeb55514fa0380ea9959d0170273f2a9 block=51000072
+   ok: proposal #7 processed passed=true actionFailed=false
+tx stop-loss fixture entry 0x2663f2e48d1b7125906bf8c439278cae02fdbb1f0bc76f08b4cb8c2467e24f1c block=51000073 gas=356966
+   ok: swap bounded amountIn=5000000 quoted=1998006584290098 minimum=1989074042273692 actual=1998006584290098
+tx stop-loss unwinds through real router 0xd13dc4ebf28aebb88c49f4329272cab33a87a4b3d1c7adfacd84f77ef9889761 block=51000074 gas=327697
+   ok: swap bounded amountIn=1998006584290098 quoted=4995001 minimum=4972354 actual=4995001
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: 1 bp stop-loss fired after 5 bp pool-fee entry; instance empty
+   ok: every instance closed: treasury settled
+tx proposal #8 submit 0xa5a4d391f253b55d38a77398b851b181fd79e8b72a9fa6fadf5eb9b8361cc9f3
+tx vote #8 0x3e613b387bf4d61ac38c243d63bdefff96151a921c0a44666ee5e3e11761bbe4 block=51000077 gas=117190
+tx execute #8 0xebff9ac0df293f3e3af834c224c946e955adc5c9139b100927cf1686ae59630d block=51000079
+   ok: proposal #8 processed passed=true actionFailed=false
+tx stranger sweeps dust only to immutable Safe 0x4608b44a7fdb7691049ec620742eb30818525b7308979a90ce0c77de7af63e06 block=51000080 gas=52394
+   ok: permissionless sweep returns exact dust to Safe
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+tx TwapSandwichProbe deploy 0x6ea9aab6f7c2d0e98bde067e210d3c79b78ecb233eac0f338e6e5cf7f507b3b5 address=0x6bA6BD327234b316d6F6bC106489D9925D6F474f
+tx probe wraps 100000 ETH into WETH (fork ether) 0x8bd91c2865c50d4b11a4f34f97ab0ea0850af203531ec6d7ba0c134ccb6fb3ec block=51000082 gas=54724
+   USDC holder candidate 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb balance=217313274508602
+   ok: a Base USDC holder with >= 60000000000000 base units exists on the fork
+ASSERT USDC proxy decimals=6 impersonated=0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb funded=60000000000000 recipient=0x6bA6BD327234b316d6F6bC106489D9925D6F474f tx=0xdbaa2f5d55dddb8bba565e472c9c1b0b00e873ab81f5289c8c63d770bf80588d
+ASSERT warmed pool=0xd0b53D9277642d899DF5C87A3966A349A798F224 tick=-198075 spacing=10 slots=1547 in 0.4s
+tx Strategy deploy 0xe893a45b4b68f7a0cf0f4c8d6c328a0d5b2d8fe695d718006d6664a63fa12a2c address=0x7E3E17AfaD655772f9ca8EE002c0A2D61716AD25
+tx proposal #9 submit 0x2377bab5ba00857e378e507f682785bfc9b59ec308d0e117dddc8920b9ab34e3
+tx vote #9 0xc15507d20d4e8a1b58a1788ba86a233550fc188ddce054c50c6870a0d697f58e block=51000087 gas=117190
+tx execute #9 0xd973e84aac5661907525dd77bedcbc8747a91dcab7631203f984ea421bb28e6d block=51000089
+   ok: proposal #9 processed passed=true actionFailed=false
+tx T-4 entry sandwich (+25% WETH print, victim DCA buy) 0x2056e5756207bdf7bd8dc0379c156ca963879d31ed346f2c8013ab3b6cde0ced block=51000090 gas=7176494
+   ok: swap bounded amountIn=2000000 quoted=799164044735887 minimum=795629616909476 actual=799164044735887
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=2000000 quoted=799164044735887 minimum=795629616909476 actual=799164044735887
+   sandwich T-4 entry sandwich (+25% WETH print, victim DCA buy): spot 2500 bps during the print, 0 bps after the back-run; price() 2501163805 -> 2501163805; value() 20000000 -> 20000000; moved=2616849634152 received=961011833624271572310; refused output=639362047019863 < minimum=795629616909476; strategy Running weth=799164044735887 usdc=18000000
+   ok: same-block spot print moved the pool by more than 20% (2500 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (0 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-4: the run during the print was refused (would have received 639362047019863 wei WETH, bound 795629616909476); after restoration the run filled 799164044735887 wei WETH for 2 USDC
+tx Strategy deploy 0x7fda1fce28b0a687d09e6ef5b17b952c9bb9c3f6e21db468faebcb3c8de76f89 address=0x43738A5cC9f9B9A0Aa3DB8Fb2A38cE01a1206Ac9
+tx proposal #10 submit 0x857bb383866862d3a07f44ed8866e5d30cc862aa57676a3e536272c9b3af21fc
+tx vote #10 0x2e3b3f6c36918d300b0c08b720e456fa7baf1908647b499dd8f7fd9192fe1813 block=51000094 gas=117190
+tx execute #10 0x9ac23cc7a4c2ff14ff0e8e63687442009b35a47b37dab19810851d50b47f344f block=51000096
+   ok: proposal #10 processed passed=true actionFailed=false
+tx T-5 victim buys its first 5 USDC of WETH at the fair price 0xc4e033198b0bafc35ac51b9889f4d04dc7ef0b4de5e009872b2bab125fdce0fc block=51000097 gas=361559
+   ok: swap bounded amountIn=5000000 quoted=1997909830705010 minimum=1989074042273692 actual=1997909830705010
+tx T-5 print sandwich (-25% WETH print, attacker calls run()) 0xaee1e48ce3ec18eaabe9c995750774280c9df540213b186f401ff18fa469d7fd block=51000098 gas=8721702
+   ok: swap bounded amountIn=5000000 quoted=2663880379024956 minimum=2650560977129831 actual=2663880379024956
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=5000000 quoted=2663880379024956 minimum=2650560977129831 actual=2663880379024956
+   sandwich T-5 print sandwich (-25% WETH print, attacker calls run()): spot -2501 bps during the print, -1 bps after the back-run; price() 2501163805 -> 2501163805; value() 9997099 -> 9997099; moved=1309213054938713777982 received=2971440377033; strategy Running weth=4661790209729966 usdc=0
+   ok: same-block spot print moved the pool by more than 20% (-2501 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (-1 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-5: the stop-loss did not fire on the print (value 9997099 unchanged); the run bought 2663880379024956 wei WETH at the attacker's cheap spot and the strategy stays Running
+tx Strategy deploy 0xead611335b8ca8085d83a34bdfa7dc08b8cbc07dd44909b3b2c77cf1fc04b21e address=0xC929eD7f41481BFC5e16E491e8a0CC8557505937
+tx proposal #11 submit 0x3b627a72c706bbd7f609f7c5e4a47a80bb4b130bcf49be7a066824a61362f61b
+tx vote #11 0x1a96056d4b63c22ec9d09ca31c6aa72188a06d56a8a4a3bacf270f773c64bfa7 block=51000102 gas=117190
+tx execute #11 0xaa49b8a6011f857e108fe440ebb663ff228c4b9b0cbaa045faf7f4af99d5a47f block=51000104
+   ok: proposal #11 processed passed=true actionFailed=false
+tx T-5 exit victim buys 5 USDC of WETH 0x1cee00721816c9fda34f9839b879c66624c48276ca9330155603747c43b03bc5 block=51000105 gas=354448
+   ok: swap bounded amountIn=5000000 quoted=1998028431756021 minimum=1989074042273692 actual=1998028431756021
+tx T-5 exit sandwich (-25% WETH print, victim deadline unwind) 0x888275e83bae449a8097191f308ae1be269f8857c2362c5308ef05953877bcc6 block=51000107 gas=8799979
+   ok: swap bounded amountIn=1998028431756021 quoted=4994702 minimum=4972409 actual=4994702
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=1998028431756021 quoted=4994702 minimum=4972409 actual=4994702
+   sandwich T-5 exit sandwich (-25% WETH print, victim deadline unwind): spot -2501 bps during the print, -1 bps after the back-run; price() 2501163805 -> 2501163805; value() 4997396 -> 4997396; moved=1308753533634440965527 received=2970209829339; refused output=3746246 < minimum=4972409; strategy Complete weth=0 usdc=0
+   ok: same-block spot print moved the pool by more than 20% (-2501 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (-1 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-5: the deadline sell during the print was refused (would have received 3746246 USDC units, bound 4972409); after restoration it sold for 4994702 USDC units to the Safe
+=== SCENARIO K: PASS ===
+EXIT 0

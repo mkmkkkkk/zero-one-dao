@@ -1,0 +1,121 @@
+anvil http://127.0.0.1:11547 chainId 31401
+deployed: safe 0xd1E089fDA466434B5F9C0e517d368baE4A2Fd6Ea baal 0x61A9D32E4DAeB3AEb327CB9A37923C825b0e9c07 shares 0x0884215fc23bD57256f31AD68245417302F6395d settlement 0x091afAE65eD5e051261F76f7Bf72127bca14232D
+          depositShaman 0xA30Eef5727BA9342D6fb681A04051Aa292338C21 workManager 0x9dBff0d5A6bb2C800197d5cBFE64fFD884aaD1fD constitution 0x0cAB46845181f8614d8138cA729EB3f6F8Fc9E89
+          templateFactory 0x9269040088278bEC2d8589462f88718e196A3338 deployers 0xc55D07eeD4310DeA9a78236f299438ff3b77407a 0x3Ccc6EEb8558020DeB36cbf8B9158b0CCA8d7D26 0xDDD7294D657f8854D64184A656EE34bd55e271f5 0x0aFBE10ef2658c67BF72a802d8557edE6C2B92e1 intentAccount 0x6493c4338CF4C44A8acc23Dd5D2DeA00b6d76198
+   F = 0x52A039A976526182D5B3c35A9b021871821bf04f  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x6aFe4d02E6296B07CB098D621Eb6d33F8a393E1a  member agent A
+   B = 0xe3C3D72CD967Fa4A270Bf2B2182dCc34aee50e6f  member agent B
+   C = 0x0284870406175B5F4F4c4b9444b99F073807d811  member agent C
+   D = 0x1ef2584Dcac038002E169AD2cdF0eF6c9Ade5695  depositor D (joins later)
+   O = 0x7B6c8cf675770F984203ea928512C43d0CAe553d  operator O (mandate recipient)
+   W = 0x6E322B91Ec7cCeA0c7a678c5E09bFFaaadd1F1a5  worker W (task deliverer)
+   shaman 0xA30Eef5727BA9342D6fb681A04051Aa292338C21 permission 2 (DepositShaman)
+   shaman 0x9dBff0d5A6bb2C800197d5cBFE64fFD884aaD1fD permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xc55D07eeD4310DeA9a78236f299438ff3b77407a
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x3Ccc6EEb8558020DeB36cbf8B9158b0CCA8d7D26
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xDDD7294D657f8854D64184A656EE34bd55e271f5
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x0aFBE10ef2658c67BF72a802d8557edE6C2B92e1
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xf21b0a389872c7b3107cac3032842f3b873a189cc3bbf89a8ddd0b45726bfb42 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0xfa888163ca8e1a3147b1b55f8c8f529df96c590d1f63271ea68e3da7bccf8052 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0x07a7d5b8b51bcd17bbb74474b887662c284bdf5a4e12070895cecd079c52dd41 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x769ba5e19d00b22ee8d7cb9d85221e4ea97dc4dbdecfab30dc1ed347137115a9 (block 25, gas 51238)
+   tx fund O with 10000 USDC: 0x6edf50e1fdd70e20f9ec1403cb715dcd37bdbac85f6d5406e4834eeccd0b35f6 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0xe1c528ae594d3e6b9c941abc251b771cd2ae25a68a6214a707e1e2c56b1de2b7 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0xdba773eb06fa6e9cca63732793cc9bf1ad4fcfd190153301003390ca690a567c (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x0d165d9da665f3a0ca3fb38b7009ddc1a96fcd89654fa80bd4a7ca505bb68e2a (block 29, gas 208079)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x5bea1322325f348f7ac108bcba8c8f2110d08780af33fb118ebabbd179a9d103 (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0xdb140b65d2d9ddad3506e17b86b9ce0e311b4a467004720bb9f461549b564dca (block 31, gas 173861)
+   tx B approve deposit shaman: 0xe1fea352d681d85e0435b0c0db25f36f5a778184c45bf668ab540afd4f78afe2 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x297fa7cdd842aac07f49157ab92649284dd3395c454dc91ba3a89a64b94c899d (block 33, gas 173861)
+   tx C approve deposit shaman: 0xc53ced885db7bfd72cb863d65984647090fad9b112cc1efbe60db9653445cc5d (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x1f45c9058b11427c2e636756490cdf8a58b39519be9ea36a1c8fafee3e3458d2 (block 35, gas 173861)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: negative: a Project whose verifier is the proposer cannot be deployed
+   ok: A naming A as verifier is rejected by the constructor (constructor reverted with VerifierIsOperator)
+   ok: duplicate verifiers are rejected (constructor reverted with DuplicateVerifier)
+   ok: threshold above the verifier count is rejected (constructor reverted with InvalidThreshold)
+
+== step 5: A deploys a Project (tranches: 300 at once; 200 after B and C confirm; 100 after B and C confirm; 30 d deadline) and submits fund+start
+   A deployed ProjectProposal @ 0x70fa1b24858CB97970EdFA23ad99d384d5d6d07F via TemplateFactory (tx 0x4a182c7eaf424fc833f01c8bc5b2fb7dcd94e9e11e93642931db4be39610dd9b, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0xe9dc6feecbcde4b08c422b88b29a60ae15840b91f8ac5a568d0e56633b25a8d2 codeHash 0xa9b5e3cccdfd6a37480f105bd8b1f9564c20450097d57a0472e6d01fa82d8f09
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "A: build the beacon, 600 USDC in three tranches {"template":"Project","contract"...": 0x6d961b79a3eca1e34f65d1290358844d9c730aab0cc7ce6aad90fb131debb219 (block 37, gas 230892)
+   details: A: build the beacon, 600 USDC in three tranches {"template":"Project","contract":"ProjectProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x70fa1b24858CB97970EdFA23ad99d384d5d6d07F","operator":"0x6aFe4d02E6296B07CB098D621Eb6d33F8a393E1a","budget":"600000000","deadline":"1791547289","params":{"tranches":[{"amount":"300000000","releaseType":"date","releaseAt":"0","verifiers":[],"threshold":0},{"amount":"200000000","releaseType":"verifiers","releaseAt":"0","verifiers":["0xe3C3D72CD967Fa4A270Bf2B2182dCc34aee50e6f","0x0284870406175B5F4F4c4b9444b99F073807d811"],"threshold":2},{"amount":"100000000","releaseType":"verifiers","releaseAt":"0","verifiers":["0xe3C3D72CD967Fa4A270Bf2B2182dCc34aee50e6f","0x0284870406175B5F4F4c4b9444b99F073807d811"],"threshold":2}],"deadline":"1791547289"},"paramsHash":"0xe9dc6feecbcde4b08c422b88b29a60ae15840b91f8ac5a568d0e56633b25a8d2","codeHash":"0xa9b5e3cccdfd6a37480f105bd8b1f9564c20450097d57a0472e6d01fa82d8f09","salt":"0x0000000000000000000000000000000000000000000000000000000000000002"}
+   warp +1s (let votingStarts become past) -> block 38 timestamp 1788955290
+   proposal #1 state = Voting
+   [before vote] Project @ 0x70fa1b24858CB97970EdFA23ad99d384d5d6d07F: status Pending budget 600 deadline 1791547289 operator 0x6aFe4d02E6296B07CB098D621Eb6d33F8a393E1a params 0xe9dc6feecbcde4b08c422b88b29a60ae15840b91f8ac5a568d0e56633b25a8d2 held 0 USDC
+   ok: Pending project is absent from active ledger
+   ok: describe(): Pending, budget 600, deadline, operator A
+   ok: three tranches recorded
+
+== step 6: A YES, B YES; grace passes; D executes: the Safe funds 600 and starts; the first tranche (300) releases to A at once
+   tx A votes YES on #1 -> yes 1000 / no 0: 0xa5ffb0a345543504b22587816b7d30d11a5baa7db67a093e4887b47ee31efc7e (block 39, gas 117855)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x980dbc5c1722d63a1cbb2c963e471774e9430dca3a7cf0f629b2d0463ee846f9 (block 40, gas 100755)
+   warp +43200s (past grace of #1) -> block 41 timestamp 1788998490
+   proposal #1 state = Ready
+   tx D processProposal #1 -> passed=true actionFailed=false state=Processed: 0x1db342569c3d0a41f2d4f39f998dd2941195bed6cbe98feafd8da05aeb300e64 (block 42, gas 365473)
+   ok: fund + start executed by the Safe
+   [after start] treasury(Safe) USDC = 2450  totalShares = 3050
+   [after start] A: USDC = 9300  shares = 1000
+   ok: treasury decreased by the whole budget (600)
+   ok: A received the first tranche (300) on vote
+   ok: the project holds the two unreleased tranches (300)
+   ok: tranche 0 released, tranche 1 not
+   [running] Project @ 0x70fa1b24858CB97970EdFA23ad99d384d5d6d07F: status Running budget 600 deadline 1791547289 operator 0x6aFe4d02E6296B07CB098D621Eb6d33F8a393E1a params 0xe9dc6feecbcde4b08c422b88b29a60ae15840b91f8ac5a568d0e56633b25a8d2 held 300 USDC
+   ok: project is Running
+   ok: started project is open in ledger
+
+== step 7: second tranche: A (operator) and D (stranger) cannot confirm; B confirms (1/2) -> nothing; B again refused; C confirms (2/2) -> 200 to A
+   ok: A (proposer/operator) cannot confirm its own tranche (reverted with OnlyVerifier)
+   ok: D is not a verifier (reverted with OnlyVerifier)
+   ok: a verifiers tranche cannot be released by date (reverted with WrongReleaseType)
+   tx B confirms tranche 1 (1/2): 0xc76830cf56a799a4e08ca1980e74f724d0c0c0ad04724ee595c88853e2b2a2d4 (block 43, gas 84613)
+   ok: nothing released after 1 of 2 confirmations
+   ok: B cannot confirm twice (reverted with AlreadyConfirmed)
+   tx C confirms tranche 1 (2/2) -> release: 0x650efef7bddb1dc5e1ccc1c70941d148d374c19eb235df2f2379790122af0251 (block 44, gas 100786)
+   ok: A received the second tranche (200) after both verifiers confirmed
+   ok: the project holds the last tranche (100)
+   ok: a released tranche takes no more confirmations (reverted with TrancheSettled)
+
+== step 8: third tranche is never confirmed; end() before the deadline is refused; after the deadline anyone ends it and the unspent 100 returns to the Safe
+   ok: end() before the deadline is refused (reverted with DeadlineNotReached)
+   ok: A cannot stop() its own project (reverted with OnlySafe)
+   warp +2548800s (to the project deadline) -> block 45 timestamp 1791547290
+   tx W end() after the deadline: 0xfcafd9fbe39715d2fdcfce67059ee3e6c16afde084b3eeee3b28f84dd3e3ff5f (block 46, gas 62241)
+   [ended] Project @ 0x70fa1b24858CB97970EdFA23ad99d384d5d6d07F: status Complete budget 600 deadline 1791547289 operator 0x6aFe4d02E6296B07CB098D621Eb6d33F8a393E1a params 0xe9dc6feecbcde4b08c422b88b29a60ae15840b91f8ac5a568d0e56633b25a8d2 held 0 USDC
+   ok: permissionless Project.end closes the recorded ledger instance
+   ok: project Complete, holds nothing
+   ok: unspent tranche (100 USDC) returned to the Safe
+   ok: treasury = start - what A actually received (500)
+   ok: no confirmation after the end (reverted with WrongStatus)
+
+=== SCENARIO H: PASS ===
+
+anvil stopped (http://127.0.0.1:11547)

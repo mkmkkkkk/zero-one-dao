@@ -1,0 +1,19 @@
+relay up at http://127.0.0.1:18945; default per-IP rate = 30/min
+
+== F1 the per-IP rate limit (default 30/min) fires and is persisted before the rejection
+   40 rejected requests from a single IP -> 10 answered 429 (a 30/min limit blocks >= 10)
+   db.json rates["ip:203.0.113.7"].n = 40 after 40 requests (every request counted, rejected ones included)
+   a different cf-connecting-ip is a different bucket (198.51.100.42 -> status 400): the relay must sit behind Cloudflare or on loopback (docs/RELAY.md)
+
+== F2 op=identity&pass= refuses a pass below the 128-bit entropy floor before revealing anything
+   estimator: "correct horse battery staple correct horse!" -> 51.7 bits (floor 128)
+   -> 400 pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its addres
+   estimator: 32 random bytes as base64url -> 282.5 bits
+   strong pass -> 0x943b1D609B8ba39EaC21244dCA1540eb9FC1Ada2 (deterministic, delegated=false); guessing now costs the full 128 bits, not a dictionary
+
+== F4 the relay's secret fully determines every T0 private key
+   secret (state/relay/secret) + pass reproduces the exact key -> 0x943b1D609B8ba39EaC21244dCA1540eb9FC1Ada2
+   whoever holds this 32-byte secret can sign ANY intent (propose/vote/ragequit) for EVERY T0 account
+
+=== AUDIT TEST relay-adversarial: A5-09 and A5-08 FIXED (F1 limit fires and persists; F2 weak pass refused), A5-07 documented custody reproduced (F4) ===
+EXIT 0
