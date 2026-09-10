@@ -1,0 +1,342 @@
+live chain Base Sepolia (84532) rpc https://sepolia.base.org; founder 0x95F646D87e465a4a177a57d3288d1326e3d3a75d 0.000633178010891851 ETH
+   scenario DAO record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-K-native-sepolia-2026-09-10T19-27-05-248Z.json
+   tx deploy SafeProxy: 0xec4992dff4ae2890e15172e13aae16d4f533bed78d04f46b0b780e84586adfc8
+   tx deploy BaalProxy: 0x5b46e3a034f8198901fd6d29aa8f794422cd20a85fd736558eeef3f2f964ebf8
+   tx deploy NavShareToken: 0xc79a4de08613d41e9375bd01cf12ad27235687b4981097aa5e91231c5ecafea5
+   tx deploy LootToken: 0xb22e40e1f71f80e13003baa064ffa19c855ad9950eabc12a9e75b901f53188ef
+   tx deploy DepositShaman: 0xab035cf40e9a69e24e477914fa8041dd9cbe1149be71a20c4aaddee312501f41
+   tx deploy WorkManager: 0x75f71ca1a615092dcb39de0040053f25763fb76e7fab2d7d47dc538c0f964a0d
+   tx deploy PaymentDeployer: 0x6f53278ee03c5723cf102882699dbb72410371dee6d68b9e3cbe5a0d975b9ba1
+   tx deploy StrategyDeployer: 0x298c756165691815c66d795fddfb268cac80126c3ec74279a39eea398b331a0a
+   tx deploy ProjectDeployer: 0x7e0ce687b157e086f0dc55d9afa8d0fec25bb4e167c9abd59c468383469e6ae2
+   tx deploy ConfigDeployer: 0x67c10801c5efc8fe8e42f3734b3d10366d1bddcce6cd645868ac560acd912fcc
+   tx deploy TemplateFactory: 0x43815c5f4707b4914389eab45279fead47533a7e7e1fd3857afb014d5a071fa0
+   tx deploy ZeroOneIntentAccount: 0xa3bd4dbb8cbb6959b17a98758bd50d7a0a894ec59dda54278084271788f49855
+   tx deploy Constitution: 0xc19b1c16fc1ac7f0a2ecf1d0ae839b1693bd425fcd84f020c8afb698c7457c1d
+   tx deploy Safe.setup: 0xfc4cb8190f24ba45ac3d758e314a6f957e4085b8210b7e68b354ef1cd7bbb97d
+   tx deploy Baal.setUp: 0xb54d27108748cfcff4021423d16148094efa9f30f75395ed6373fe78c404425c
+deployed: safe 0x3e1408747162D078d96b573F161879de698dceD6 baal 0xabC37D9d141C150054fc9D7085e21B3515f76f26 shares 0xa909C557AAb22761794973b5231E304bC8085772 settlement 0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a
+          depositShaman 0x77060ad699D2cB5fB6c92753FBC193759da88f60 workManager 0xd04Aa2695Eb96950bd2638EAd38836c18Dc5CD8c constitution 0x386C21B3344a9c92b22ab6abF52f3A21e063F3A8
+          templateFactory 0x529425461a9d2B4E929b41d9Bc016fa548293287 deployers 0x489D2c3C0F8A3d29b738A913e5d839ce96937873 0xFE1C7ffB3773604D0d25621A0B3980AF77A4cf2d 0xdB60373b888C2DFC994B0c011b64a995fBa4ac4F 0x492A352Fa5227DF0408e153a31cBB7f1a52777A6 intentAccount 0x8FdC6dFd63865F4C86b99416cb8ff34b7551ec8D
+   F = 0x95F646D87e465a4a177a57d3288d1326e3d3a75d  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a  member agent A
+   B = 0x857A8c21822cDF4BFF2a3dD661E21f293ba8e0Bc  member agent B
+   C = 0x0703Df74D5e94C469A14aeBF790055F2E10cAA22  member agent C
+   D = 0xFa6800cE6Bb0F879cB504065B5AbdF23a9005559  depositor D (joins later)
+   O = 0x5531307642877686C837c205796C8e25CfD0017E  operator O (mandate recipient)
+   W = 0x46Ef823B5f3e8A141BfB7A723773e6185A204C6a  worker W (task deliverer)
+   shaman 0x77060ad699D2cB5fB6c92753FBC193759da88f60 permission 2 (DepositShaman)
+   shaman 0xd04Aa2695Eb96950bd2638EAd38836c18Dc5CD8c permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x489D2c3C0F8A3d29b738A913e5d839ce96937873
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xFE1C7ffB3773604D0d25621A0B3980AF77A4cf2d
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xdB60373b888C2DFC994B0c011b64a995fBa4ac4F
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x492A352Fa5227DF0408e153a31cBB7f1a52777A6
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xf9818146bc9f7de22f0ec0261dab5025fdb999c64970d1f66ca9d81e649756db (block 46650080, gas 34194)
+   tx fund B with 10000 USDC: 0xcc8e097d392544885cf590e7e63691e94ecfc4ef95aee9051ba836e299ca8268 (block 46650082, gas 34194)
+   tx fund C with 10000 USDC: 0x376f55cbdfa4dbc0a8fffc3c09a840276874399ba0bf69bbe15967231f69c77d (block 46650084, gas 34182)
+   tx fund D with 10000 USDC: 0x6612c7e4a4dd2d5f1ab720b6fa73ef76bfae475bb4807af8ba41a5d11c988cef (block 46650086, gas 34170)
+   tx fund O with 10000 USDC: 0xb2f66682aba85c4e5c56af606c9122c9b97bed07ccf539af8d025c4af1bfb114 (block 46650088, gas 34194)
+   tx fund W with 10000 USDC: 0xd17b04bc0ccbbe6ecbea3342023bbc88c2173a9a0d61f6beea12b7929d22d7b8 (block 46650090, gas 34194)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x16853d985d35b044bc9cda2b3e9b1413701a0c63bdbd44480943c56455cfe957 (block 46650092, gas 45923)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x91fd3dfddcf8e8516ecbdf2e105e93a15350049b924b644c6e3f75548bf4d9c1 (block 46650095, gas 301884)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xca260f32e998d76b4e107971eb181a374ea8b9b7850d1103b4d8414da1177150 (block 46650097, gas 45911)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x0fb3d1c724580d5e07d1e0e93cb91dd1a8967a1608385f68175c2aca2184f684 (block 46650099, gas 250662)
+   tx B approve deposit shaman: 0x13a2c6e88aadd5441c307c3e15d2416e068355c85c0e242b2f5bfddeea841389 (block 46650101, gas 45911)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x6ad88b11432052644f48e880683dc562f4e9fe78a0092e9b439f694282ab494e (block 46650103, gas 250662)
+   tx C approve deposit shaman: 0x8d8d80737a3a2de7ec5c2c7c5989a5265a58927915383247b8218d780521ff6d (block 46650104, gas 45911)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xa6c2a4e5796bab130b64eec7cf1564d998754f2df093fa31288c6080763cd6de (block 46650106, gas 250662)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99879900  shares = 50
+   [seeded] A: USDC = 18000  shares = 1000
+   [seeded] B: USDC = 18000  shares = 1000
+   [seeded] C: USDC = 18000  shares = 1000
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Sepolia factory has code 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
+   ok: published Sepolia router has code 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4
+   ok: published Sepolia quoter has code 0xC5290058841028F1614F3A6F0F5816cAd0df5E27
+   ok: published Sepolia manager has code 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2
+   ok: published dependency factory matches
+   ok: published dependency factory matches
+RECEIPT K asset deploy 0x730f913577f3cb6794d9b7de6e45bdac8691fd5e4ccbe2cb530000deb18cacc0 address=0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA
+RECEIPT create own mock pair tx=0x0afb296111ddcf3b64428bec8bccea006f1b7e36c90b24f7f49871931bf3cb02 block=46650113 gas=4558970
+RECEIPT initialize price 1 tx=0x822d0e1e9360fb0d73f196017647e538ab3fe1dcc30f6f3df72ec5d1921ef48c block=46650115 gas=70156
+RECEIPT grow observation ring tx=0x06f4f5c2d6443b73b346b6a078a5faeed1e4e9405f77e4317a96c97a857ffb31 block=46650117 gas=2853130
+   ok: new pool refuses 30-minute TWAP (constructor reverted with WindowUnavailable)
+RECEIPT liquidity approval tx=0x4823a04728f2b0edd6b4c262f7235a5bd0b124b49b753e20a5d8e7904e37d118 block=46650119 gas=45923
+RECEIPT liquidity approval tx=0xb3657e108a7b46b0b0766af41cdfcfe899dc4ef050b3f7a262602d6a9d52bed0 block=46650119 gas=45901
+RECEIPT mint own full-range liquidity tx=0xa88c4a6c13bad64dda27551766f3663b27dad474c5641cc15b607bd1a9ec939a block=46650121 gas=593093
+K POOL READY; waiting real TWAP history until 2026-09-10T19:58:39.000Z
+   ...waiting (real Uniswap TWAP history): block 46650152 timestamp 1789068592, target 1789070319 (1727 s left)
+   ...waiting (real Uniswap TWAP history): block 46650183 timestamp 1789068654, target 1789070319 (1665 s left)
+   ...waiting (real Uniswap TWAP history): block 46650214 timestamp 1789068716, target 1789070319 (1603 s left)
+   ...waiting (real Uniswap TWAP history): block 46650245 timestamp 1789068778, target 1789070319 (1541 s left)
+   ...waiting (real Uniswap TWAP history): block 46650276 timestamp 1789068840, target 1789070319 (1479 s left)
+   ...waiting (real Uniswap TWAP history): block 46650307 timestamp 1789068902, target 1789070319 (1417 s left)
+   ...waiting (real Uniswap TWAP history): block 46650337 timestamp 1789068962, target 1789070319 (1357 s left)
+   ...waiting (real Uniswap TWAP history): block 46650368 timestamp 1789069024, target 1789070319 (1295 s left)
+   ...waiting (real Uniswap TWAP history): block 46650398 timestamp 1789069084, target 1789070319 (1235 s left)
+   ...waiting (real Uniswap TWAP history): block 46650429 timestamp 1789069146, target 1789070319 (1173 s left)
+   ...waiting (real Uniswap TWAP history): block 46650459 timestamp 1789069206, target 1789070319 (1113 s left)
+   ...waiting (real Uniswap TWAP history): block 46650490 timestamp 1789069268, target 1789070319 (1051 s left)
+   ...waiting (real Uniswap TWAP history): block 46650520 timestamp 1789069328, target 1789070319 (991 s left)
+   ...waiting (real Uniswap TWAP history): block 46650551 timestamp 1789069390, target 1789070319 (929 s left)
+   ...waiting (real Uniswap TWAP history): block 46650581 timestamp 1789069450, target 1789070319 (869 s left)
+   ...waiting (real Uniswap TWAP history): block 46650612 timestamp 1789069512, target 1789070319 (807 s left)
+   ...waiting (real Uniswap TWAP history): block 46650642 timestamp 1789069572, target 1789070319 (747 s left)
+   ...waiting (real Uniswap TWAP history): block 46650673 timestamp 1789069634, target 1789070319 (685 s left)
+   ...waiting (real Uniswap TWAP history): block 46650703 timestamp 1789069694, target 1789070319 (625 s left)
+   ...waiting (real Uniswap TWAP history): block 46650734 timestamp 1789069756, target 1789070319 (563 s left)
+   ...waiting (real Uniswap TWAP history): block 46650765 timestamp 1789069818, target 1789070319 (501 s left)
+   ...waiting (real Uniswap TWAP history): block 46650795 timestamp 1789069878, target 1789070319 (441 s left)
+   ...waiting (real Uniswap TWAP history): block 46650826 timestamp 1789069940, target 1789070319 (379 s left)
+   ...waiting (real Uniswap TWAP history): block 46650856 timestamp 1789070000, target 1789070319 (319 s left)
+   ...waiting (real Uniswap TWAP history): block 46650887 timestamp 1789070062, target 1789070319 (257 s left)
+   ...waiting (real Uniswap TWAP history): block 46650917 timestamp 1789070122, target 1789070319 (197 s left)
+   ...waiting (real Uniswap TWAP history): block 46650948 timestamp 1789070184, target 1789070319 (135 s left)
+   ...waiting (real Uniswap TWAP history): block 46650978 timestamp 1789070244, target 1789070319 (75 s left)
+   ...waiting (real Uniswap TWAP history): block 46651009 timestamp 1789070306, target 1789070319 (13 s left)
+   wait +1789s (real Uniswap TWAP history) -> block 46651017 timestamp 1789070322 (real 1791 s)
+RECEIPT venue deploy 0xf38f37a19632b4591f23656f461b7a75a12f5dfbf88b41eb116c6be307ad2906 address=0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e
+   A deployed StrategyProposal @ 0x96B1F709Cd884273226eb71ad992A702093B901B via TemplateFactory (tx 0xfe3f993a6d0b93267e99b5ab80a664ca8a2109de0dbdabccb072a7f011a25117, salt 0x0000000000000000000000000000000000000000000000000000000000000004) paramsHash 0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189 codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "K two buys then voted stop and unwind {"template":"Strategy","contract":"Strateg...": 0xd758635598bcc6ed44accb6a6cd76f6346cc10d4ebbcfa340e0857543e3391da (block 46651025, gas 304360)
+   details: K two buys then voted stop and unwind {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x96B1F709Cd884273226eb71ad992A702093B901B","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"20000000","deadline":"1789156726","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"20000000","rule":{"maxPerRun":"2000000","minInterval":"0","deadline":"1789156726","takeProfitBps":"2500","stopLossBps":"5000","slippageBps":"50"}},"paramsHash":"0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x0000000000000000000000000000000000000000000000000000000000000004"}
+   wait +1s (let votingStarts become past) -> block 46651026 timestamp 1789070340 (real 0 s)
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x82181e25f819e27cfb4e3ebe08ec3fda6ca4be2c55efdbd9bc543d8db7a05b7c (block 46651028, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0xa22209e7abdf09685dbb12053f22c91932a85eedcc8ead062beec84260dcc4ec (block 46651030, gas 100127)
+   ...waiting (past grace of #1): block 46651061 timestamp 1789070410, target 1789070579 (169 s left)
+   ...waiting (past grace of #1): block 46651092 timestamp 1789070472, target 1789070579 (107 s left)
+   ...waiting (past grace of #1): block 46651123 timestamp 1789070534, target 1789070579 (45 s left)
+   wait +229s (past grace of #1) -> block 46651146 timestamp 1789070580 (real 231 s)
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=false state=Processed: 0xe5d39ad5bc6c9f08ab1a125d125a080e637123b5b7d130fad62de1084654572b (block 46651149, gas 369588)
+   ok: K proposal 1 executed
+RECEIPT permissionless Strategy run tx=0x84b55b9dd30a86eebc93678d45fe20eda59aa59825542cc5f2f02be1637a5d4c block=46651151 gas=382946
+RECEIPT permissionless Strategy run tx=0x8a944f0a563a39eceb941826d9b566a5e5da30aae7203852551febd7b6ff39bf block=46651153 gas=299972
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: two real v3 buys spend exactly 2 mock USDC each
+   ok: asset in open instance pauses deposits
+   ok: running asset gate (reverted with TreasuryNotSettled)
+   tx A submitProposal #2 "K stop" (baalGas 120883): 0xa7dbb098b1ef757afaa89fe548bbd7dee31177f22678163ea7726ca3aac69b22 (block 46651159, gas 282126)
+   wait +1s (let votingStarts become past) -> block 46651160 timestamp 1789070608 (real 2 s)
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xa11f4f94d7c60ff98c68e5ab5027f6226b7c3e3ca89baaecd08efad133d572d3 (block 46651162, gas 117227)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0x4746e71d13ccd2c750f5bec0b50a71479230854ad3f356615d60109171af16a2 (block 46651164, gas 100127)
+   ...waiting (past grace of #2): block 46651195 timestamp 1789070678, target 1789070847 (169 s left)
+   ...waiting (past grace of #2): block 46651226 timestamp 1789070740, target 1789070847 (107 s left)
+   ...waiting (past grace of #2): block 46651256 timestamp 1789070800, target 1789070847 (47 s left)
+   wait +231s (past grace of #2) -> block 46651280 timestamp 1789070848 (real 231 s)
+   proposal #2 state = Ready
+   tx W processProposal #2 -> passed=true actionFailed=false state=Processed: 0xea7eeec400e8d093858c72c3e07911f80b650f2fea2cb89651a189fa36d96630 (block 46651283, gas 168377)
+   ok: K proposal 2 executed
+   ok: stop preserves asset and returns USDC
+   ok: stopped asset gate (reverted with TreasuryNotSettled)
+   tx A submitProposal #3 "K unwind" (baalGas 687112): 0x0cabe3aa8db4dc1c6c62c930a450bf088fbb1e50fef4d55c3fa14cf7459e283f (block 46651288, gas 282150)
+   wait +1s (let votingStarts become past) -> block 46651289 timestamp 1789070866 (real 3 s)
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x05730b1657b65aaa159c997af7e4433309de48bc6c2ffd34594307042bcaf9c9 (block 46651291, gas 117227)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0x3ec32735bfec14635454e8410f40784c65e8287e6e52387165db9334549d46a7 (block 46651293, gas 100127)
+   ...waiting (past grace of #3): block 46651324 timestamp 1789070936, target 1789071105 (169 s left)
+   ...waiting (past grace of #3): block 46651355 timestamp 1789070998, target 1789071105 (107 s left)
+   ...waiting (past grace of #3): block 46651385 timestamp 1789071058, target 1789071105 (47 s left)
+   wait +231s (past grace of #3) -> block 46651409 timestamp 1789071106 (real 230 s)
+   proposal #3 state = Ready
+   tx W processProposal #3 -> passed=true actionFailed=false state=Processed: 0x73234805b912f7fb879e6530d4231fb357423e116b142c238ccece46c2e6a76a (block 46651412, gas 433769)
+   ok: K proposal 3 executed
+   ok: unwind sold asset and reopened deposits
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   A deployed StrategyProposal @ 0xEc7F799b1264B54eacce1811F3d343f1771dde7B via TemplateFactory (tx 0x01472ffe514e5ebac0e22514cad744889c5ce66d2a6b43982fe1d3bf7e7626e9, salt 0x000000000000000000000000000000000000000000000000000000000000000b) paramsHash 0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189 codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #4 "K migration source {"template":"Strategy","contract":"StrategyProposal","compile...": 0xc67588b0eacd37ad1bfebb8b763debd1c7d444d2dafc0ad2b448a2bd76c1b624 (block 46651421, gas 303735)
+   details: K migration source {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xEc7F799b1264B54eacce1811F3d343f1771dde7B","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"20000000","deadline":"1789156726","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"20000000","rule":{"maxPerRun":"2000000","minInterval":"0","deadline":"1789156726","takeProfitBps":"2500","stopLossBps":"5000","slippageBps":"50"}},"paramsHash":"0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x000000000000000000000000000000000000000000000000000000000000000b"}
+   wait +1s (let votingStarts become past) -> block 46651422 timestamp 1789071132 (real 3 s)
+   proposal #4 state = Voting
+   tx A votes YES on #4 -> yes 1000 / no 0: 0x7f84ce9f5c1d215e13a1eb456690847c9dfa4848443a48a73c426a0dcb9a763f (block 46651425, gas 117227)
+   tx B votes YES on #4 -> yes 2000 / no 0: 0xdaf845db4d7055d92008d0a324a44ba901ccdcc9c02df33d4ed834ae55d06eae (block 46651427, gas 100127)
+   ...waiting (past grace of #4): block 46651459 timestamp 1789071206, target 1789071371 (165 s left)
+   ...waiting (past grace of #4): block 46651490 timestamp 1789071268, target 1789071371 (103 s left)
+   ...waiting (past grace of #4): block 46651520 timestamp 1789071328, target 1789071371 (43 s left)
+   wait +227s (past grace of #4) -> block 46651543 timestamp 1789071374 (real 228 s)
+   proposal #4 state = Ready
+   tx W processProposal #4 -> passed=true actionFailed=false state=Processed: 0xa0940cec5a892cf90034d65a1d214a2015aec199a9b2db4e5a618762be79b54e (block 46651545, gas 304856)
+   ok: K proposal 4 executed
+RECEIPT permissionless Strategy run tx=0x6f20995c14a0f1168d8f674c11625a7538fb378f4a4e3c5253be23f84e085e87 block=46651547 gas=351250
+RECEIPT migration target deploy 0xa831447e7e246c0a9cb30589a9472da4d2397834762b07e6ad402da9fcec32a6
+   tx A submitProposal #5 "K migrate" (baalGas 371893): 0xfa70865d950b8184337e5b804c9f6e389138a333f3f1fbe1d3bcdbf2638a9831 (block 46651553, gas 284373)
+   wait +1s (let votingStarts become past) -> block 46651554 timestamp 1789071396 (real 3 s)
+   proposal #5 state = Voting
+   tx A votes YES on #5 -> yes 1000 / no 0: 0x85284a0554889464f3288d29781107676eb71ed21e1dbad59a9056cd42116f25 (block 46651557, gas 117227)
+   tx B votes YES on #5 -> yes 2000 / no 0: 0x617ba913dee12fc630d02f8165a6411e53d44d9ad4b7e9b98b1d2b3814fa7977 (block 46651559, gas 100127)
+   ...waiting (past grace of #5): block 46651591 timestamp 1789071470, target 1789071635 (165 s left)
+   ...waiting (past grace of #5): block 46651622 timestamp 1789071532, target 1789071635 (103 s left)
+   ...waiting (past grace of #5): block 46651652 timestamp 1789071592, target 1789071635 (43 s left)
+   wait +227s (past grace of #5) -> block 46651675 timestamp 1789071638 (real 229 s)
+   proposal #5 state = Ready
+   tx W processProposal #5 -> passed=true actionFailed=false state=Processed: 0x91cf95c5ba2c8a0308691b73349ed77f01e8948a2eda55c0544772e283a3bff6 (block 46651677, gas 316011)
+   ok: K proposal 5 executed
+   [K instance] Strategy @ 0xEc7F799b1264B54eacce1811F3d343f1771dde7B: status Migrated budget 20 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189 held 0 USDC
+   [K instance] Strategy @ 0x77D9F01C842aFbF694D272C72C4804F773146B68: status Running budget 20 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189 held 18 USDC
+   ok: migration preserves both token balances
+RECEIPT permissionless Strategy run tx=0x47f2f995c03625422c454721a9f3df0259264ab7dae0db585004a853b36aa2f4 block=46651680 gas=334150
+   tx A submitProposal #6 "K voted proceeds fixture" (baalGas 80023): 0xc4f942f0eb399ec2400f79a6fc6c2a84d9c554c6bbb7043d498155271ef2f6e8 (block 46651683, gas 283448)
+   wait +1s (let votingStarts become past) -> block 46651685 timestamp 1789071658 (real 3 s)
+   proposal #6 state = Voting
+   tx A votes YES on #6 -> yes 1000 / no 0: 0x002cff375c4ff36ce53b666c1d12b2a80751554566ccb4bde8978e05d78fab09 (block 46651687, gas 117227)
+   tx B votes YES on #6 -> yes 2000 / no 0: 0x3f81a5df30d47b1898794abb71425f06c58cdf96ee1018655baee20277757ddf (block 46651689, gas 100127)
+   ...waiting (past grace of #6): block 46651720 timestamp 1789071728, target 1789071895 (167 s left)
+   ...waiting (past grace of #6): block 46651751 timestamp 1789071790, target 1789071895 (105 s left)
+   ...waiting (past grace of #6): block 46651781 timestamp 1789071850, target 1789071895 (45 s left)
+   wait +229s (past grace of #6) -> block 46651804 timestamp 1789071896 (real 229 s)
+   proposal #6 state = Ready
+   tx W processProposal #6 -> passed=true actionFailed=false state=Processed: 0xb4f0ee3247046b583291beb8ef21cb93cd6b193520c49993feac19376b6b3d07 (block 46651807, gas 153073)
+   ok: K proposal 6 executed
+RECEIPT permissionless Strategy run tx=0xcac70b9d189360c7b02160a3a72e535c7de6867afa8e80975ad9397e1dde20d6 block=46651809 gas=321244
+   [K instance] Strategy @ 0x77D9F01C842aFbF694D272C72C4804F773146B68: status Complete budget 20 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x7f21bda1229221589080a46373a27ce02f61cdfb7dbd4c5301efe0a9e3db7189 held 0 USDC
+   ok: take-profit sells via real router
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   A deployed StrategyProposal @ 0x7e632CDa02faa348Ae1069710058779E6Ca21B44 via TemplateFactory (tx 0x6683db0cd0ce4951c8433170d5147d3e1078157bbd76680dc6fcd7e8ae2da006, salt 0x0000000000000000000000000000000000000000000000000000000000000013) paramsHash 0x1305a15165606188137b4c6611a16ce589d4eef202c2dfc88bc938c9618e272a codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #7 "K 1bp stop-loss after 5bp pool fee {"template":"Strategy","contract":"StrategyPr...": 0xb3d2a8061a5f871c6b4dd37de6c00eddd6418ced946dbb3e55558eb57b881dc7 (block 46651817, gas 304240)
+   details: K 1bp stop-loss after 5bp pool fee {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x7e632CDa02faa348Ae1069710058779E6Ca21B44","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"5000000","deadline":"1789156726","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"5000000","rule":{"maxPerRun":"5000000","minInterval":"0","deadline":"1789156726","takeProfitBps":"2500","stopLossBps":"1","slippageBps":"50"}},"paramsHash":"0x1305a15165606188137b4c6611a16ce589d4eef202c2dfc88bc938c9618e272a","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x0000000000000000000000000000000000000000000000000000000000000013"}
+   wait +1s (let votingStarts become past) -> block 46651821 timestamp 1789071930 (real 0 s)
+   proposal #7 state = Voting
+   tx A votes YES on #7 -> yes 1000 / no 0: 0x096fc243785410174b860195b68292c211a4d962485c12e2d2df7919d48769aa (block 46651823, gas 117227)
+   tx B votes YES on #7 -> yes 2000 / no 0: 0x2b9e1a5e74f29df27b678450a278e9f346212f15356ea32b576517ec876627c7 (block 46651825, gas 100127)
+   ...waiting (past grace of #7): block 46651857 timestamp 1789072002, target 1789072163 (161 s left)
+   ...waiting (past grace of #7): block 46651888 timestamp 1789072064, target 1789072163 (99 s left)
+   ...waiting (past grace of #7): block 46651918 timestamp 1789072124, target 1789072163 (39 s left)
+   wait +223s (past grace of #7) -> block 46651938 timestamp 1789072164 (real 224 s)
+   proposal #7 state = Ready
+   tx W processProposal #7 -> passed=true actionFailed=false state=Processed: 0x2e82a5d4c5c65b420fd2d7bcf12e7a9ce3b4c58e4e17e9e38dca98922d74ecb3 (block 46651941, gas 304832)
+   ok: K proposal 7 executed
+RECEIPT permissionless Strategy run tx=0xac36bb7dc1c1d584b8194a54f223d1a1052e0353d5ec88110f3dcdc2a4654cc8 block=46651943 gas=346450
+RECEIPT permissionless Strategy run tx=0x3794262327651a418c3c942532bf4dbf6f28b6109a368f3af6537015bc24c891 block=46651944 gas=336849
+   [K instance] Strategy @ 0x7e632CDa02faa348Ae1069710058779E6Ca21B44: status Complete budget 5 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x1305a15165606188137b4c6611a16ce589d4eef202c2dfc88bc938c9618e272a held 0 USDC
+   ok: stop-loss sells via real router
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+RECEIPT sandwich probe 0x1631127927dd8e102858a7ce7e06ab4241cfbe603ee33def4a179ce4dc30eddd
+RECEIPT own mock sandwich capital tx=0x9c4083f4c1b058db4d67caa415a9bd3819bc69d867cfe9af3f346cb154c7b53c block=46651948 gas=51306
+RECEIPT own mock sandwich capital tx=0x9e72d4de4a208ac96cfb122438321f2fa2d19e46dc1bccadba07536b7133bd16 block=46651949 gas=51262
+   A deployed StrategyProposal @ 0xE0FfCC777524AE9eBC3621c5d73c326Cb5990B61 via TemplateFactory (tx 0x4d3f55a0f801ff51134743be21b14ce9f114c572b1124e7ef8add0848037d778, salt 0x0000000000000000000000000000000000000000000000000000000000000016) paramsHash 0x8a489c98f9d4f462ad07e23cfb5ed4c40d688c66654cab8a128e097adc0f7075 codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #8 "K entry sandwich {"template":"Strategy","contract":"StrategyProposal","compiler"...": 0x9fa15df349f052a22473ea26a2bbfae8b115904f5e46ccec7df4aabd3372275d (block 46651955, gas 303639)
+   details: K entry sandwich {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xE0FfCC777524AE9eBC3621c5d73c326Cb5990B61","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"20000000","deadline":"1789156726","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"20000000","rule":{"maxPerRun":"2000000","minInterval":"0","deadline":"1789156726","takeProfitBps":"0","stopLossBps":"0","slippageBps":"50"}},"paramsHash":"0x8a489c98f9d4f462ad07e23cfb5ed4c40d688c66654cab8a128e097adc0f7075","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x0000000000000000000000000000000000000000000000000000000000000016"}
+   wait +1s (let votingStarts become past) -> block 46651956 timestamp 1789072200 (real 3 s)
+   proposal #8 state = Voting
+   tx A votes YES on #8 -> yes 1000 / no 0: 0xf89414e7b6db628103b7e8e3dc32de610c1f28787560c60f328a5ed353982727 (block 46651959, gas 117227)
+   tx B votes YES on #8 -> yes 2000 / no 0: 0xe84c30e571db6a2890a24ffcf2547e963124da83cc920e1781612f64aa4f0f24 (block 46651961, gas 100127)
+   ...waiting (past grace of #8): block 46651993 timestamp 1789072274, target 1789072439 (165 s left)
+   ...waiting (past grace of #8): block 46652023 timestamp 1789072334, target 1789072439 (105 s left)
+   ...waiting (past grace of #8): block 46652054 timestamp 1789072396, target 1789072439 (43 s left)
+   wait +227s (past grace of #8) -> block 46652077 timestamp 1789072442 (real 228 s)
+   proposal #8 state = Ready
+   tx W processProposal #8 -> passed=true actionFailed=false state=Processed: 0xae04a981711944c86dc91a7aac1bb1eef5bb58e3f4969e48626a04729a229ca7 (block 46652079, gas 304856)
+   ok: K proposal 8 executed
+RECEIPT atomic spot print / victim / restoration tx=0x9f5dcabcab4dbfd5bbe116d0261360a6fde11c8c3ae82eeb39fb63232196324f block=46652081 gas=677478
+   ok: Sandwiched event mined
+   ok: same-block spot print does not change TWAP price or value
+   ok: sandwich victim refused by TWAP output bound
+SANDWICH rising=true refusal=true report={"priceBefore":"1000099","priceDuring":"1000099","valueBefore":"20000000","valueDuring":"20000000","sqrtBefore":"79228161999360407647424202528","sqrtDuring":"70513064179430762806207540249","sqrtAfter":"79223804450264323047070597106","moved":"123657335090","received":"109999999285","refusedOutput":"1583405","refusedMinimum":"1989802"}
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   [K instance] Strategy @ 0xE0FfCC777524AE9eBC3621c5d73c326Cb5990B61: status Running budget 20 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x8a489c98f9d4f462ad07e23cfb5ed4c40d688c66654cab8a128e097adc0f7075 held 18 USDC
+   ok: entry runs successfully after restoration
+   A deployed StrategyProposal @ 0x83bdB1Fa4DbF0E80c27F92946A47da8Bd3b1A902 via TemplateFactory (tx 0x2f3379f7db8d41b3259a9475bbc47becde5390138d10e77c9e534e122887e798, salt 0x0000000000000000000000000000000000000000000000000000000000000019) paramsHash 0x30dd843d3d10394261493e92ecdf72ca279febb8a116526b61149c0c5e635062 codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #9 "K print does not fire stop-loss {"template":"Strategy","contract":"StrategyPropo...": 0xc5dacc18f85f72f18922a1c27010c7ffd01debc240b3d87a0324eda110f14e6c (block 46652089, gas 304252)
+   details: K print does not fire stop-loss {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x83bdB1Fa4DbF0E80c27F92946A47da8Bd3b1A902","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"10000000","deadline":"1789156726","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"10000000","rule":{"maxPerRun":"5000000","minInterval":"0","deadline":"1789156726","takeProfitBps":"0","stopLossBps":"2500","slippageBps":"50"}},"paramsHash":"0x30dd843d3d10394261493e92ecdf72ca279febb8a116526b61149c0c5e635062","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x0000000000000000000000000000000000000000000000000000000000000019"}
+   wait +1s (let votingStarts become past) -> block 46652090 timestamp 1789072468 (real 3 s)
+   proposal #9 state = Voting
+   tx A votes YES on #9 -> yes 1000 / no 0: 0x281866e1d84b0336e099dd318389235b5445acf44d4a71d2ff1de6e269449d52 (block 46652093, gas 117227)
+   tx B votes YES on #9 -> yes 2000 / no 0: 0xa4cad657c4c79925d1457e59642df916dbde61f661bfc71116533c06df64e2c0 (block 46652095, gas 100127)
+   ...waiting (past grace of #9): block 46652126 timestamp 1789072540, target 1789072707 (167 s left)
+   ...waiting (past grace of #9): block 46652157 timestamp 1789072602, target 1789072707 (105 s left)
+   ...waiting (past grace of #9): block 46652187 timestamp 1789072662, target 1789072707 (45 s left)
+   wait +227s (past grace of #9) -> block 46652210 timestamp 1789072708 (real 228 s)
+   proposal #9 state = Ready
+   tx W processProposal #9 -> passed=true actionFailed=false state=Processed: 0x063d2f0316d27a1fb4a629d99d1ecd526906c3b3457d69a0b1862574b3062eb8 (block 46652213, gas 287756)
+   ok: K proposal 9 executed
+RECEIPT permissionless Strategy run tx=0xa5eabd4a30cc2f015faa1b9efe63edd85461a9d69b102f4de5b60abfd4c1564c block=46652215 gas=353167
+RECEIPT atomic spot print / victim / restoration tx=0x595b46161b2f7eef906cb3be2b0132976a7698104a019f5566e3d800e1341f7d block=46652217 gas=451650
+   ok: Sandwiched event mined
+   ok: same-block spot print does not change TWAP price or value
+SANDWICH rising=false refusal=false report={"priceBefore":"1000200","priceDuring":"1000200","valueBefore":"9997904","valueDuring":"9997904","sqrtBefore":"79223250195283636000594040159","sqrtDuring":"89522272720670508680671265379","sqrtAfter":"79227411610008848256941639854","moved":"130056968202","received":"115051381224","refusedOutput":"0","refusedMinimum":"0"}
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   [K instance] Strategy @ 0x83bdB1Fa4DbF0E80c27F92946A47da8Bd3b1A902: status Running budget 10 deadline 1789156726 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x30dd843d3d10394261493e92ecdf72ca279febb8a116526b61149c0c5e635062 held 0 USDC
+   ok: print does not trigger stop-loss; buy succeeds
+   A deployed StrategyProposal @ 0x2a6D1c21E5B753873659aCF6d603AE56760a3822 via TemplateFactory (tx 0x3381cbe58569254abde865dce4f92391cbbc4e8c6327fe051583b310ad7db820, salt 0x000000000000000000000000000000000000000000000000000000000000001c) paramsHash 0x648974859a51022813a8726212214e4e1acdec9b7d7c95c2f3bf91977db3b5d5 codeHash 0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #10 "K deadline exit sandwich {"template":"Strategy","contract":"StrategyProposal","c...": 0x024c39ea08e67a82cbe9b0bb7f7768dbd593cec675481841c1867091082f7c85 (block 46652225, gas 303711)
+   details: K deadline exit sandwich {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x2a6D1c21E5B753873659aCF6d603AE56760a3822","operator":"0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a","budget":"5000000","deadline":"1789073324","params":{"venue":"0x5bd2f1813B3CAD84e6BBE470a8f50eE5c7C8bd3e","asset":"0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA","budget":"5000000","rule":{"maxPerRun":"5000000","minInterval":"0","deadline":"1789073324","takeProfitBps":"0","stopLossBps":"0","slippageBps":"50"}},"paramsHash":"0x648974859a51022813a8726212214e4e1acdec9b7d7c95c2f3bf91977db3b5d5","codeHash":"0xc008edc8653a75dbcd4f0535881eb66506673ee5be0b21f7adb2ac10f42d2c5a","salt":"0x000000000000000000000000000000000000000000000000000000000000001c"}
+   wait +1s (let votingStarts become past) -> block 46652226 timestamp 1789072740 (real 3 s)
+   proposal #10 state = Voting
+   tx A votes YES on #10 -> yes 1000 / no 0: 0x33735302b59e8078d4ba2c074bd9a2b7809f8be4562891bf40c248548cf5a9df (block 46652229, gas 117227)
+   tx B votes YES on #10 -> yes 2000 / no 0: 0x9d523536954aa7024c0642231fdc451918a1016b9037efaf47744e7acaf218cf (block 46652231, gas 100127)
+   ...waiting (past grace of #10): block 46652262 timestamp 1789072812, target 1789072979 (167 s left)
+   ...waiting (past grace of #10): block 46652293 timestamp 1789072874, target 1789072979 (105 s left)
+   ...waiting (past grace of #10): block 46652323 timestamp 1789072934, target 1789072979 (45 s left)
+   wait +229s (past grace of #10) -> block 46652346 timestamp 1789072980 (real 229 s)
+   proposal #10 state = Ready
+   tx W processProposal #10 -> passed=true actionFailed=false state=Processed: 0xcde689ba5ef703163ea15e4f02f071c298ceb96f734633e7ca5c73bb4c6bb370 (block 46652349, gas 287756)
+   ok: K proposal 10 executed
+RECEIPT permissionless Strategy run tx=0xa351f00b6969ef477f4a4270b0f4c944c30082d91de99efbb991b9861f6507d4 block=46652351 gas=345228
+   ...waiting (real exit deadline): block 46652382 timestamp 1789073052, target 1789073325 (273 s left)
+   ...waiting (real exit deadline): block 46652413 timestamp 1789073114, target 1789073325 (211 s left)
+   ...waiting (real exit deadline): block 46652443 timestamp 1789073174, target 1789073325 (151 s left)
+   ...waiting (real exit deadline): block 46652474 timestamp 1789073236, target 1789073325 (89 s left)
+   ...waiting (real exit deadline): block 46652504 timestamp 1789073296, target 1789073325 (29 s left)
+   wait +335s (real exit deadline) -> block 46652519 timestamp 1789073326 (real 335 s)
+RECEIPT atomic spot print / victim / restoration tx=0xb8b743476baea620a020326dea2bf019bbd4cd04dbc8af134f982755745b43c5 block=46652521 gas=562585
+   ok: Sandwiched event mined
+   ok: same-block spot print does not change TWAP price or value
+   ok: sandwich victim refused by TWAP output bound
+SANDWICH rising=false refusal=true report={"priceBefore":"1000200","priceDuring":"1000200","valueBefore":"4998379","valueDuring":"4998379","sqrtBefore":"79227015676750593392669893247","sqrtDuring":"89526527714728170533716979369","sqrtAfter":"79231573245200462567151071335","moved":"130063149809","received":"115045913091","refusedOutput":"3911820","refusedMinimum":"4973387"}
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   ok: venue has no retained tokens
+   ok: router allowance reset
+   [K instance] Strategy @ 0x2a6D1c21E5B753873659aCF6d603AE56760a3822: status Complete budget 5 deadline 1789073324 operator 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a params 0x648974859a51022813a8726212214e4e1acdec9b7d7c95c2f3bf91977db3b5d5 held 0 USDC
+   ok: deadline sell fills after restoration
+=== SCENARIO K NATIVE SEPOLIA: PASS ===
+live scenario DAO left on chain: baal 0xabC37D9d141C150054fc9D7085e21B3515f76f26 safe 0x3e1408747162D078d96b573F161879de698dceD6 (record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-K-native-sepolia-2026-09-10T19-27-05-248Z.json)

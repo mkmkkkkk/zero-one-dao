@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-09-10T21:29:38.617671+00:00",
+  "remainingWorkspaceProcesses": [
+    {
+      "pid": 26250,
+      "ppid": 1,
+      "command": "/opt/homebrew/bin/node /Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs /Users/michaelmacmini/srv/zero-one-dao/relay/server.ts"
+    },
+    {
+      "pid": 26251,
+      "ppid": 26250,
+      "command": "/opt/homebrew/Cellar/node/26.5.0/bin/node --require /Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/preflight.cjs --import file:///Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/loader.mjs /Users/michaelmacmini/srv/zero-one-dao/relay/server.ts"
+    },
+    {
+      "pid": 43664,
+      "ppid": 1,
+      "command": "/opt/homebrew/bin/cloudflared tunnel --config /Users/michaelmacmini/srv/zero-one-dao/state/tunnel/cloudflared.yml run"
+    }
+  ],
+  "intendedPersistentService": "launchd relay and its existing Cloudflare tunnel",
+  "temporaryRelayPort18871Listening": false,
+  "browserTabsCreated": 0
+}

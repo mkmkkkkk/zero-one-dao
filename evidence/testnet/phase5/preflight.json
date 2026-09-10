@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7",
+  "remoteMain": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7\trefs/heads/main",
+  "oldRecordArchived": "deployments/base-sepolia-phase3.json",
+  "oldVerificationArchived": "deployments/verification-base-sepolia-phase3",
+  "oldBaal": "0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3",
+  "chainId": 84532
+}

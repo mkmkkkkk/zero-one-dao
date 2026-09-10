@@ -1,0 +1,65 @@
+{
+  "status": "BLOCKED",
+  "sourceCommit": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7",
+  "chainId": 84532,
+  "verification": {
+    "verified": 20,
+    "expected": 20
+  },
+  "scenarios": {
+    "passed": 12,
+    "expected": 12
+  },
+  "contractCornerRows": {
+    "passed": 33,
+    "expected": 33
+  },
+  "relayCornerRows": {
+    "passed": 12,
+    "expected": 12,
+    "uniqueProposalReceipts": 100
+  },
+  "receiptReadback": {
+    "checkedAt": "2026-09-10T21:28:21.265Z",
+    "count": 1350,
+    "success": 1329,
+    "reverted": 21,
+    "unknown": 0
+  },
+  "blockers": [
+    {
+      "requirement": "canonical README and validator",
+      "status": "BLOCKED",
+      "observed": "HTTP 530 / Cloudflare 1033, tunnel TLS EOF; local relay HTTP 200",
+      "evidence": [
+        "canonical-final-headers.txt",
+        "canonical-final-body.txt",
+        "validate-canonical-recheck.log",
+        "tunnel-delivery-readonly.log"
+      ],
+      "constraint": "User forbids network changes"
+    },
+    {
+      "requirement": "complete mini T1 cold start",
+      "status": "BLOCKED",
+      "observed": "Only join/deposit/propose/vote performed; Config #1 and Payment #2 still Voting",
+      "earliestChainTimestamps": [
+        "2026-09-11T07:14:25Z",
+        "2026-09-11T07:28:23Z"
+      ],
+      "evidence": [
+        "cold-start-mini-T1.log",
+        "canonical-governance-delivery.json"
+      ]
+    },
+    {
+      "requirement": "second-machine T0 cold start",
+      "status": "BLOCKED",
+      "secondMachineIdentity": "unknown",
+      "coldStartResult": "unknown",
+      "evidence": [
+        "second-machine-access.json"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "chainId": 84532,
+  "baal": "0x373b1dA53C30c3D38d06974002A86025dC115534",
+  "source": "0x5555eFa2f15ACdE83F5B5a51B604A529D9460820",
+  "recipient": "0xcb4D2DD691f34794eb614d801164b8dE68c51f93",
+  "eoaRefusal": "0x897253bcb2090dea69f2ef93178551a590a6ebfa1a94c37f1890e0d7563d6e54",
+  "contractMigration": "0x1877ca6a592368ecf55928c3c03a763037a8cbb7dc7735b99dcbe73859520c6d",
+  "proposalId": 7,
+  "recipientBefore": "1000000",
+  "recipientAfter": "101000000",
+  "result": "PASS"
+}

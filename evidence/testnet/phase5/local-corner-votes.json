@@ -1,0 +1,83 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-10T19:56:25.289Z",
+  "parts": [
+    [
+      "votes",
+      true,
+      ""
+    ]
+  ],
+  "rows": [
+    {
+      "id": "vote-in-submission-block",
+      "expected": "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).",
+      "observed": "submit block 36 t=1789070184, vote block 37 t=1789070184 (same timestamp), vote status reverted",
+      "ok": true,
+      "receipt": "0xf920c42c18ada11733d595fa54eae0f455df0228dd52e0373bce8ab7f85bc155"
+    },
+    {
+      "id": "vote-twice",
+      "expected": "simulation decodes voted; transaction reverts",
+      "observed": "voted; mined reverted at 40",
+      "ok": true,
+      "receipt": "0x11e16ae675fb2b4e34aee69c1b64a76a7bef5815bbbd559b6bc4eec2dc967606"
+    },
+    {
+      "id": "process-before-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 42",
+      "ok": true,
+      "receipt": "0x9be3277ab18abae7ecbb19ce5554f0c6c3996e715b32ea72a8981440f880b318"
+    },
+    {
+      "id": "vote-after-voting-ends",
+      "expected": "simulation decodes !voting; transaction reverts",
+      "observed": "!voting; mined reverted at 44",
+      "ok": true,
+      "receipt": "0x985cf7e58d2c8869ebc3119a9bf8042540efaae721d0ae2bae248f18bfbe142d"
+    },
+    {
+      "id": "process-during-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 45",
+      "ok": true,
+      "receipt": "0x8d2b9011e136ade6a9cf75d75e12f0c10533adc3dcaf9bede02921509619087b"
+    },
+    {
+      "id": "process-twice",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 48",
+      "ok": true,
+      "receipt": "0x5d5f365d736859781808cfd7ab798eb10c5b57895be7925fe013029745e6a586"
+    },
+    {
+      "id": "multicall-reverts-actionFailed",
+      "expected": "passed=true, actionFailed=true, USDC untouched",
+      "observed": "passed=true actionFailed=true; treasury 3050 -> 3050",
+      "ok": true,
+      "receipt": "0x47db8aecaee31919fcaae3c82d379caa20a329f60430c0f58c20f9caa261ba88"
+    },
+    {
+      "id": "minRetention-33.9pct",
+      "expected": "33.9% deficit leaves 66.1%, proposal passes",
+      "observed": "burned 33900000000000000000; supply 100000000000000000000; passed=true",
+      "ok": true,
+      "receipt": "0x3d9a2ac5fb1ebf3463d5cabad80b33f6be255407b7cf3022d81c768069a8c612"
+    },
+    {
+      "id": "minRetention-exactly-34pct",
+      "expected": "remaining 66 of 100 = 66% >= 66% -> passes",
+      "observed": "B exited 34 (34%); passed=true",
+      "ok": true,
+      "receipt": "0xc82954359c5237943069959f932446eb7f578eec31705b9d07d8c292885b8cd9"
+    },
+    {
+      "id": "minRetention-over-34pct",
+      "expected": "remaining 66 of 106 = 62.26% < 66% -> fails",
+      "observed": "C exited 40 (37.73%); passed=false",
+      "ok": true,
+      "receipt": "0xcf3f195a7308f0b2f19f89397c3bb97e95fb6493becbe26ffab30d708a8b4cb2"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "status": "1",
+  "message": "OK",
+  "result": [
+    {
+      "SourceCode": "{{\r\n  \"language\": \"Solidity\",\r\n  \"sources\": {\r\n    \"@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol\": {\r\n      \"content\": \"// SPDX-License-Identifier: LGPL-3.0-only\\npragma solidity >=0.8.0;\\n\\ncontract ModuleProxyFactory {\\n    event ModuleProxyCreation(\\n        address indexed proxy,\\n        address indexed masterCopy\\n    );\\n\\n    /// `target` can not be zero.\\n    error ZeroAddress(address target);\\n\\n    /// `target` has no code deployed.\\n    error TargetHasNoCode(address target);\\n\\n    /// `address_` is already taken.\\n    error TakenAddress(address address_);\\n\\n    /// @notice Initialization failed.\\n    error FailedInitialization();\\n\\n    function createProxy(address target, bytes32 salt)\\n        internal\\n        returns (address result)\\n    {\\n        if (address(target) == address(0)) revert ZeroAddress(target);\\n        if (address(target).code.length == 0) revert TargetHasNoCode(target);\\n        bytes memory deployment = abi.encodePacked(\\n            hex\\\"602d8060093d393df3363d3d373d3d3d363d73\\\",\\n            target,\\n            hex\\\"5af43d82803e903d91602b57fd5bf3\\\"\\n        );\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            result := create2(0, add(deployment, 0x20), mload(deployment), salt)\\n        }\\n        if (result == address(0)) revert TakenAddress(result);\\n    }\\n\\n    function deployModule(\\n        address masterCopy,\\n        bytes memory initializer,\\n        uint256 saltNonce\\n    ) public returns (address proxy) {\\n        proxy = createProxy(\\n            masterCopy,\\n            keccak256(abi.encodePacked(keccak256(initializer), saltNonce))\\n        );\\n        (bool success, ) = proxy.call(initializer);\\n        if (!success) revert FailedInitialization();\\n\\n        emit ModuleProxyCreation(proxy, masterCopy);\\n    }\\n}\\n\"\r\n    }\r\n  },\r\n  \"settings\": {\r\n    \"evmVersion\": \"london\",\r\n    \"metadata\": {\r\n      \"bytecodeHash\": \"ipfs\",\r\n      \"useLiteralContent\": true\r\n    },\r\n    \"optimizer\": {\r\n      \"enabled\": true,\r\n      \"runs\": 200\r\n    },\r\n    \"remappings\": [],\r\n    \"outputSelection\": {\r\n      \"*\": {\r\n        \"*\": [\r\n          \"evm.bytecode\",\r\n          \"evm.deployedBytecode\",\r\n          \"devdoc\",\r\n          \"userdoc\",\r\n          \"metadata\",\r\n          \"abi\"\r\n        ]\r\n      }\r\n    }\r\n  }\r\n}}",
+      "ABI": "[{\"inputs\":[],\"name\":\"FailedInitialization\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"address_\",\"type\":\"address\"}],\"name\":\"TakenAddress\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"TargetHasNoCode\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"}],\"name\":\"ZeroAddress\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"proxy\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"masterCopy\",\"type\":\"address\"}],\"name\":\"ModuleProxyCreation\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"masterCopy\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"initializer\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"saltNonce\",\"type\":\"uint256\"}],\"name\":\"deployModule\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"proxy\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+      "ContractName": "ModuleProxyFactory",
+      "CompilerVersion": "v0.8.10+commit.fc410830",
+      "CompilerType": "solc-j",
+      "OptimizationUsed": "1",
+      "Runs": "200",
+      "ConstructorArguments": "",
+      "EVMVersion": "london",
+      "Library": "",
+      "ContractFileName": "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
+      "LicenseType": "",
+      "Proxy": "0",
+      "Implementation": "",
+      "SwarmSource": "",
+      "SimilarMatch": ""
+    }
+  ]
+}

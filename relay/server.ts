@@ -507,7 +507,27 @@ async function submit(envelope: Envelope, custodial = false, passHash?: string):
   let waitedBlocks = 0;
   if (m.op === OPS.vote) waitedBlocks = await awaitVotingCheckpoint(m.proposalId);
   const data = encodeFunctionData({ abi: env.abi.account, functionName: "executeIntent", args: [m, envelope.signature] });
-  const estimate = await simulate(m.member, data, id.delegated);
+  // An outside agent only has the README and snippet. Settle a pending journal suffix through
+  // the same locked, journaled and budgeted sponsor path, after the signed execution itself has
+  // reached Baal's RetentionUnsettled guard. Bound one request; progress survives a retry.
+  let estimate: bigint;
+  const retentionHashes: Hex[] = [];
+  for (;;) {
+    try {
+      estimate = await simulate(m.member, data, id.delegated);
+      break;
+    } catch (error) {
+      if (m.op !== OPS.execute || explain(env, error).error?.name !== "RetentionUnsettled") throw error;
+      if (retentionHashes.length >= 4) fail(503, "retention settlement advanced 512 records; retry execute to continue", { retentionHashes });
+      const settled = await sponsored({
+        to: D.shares,
+        data: encodeFunctionData({ abi: env.abi.shares, functionName: "settleRetention", args: [BigInt(m.proposalId), 128n] }),
+        gas: 8_000_000n,
+      });
+      retentionHashes.push(settled.transactionHash);
+    }
+  }
+  if (retentionHashes.length) faucetNote = { ...faucetNote, retentionHashes };
   const gas = m.op === OPS.execute ? (estimate > PROCESS_GAS ? (estimate * 13n) / 10n : PROCESS_GAS + 600_000n) : (estimate * 13n) / 10n + 30_000n;
   if (gas > 8_000_000n) fail(400, `intent needs ${gas} gas, above the sponsored maximum of 8000000`);
   db.requests[digest] = { hash: "0x" as Hex, member: m.member, op: m.op, status: "pending" };

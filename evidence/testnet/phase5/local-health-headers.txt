@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Cache-Control: no-store, private
+Referrer-Policy: no-referrer
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: *
+Date: Thu, 10 Sep 2026 21:19:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

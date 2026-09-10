@@ -1,0 +1,47 @@
+RESUME native fixture corner-votes 0xCfC306120D7DF0E512B12678669AeBa5491cfB33 from evidence/testnet/phase5/scenario-daos/corner-votes-2026-09-10T20-56-42-994Z.json
+   ok: resume unchanged 100-share fixture after reverted proposal submission
+   tx F submitProposal #3 "corner: retention 33.9% exits" (baalGas 56674): 0xad9a82cda1d588c96c351a67bcd5281355d8faf45e9a3b190fc43b24f59fbbc7 (block 46653295, gas 280822)
+   wait +1s (let votingStarts become past) -> block 46653296 timestamp 1789074880 (real 2 s)
+   proposal #3 state = Voting
+   tx F votes YES on #3 -> yes 50 / no 0: 0x457739b55acc2c3fddbb81b34894265d2b55873381eb4975d8f8ca0fea258259 (block 46653299, gas 117227)
+   tx B ragequit 33.9 shares -> paid 33.9 USDC (pro-rata of 100 at supply 100): 0x8c4cb77d205cd2b10a58b657ebbdde8d287e62bc392750036436924edcde359c (block 46653302, gas 249736)
+   ...waiting (past grace of #3): block 46653333 timestamp 1789074954, target 1789075119 (165 s left)
+   ...waiting (past grace of #3): block 46653363 timestamp 1789075014, target 1789075119 (105 s left)
+   ...waiting (past grace of #3): block 46653394 timestamp 1789075076, target 1789075119 (43 s left)
+   wait +227s (past grace of #3) -> block 46653417 timestamp 1789075122 (real 228 s)
+   proposal #3 state = Ready
+RETENTION proposal=3 chunk=1 gas=55250 tx=0x83a12e1851f1832088582fc7be0b5a35dfe90965bd4f037bce245cbd074e3fe8
+   tx A processProposal #3 -> passed=true actionFailed=false state=Processed: 0x6ac73dcd2596d4b5ba4cb43cbc50d7130eda8d940b94028f29fbb0608734a75e (block 46653421, gas 136180)
+   CASE minRetention-33.9pct | expected: 33.9% deficit leaves 66.1%, proposal passes | observed: burned 33900000000000000000; supply 100000000000000000000; passed=true | OK | receipt: 0x6ac73dcd2596d4b5ba4cb43cbc50d7130eda8d940b94028f29fbb0608734a75e
+   tx B approve deposit shaman: 0x53cc6365d9ed9757b9ee2aa307284b9e34efab8e9b627496a853d89353bfaf4b (block 46653424, gas 45923)
+   tx B deposit 33.9 USDC -> 33.9 shares (quoted 33.9): 0xd19a64b1849926e8578e05b8dbf76edf3a6dfb517de344b0127c3bfae6dc6058 (block 46653426, gas 238756)
+   tx F submitProposal #4 "corner: retention boundary 34% exits" (baalGas 56674): 0xd9fc39ce365b34a57d256af42a997853dd817eff832d4dce8452febba2b9decc (block 46653430, gas 281302)
+   wait +1s (let votingStarts become past) -> block 46653431 timestamp 1789075150 (real 2 s)
+   proposal #4 state = Voting
+   tx F votes YES on #4 -> yes 50 / no 0: 0x018fac1615b329ad17117b6b741dbe154c30cce15aa6f90f51afa457407069d7 (block 46653434, gas 117227)
+   tx B ragequit 34 shares -> paid 34 USDC (pro-rata of 100 at supply 100): 0xa46270d510ae4457733eb6f19d0c3f5d7f01b8132406f2a2d16c79875e5847ff (block 46653437, gas 205136)
+   ...waiting (past grace of #4): block 46653468 timestamp 1789075224, target 1789075389 (165 s left)
+   ...waiting (past grace of #4): block 46653499 timestamp 1789075286, target 1789075389 (103 s left)
+   ...waiting (past grace of #4): block 46653529 timestamp 1789075346, target 1789075389 (43 s left)
+   wait +227s (past grace of #4) -> block 46653551 timestamp 1789075390 (real 226 s)
+   proposal #4 state = Ready
+RETENTION proposal=4 chunk=1 gas=57815 tx=0xeb2d12ea4cf049242cd7f380450e98c10a505469adc81c3e78e0681913b5fb5c
+   tx A processProposal #4 -> passed=true actionFailed=false state=Processed: 0x6845eaf580da520d4882650d503d88f4592376572394f6f1d1744cf6bd6f53c6 (block 46653554, gas 136180)
+   CASE minRetention-exactly-34pct | expected: remaining 66 of 100 = 66% >= 66% -> passes | observed: B exited 34 (34%); passed=true | OK | receipt: 0x6845eaf580da520d4882650d503d88f4592376572394f6f1d1744cf6bd6f53c6
+   tx C approve deposit shaman: 0x743885b73fe9b93c3442a5ec00c8fedc0b98a37efe82545437c827ed656b7f5f (block 46653556, gas 45911)
+   tx C deposit 40 USDC -> 40 shares (quoted 40): 0xd4c082418fb32f0a48a63b3686e4a57a6196414a7126ca7054e47562549ec4f4 (block 46653558, gas 235944)
+   tx F submitProposal #5 "corner: retention > 34% exits" (baalGas 56674): 0xd37fb27956b418eee800a8104467e52f1b14002dbe86d0272667d5d7f7cb46aa (block 46653562, gas 280822)
+   wait +1s (let votingStarts become past) -> block 46653563 timestamp 1789075414 (real 3 s)
+   proposal #5 state = Voting
+   tx F votes YES on #5 -> yes 50 / no 0: 0x89275459f8e58df4b2cbb2125e68fe72fcc01f430887bf9df1f182e1b9c0d51e (block 46653566, gas 117227)
+   tx C ragequit 40 shares -> paid 40 USDC (pro-rata of 106 at supply 106): 0x0979ce1ac4a2a4ba9220d0ed6036d516c629f429726820bc06bca72a7a053654 (block 46653569, gas 205136)
+   ...waiting (past grace of #5): block 46653601 timestamp 1789075490, target 1789075653 (163 s left)
+   ...waiting (past grace of #5): block 46653631 timestamp 1789075550, target 1789075653 (103 s left)
+   ...waiting (past grace of #5): block 46653661 timestamp 1789075610, target 1789075653 (43 s left)
+   wait +227s (past grace of #5) -> block 46653683 timestamp 1789075654 (real 227 s)
+   proposal #5 state = Ready
+RETENTION proposal=5 chunk=1 gas=55250 tx=0x8d9730319baea8f6066b1d0c4fafd8bef5087dd36b4091ca4cc550da0da4efd4
+   tx A processProposal #5 -> passed=false actionFailed=false state=Processed: 0x1236dc0a892b1bafb0367972f46ac50f69f2f0a61df54806bdb6d7ef986b1468 (block 46653688, gas 115578)
+   CASE minRetention-over-34pct | expected: remaining 66 of 106 = 62.26% < 66% -> fails | observed: C exited 40 (37.73%); passed=false | OK | receipt: 0x1236dc0a892b1bafb0367972f46ac50f69f2f0a61df54806bdb6d7ef986b1468
+   ok: all native retention boundaries pass
+NATIVE VOTE BOUNDARIES PASS

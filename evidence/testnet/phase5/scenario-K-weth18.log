@@ -1,0 +1,74 @@
+ASSERT published Sepolia WETH has 18 decimals
+RECEIPT increaseObservationCardinalityNext tx=0xcd9b07ee4b3697edabb4216e7db39ded7d87cc9493ac8ebfe08332412f6060b4 block=46650876 gas=2853130
+RECEIPT deposit tx=0xa2a825925e248af01586c7c406f5c24dfec6de3af26af6e536254ca7c044223b block=46650877 gas=44866
+RECEIPT approve tx=0xc5ec3c809be4905cd6d8231e5f351ac819073e258e89235b01c22f32761f1b84 block=46650878 gas=45923
+RECEIPT approve tx=0xf72889a336946d2db1895bee8776c58ea5b1022818719fcb314357cd422f69b6 block=46650879 gas=46019
+RECEIPT mint tx=0xbfba8339c3490fe62f5625187e254481886b79ee4b5506e3635ca479b1dc6103 block=46650881 gas=596485
+WETH18 real TWAP wait seconds=1747
+WETH18 real TWAP wait seconds=1717
+WETH18 real TWAP wait seconds=1685
+WETH18 real TWAP wait seconds=1655
+WETH18 real TWAP wait seconds=1623
+WETH18 real TWAP wait seconds=1593
+WETH18 real TWAP wait seconds=1563
+WETH18 real TWAP wait seconds=1531
+WETH18 real TWAP wait seconds=1501
+WETH18 real TWAP wait seconds=1469
+WETH18 real TWAP wait seconds=1439
+WETH18 real TWAP wait seconds=1409
+WETH18 real TWAP wait seconds=1377
+WETH18 real TWAP wait seconds=1347
+WETH18 real TWAP wait seconds=1315
+WETH18 real TWAP wait seconds=1285
+WETH18 real TWAP wait seconds=1255
+WETH18 real TWAP wait seconds=1223
+WETH18 real TWAP wait seconds=1193
+WETH18 real TWAP wait seconds=1161
+WETH18 real TWAP wait seconds=1131
+WETH18 real TWAP wait seconds=1101
+WETH18 real TWAP wait seconds=1069
+WETH18 real TWAP wait seconds=1039
+WETH18 real TWAP wait seconds=1009
+WETH18 real TWAP wait seconds=977
+WETH18 real TWAP wait seconds=947
+WETH18 real TWAP wait seconds=915
+WETH18 real TWAP wait seconds=885
+WETH18 real TWAP wait seconds=853
+WETH18 real TWAP wait seconds=823
+WETH18 real TWAP wait seconds=793
+WETH18 real TWAP wait seconds=761
+WETH18 real TWAP wait seconds=731
+WETH18 real TWAP wait seconds=701
+WETH18 real TWAP wait seconds=669
+WETH18 real TWAP wait seconds=639
+WETH18 real TWAP wait seconds=607
+WETH18 real TWAP wait seconds=577
+WETH18 real TWAP wait seconds=547
+WETH18 real TWAP wait seconds=515
+WETH18 real TWAP wait seconds=485
+WETH18 real TWAP wait seconds=453
+WETH18 real TWAP wait seconds=423
+WETH18 real TWAP wait seconds=393
+WETH18 real TWAP wait seconds=361
+WETH18 real TWAP wait seconds=331
+WETH18 real TWAP wait seconds=299
+WETH18 real TWAP wait seconds=269
+WETH18 real TWAP wait seconds=239
+WETH18 real TWAP wait seconds=207
+WETH18 real TWAP wait seconds=177
+WETH18 real TWAP wait seconds=145
+WETH18 real TWAP wait seconds=115
+WETH18 real TWAP wait seconds=85
+WETH18 real TWAP wait seconds=53
+WETH18 real TWAP wait seconds=23
+RECEIPT WETH18 venue 0x581f1a9836ea2a2c968add727f1acc8e0495715f37caee271d33e9f71ff0a436 address=0xA565A143b13ee8fd11a7868a403d8938051B556A
+ASSERT venue.assetUnit is 1e18
+RECEIPT approve tx=0xe332eb5a491b6681d6c83726b64a7477fb63c3ec79143d1b3a285555ef3a572b block=46651764 gas=45911
+RECEIPT buy tx=0xc7700d1c5e23d4626d1afe88ebf7ee2dbf06a27fc307f1af5a7c4e1f2f38f38a block=46651765 gas=276873
+ASSERT actual buy uses the 18-decimal asset unit and satisfies its TWAP bound
+RECEIPT approve tx=0xc75408a7862ac94e52b9a30a36b9d12ef90fb83513a52db5bac1e482b7810088 block=46651766 gas=46007
+RECEIPT sell tx=0x66e4796a73ca7f836cc7618161be2ff0d2295990d6bfa8a505f59caf99a1c89e block=46651767 gas=277067
+ASSERT 18-decimal WETH round trip returns actual USDC less pool fees
+ASSERT venue balance and router allowance reset
+ASSERT venue balance and router allowance reset
+K NATIVE WETH18 PASS

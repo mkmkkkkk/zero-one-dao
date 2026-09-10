@@ -1,0 +1,412 @@
+generated actor keys -> /Users/michaelmacmini/srv/zero-one-dao/state/testnet-phase5-ledger/actors.json (0600)
+live chain Base Sepolia (84532) rpc https://sepolia.base.org; founder 0x8F3ad01830A2d22C313f17eEBafaBfB9d58B248f 0.001 ETH
+   tx fund A 0x6167e7562935f4612a656aA78AaC50cCC712f90E with 0.00008 ETH: 0x08d7950a610ac99dd187f8d999f57a906b33a624b422a545f765b34e2c6fae68 (block 46651906)
+   tx fund B 0xE850Aab5f8A82d8666551827C3E805D8b9FC0E0b with 0.00008 ETH: 0x7a1345cb25e036e17b642d31e22d8af845f7de3f64d582194c6c7a564c2db43a (block 46651906)
+   tx fund C 0x367573d5699616B3a920Ac2E8DFAd5FC3690a6C2 with 0.00008 ETH: 0xcf7540e6d958e6206c92098c2d6ef7295e23c7994840cae7106bcdce88684678 (block 46651907)
+   tx fund D 0xc554da288A949c7bCb376591BfB604715c5737da with 0.00008 ETH: 0x11ba158d91ca037e5df3a9b781d1a4372bef9fdbeb30afeaed03b3147260cc48 (block 46651908)
+   tx fund O 0x5Bc519733Fb1e7Bf91DEA0B10C0055f171a5Adf4 with 0.00008 ETH: 0x3b81c84d186510bbf9828d8b366d02dd80065eab690fc24aa6fc1c64fd131bbd (block 46651909)
+   tx fund W 0xf4242b14639bDd67C1BC5513AC2111e420b42Fd5 with 0.00008 ETH: 0x8559fdaa47b98f7c28451e9280a4f0ab34dd86b4e97eef544d1a795141734615 (block 46651910)
+   scenario DAO record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-L-2026-09-10T20-29-31-832Z.json
+   tx deploy SafeProxy: 0x9d333212faeab21694aa1177b5ff629a3486fc56aa662004f48a22a7e4e83cb9
+   tx deploy BaalProxy: 0x8f8cf751d1c3eb6ac6474fe7acb184ef955cb61026edb62f8687ee3dd3a24fb9
+   tx deploy NavShareToken: 0x306daa0068c1c1ce3260a57f07fdca27742f49213646c53cd0ced10d1cb7b807
+   tx deploy LootToken: 0xeff662bd67d17b87349775e6912bbb36555f1d6f17330cd84851d625cff317d6
+   tx deploy DepositShaman: 0xaaac715146f200f0098c1abae0c5e560f72064af0a1d15fdaec8c581da511235
+   tx deploy WorkManager: 0x327ba969cb5bc8923ba91c34a92aa3c70fee33114aa5cfbd702883d5cb0c22e8
+   tx deploy PaymentDeployer: 0xcef2c7d8c6e70daed62135c903867a7dd7be01e845ba9c7cfcf4233488a1a570
+   tx deploy StrategyDeployer: 0xe0777aeb36a03699bea701c77237c735eaf5117f459312405ff277056c816039
+   tx deploy ProjectDeployer: 0xba2f129b1adc5235f8a42a5d7b4a1391bebd87514780b906d10681ba58b0cbd9
+   tx deploy ConfigDeployer: 0x617773e1e2b80a48cfb00468c8df60057502713b7e07caa27e0458d5421fe3ac
+   tx deploy TemplateFactory: 0x801a45c974eaf59b4aeb10a94b5242e735b33551d4d2991e2a064eda7b994384
+   tx deploy ZeroOneIntentAccount: 0x8c47d26d872aab7485796a03ebbe02b2890f5228d164c8b4c77f12ec9a245fa8
+   tx deploy Constitution: 0x30aa4a35f3545204a39ebf087b6e37c67f7fc449efe9b34638f9f540b5b0abed
+   tx deploy Safe.setup: 0x29c70911b4fb3ccc4649ad7e04b310350ced9e45be1e67a882d440c90a1ae447
+   tx deploy Baal.setUp: 0x74d38cec4a1df5538902578342f96285f822a426ac5bd32ef8f66b549dbf6ea6
+deployed: safe 0x4E316fDDee96ABe7c17Fed5bB6198929C012A7c0 baal 0x9361be2d3d73852dD72729ABA94D02f9Fd583626 shares 0x70952891d4009353948784dD0C1DA855b1bb6E90 settlement 0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a
+          depositShaman 0xDBff3d1fDfe5eCd641b17F4Ba0281Af59cC6f411 workManager 0xB8Cb924f4EB27CA8E2A90e93E7BC62D4D18b6517 constitution 0x531c8c677E1b3A1A634c835b281fE27ba625F4b2
+          templateFactory 0xae0080DA529cF53eA74170907F238C900758C5DD deployers 0x3eaB0EbE38c1b3217d6A1b0a5BA2Fb3DE53E9625 0xb0a601743491bae87809E3EC1D4E6423C319BB6d 0xb7ad6e0fF74d5320bBC9cd75F0Fb10936f72afB3 0x777D68258102b85BbdD75543A21b7DFa44BE6dd6 intentAccount 0xe4c4fD8536F32a8c3669e67cF4D926f28a02a0B0
+   F = 0x8F3ad01830A2d22C313f17eEBafaBfB9d58B248f  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x6167e7562935f4612a656aA78AaC50cCC712f90E  member agent A
+   B = 0xE850Aab5f8A82d8666551827C3E805D8b9FC0E0b  member agent B
+   C = 0x367573d5699616B3a920Ac2E8DFAd5FC3690a6C2  member agent C
+   D = 0xc554da288A949c7bCb376591BfB604715c5737da  depositor D (joins later)
+   O = 0x5Bc519733Fb1e7Bf91DEA0B10C0055f171a5Adf4  operator O (mandate recipient)
+   W = 0xf4242b14639bDd67C1BC5513AC2111e420b42Fd5  worker W (task deliverer)
+   shaman 0xDBff3d1fDfe5eCd641b17F4Ba0281Af59cC6f411 permission 2 (DepositShaman)
+   shaman 0xB8Cb924f4EB27CA8E2A90e93E7BC62D4D18b6517 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x3eaB0EbE38c1b3217d6A1b0a5BA2Fb3DE53E9625
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xb0a601743491bae87809E3EC1D4E6423C319BB6d
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xb7ad6e0fF74d5320bBC9cd75F0Fb10936f72afB3
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x777D68258102b85BbdD75543A21b7DFa44BE6dd6
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x64a431f9a12cee0812c1c07cfc1c1a364a0e951b96906dbfeefc6aa18a3fb137 (block 46651950, gas 51294)
+   tx fund B with 10000 USDC: 0x16da1f4d3bb059963d390387153d560125d6d472791ea777c4a7141e2b93746b (block 46651952, gas 51294)
+   tx fund C with 10000 USDC: 0x3c31dd8f825c9d7cd157ccdbed804ecfb5dc98c04dbc585c241de8725e22b504 (block 46651954, gas 51294)
+   tx fund D with 10000 USDC: 0xb618b159196c0776e7a43ad6f842eb66674e25a47a4e97f3de0aea12ba009186 (block 46651956, gas 51294)
+   tx fund O with 10000 USDC: 0xc46b08231b56e0230af5051fdd3544ebf2586a3fe0c43d01812335ffc9fe4f19 (block 46651958, gas 51282)
+   tx fund W with 10000 USDC: 0x5d6d84db3f862d94b9939a9a1ff7d6980cc238916171f2dc4959c3be7c3ff858 (block 46651960, gas 51294)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x94368fa84fdfd33039fd846da86850141df7894d7f30b9210278d1b91ee05ad6 (block 46651962, gas 45923)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x8c2d6fafd789590724a0391f7e7d3a0a95b2cb47c143458e2816a9235f642a10 (block 46651964, gas 301884)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x3c9f7c56be77105c554d8fe2211014915ea60f5d646efd490e8a3899ac460364 (block 46651966, gas 45911)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x5eaddec08464e780ed6202e2092ce19adfe6214b2370c6b7b0ecfc14ff202b4b (block 46651968, gas 250662)
+   tx B approve deposit shaman: 0xca27905eb8fd6e4f1be82306cc7bd5cf1bf4aa09a0272ead373f487688afa3f0 (block 46651970, gas 45911)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x7edf165b6111d21f4bcbaaf675e36cafb6e5d0e7b886dd2023676c6fae1195bb (block 46651972, gas 250662)
+   tx C approve deposit shaman: 0x467f641a782ae2f667abc663005bf5fa57581305f5e3a00a27d2003f03b6b1b1 (block 46651974, gas 45911)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x02b00a6be27bf4ac02ed92f273b41e2de6c568f3c6f53bb1fcc21a375050d23b (block 46651977, gas 250662)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 4939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: seed sufficient settlement for a voted 100k Strategy; record NAV from chain
+   tx fund Safe with additional settlement: 0x27650159ace7439a13bfbc09cd4d4a25125892490b46773f8e371e78e5af24dc (block 46651981, gas 34194)
+   MOCK 0x4983198f1D64b2432D470293C230e5E5884A2D42 (tx 0x1d8d608330482b0e5b8f6a9c79d696004e5a5eec024504c48249549b1232884d); MockDex 0x3b33287E4465C108c3CDF93204e6fD78b95f2108 (tx 0x8e8222705b4037905dfdc8db0a317d25ebad6f9ccea38f3f3a5f9ab32a4ddac1) price 2 USDC per MOCK
+   tx F seeds MockDex with 1000000 USDC: 0x46928edbed5be6431f0e4ed11adbea99ff31a2b1e321ced6bd5f38ca3421292f (block 46651986, gas 51294)
+   tx F seeds MockDex with 1000000 MOCK: 0x0e3410f12d3bd4447c04c43112011b5c5cc408c430caa0f0c40402236f1e502e (block 46651988, gas 51250)
+   LedgerProbe 0x1B35DC97dEe0e2A7530711d81817885cFD897B75 deployment tx 0x23c1e30818d720725f492cb735fcb90f88fa3c9cce624bf6de1551ec86aa2a37; TreasuryLedger 0xB4bEFdFbe63F284A1b2F295D2B25aB4702b48eD5
+   ok: unregistered contract cannot spoofOpen despite claiming Running (reverted with UnknownInstance)
+   ok: unregistered contract cannot spoofClose despite claiming Running (reverted with UnknownInstance)
+   ok: EOA cannot open ledger (reverted with UnknownInstance)
+   tx donate one settlement unit to never-voted instance: 0xfb1049ef8a557aaca841595eee8732ccb0b1a2db505c4d1a12e96b270730318f (block 46651995, gas 51258)
+   ok: deployment alone adds no active instance and registers no asset
+   ok: never-voted instance balance is excluded from deposit NAV
+   baalGas: the action fails at every gas limit (meant to fail?); using the fallback 2000000
+   tx A submitProposal #1 "underfunded start must roll back ledger registration" (baalGas 2000000): 0x32ebccee196d4bc65e572132a3690df188761cd68e019f65213eb6fe846f6acd (block 46651997, gas 283074)
+   wait +1s (let votingStarts become past) -> block 46651998 timestamp 1789072284 (real 3 s)
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0xae08b1cd023ff223a92754122316a631dbdf4c47a66fe6bd06d86e6e29c5a513 (block 46652000, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x381138161c6a57bd1e0dc28d5cd6076f78ad998f65814adc81986aaf79f42bb8 (block 46652002, gas 100127)
+   ...waiting (past grace of #1): block 46652034 timestamp 1789072356, target 1789072523 (167 s left)
+   ...waiting (past grace of #1): block 46652064 timestamp 1789072416, target 1789072523 (107 s left)
+   ...waiting (past grace of #1): block 46652095 timestamp 1789072478, target 1789072523 (45 s left)
+   wait +229s (past grace of #1) -> block 46652118 timestamp 1789072524 (real 231 s)
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=true state=Processed: 0xa65b4c439396763d1b1ebbf6006c2dcda578608b5e85543e1e1459251fcc318c (block 46652121, gas 347381)
+   ok: proposal #1: passed=true actionFailed=true
+   ok: actionFailed start rolls back active set and append-only asset registration
+   tx A submitProposal #2 "stop pending instance with donated settlement" (baalGas 161746): 0x2b1c2fc64986af614036449831d2e63b92a62c8eafbf677f154e2ec792479e45 (block 46652126, gas 282990)
+   wait +1s (let votingStarts become past) -> block 46652127 timestamp 1789072542 (real 3 s)
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xd691bd1ba3dba4c01781563e640e56c65015211a1b0ecddc21c08cbb291a1acb (block 46652130, gas 117227)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0x4d85b86ad8e824a10e3b52da38bf2da8eb57c911e02fa2809482f9d296f0030f (block 46652132, gas 100127)
+   ...waiting (past grace of #2): block 46652164 timestamp 1789072616, target 1789072781 (165 s left)
+   ...waiting (past grace of #2): block 46652195 timestamp 1789072678, target 1789072781 (103 s left)
+   ...waiting (past grace of #2): block 46652225 timestamp 1789072738, target 1789072781 (43 s left)
+   wait +227s (past grace of #2) -> block 46652247 timestamp 1789072782 (real 226 s)
+   proposal #2 state = Ready
+   tx W processProposal #2 -> passed=true actionFailed=false state=Processed: 0xb2fa92acc7f7d3bfa9e907713ed6b726add2822a968e320067bd3362e88ebd55 (block 46652250, gas 197100)
+   ok: proposal #2: passed=true actionFailed=false
+   ok: stopping never-open instance does not corrupt active set
+   A deployed StrategyProposal @ 0x855D70878Cca8fFec150d75371464bA9B77f4560 via TemplateFactory (tx 0x58909373b67a2b015017697bcfaebad02a7957bbc0e61363ff396df95d73472a, salt 0x0000000000000000000000000000000000000000000000000000000000000007) paramsHash 0x6551d42239b4ada9cce14c07dded1ef5c9f7443ac85842729e152c8301fac523 codeHash 0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #3 "100k Strategy tests deposit treasury accounting {"template":"Strategy","contract...": 0xb452bd0217eb195a94a2615a20d3dce25e285b14d4c19a1325321b183a645040 (block 46652258, gas 304576)
+   details: 100k Strategy tests deposit treasury accounting {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x855D70878Cca8fFec150d75371464bA9B77f4560","operator":"0x6167e7562935f4612a656aA78AaC50cCC712f90E","budget":"100000000000","deadline":"1820608264","params":{"venue":"0x3b33287E4465C108c3CDF93204e6fD78b95f2108","asset":"0x4983198f1D64b2432D470293C230e5E5884A2D42","budget":"100000000000","rule":{"maxPerRun":"10000000000","minInterval":"1","deadline":"1820608264","takeProfitBps":"0","stopLossBps":"0","slippageBps":"100"}},"paramsHash":"0x6551d42239b4ada9cce14c07dded1ef5c9f7443ac85842729e152c8301fac523","codeHash":"0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893","salt":"0x0000000000000000000000000000000000000000000000000000000000000007"}
+   wait +1s (let votingStarts become past) -> block 46652259 timestamp 1789072806 (real 3 s)
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0x573cd38ead9bc86ab648a76311a362128b2d40f1b4414315defa5c33ad790fbc (block 46652262, gas 117227)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0x923819a11b88a6c052a712c0d5862760e7aeb491d75ade9561e70291f6845d72 (block 46652264, gas 100127)
+   ...waiting (past grace of #3): block 46652296 timestamp 1789072880, target 1789073045 (165 s left)
+   ...waiting (past grace of #3): block 46652327 timestamp 1789072942, target 1789073045 (103 s left)
+   ...waiting (past grace of #3): block 46652357 timestamp 1789073002, target 1789073045 (43 s left)
+   wait +227s (past grace of #3) -> block 46652379 timestamp 1789073046 (real 226 s)
+   proposal #3 state = Ready
+   tx W processProposal #3 -> passed=true actionFailed=false state=Processed: 0xd957e80a4201a2fbd9f74b147d706d03da57bbdf80514c46f39a9f33e10cc5f2 (block 46652381, gas 369620)
+   ok: proposal #3: passed=true actionFailed=false
+   NAV before budget=203050000001 Safe after=103050000001 open instance=100000000000 ledger=203050000001
+   ok: 100k budget moved from Safe into active instance without changing total settlement
+   ok: ledger counts open USDC budget and permits settled deposits
+   ok: voted Strategy is in the active set
+   tx D approve deposit shaman: 0x2c5e95fc94d84dcb2161ee5dccafb37457ed4dba6b9c01ed86e9ab76d7f9a83a (block 46652385, gas 45911)
+   tx D deposit 1000 USDC -> 15.020930805146412554 shares (quoted 15.020930805146412554): 0xaa65e4002b786628dd0cf7a83c33bf78c58127c3b0bf6a0555ec66eecb18179e (block 46652387, gas 265775)
+   ok: actual deposit mint uses ledger NAV including the 100k active budget
+   ok: receipt and balances reject the former Safe-only cheap-mint amount
+
+== step 5: two running Strategy instances share one registered asset; migrate closes old identity
+   A deployed StrategyProposal @ 0x981F475Eb72D18c379E5FDB3D96Ae56e7a036187 via TemplateFactory (tx 0x6cc671a922126b9c2b71470cdc512a55e6e0c8b976f0efddab655c3f830e96b8, salt 0x000000000000000000000000000000000000000000000000000000000000000a) paramsHash 0xb62c0d60e657d20b7a36dab50b92884c7a75b9f418e37beedfe9cad6a56e662f codeHash 0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #4 "second Strategy shares registered asset {"template":"Strategy","contract":"Strat...": 0x82bfc9026a2c24f1503019e748c26ffe770c45d2256a2674535f71c61b03d58f (block 46652394, gas 304396)
+   details: second Strategy shares registered asset {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x981F475Eb72D18c379E5FDB3D96Ae56e7a036187","operator":"0x6167e7562935f4612a656aA78AaC50cCC712f90E","budget":"100000000","deadline":"1820608264","params":{"venue":"0x3b33287E4465C108c3CDF93204e6fD78b95f2108","asset":"0x4983198f1D64b2432D470293C230e5E5884A2D42","budget":"100000000","rule":{"maxPerRun":"10000000000","minInterval":"1","deadline":"1820608264","takeProfitBps":"0","stopLossBps":"0","slippageBps":"100"}},"paramsHash":"0xb62c0d60e657d20b7a36dab50b92884c7a75b9f418e37beedfe9cad6a56e662f","codeHash":"0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893","salt":"0x000000000000000000000000000000000000000000000000000000000000000a"}
+   wait +1s (let votingStarts become past) -> block 46652395 timestamp 1789073078 (real 0 s)
+   proposal #4 state = Voting
+   tx A votes YES on #4 -> yes 1000 / no 0: 0x60ca8f804fe3fe6bbd24fed906babeb7e37f5be7a2b8af1842e4eb4baab5f594 (block 46652397, gas 117227)
+   tx B votes YES on #4 -> yes 2000 / no 0: 0x0eb905d627a96c37374c56b569bdb6e109d7189be15617eb4e4f3b6360bbccba (block 46652399, gas 100127)
+   ...waiting (past grace of #4): block 46652431 timestamp 1789073150, target 1789073317 (167 s left)
+   ...waiting (past grace of #4): block 46652462 timestamp 1789073212, target 1789073317 (105 s left)
+   ...waiting (past grace of #4): block 46652493 timestamp 1789073274, target 1789073317 (43 s left)
+   wait +229s (past grace of #4) -> block 46652515 timestamp 1789073318 (real 229 s)
+   proposal #4 state = Ready
+   tx W processProposal #4 -> passed=true actionFailed=false state=Processed: 0xc2433e1482a25e2e47269605854bede94e450dc5c57d65af10bfffe85a061568 (block 46652518, gas 287756)
+   ok: proposal #4: passed=true actionFailed=false
+   ok: two active Strategies register the same asset only once
+   tx A submitProposal #5 "migrate second Strategy and start replacement" (baalGas 325194): 0xadda00ffa86e2ed1e2a6188485d7c9154927d755272cc61d85e1a067dbf512a9 (block 46652525, gas 285201)
+   wait +1s (let votingStarts become past) -> block 46652526 timestamp 1789073340 (real 2 s)
+   proposal #5 state = Voting
+   tx A votes YES on #5 -> yes 1000 / no 0: 0xcac5712c978de7beb6f746796bfeafc26644db15b735267170bd1c0fc9001a15 (block 46652529, gas 117227)
+   tx B votes YES on #5 -> yes 2000 / no 0: 0x2685e5c87d07f1fbd6bd10626b679b4e698818c3da1c76c80c51918c95208ff0 (block 46652531, gas 100127)
+   ...waiting (past grace of #5): block 46652563 timestamp 1789073414, target 1789073579 (165 s left)
+   ...waiting (past grace of #5): block 46652594 timestamp 1789073476, target 1789073579 (103 s left)
+   ...waiting (past grace of #5): block 46652624 timestamp 1789073536, target 1789073579 (43 s left)
+   wait +227s (past grace of #5) -> block 46652646 timestamp 1789073580 (real 227 s)
+   proposal #5 state = Ready
+   tx W processProposal #5 -> passed=true actionFailed=false state=Processed: 0xadaf2b25d5c93eb469d1bf721afa1fb859ec1fb91c963a671a3aaededce333de (block 46652649, gas 291725)
+   ok: proposal #5: passed=true actionFailed=false
+   ok: migration removes old identity and opens voted replacement
+   tx A submitProposal #6 "stop replacement while it holds only settlement" (baalGas 161746): 0x8253583114744fa9c3b9511342dfb7a71f111afe5a6007d61baabe7f125bfeb8 (block 46652653, gas 283014)
+   wait +1s (let votingStarts become past) -> block 46652655 timestamp 1789073598 (real 3 s)
+   proposal #6 state = Voting
+   tx A votes YES on #6 -> yes 1000 / no 0: 0xdb099ce60b779934174a17155b5b4aa81477a401a3967762cfe92466f4d89f6a (block 46652657, gas 117227)
+   tx B votes YES on #6 -> yes 2000 / no 0: 0xf5263ab86c2dad8d2dccd7adc3a0e3c65e6ea9a76d9937122ae1bb1696b62151 (block 46652659, gas 100127)
+   ...waiting (past grace of #6): block 46652691 timestamp 1789073670, target 1789073835 (165 s left)
+   ...waiting (past grace of #6): block 46652721 timestamp 1789073730, target 1789073835 (105 s left)
+   ...waiting (past grace of #6): block 46652752 timestamp 1789073792, target 1789073835 (43 s left)
+   wait +227s (past grace of #6) -> block 46652774 timestamp 1789073836 (real 229 s)
+   proposal #6 state = Ready
+   tx W processProposal #6 -> passed=true actionFailed=false state=Processed: 0x63d7cb3c87fa52c5887a7e8ea141e84b7cf04ab364ab340d3156ea436a33f8c7 (block 46652777, gas 184852)
+   ok: proposal #6: passed=true actionFailed=false
+   ok: stop closes a running instance with zero asset holdings
+
+== step 6: actual buy blocks deposits while active; voted stop returns the raw settlement, keeps the asset inside and leaves the instance open
+   tx buy asset with 10k settlement: 0xff90a77be88f1643b0e918349c05f780aa87c04ee485e6fc9c2cf905f6b2cd7e (block 46652779, gas 150783)
+   ok: open instance asset balance makes treasury unsettled
+   ok: deposit refuses active asset holdings (reverted with TreasuryNotSettled)
+   ok: quote refuses active asset holdings (reverted with TreasuryNotSettled)
+   tx A submitProposal #7 "stop Strategy: raw settlement back to the Safe, asset stays inside" (baalGas 120883): 0x57f6b4b5ca794aa1a34d63fd40439e8e36f292d61639094af73abc9ad3f4f771 (block 46652784, gas 283639)
+   wait +1s (let votingStarts become past) -> block 46652785 timestamp 1789073858 (real 3 s)
+   proposal #7 state = Voting
+   tx A votes YES on #7 -> yes 1000 / no 0: 0xa9856b51d67d0f7112c1fa598f02de0f5fbdc1f2d696df0c33fdc37fe7462607 (block 46652788, gas 117227)
+   tx B votes YES on #7 -> yes 2000 / no 0: 0x852d9c05bee9328d4e5a3f1ce579836be6eb7e1c986ab438e00b568ac7fde071 (block 46652790, gas 100127)
+   ...waiting (past grace of #7): block 46652822 timestamp 1789073932, target 1789074097 (165 s left)
+   ...waiting (past grace of #7): block 46652853 timestamp 1789073994, target 1789074097 (103 s left)
+   ...waiting (past grace of #7): block 46652891 timestamp 1789074070, target 1789074097 (27 s left)
+   wait +227s (past grace of #7) -> block 46652905 timestamp 1789074098 (real 226 s)
+   proposal #7 state = Ready
+   tx W processProposal #7 -> passed=true actionFailed=false state=Processed: 0xd6e7ef5d1b7717d32f8686863c1296000c118a321b5bd523c20a5ee404f6ee5e (block 46652908, gas 168377)
+   ok: proposal #7: passed=true actionFailed=false
+   [S1 after stop] Strategy @ 0x855D70878Cca8fFec150d75371464bA9B77f4560: status Stopped budget 100000 deadline 1820608264 operator 0x6167e7562935f4612a656aA78AaC50cCC712f90E params 0x6551d42239b4ada9cce14c07dded1ef5c9f7443ac85842729e152c8301fac523 held 0 USDC
+   ok: stop returned every settlement unit to the Safe
+   ok: stop left the asset inside the stopped instance (no venue call, nothing raw on the Safe)
+   ok: the stopped instance stays open in the ledger while it holds its asset
+   ok: the stopped instance's asset keeps the treasury unsettled
+   ok: same deposit refuses while the stopped instance holds the asset (reverted with TreasuryNotSettled)
+   actual rejected deposit tx 0x8d62adbee0b89ada44cc10d7eb2c9da9f058163a19ec9a7eee2704f0e7ea53ae block 46652913 status reverted
+   ok: mined refusal changes neither Safe settlement nor share supply
+   ok: nobody but the Safe can unwind (reverted with OnlySafe)
+
+== step 7: voted unwind() sells the stopped instance's asset on the venue at the rule's slippage bound, returns the proceeds and reopens deposits at the measured NAV
+   tx MockDex price -> 3 USDC per MOCK: 0x7b8af8172e944dea1baf0fc3d7e0edae52a6e2dcb474ba0adb621396a08c6eb0 (block 46652915, gas 27534)
+   tx A submitProposal #8 "unwind stopped Strategy through its venue" (baalGas 272656): 0xb201bdbd0e76bddb549d33a9ddb59e75090941b4a5ca85d9ea9381d936948812 (block 46652918, gas 282942)
+   wait +1s (let votingStarts become past) -> block 46652919 timestamp 1789074126 (real 3 s)
+   proposal #8 state = Voting
+   tx A votes YES on #8 -> yes 1000 / no 0: 0xa47b9bbfcc6df9c94147d63cad2c908bbb04bd289ceb5e4dd09326af2c53e17e (block 46652922, gas 117227)
+   tx B votes YES on #8 -> yes 2000 / no 0: 0xe6699529a0a97e762a9856600a23564846c70285d441d7992439318b28453d17 (block 46652924, gas 100127)
+   ...waiting (past grace of #8): block 46652956 timestamp 1789074200, target 1789074365 (165 s left)
+   ...waiting (past grace of #8): block 46652987 timestamp 1789074262, target 1789074365 (103 s left)
+   ...waiting (past grace of #8): block 46653017 timestamp 1789074322, target 1789074365 (43 s left)
+   wait +227s (past grace of #8) -> block 46653039 timestamp 1789074366 (real 228 s)
+   proposal #8 state = Ready
+   tx W processProposal #8 -> passed=true actionFailed=false state=Processed: 0xe7ffe7b32c34a9428b07c37976848994c6fd8c2cbb677437871a192a87028641 (block 46653042, gas 221940)
+   ok: proposal #8: passed=true actionFailed=false
+   ok: unwind sold every asset unit and left nothing inside
+   ok: unwind closed the ledger entry; the treasury is settled
+   ok: new NAV comes from actual sale proceeds, not an assumed constant
+   ok: a closed instance cannot be unwound twice (simulated from the Safe) (reverted with NotUnwindable)
+   tx D approve deposit shaman: 0xc4b66f2fa9a472ce97f92ce5fb4e31c01daa0aa525b54d641ff3787b2141dcac (block 46653047, gas 45911)
+   tx D deposit 1000 USDC -> 14.661664342456277197 shares (quoted 14.661664342456277197): 0x71c3a09f37fbbbc9a9f306763632334733303473426d4d7a78df829bf4fc0bf4 (block 46653049, gas 238744)
+   ok: same formerly-refused deposit succeeds at measured new NAV
+
+== step 8: the other voted way out of a stopped instance: migrate it (raw asset moves, no venue call), then stop + unwind the successor in one vote
+   A deployed StrategyProposal @ 0x7d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c via TemplateFactory (tx 0x14f4209dcf4da30ec7bca7a1b82d1e04b0db6fc5b4f68d4cfdf0abf0d26dbbca, salt 0x0000000000000000000000000000000000000000000000000000000000000016) paramsHash 0x7e6bfb8ac638c8ddff3033ef1b1e22ab647d00c4a426dd84f3fd0f4b3a085de4 codeHash 0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #9 "third Strategy: buy, stop, migrate, unwind successor {"template":"Strategy","con...": 0xcf5b70324d63d61aebafac43bf66973ffc7660a4ee291ce2dca01ae6144868f0 (block 46653055, gas 304528)
+   details: third Strategy: buy, stop, migrate, unwind successor {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x7d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c","operator":"0x6167e7562935f4612a656aA78AaC50cCC712f90E","budget":"100000000","deadline":"1820608264","params":{"venue":"0x3b33287E4465C108c3CDF93204e6fD78b95f2108","asset":"0x4983198f1D64b2432D470293C230e5E5884A2D42","budget":"100000000","rule":{"maxPerRun":"100000000","minInterval":"1","deadline":"1820608264","takeProfitBps":"0","stopLossBps":"0","slippageBps":"100"}},"paramsHash":"0x7e6bfb8ac638c8ddff3033ef1b1e22ab647d00c4a426dd84f3fd0f4b3a085de4","codeHash":"0xc1810037373ce74735eb92f5e2660c57c305fd8d75ef83d01988b155f5c62893","salt":"0x0000000000000000000000000000000000000000000000000000000000000016"}
+   wait +1s (let votingStarts become past) -> block 46653056 timestamp 1789074400 (real 2 s)
+   proposal #9 state = Voting
+   tx A votes YES on #9 -> yes 1000 / no 0: 0x7e5585acb9aa6f929c48b046339de0bb94ca10d048fb87bb47ddc3ed3fb07489 (block 46653059, gas 117227)
+   tx B votes YES on #9 -> yes 2000 / no 0: 0x1d50add4072882b649772a1c2570c8df047c48e51db630b4db53e3f3bd15ddcd (block 46653061, gas 100127)
+   ...waiting (past grace of #9): block 46653092 timestamp 1789074472, target 1789074639 (167 s left)
+   ...waiting (past grace of #9): block 46653123 timestamp 1789074534, target 1789074639 (105 s left)
+   ...waiting (past grace of #9): block 46653153 timestamp 1789074594, target 1789074639 (45 s left)
+   wait +229s (past grace of #9) -> block 46653176 timestamp 1789074640 (real 228 s)
+   proposal #9 state = Ready
+   tx W processProposal #9 -> passed=true actionFailed=false state=Processed: 0x12b76c81662f80952694aa94fcb233cf3815b6a6f3097cbf6e05387d90867f62 (block 46653178, gas 304856)
+   ok: proposal #9: passed=true actionFailed=false
+   tx S3 buys with its whole 100 budget: 0xd7a5f1b201f9454e35dd1dc709a1f69155a4d574dc551180c26e5cfb95eb9f25 (block 46653180, gas 145983)
+   ok: S3 holds the asset; deposits paused
+
+=== SCENARIO L: FAIL ===
+
+live scenario DAO left on chain: baal 0x9361be2d3d73852dD72729ABA94D02f9Fd583626 safe 0x4E316fDDee96ABe7c17Fed5bB6198929C012A7c0 (record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-L-2026-09-10T20-29-31-832Z.json)
+ContractFunctionExecutionError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+
+This error could arise when the account does not have enough funds to:
+ - pay for the total gas fee,
+ - pay for the value to send.
+ 
+The cost of the transaction is calculated as `gas * gas fee + value`, where:
+ - `gas` is the amount of gas needed for transaction to execute,
+ - `gas fee` is the gas fee,
+ - `value` is the amount of ether to send to the recipient.
+ 
+Request Arguments:
+  chain:  Base Sepolia (id: 84532)
+  from:   0x6167e7562935f4612a656aA78AaC50cCC712f90E
+  to:     0x9361be2d3d73852dD72729ABA94D02f9Fd583626
+  data:   0x3a82ffc80000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000193cc000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000a48d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002573746f70205333207768696c6520697420686f6c6473206f6e6c7920746865206173736574000000000000000000000000000000000000000000000000000000
+ 
+Contract Call:
+  address:   0x9361be2d3d73852dD72729ABA94D02f9Fd583626
+  function:  submitProposal(bytes proposalData, uint32 expiration, uint256 baalGas, string details)
+  args:                    (0x8d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f500000000000000, 0, 103372, stop S3 while it holds only the asset)
+  sender:    0x6167e7562935f4612a656aA78AaC50cCC712f90E
+
+Docs: https://viem.sh/docs/contract/writeContract
+Details: insufficient funds for gas * price + value: have 1684710933361 want 2106468000000
+Version: viem@2.56.3
+    at getContractError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getContractError.ts:82:10)
+    at writeContract.internal (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/writeContract.ts:241:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async write (/Users/michaelmacmini/srv/zero-one-dao/scenarios/lib.ts:449:16)
+    at async propose (/Users/michaelmacmini/srv/zero-one-dao/scenarios/lib.ts:667:19)
+    at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/L-treasury-ledger.ts:134:23) {
+  cause: TransactionExecutionError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+  
+  This error could arise when the account does not have enough funds to:
+   - pay for the total gas fee,
+   - pay for the value to send.
+   
+  The cost of the transaction is calculated as `gas * gas fee + value`, where:
+   - `gas` is the amount of gas needed for transaction to execute,
+   - `gas fee` is the gas fee,
+   - `value` is the amount of ether to send to the recipient.
+   
+  Request Arguments:
+    chain:  Base Sepolia (id: 84532)
+    from:   0x6167e7562935f4612a656aA78AaC50cCC712f90E
+    to:     0x9361be2d3d73852dD72729ABA94D02f9Fd583626
+    data:   0x3a82ffc80000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000193cc000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000a48d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002573746f70205333207768696c6520697420686f6c6473206f6e6c7920746865206173736574000000000000000000000000000000000000000000000000000000
+  
+  Details: insufficient funds for gas * price + value: have 1684710933361 want 2106468000000
+  Version: viem@2.56.3
+      at getTransactionError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:44:10)
+      at sendTransaction (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/sendTransaction.ts:405:11)
+      ... 4 lines matching cause stack trace ...
+      at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/L-treasury-ledger.ts:134:23) {
+    cause: InsufficientFundsError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+    
+    This error could arise when the account does not have enough funds to:
+     - pay for the total gas fee,
+     - pay for the value to send.
+     
+    The cost of the transaction is calculated as `gas * gas fee + value`, where:
+     - `gas` is the amount of gas needed for transaction to execute,
+     - `gas fee` is the gas fee,
+     - `value` is the amount of ether to send to the recipient.
+    
+    Details: insufficient funds for gas * price + value: have 1684710933361 want 2106468000000
+    Version: viem@2.56.3
+        at getNodeError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getNodeError.ts:103:12)
+        at <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:37:19)
+        at getTransactionError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:43:5)
+        at sendTransaction (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/sendTransaction.ts:405:11)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async writeContract.internal (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/writeContract.ts:230:14)
+        at async write (/Users/michaelmacmini/srv/zero-one-dao/scenarios/lib.ts:449:16)
+        at async propose (/Users/michaelmacmini/srv/zero-one-dao/scenarios/lib.ts:667:19)
+        at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/L-treasury-ledger.ts:134:23) {
+      details: 'insufficient funds for gas * price + value: have 1684710933361 want 2106468000000',
+      docsPath: undefined,
+      metaMessages: [Array],
+      shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+      version: '2.56.3',
+      [cause]: [TransactionRejectedRpcError]
+    },
+    details: 'insufficient funds for gas * price + value: have 1684710933361 want 2106468000000',
+    docsPath: undefined,
+    metaMessages: [
+      'This error could arise when the account does not have enough funds to:',
+      ' - pay for the total gas fee,',
+      ' - pay for the value to send.',
+      ' ',
+      'The cost of the transaction is calculated as `gas * gas fee + value`, where:',
+      ' - `gas` is the amount of gas needed for transaction to execute,',
+      ' - `gas fee` is the gas fee,',
+      ' - `value` is the amount of ether to send to the recipient.',
+      ' ',
+      'Request Arguments:',
+      '  chain:  Base Sepolia (id: 84532)\n' +
+        '  from:   0x6167e7562935f4612a656aA78AaC50cCC712f90E\n' +
+        '  to:     0x9361be2d3d73852dD72729ABA94D02f9Fd583626\n' +
+        '  data:   0x3a82ffc80000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000193cc000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000a48d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002573746f70205333207768696c6520697420686f6c6473206f6e6c7920746865206173736574000000000000000000000000000000000000000000000000000000'
+    ],
+    shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+    version: '2.56.3'
+  },
+  details: 'insufficient funds for gas * price + value: have 1684710933361 want 2106468000000',
+  docsPath: '/docs/contract/writeContract',
+  metaMessages: [
+    'This error could arise when the account does not have enough funds to:',
+    ' - pay for the total gas fee,',
+    ' - pay for the value to send.',
+    ' ',
+    'The cost of the transaction is calculated as `gas * gas fee + value`, where:',
+    ' - `gas` is the amount of gas needed for transaction to execute,',
+    ' - `gas fee` is the gas fee,',
+    ' - `value` is the amount of ether to send to the recipient.',
+    ' ',
+    'Request Arguments:',
+    '  chain:  Base Sepolia (id: 84532)\n' +
+      '  from:   0x6167e7562935f4612a656aA78AaC50cCC712f90E\n' +
+      '  to:     0x9361be2d3d73852dD72729ABA94D02f9Fd583626\n' +
+      '  data:   0x3a82ffc80000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000193cc000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000a48d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002573746f70205333207768696c6520697420686f6c6473206f6e6c7920746865206173736574000000000000000000000000000000000000000000000000000000',
+    ' ',
+    'Contract Call:',
+    '  address:   0x9361be2d3d73852dD72729ABA94D02f9Fd583626\n' +
+      '  function:  submitProposal(bytes proposalData, uint32 expiration, uint256 baalGas, string details)\n' +
+      '  args:                    (0x8d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f500000000000000, 0, 103372, stop S3 while it holds only the asset)\n' +
+      '  sender:    0x6167e7562935f4612a656aA78AaC50cCC712f90E'
+  ],
+  shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+  version: '2.56.3',
+  abi: [
+    {
+      inputs: [Array],
+      name: 'submitProposal',
+      outputs: [Array],
+      stateMutability: 'payable',
+      type: 'function'
+    }
+  ],
+  args: [
+    '0x8d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000059007d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000407da68f500000000000000',
+    0,
+    103372n,
+    'stop S3 while it holds only the asset'
+  ],
+  contractAddress: '0x9361be2d3d73852dD72729ABA94D02f9Fd583626',
+  formattedArgs: undefined,
+  functionName: 'submitProposal',
+  sender: '0x6167e7562935f4612a656aA78AaC50cCC712f90E'
+}

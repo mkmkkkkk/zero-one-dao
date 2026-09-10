@@ -1,0 +1,5 @@
+
+> zero-one-dao@0.1.0 typecheck
+> tsc --noEmit
+
+scenarios/phase5-same-block-vote.ts(32,169): error TS18046: 'e' is of type 'unknown'.

@@ -1,0 +1,209 @@
+{
+  "chainId": 84532,
+  "checkedAt": "2026-09-10T20:04:32.773597+00:00",
+  "verified": 20,
+  "expected": 20,
+  "contracts": [
+    {
+      "name": "Baal",
+      "address": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+      "url": "https://sepolia.basescan.org/address/0x458Bb655AEF64A58Fb5473F52d2C469234746807#code",
+      "verified": true,
+      "contractName": "Baal",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/Baal-source.json",
+      "readbackSha256": "22dfea8f83534e9b37f1713c920d2c87605646303048a9c3e41c99ffbbebcdb4"
+    },
+    {
+      "name": "MultiSendCallOnly",
+      "address": "0xc48264D72D2228f94653D02bB845f9C00696BE66",
+      "url": "https://sepolia.basescan.org/address/0xc48264D72D2228f94653D02bB845f9C00696BE66#code",
+      "verified": true,
+      "contractName": "MultiSendCallOnly",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/MultiSendCallOnly-source.json",
+      "readbackSha256": "4406650eba73a5d500c1326983ba4eaabf211f6901351ddcd2e30e471812936a"
+    },
+    {
+      "name": "MockUSDC",
+      "address": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+      "url": "https://sepolia.basescan.org/address/0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a#code",
+      "verified": true,
+      "contractName": "MockUSDC",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/MockUSDC-source.json",
+      "readbackSha256": "f778fac126802c442634b73da9b7a9f70716d5db21c1ba2e9c9a0b7010501e1b"
+    },
+    {
+      "name": "NavShareToken",
+      "address": "0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8",
+      "url": "https://sepolia.basescan.org/address/0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8#code",
+      "verified": true,
+      "contractName": "NavShareToken",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/NavShareToken-source.json",
+      "readbackSha256": "dd3ba974ae40385f4d9163593bb41289d6c6f069f2d6a4c04c116c86c171d450"
+    },
+    {
+      "name": "LootToken",
+      "address": "0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b",
+      "url": "https://sepolia.basescan.org/address/0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b#code",
+      "verified": true,
+      "contractName": "LootToken",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/LootToken-source.json",
+      "readbackSha256": "f5e85d579789a375c8e104db98462363e6940d7e3eabe9baf6076e3e8b6511d4"
+    },
+    {
+      "name": "TreasuryLedger",
+      "address": "0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC",
+      "url": "https://sepolia.basescan.org/address/0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC#code",
+      "verified": true,
+      "contractName": "TreasuryLedger",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/TreasuryLedger-source.json",
+      "readbackSha256": "b203262c74127bbc999fad9ae2808c96501f7a24e02b1ba12ea3404d95ab7d01"
+    },
+    {
+      "name": "DepositShaman",
+      "address": "0xE3041d2FE25987a3941a066Eb980B11BF81E2267",
+      "url": "https://sepolia.basescan.org/address/0xE3041d2FE25987a3941a066Eb980B11BF81E2267#code",
+      "verified": true,
+      "contractName": "DepositShaman",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/DepositShaman-source.json",
+      "readbackSha256": "9c87412482be02e682a3cc864292672285ba4e846b5a2e5232511a402b896335"
+    },
+    {
+      "name": "WorkManager",
+      "address": "0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8",
+      "url": "https://sepolia.basescan.org/address/0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8#code",
+      "verified": true,
+      "contractName": "WorkManager",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/WorkManager-source.json",
+      "readbackSha256": "ab96b3ccc9dfcad4bb49ed685c0479ec912d78e2a6913fb871619927b4645e30"
+    },
+    {
+      "name": "PaymentDeployer",
+      "address": "0x9821F97d84C5ba19F8844c1344635Cd4034415BB",
+      "url": "https://sepolia.basescan.org/address/0x9821F97d84C5ba19F8844c1344635Cd4034415BB#code",
+      "verified": true,
+      "contractName": "PaymentDeployer",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/PaymentDeployer-source.json",
+      "readbackSha256": "310b15244c871a2ce49d4a527b65ca8b32247e8a824ca62bb0f76a196130b8e1"
+    },
+    {
+      "name": "StrategyDeployer",
+      "address": "0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b",
+      "url": "https://sepolia.basescan.org/address/0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b#code",
+      "verified": true,
+      "contractName": "StrategyDeployer",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/StrategyDeployer-source.json",
+      "readbackSha256": "8c83b09c0051bebb420ea4d72541e213b6a29933ee1dc1a837bff42fc808db55"
+    },
+    {
+      "name": "ProjectDeployer",
+      "address": "0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1",
+      "url": "https://sepolia.basescan.org/address/0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1#code",
+      "verified": true,
+      "contractName": "ProjectDeployer",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/ProjectDeployer-source.json",
+      "readbackSha256": "bb286b844e9716dad3cb8b1135bb94c931234bebffaee3a9d7abe784c7c8d688"
+    },
+    {
+      "name": "ConfigDeployer",
+      "address": "0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3",
+      "url": "https://sepolia.basescan.org/address/0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3#code",
+      "verified": true,
+      "contractName": "ConfigDeployer",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/ConfigDeployer-source.json",
+      "readbackSha256": "4379c832782b9520253bb5af0a7b94a216e3b4498fe308a0966f8179d8c688b0"
+    },
+    {
+      "name": "TemplateFactory",
+      "address": "0x9FC4166933729E26a73e95645deD9DF15673EDfD",
+      "url": "https://sepolia.basescan.org/address/0x9FC4166933729E26a73e95645deD9DF15673EDfD#code",
+      "verified": true,
+      "contractName": "TemplateFactory",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/TemplateFactory-source.json",
+      "readbackSha256": "5f7e7be9436e3ea79eca9ed3873cafb32ed990dec23d9e823deb201f361a79f8"
+    },
+    {
+      "name": "ZeroOneIntentAccount",
+      "address": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+      "url": "https://sepolia.basescan.org/address/0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8#code",
+      "verified": true,
+      "contractName": "ZeroOneIntentAccount",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/ZeroOneIntentAccount-source.json",
+      "readbackSha256": "8efdfed3d1ab6addbe0f22488f7c92db74c2505ad5dbc394c5e134d93a31e76a"
+    },
+    {
+      "name": "Constitution",
+      "address": "0xF4cDf63FCD19bBf7285D089b848212ba2C34596F",
+      "url": "https://sepolia.basescan.org/address/0xF4cDf63FCD19bBf7285D089b848212ba2C34596F#code",
+      "verified": true,
+      "contractName": "Constitution",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/Constitution-source.json",
+      "readbackSha256": "dac46585af6f0bef4fc495a5c9623b3510211d84b865b50a16afba9610ac4fda"
+    },
+    {
+      "name": "ModuleProxyFactory",
+      "address": "0x383B80c358FADCA4654aCACe047BB706cca1FaD1",
+      "url": "https://sepolia.basescan.org/address/0x383B80c358FADCA4654aCACe047BB706cca1FaD1#code",
+      "verified": true,
+      "contractName": "ModuleProxyFactory",
+      "compiler": "v0.8.10+commit.fc410830",
+      "readback": "deployments/verification-base-sepolia/evidence/ModuleProxyFactory-source.json",
+      "readbackSha256": "5548af9caf6bcd9f85d51ae9e26200cbf6b466f7687f5a271b1fcf226f763955"
+    },
+    {
+      "name": "SafeSingleton",
+      "address": "0x604256c90fBe0823cE8AEF6e0563cA689435f994",
+      "url": "https://sepolia.basescan.org/address/0x604256c90fBe0823cE8AEF6e0563cA689435f994#code",
+      "verified": true,
+      "contractName": "GnosisSafe",
+      "compiler": "v0.8.10+commit.fc410830",
+      "readback": "deployments/verification-base-sepolia/evidence/SafeSingleton-source.json",
+      "readbackSha256": "ea4cdcedb8ee8edbc0fb613db9980c794843ecbec55c5b9aa8d2e2681ecdbcc6"
+    },
+    {
+      "name": "SafeProxyFactory",
+      "address": "0xd0a855D44F2DD6e568Bc534E1E7731276443bF81",
+      "url": "https://sepolia.basescan.org/address/0xd0a855D44F2DD6e568Bc534E1E7731276443bF81#code",
+      "verified": true,
+      "contractName": "GnosisSafeProxyFactory",
+      "compiler": "v0.8.10+commit.fc410830",
+      "readback": "deployments/verification-base-sepolia/evidence/SafeProxyFactory-source.json",
+      "readbackSha256": "0228665b306e6544a4eaaf449264c0215ca2998c2455941c0a1ddfbc949c8958"
+    },
+    {
+      "name": "Safe",
+      "address": "0x6a0eFF5Aef13254aef69740392e064695b519A58",
+      "url": "https://sepolia.basescan.org/address/0x6a0eFF5Aef13254aef69740392e064695b519A58#code",
+      "verified": true,
+      "contractName": "GnosisSafeProxy",
+      "compiler": "v0.8.10+commit.fc410830",
+      "readback": "deployments/verification-base-sepolia/evidence/Safe-source.json",
+      "readbackSha256": "03df3c9147311936b5fe7f61af70458d4a38ffd436900010d8dbaf24a0a347f4"
+    },
+    {
+      "address": "0x2a97A8DB1797dfD8691668D729eB8291ACE664cb",
+      "implementation": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+      "url": "https://sepolia.basescan.org/address/0x2a97A8DB1797dfD8691668D729eB8291ACE664cb#code",
+      "name": "BaalProxy",
+      "verified": true,
+      "contractName": "Baal",
+      "compiler": "v0.8.36+commit.8a079791",
+      "readback": "deployments/verification-base-sepolia/evidence/BaalProxy-source.json",
+      "readbackSha256": "2655a97d670e597be4570d4360c41f5046722cc37c4710e24ff2b9dd2a147892"
+    }
+  ]
+}

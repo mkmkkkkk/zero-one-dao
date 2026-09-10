@@ -1,0 +1,17 @@
+   fetching every URL the README advertises on https://relay-zero.mkyang.ai (8 advertised paths, 13 probes)
+AssertionError [ERR_ASSERTION]: origin did not answer 200 for https://relay-zero.mkyang.ai/README.txt -> 530 text/html; charset=UTF-8 body: <!doctype html> <!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]--> <!--[if IE 7]> <html class="no-js ie7 oldie" lang="en-US"> <![endif]--> <!--[if IE 8]> <html class="no-
+
+530 !== 200
+
+    at runProbe (/Users/michaelmacmini/srv/zero-one-dao/beacon/scripts/validate.ts:166:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async validateBeacon (/Users/michaelmacmini/srv/zero-one-dao/beacon/scripts/validate.ts:274:44) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 530,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+exit_code=1

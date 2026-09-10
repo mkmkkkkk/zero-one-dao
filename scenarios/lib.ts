@@ -49,8 +49,8 @@ export const T = {
   margin: LIVE ? 12 : 2,
 } as const;
 const LIVE_GOVERNANCE = { votingPeriod: Number(process.env.ZERO_ONE_LIVE_VOTING ?? 120), gracePeriod: Number(process.env.ZERO_ONE_LIVE_GRACE ?? 120) };
-const ACTOR_ETH_FLOOR = 400_000_000_000_000n; // 0.0004 ETH
-const ACTOR_ETH_TOPUP = 800_000_000_000_000n; // 0.0008 ETH
+const ACTOR_ETH_FLOOR = BigInt(process.env.ZERO_ONE_ACTOR_ETH_FLOOR ?? "400000000000000"); // 0.0004 ETH
+const ACTOR_ETH_TOPUP = BigInt(process.env.ZERO_ONE_ACTOR_ETH_TOPUP ?? "800000000000000"); // 0.0008 ETH
 
 interface LiveDeployment {
   chainId: number;
@@ -137,6 +137,7 @@ export async function expectRevert(promise: Promise<unknown>, needle: string, me
     await promise;
   } catch (error) {
     const text = error instanceof Error ? `${error.message}` : String(error);
+    if (!text.includes(needle)) console.log(`   unexpected refusal: ${text.slice(0, 1600)}`);
     assert(text.includes(needle), `${message} (reverted with ${needle})`);
     return;
   }
@@ -193,6 +194,7 @@ export function runIfMain(url: string, main: () => Promise<void>): void {
 async function liveBoot(name: string): Promise<{ chain: LocalChain; deployer: WriteContext; dao: ZeroOneDao; live: Mirror["live"] }> {
   const deploymentFile = path.resolve(ROOT, process.env.ZERO_ONE_LIVE_DEPLOYMENT!);
   const deployment = JSON.parse(readFileSync(deploymentFile, "utf8")) as LiveDeployment;
+  if (deployment.chainId !== 84532) throw new Error("Live acceptance is Base Sepolia only");
   const keyFile = process.env.ZERO_ONE_DEPLOYER_KEY_FILE ?? path.join(process.env.HOME ?? "", "srv", "aow-exit", ".env.sepolia");
   const founderKey = keyFromEnvFile(keyFile, process.env.ZERO_ONE_DEPLOYER_KEY_VAR ?? "ANCHOR_PRIVATE_KEY");
   const actorsFile = path.resolve(ROOT, process.env.ZERO_ONE_ACTORS_FILE ?? path.join("state", "testnet", "actors.json"));
@@ -211,6 +213,7 @@ async function liveBoot(name: string): Promise<{ chain: LocalChain; deployer: Wr
   const viemChain = liveChain(deployment.chainId, deployment.rpcUrl);
   const { publicClient, contexts } = liveContexts(viemChain, keys);
   const chain: LocalChain = { chain: viemChain as never, publicClient, contexts, accounts: keys.map((key) => privateKeyToAccount(key)) };
+  if (await publicClient.getChainId() !== 84532) throw new Error("Live acceptance RPC chain mismatch");
   const deployer = contexts[0]!;
   console.log(`live chain ${viemChain.name} (${deployment.chainId}) rpc ${viemChain.rpcUrls.default.http[0]}; founder ${deployer.account.address} ${fmtEth(await publicClient.getBalance({ address: deployer.account.address }))} ETH`);
   for (const [index, actor] of names.entries()) {
@@ -235,7 +238,7 @@ async function liveBoot(name: string): Promise<{ chain: LocalChain; deployer: Wr
   mkdirSync(recordDir, { recursive: true });
   const recordFile = path.join(recordDir, `${name}-${new Date().toISOString().replace(/[:.]/gu, "-")}.json`);
   // The record is a valid relay deployment file (relay/common.ts loadDeployment) so a scenario can point a relay at its DAO.
-  const record = { scenario: name, chainId: deployment.chainId, rpcUrl: viemChain.rpcUrls.default.http[0], startBlock: Number(dao.startBlock), deployer: dao.params.founder, founder: dao.params.founder, settlement: dao.settlement, safe: dao.safe, baal: dao.baal, shares: dao.shares, loot: dao.loot, depositShaman: dao.depositShaman, workManager: dao.workManager, templateFactory: dao.templateFactory, templateDeployers: dao.templateDeployers, intentAccount: dao.intentAccount, constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" }, governance: { votingPeriod: dao.params.governance.votingPeriod, gracePeriod: dao.params.governance.gracePeriod, proposalOffering: dao.params.governance.proposalOffering.toString(), quorumPercent: dao.params.governance.quorumPercent.toString(), sponsorThreshold: dao.params.governance.sponsorThreshold.toString(), minRetentionPercent: dao.params.governance.minRetentionPercent.toString() }, singletons: deployment.singletons, txHashes: dao.txHashes, actors: Object.fromEntries(["F", ...names].map((actor, index) => [actor, contexts[index]!.account.address])) };
+  const record = { scenario: name, chainId: deployment.chainId, rpcUrl: viemChain.rpcUrls.default.http[0], startBlock: Number(dao.startBlock), deployer: dao.params.founder, founder: dao.params.founder, settlement: dao.settlement, safe: dao.safe, baal: dao.baal, shares: dao.shares, loot: dao.loot, depositShaman: dao.depositShaman, workManager: dao.workManager, treasuryLedger: dao.treasuryLedger, templateFactory: dao.templateFactory, templateDeployers: dao.templateDeployers, intentAccount: dao.intentAccount, constitution: { address: dao.constitution, textHash: dao.constitutionHash, textUrl: dao.constitutionTextUrl, text: "docs/CONSTITUTION.md" }, governance: { votingPeriod: dao.params.governance.votingPeriod, gracePeriod: dao.params.governance.gracePeriod, proposalOffering: dao.params.governance.proposalOffering.toString(), quorumPercent: dao.params.governance.quorumPercent.toString(), sponsorThreshold: dao.params.governance.sponsorThreshold.toString(), minRetentionPercent: dao.params.governance.minRetentionPercent.toString() }, singletons: deployment.singletons, txHashes: dao.txHashes, actors: Object.fromEntries(["F", ...names].map((actor, index) => [actor, contexts[index]!.account.address])) };
   writeFileSync(recordFile, `${JSON.stringify(record, null, 2)}\n`);
   console.log(`   scenario DAO record ${recordFile}`);
   for (const [label, hash] of Object.entries(dao.txHashes)) console.log(`   tx deploy ${label}: ${hash}`);
@@ -413,7 +416,7 @@ export async function retryLag<R>(fn: () => Promise<R>): Promise<R> {
  * Live mode: refresh the head from the chain and run `fn` at that block, retrying while the answering
  * node lags. Mirror mode: run `fn` at "latest".
  */
-async function atHead<R>(mirror: Mirror, fn: (block: bigint | undefined) => Promise<R>): Promise<R> {
+export async function atHead<R>(mirror: Mirror, fn: (block: bigint | undefined) => Promise<R>): Promise<R> {
   if (!LIVE) return fn(undefined);
   let last: unknown;
   for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -440,9 +443,9 @@ async function write(context: WriteContext, request: { address: Address; abi: Ab
   const simulation = LIVE
     ? await simulateSettled<{ request: Record<string, unknown> }>(context, { ...call, ...(mirror ? { blockNumber: mirror.head } : {}) })
     : await context.publicClient.simulateContract({ ...call, account: context.account } as never);
-  // Local Anvil can cross a second after estimation: both account and supply checkpoints then append
+  // A local or live chain can cross a second after estimation: account and supply checkpoints append
   // instead of overwriting. Leave room for those storage writes; gasUsed remains the measured cost.
-  const sendGas = gas ?? (!LIVE ? await context.publicClient.estimateContractGas({ ...call, account: context.account } as never) + 120_000n : undefined);
+  const sendGas = gas ?? await context.publicClient.estimateContractGas({ ...call, account: context.account } as never) + 120_000n;
   const hash = await context.walletClient.writeContract({ ...simulation.request, ...(sendGas === undefined ? {} : { gas: sendGas }), account: context.account, chain: context.chain } as never);
   const receipt = await context.publicClient.waitForTransactionReceipt({ hash, timeout: 180_000 });
   if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
@@ -737,7 +740,8 @@ export const PROCESS_GAS = 5_000_000n;
 
 /** Process (execute) a Ready proposal with an explicit gas limit; returns the resulting flags. */
 export async function processProposal(mirror: Mirror, actor: ActorName, proposal: Proposal): Promise<{ receipt: Receipt; info: ProposalInfo }> {
-  await settleRetention(mirror.actors[actor], mirror.dao.shares, proposal.id);
+  const settled = await settleRetention(mirror.actors[actor], mirror.dao.shares, proposal.id);
+  observe(mirror, settled.blockNumber);
   const receipt = await write(mirror.actors[actor], { address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [proposal.id, proposal.data], gas: PROCESS_GAS }, mirror);
   const info = await proposalInfo(mirror, proposal.id);
   printReceipt(`${actor} processProposal #${proposal.id} -> passed=${info.status.passed} actionFailed=${info.status.actionFailed} state=${await stateOf(mirror, proposal.id)}`, receipt);

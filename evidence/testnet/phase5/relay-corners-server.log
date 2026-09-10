@@ -1,0 +1,231 @@
+{
+  "listening": "127.0.0.1:18871",
+  "startedAt": "2026-09-10T19:58:07.852Z",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "sponsor": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployment": "evidence/testnet/phase5/scenario-daos/corner-money-2026-09-10T19-41-53-096Z.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/relay-phase5-contract-corners",
+  "beaconDir": "beacon/public-phase5-corners",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": true
+}
+
+[index] scan 46650999..46651002 rows=17
+[index] scan 46651003..46651007 rows=17
+[index] scan 46651008..46651017 rows=18
+[index] scan 46651018..46651020 rows=18
+[index] scan 46651021..46651023 rows=18
+[index] scan 46651024..46651033 rows=18
+[index] scan 46651034..46651038 rows=18
+[index] scan 46651039..46651050 rows=19
+[index] scan 46651051..46651054 rows=19
+[index] scan 46651055..46651065 rows=20
+[index] scan 46651066..46651076 rows=21
+[index] scan 46651077..46651087 rows=22
+[index] scan 46651088..46651098 rows=23
+[index] scan 46651099..46651109 rows=24
+[index] scan 46651110..46651120 rows=25
+[index] scan 46651121..46651131 rows=26
+[index] scan 46651132..46651140 rows=27
+[index] scan 46651141..46651151 rows=28
+[index] scan 46651152..46651163 rows=29
+[index] scan 46651164..46651174 rows=30
+[index] scan 46651175..46651185 rows=31
+[index] scan 46651186..46651194 rows=32
+[index] scan 46651195..46651205 rows=33
+[index] scan 46651206..46651216 rows=34
+[index] scan 46651217..46651227 rows=35
+[index] scan 46651228..46651238 rows=36
+[index] scan 46651239..46651249 rows=37
+[index] scan 46651250..46651260 rows=38
+[index] scan 46651261..46651271 rows=39
+[index] scan 46651272..46651282 rows=40
+[index] scan 46651283..46651293 rows=41
+[index] scan 46651294..46651304 rows=42
+[index] scan 46651305..46651315 rows=43
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4M2E1NTIzNTNiZjlhN2NlYzAzOTRmN2EzMjdlY2M3MjMxMDUzYjFmNSIsIm9wIjowLCJwcm9wb3NhbElkIjowLCJhbW91bnQiOiIwIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMD -> 503 sponsor balance below reserve; send the transaction yourself
+[index] scan 46651316..46651320 rows=43
+[relay] /relay?op=vote&proposalId=1&approve=no&pass=<redacted> -> 503 relay queue full; retry in a few seconds
+[relay] /relay?op=vote&proposalId=1&approve=no&pass=<redacted> -> 503 relay queue full; retry in a few seconds
+[index] scan 46651321..46651329 rows=43
+[index] scan 46651330..46651332 rows=43
+[index] scan 46651333..46651336 rows=43
+[index] scan 46651337..46651339 rows=43
+[index] scan 46651340..46651343 rows=43
+[index] scan 46651344..46651347 rows=43
+{
+  "listening": "127.0.0.1:18871",
+  "startedAt": "2026-09-10T20:14:48.743Z",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "sponsor": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployment": "evidence/testnet/phase5/scenario-daos/corner-money-2026-09-10T19-41-53-096Z.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/relay-phase5-contract-corners",
+  "beaconDir": "beacon/public-phase5-corners",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": true
+}
+
+{
+  "listening": "127.0.0.1:18871",
+  "startedAt": "2026-09-10T20:16:46.599Z",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "sponsor": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployment": "evidence/testnet/phase5/scenario-daos/corner-money-2026-09-10T19-41-53-096Z.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/relay-phase5-contract-corners",
+  "beaconDir": "beacon/public-phase5-corners",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": true
+}
+
+{
+  "listening": "127.0.0.1:18871",
+  "startedAt": "2026-09-10T20:19:02.592Z",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "sponsor": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployment": "evidence/testnet/phase5/scenario-daos/corner-money-2026-09-10T19-41-53-096Z.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/relay-phase5-contract-corners",
+  "beaconDir": "beacon/public-phase5-corners",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": true
+}
+
+[index] scan 46651619..46651629 rows=43
+[index] scan 46651630..46651646 rows=44
+[index] scan 46651647..46651656 rows=45
+[index] scan 46651657..46651668 rows=46
+[index] scan 46651669..46651679 rows=47
+[index] scan 46651680..46651690 rows=48
+[index] scan 46651691..46651702 rows=49
+[index] scan 46651703..46651713 rows=50
+[index] scan 46651714..46651726 rows=51
+[index] scan 46651727..46651736 rows=52
+[index] scan 46651737..46651747 rows=53
+[index] scan 46651748..46651758 rows=54
+[index] scan 46651759..46651767 rows=55
+[index] scan 46651768..46651777 rows=56
+[index] scan 46651778..46651788 rows=57
+[index] scan 46651789..46651799 rows=58
+[index] scan 46651800..46651811 rows=59
+[index] scan 46651812..46651823 rows=60
+[index] scan 46651824..46651834 rows=61
+[index] scan 46651835..46651844 rows=62
+[index] scan 46651845..46651856 rows=63
+[index] scan 46651857..46651867 rows=64
+[index] scan 46651868..46651878 rows=65
+[index] scan 46651879..46651890 rows=66
+[index] scan 46651891..46651901 rows=67
+[index] scan 46651902..46651914 rows=68
+[index] scan 46651915..46651925 rows=69
+[index] scan 46651926..46651937 rows=70
+[index] scan 46651938..46651950 rows=71
+[index] scan 46651951..46651960 rows=72
+[index] scan 46651961..46651972 rows=73
+[index] scan 46651973..46651984 rows=74
+[index] scan 46651985..46651995 rows=75
+[index] scan 46651996..46652008 rows=76
+[index] scan 46652009..46652020 rows=77
+[index] scan 46652021..46652030 rows=78
+[index] scan 46652031..46652043 rows=79
+[index] scan 46652044..46652053 rows=80
+[index] scan 46652054..46652065 rows=81
+[index] scan 46652066..46652077 rows=82
+[index] scan 46652078..46652089 rows=83
+[index] scan 46652090..46652102 rows=84
+[index] scan 46652103..46652115 rows=85
+[index] scan 46652116..46652126 rows=86
+[index] scan 46652127..46652138 rows=87
+[index] scan 46652139..46652152 rows=88
+[index] scan 46652153..46652164 rows=89
+[index] scan 46652165..46652176 rows=90
+[index] scan 46652177..46652188 rows=91
+[index] scan 46652189..46652201 rows=92
+[index] scan 46652202..46652214 rows=93
+[index] scan 46652215..46652224 rows=94
+[index] scan 46652225..46652237 rows=95
+[index] scan 46652238..46652248 rows=96
+[index] scan 46652249..46652260 rows=97
+[index] scan 46652261..46652271 rows=98
+[index] scan 46652272..46652285 rows=99
+[index] scan 46652286..46652296 rows=100
+[index] scan 46652297..46652307 rows=101
+[index] scan 46652308..46652320 rows=102
+[index] scan 46652321..46652332 rows=103
+[index] scan 46652333..46652345 rows=104
+[index] scan 46652346..46652357 rows=105
+[index] scan 46652358..46652368 rows=106
+[index] scan 46652369..46652381 rows=107
+[index] scan 46652382..46652393 rows=108
+[index] scan 46652394..46652406 rows=109
+[index] scan 46652407..46652419 rows=110
+[index] scan 46652420..46652432 rows=111
+[index] scan 46652433..46652445 rows=112
+[index] scan 46652446..46652458 rows=113
+[index] scan 46652459..46652471 rows=114
+[index] scan 46652472..46652482 rows=115
+[index] scan 46652483..46652495 rows=116
+[index] scan 46652496..46652509 rows=117
+[index] scan 46652510..46652520 rows=118
+[index] scan 46652521..46652530 rows=118
+{
+  "listening": "127.0.0.1:18871",
+  "startedAt": "2026-09-10T20:51:30.261Z",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "sponsor": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployment": "evidence/testnet/phase5/scenario-daos/corner-money-2026-09-10T19-41-53-096Z.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/relay-phase5-contract-corners",
+  "beaconDir": "beacon/public-phase5-corners",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": true
+}
+
+[index] scan 46652572..46652602 rows=119

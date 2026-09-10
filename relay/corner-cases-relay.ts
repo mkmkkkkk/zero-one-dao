@@ -53,9 +53,12 @@ async function main(): Promise<void> {
     const adapter = getAddress(String(health.adapter));
     const baal = getAddress(String(health.baal));
     const chainId = Number(health.chainId);
+    assert(chainId === 84532, "relay acceptance is Base Sepolia only");
     const rpc = createPublicClient({ transport: http("https://sepolia.base.org", { retryCount: 4 }) });
     const count = (await rpc.readContract({ address: baal, abi: parseAbi(["function proposalCount() view returns (uint32)"]), functionName: "proposalCount" })) as number;
     const workManager = getAddress(/^(?:.*\bWorkManager|.*work)\s+(0x[0-9a-fA-F]{40})/mu.exec(readme)?.[1] ?? String(health.workManager ?? ""));
+    const weakPass = await get(`${origin}/relay?op=identity&pass=${"a".repeat(64)}`, false);
+    row("weak-T0-pass", "400 rejects predictable T0 identity before sponsorship", `${weakPass.httpStatus} ${String(weakPass.reason)}`, weakPass.httpStatus === 400 && /entropy|guessable/.test(String(weakPass.reason)));
     row("relay-down-direct-reads", "the README's Baal address answers eth_call without the relay", `Baal ${baal} proposalCount = ${count} via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory)`, readme.includes(baal));
 
     step("fresh T1 agent: join, deposit 10 USDC (faucet) so it holds >= 1 share; a second fresh key that never joins; two T0 passes");
@@ -147,6 +150,7 @@ async function main(): Promise<void> {
       if (body.ok !== true) throw new Error(`spam proposal ${submitted + 1} failed: ${response.status} ${String(body.reason)}`);
       submitted += 1;
       hashes.push(String(body.hash));
+      console.log(`RECEIPT spam ${submitted} tx=${String(body.hash)} deploy=${String(body.deployHash ?? "existing")}`);
       if (submitted % 10 === 0) console.log(`   ${submitted}/${spam} submitted (${rateLimited} rate-limited waits) after ${Math.round((Date.now() - started) / 1000)} s`);
     }
     const all = await getJson(`${origin}/proposals.json`, 200);
@@ -161,7 +165,7 @@ async function main(): Promise<void> {
     row("rate-limit-per-address", "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice", limited === undefined ? `no 429/503 in a burst of 10 (statuses ${burst.map((entry) => entry.status).join(" ")})` : `${limited.status} ${String(limited.body.reason)} (statuses ${burst.map((entry) => entry.status).join(" ")}); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does`, limited !== undefined);
 
     step("sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)");
-    row("sponsor-cap-exhausted", "503 'sponsor balance below reserve' / 'daily gas sponsorship budget reached; ... send the transaction yourself'", sponsorCap ?? "not triggered in this run (first run on 2026-09-08 hit '503 sponsor balance below reserve; send the transaction yourself' after 3 proposals with the 3 gwei reserve policy; the Base Sepolia reserve is now 0.05 gwei)", true);
+    row("sponsor-cap-exhausted", "current-run 503 with a readable sponsor budget/reserve reason", sponsorCap ?? "unknown: not triggered in this run", sponsorCap !== undefined);
 
     step("beacon: state.json fields, stale flag, README hash");
     const state = await getJson(`${beacon}/state.json`, 200);
@@ -170,10 +174,11 @@ async function main(): Promise<void> {
     row("beacon-state-json", "proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here", `proposal fields: ${["state", "votingEnds", "graceEnds", "yesVotes"].map((k) => `${k}=${String(first1[k])}`).join(" ")}; generatedAt ${String(state.generatedAt)} staleAfter ${String(state.staleAfter)}; README keccak256 ${readmeHash}`, typeof first1.state === "string" && typeof state.staleAfter === "string");
     passed = rows.every((entry) => entry.ok);
   } finally {
-    const outFile = path.resolve(ROOT, "evidence", "testnet", `corner-cases-relay-${new Date().toISOString().slice(0, 10)}.json`);
+    const outFile = path.resolve(ROOT, process.env.ZERO_ONE_CORNER_EVIDENCE ?? "evidence/testnet", `corner-cases-relay-${new Date().toISOString().slice(0, 10)}.json`);
     mkdirSync(path.dirname(outFile), { recursive: true });
     writeFileSync(outFile, `${JSON.stringify({ host: hostname(), at: new Date().toISOString(), rows }, null, 2)}\n`);
     console.log(`\n${JSON.stringify(rows, null, 2)}\n=== RELAY CORNER CASES: ${passed ? "PASS" : "FAIL"} (${rows.filter((entry) => entry.ok).length}/${rows.length}) -> ${outFile} ===\n`);
+    if (!passed) process.exitCode = 1;
   }
 }
 

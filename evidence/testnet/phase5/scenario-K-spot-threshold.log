@@ -1,0 +1,6 @@
+RECEIPT transfer tx=0x8e75ffbb14f8e031253413d2076951343c9765ea6623ba23c9a990b06f09fc4f block=46652552
+RECEIPT sandwich tx=0x82a21a730a750e46698fe9363c9ee47dc460eaf7666592f6d147e9e92e02dff4 block=46652555
+ASSERT spot portfolio crosses the voted stop-loss while TWAP portfolio remains above it
+ASSERT same-transaction manipulation leaves TWAP price and value unchanged
+ASSERT run bought with the donated cash and did not fire a false stop-loss
+NATIVE SPOT THRESHOLD COUNTEREXAMPLE PASS

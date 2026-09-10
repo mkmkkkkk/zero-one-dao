@@ -1,0 +1,15 @@
+{
+  "to": "0x2ad5dB5bcD873b1e74737e7a07dfC61628772737",
+  "deployer": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "eth": {
+    "sent": "0.001",
+    "hash": "0x9f72deee56bfb2095f0c9c325c703330b17ef999b7f9352ca03003cc1eac083e",
+    "balanceAfter": "0"
+  },
+  "usdc": {
+    "minted": "1000",
+    "hash": "0x2fd3f64f402c63f18bc36d580419e129b76853568151ca5f7cc8ec3d1203c739",
+    "balanceAfter": "0"
+  },
+  "deployerBalanceEth": "0.001942475291145561"
+}

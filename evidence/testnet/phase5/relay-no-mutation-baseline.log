@@ -1,0 +1,738 @@
+
+> zero-one-dao@0.1.0 e2e:relay
+> tsx relay/e2e-local.ts
+
+
+== step 1: deploy Zero One on a fresh anvil (prague) + genesis: founder deposits 50 USDC -> 50e18 shares
+   anvil http://127.0.0.1:11545 chainId 31401; safe 0x7682f967De7c3F05DAEf921aE8172CbdA6D011d5 baal 0xD883B50D474F4fAA7623562d8C99a4D0Eb4c58c4 adapter 0x1008f5d6BD6C2b8FA2113a70d33689728daC2742; genesis 0x3d788cf2c3a3143b9afa74f5726763e8f8bc60b7058ac1e1c4bec3cbab12b3c0
+   ok: founder holds 50e18 shares = 100%
+
+== step 2: sponsor float: 10,000 test USDC to the relay sponsor (faucet for test chains); write the deployment record
+   deployment record /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/deployment.json
+   ok: relay decodes TreasuryNotSettled with the settlement-vote recovery reason
+
+== step 3: start the relay against the mirror (sponsor = anvil account 15); the relay also serves the beacon files (RELAY_BEACON_DIR)
+{
+  "listening": "127.0.0.1:18752",
+  "startedAt": "2026-09-10T19:23:05.732Z",
+  "chainId": 31401,
+  "adapter": "0x1008f5d6BD6C2b8FA2113a70d33689728daC2742",
+  "sponsor": "0xF2b346975148084e6441E09370ED4bDcd494FE8a",
+  "deployment": "/Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/deployment.json",
+  "stateDir": "/Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/relay",
+  "beaconDir": "/Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/beacon",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": false
+}
+
+   health: {"service":"zero-one-relay","dao":"Zero One","chainId":31401,"chain":"local mirror","adapter":"0x1008f5d6BD6C2b8FA2113a70d33689728daC2742","baal":"0xD883B50D474F4fAA7623562d8C99a4D0Eb4c58c4","safe":"0x7682f967De7c3F05DAEf921aE8172CbdA6D011d5","settlement":"0x804808B5801DD784A8b2d08347Da13e280a5C1b8","constitution":{"address":"0x67e6077e66a0b8683c6614D1Ec5C335a21a4B046","textHash":"0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a","textUrl":"docs/CONSTITUTION.md","text":"docs/CONSTITUTION.md"},"sponsor":"0xF2b346975148084e6441E09370ED4bDcd494FE8a","sponsorBalanceWei":"10000000
+   ok: relay is alive on the mirror with the deployed adapter
+
+== step 4: build and validate the beacon (README <= 44 lines, every address has code, every advertised URL answers 200 from the relay)
+[index] scan 0..24 rows=1
+[index] scan 0..24 rows=1
+$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
+{
+  "result": "PASS",
+  "fetched": 13,
+  "origin": "http://127.0.0.1:18752",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "mirrorProbed": false,
+  "advertised": [
+    "/",
+    "/CONSTITUTION.md",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "offOriginUrls": [
+    "https://zero-one-beacon.vercel.app"
+  ],
+  "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
+  "probes": [
+    {
+      "target": "/README.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 6599
+    },
+    {
+      "target": "/llms.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 1397
+    },
+    {
+      "target": "/snippet.js",
+      "status": 200,
+      "type": "text/javascript; charset=utf-8",
+      "bytes": 11022
+    },
+    {
+      "target": "/snippet.py",
+      "status": 200,
+      "type": "text/x-python; charset=utf-8",
+      "bytes": 10794
+    },
+    {
+      "target": "/CONSTITUTION.md",
+      "status": 200,
+      "type": "text/markdown; charset=utf-8",
+      "bytes": 3115
+    },
+    {
+      "target": "/robots.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 23
+    },
+    {
+      "target": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8",
+      "bytes": 5295
+    },
+    {
+      "target": "/health.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1502
+    },
+    {
+      "target": "/state.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 2168
+    },
+    {
+      "target": "/proposals.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 430
+    },
+    {
+      "target": "/pending.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 518
+    },
+    {
+      "target": "/me/0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1412
+    },
+    {
+      "target": "/relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 4831
+    }
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 11,
+  "proposals": 0,
+  "tasks": 0,
+  "members": 1,
+  "block": "24"
+}
+
+   fetching every URL the README advertises on http://127.0.0.1:18752 (9 advertised paths, 13 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (6599 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1397 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10794 bytes)
+   fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
+   fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
+   fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1502 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (2168 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (430 bytes)
+   fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
+   fetched /me/0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A.json -> 200 application/json; charset=utf-8 (1412 bytes)
+   fetched /relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched http://127.0.0.1:18752/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+$ wc -l README.txt
+      44 /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/beacon/README.txt
+
+   ok: beacon validator CLI produced PASS
+   ok: README line count command succeeds
+
+----- README.txt (44 lines) -----
+Zero One | Any member can propose anything; only the other members' votes or exits can stop it.
+Chain local mirror (31401). Relay http://127.0.0.1:18752. Settlement USDC (6 dec). Shares: 18 dec, non-transferable, weight and exit.
+That host is canonical: it serves this file, the snippets, the dashboard and every endpoint below. Mirror https://zero-one-beacon.vercel.app has the same files and forwards /relay, but a mirror can answer a plain GET with a bot challenge page, so read from http://127.0.0.1:18752.
+Constitution http://127.0.0.1:18752/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (immutable, on-chain at 0x67e6077e66a0b8683c6614D1Ec5C335a21a4B046).
+In: USDC at NAV (1 share per USDC while empty). Out: ragequit any time, pro-rata, same block. Work: shares voted per task.
+Deposits pause while an open proposal contract still holds a non-USDC asset (a vote settles it, then they resume); Safe dust never pauses them; exit is pro-rata of the Safe only.
+Eight verbs. One signed intent each, sent as GET http://127.0.0.1:18752/relay?intent=<base64url JSON {message,signature[,authorization]}>.
+message = {member, op, proposalId, amount, evidenceHash, data, details, nonce, deadline}; unused fields are 0 / "0x" / "".
+join      GET /relay?op=join&authorization=<base64url {chainId,address,nonce,r,s,yParity}> attaches the adapter to your key; mints nothing
+deposit   op=5 amount=<USDC raw units>                    pulls USDC from your address into the Safe, mints shares at NAV
+task      op=7 amount=<taskId>                            claims an active task (its verifiers cannot)
+deliver   op=8 amount=<taskId> evidenceHash=keccak256(evidence text)
+propose   op=0 data=abi.encode(uint8 template,bytes params,bytes32 salt) details=<text+json>   one intent; GET /relay?op=quote (below) builds it
+vote      op=2 proposalId=<id> amount=1 (yes) or 0 (no)   needs shares held before the proposal was submitted
+execute   op=3 proposalId=<id> data=<proposalData>        anyone, after grace; the relay sends 5,000,000 gas
+ragequit  op=4 amount=<shares raw units> data=abi.encode(address[] [USDC])   burns shares, pays pro-rata of the Safe
+also work op=6 data=abi.encode(address[] verifiers,uint16 threshold,uint256 rewardShares,uint32 expiration) details=<text> submits the task
+proposal and sponsors it in the same transaction (>= 1 share); confirm op=9 amount=<taskId> data=<evidence bytes> (a named verifier)
+Intent(address member,uint8 op,uint32 proposalId,uint256 amount,bytes32 evidenceHash,bytes data,string details,uint256 nonce,uint256 deadline)
+EIP-712 domain: name ZeroOneIntent, version 1, chainId 31401, verifyingContract 0x1008f5d6BD6C2b8FA2113a70d33689728daC2742. nonce from /me; deadline <= now + 3600 s.
+quote: GET /relay?op=quote&member=<addr>&template=<T>&params=<JSON>&summary=<text> (read-only) returns instance, codeHash, paramsHash, budget and the
+exact op-0 message to sign; template ids 0 Payment 1 Strategy 2 Project 3 Config; salt = your nonce. The instance address is CREATE2 from
+(template, params, member, salt) via the factory 0x10C5db908e40086388E7f5710Bb1CDC3B451269e: your account recomputes it and the fund+start multicall on-chain, so nobody can
+swap the code. The relay deploys the instance if empty when your signed intent arrives (members with >= 1 share).
+Templates: Payment {recipients[],amounts[]} | Strategy {venue,asset,budget,rule{maxPerRun,minInterval,deadline,takeProfitBps,stopLossBps,slippageBps}}
+           Project {tranches[{amount,releaseType:date|verifiers,releaseAt,verifiers[],threshold}],deadline} | Config {votingPeriod,gracePeriod,...}
+Every response is JSON: {ok:true, hash, ...} or {ok:false, status, reason, error:{name,args}} (decoded custom errors, never a bare revert).
+T1 (your own key; Node 18+ or Python 3, no packages): GET http://127.0.0.1:18752/snippet.js or /snippet.py and run
+  node snippet.js join --key agent.key        python3 snippet.py join --key agent.key
+  ... deposit --usdc 100 | vote --proposal 1 --approve yes | execute --proposal 1 | task --task 1 | deliver --task 1 --evidence "text"
+  ... propose --template Payment --params '{"recipients":["0x.."],"amounts":["10000000"]}' | ragequit | work --verifiers a,b --reward-shares RAW
+  ... confirm --task 1 --evidence "text" (verifier). propose checks the quoted intent (template id, salt, paramsHash; Payment params re-encoded) before signing.
+Each command reads /me, signs locally and prints the exact GET URL; fetch it. Address goes to stderr. Keep the key file 0600.
+T0 (fetch only; custodial-lite: the relay derives and holds your key from your pass, so it can sign for you): GET http://127.0.0.1:18752/relay?op=join&pass=<32..256 chars, >= 128 bits of entropy: openssl rand -hex 32>
+  same pass with op=deposit&amount= | op=vote&proposalId=&approve=yes | op=execute&proposalId= | op=task&taskId= | op=deliver&taskId=&evidence=
+  op=propose&template=&params= | op=work&verifiers=&rewardShares= | op=confirm&taskId=&evidence= | op=ragequit ; op=identity&pass= gives your address
+Read: /me/<address>.json (shares, NAV, settled, depositTreasury, shareLiability, exit value, open proposals with deadlines, decoded calls, treasury effect and warnings[], my votes, my tasks, nonce, ragequit data)
+      /proposals.json (every proposal, state, deadlines, votes, decoded calls, proposalData, flags) | /state.json (treasury, members, tasks, governance) | /pending.json (what the relay is holding)
+Process: submit (self-sponsored: >= 1 share) -> voting 6 h -> grace 6 h (exit allowed) -> execute. Silence is consent: poll /me at least hourly.
+A vote in the block of the submission is impossible (share checkpoint); the relay waits for the next block before sending it.
+T0: the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1. The relay's secret is every T0 key; ok comes only after the hash is on chain (/pending.json).
+Addresses: Safe 0x7682f967De7c3F05DAEf921aE8172CbdA6D011d5 | Baal 0xD883B50D474F4fAA7623562d8C99a4D0Eb4c58c4 | Shares 0xDAb8691C4900BE746d0b4bBE1b7944B4ebb8AbC0 | USDC 0x804808B5801DD784A8b2d08347Da13e280a5C1b8
+           DepositShaman 0xBBf265D0714EfE832250443ab11d75f4f276ea31 | WorkManager 0x75a5dA03EB96e82Bec2E71896249fCdcB8323bca | TreasuryLedger 0xAD5DE159d22C8ea52Cc9E58dC4e9829D6c88bC19 | Adapter 0x1008f5d6BD6C2b8FA2113a70d33689728daC2742 | TemplateFactory 0x10C5db908e40086388E7f5710Bb1CDC3B451269e
+Relay down or budget exhausted? The contracts work without it: call Baal / DepositShaman / WorkManager from any wallet with the same arguments.
+----- end README.txt -----
+   ok: README.txt is at most 44 lines
+   ok: node snippet selftest: JavaScript keccak and curve vectors PASS
+   ok: python snippet selftest: Python keccak and curve vectors PASS
+
+== step 5: keys: a fresh T1 agent key (never funded with ETH) plus founder and verifier keys as 0600 files
+   agent 0x4eFbD20fc8c3818c467BF236c1CDC17144D00917 (ETH balance 0) founder 0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A verifiers 0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2 0xD8eeD3411f8357bCFaE9b5EeB18bD5DFae59B996
+
+== step 6: T1 agent: join (node snippet.js join) -> delegation attached, nothing minted
+   $ node snippet.js join --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?op=join&authorization=eyJjaGFpbklkIjozMTQwMSwi...
+   -> 200 {"ok":true,"verb":"join","address":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","delegated":true,"hash":"0xa69237658e8c7b643dd2ef6792152a02847784d5291e66db1621db0351481959","blockNumber":"25","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   ok: agent is delegated and holds 0 shares
+[index] scan 25..25 rows=1
+   /me: {"address":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","chainId":31401,"adapter":"0x1008f5d6BD6C2b8FA2113a70d33689728daC2742","delegated":true,"nonce":"0","authorizationNonce":1,"chainTime":1789068186,"domain":{"name":"ZeroOneIntent","version":"1","chainId":31401,"verifyingContract":"0x1008f5d6BD6C2b8FA2113a70d33689728daC2742"},"dao":{"name":"Zero One","principle":"Any member can propose anything; only the other members' votes or exits can stop it."},"custody":"self-custody","shares":"0","sharesFormatted":"0","percent":"0.0000","navUsdcPerShare":"1","settled":true,"depositTreasury":"50000000","shareLiability":"0","exitValueUsdc":"0","usdc":"0","usdcFormatted":"0","spendable":"0","openPropos
+   ok: /me shows delegated, nonce 0, 0 shares
+
+== step 7: T1 agent: deposit 100 USDC (deposit --usdc 100); the mirror faucet tops the agent up first
+   $ node snippet.js deposit --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --usdc 100
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"deposit","op":5,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0xb7f7b0d410b96265f7bccd261db1ce64c87f1d696718a1c9003bd2acecc27478","blockNumber":"27","gasUsed":"292782","nonceUsed":"0","nextNonce":"1","deposit":{"usdc":"100","sharesMinted":"100"},"faucet":{"toppedUpUsdc":"100","hash":"0x44a41e99ff12d377c23b7852d7d47015069309814c3dc615ac6a4a6cad1d21fe"}}
+   ok: relay answered ok ()
+   ok: 100 USDC at NAV 1 -> 100 shares
+[index] scan 26..27 rows=2
+   /me: shares 100 (66.6666%) nav 1 exitValue 100 usdc 0 nonce 1
+   ok: /me: 100 shares, NAV 1 USDC/share, exit value 100 USDC, nonce 1
+   ok: /me exposes settled and depositTreasury at the state block
+   ok: /state.json exposes the same ledger deposit NAV as /me
+
+== step 8: founder: join via the relay (python3 snippet.py) before any proposal exists
+   $ python3 snippet.py join --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   GET http://127.0.0.1:18752/relay?op=join&authorization=eyJjaGFpbklkIjozMTQwMSwi...
+   -> 200 {"ok":true,"verb":"join","address":"0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A","delegated":true,"hash":"0x478dec5b2852be42467c6a699f56fef4f8aff69ff730b4a8f931f52d04985aba","blockNumber":"28","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+
+== step 9: T1 agent: propose a Payment of 10 USDC to itself with ONE signed intent (propose --template Payment): op=quote (read-only) -> sign -> the relay deploys the CREATE2 instance -> the account submits fund+start of exactly that address
+   GET http://127.0.0.1:18752/relay?op=quote&member=0x4eFbD20fc8c3818c467BF236c1CDC17144D00917&template=Payment&params=%7B%22recipients%22%3A%5B%220x4eFbD20fc8c3818c467BF236c1CDC17144D00917%22%5D%2C%22amounts%22%3A%5B%2210000000%22%5D%7D&summary=agent%3A%20pay%20me%2010%20USDC
+   -> 200 {"ok":true,"verb":"quote","instance":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","exists":false,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","paramsHash":"0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8","paramsBytes":"0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000004efbd20fc8c3818c467bf236c1cdc17144d0091700000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000989680","salt":"0x0000000000000000000000000000000000000000000000000000000000000001","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budget":"10000000","budgetUsdc":"10","deadline":"0","calls":[{"to":"0x804808B5801DD784A8b2d08347Da13e280a5C1b8","data":"0xa9059cbb000000000000000000000000b7d2a4d0ad06e9c83e802346f9c2587b6fc6972b0000000000000000000000000000000000000000000000000000000000989680"},{"to":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","data":"0xbe9a6555"}],"propo
+   ok: relay answered ok ()
+   ok: quote: the instance address is known before deployment (exists: false), with its code hash
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --template Payment --params "{\"recipients\":[\"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917\"],\"amounts\":[\"10000000\"]}" --summary "agent: pay me 10 USDC"
+[index] scan 28..28 rows=2
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917 | {"instance":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","exists":false,"codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","paramsHash":"0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budgetUsdc":"10","canPropose":true}
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"propose","op":0,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0x2b1e6bc563af17fbcb329a475680ad66e8031042477f9ff770e0227374c5faa0","blockNumber":"30","gasUsed":"355480","nonceUsed":"1","nextNonce":"2","proposalId":1,"sponsored":true,"instance":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","template":"Payment","codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","deployHash":"0xb3a07ffcff19e520ec02da4d1331caf9cf28de1b5f26c9b9d44f6b7ea519fa6d","deployedBy":"relay sponsor"}
+   ok: relay answered ok ()
+   ok: proposal #1 submitted and self-sponsored (agent holds >= 1 share) in one intent
+   ok: the relay deployed the instance at the quoted CREATE2 address before the intent (sponsored, member >= 1 share)
+   ok: the code hash quoted before deployment equals keccak256 of the code now at the address
+[index] scan 29..30 rows=3
+   /proposals.json #1: state Voting effect "10 USDC leaves the Safe; Payment contract 0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B (budget 10 USDC, operator 0x4eFbD20fc8c3818c467BF236c1CDC17144D00917)" instance {"address":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","template":"Payment","paramsHash":"0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budget":"10000000","budgetUsdc":"10","deadline":0,"status":"Pending","codeHash":"0x3
+   ok: proposal #1 is Voting with treasury effect 10 USDC out
+   ok: instance is a Pending Payment whose operator is the agent
+   ok: the proposalData the account built on-chain equals the quoted (off-chain) multicall; details carry codeHash and paramsHash
+   GET http://127.0.0.1:18752/relay?op=quote&member=0x4eFbD20fc8c3818c467BF236c1CDC17144D00917&template=Payment&params=%7B%22recipients%22%3A%5B%220x4eFbD20fc8c3818c467BF236c1CDC17144D00917%22%5D%2C%22amounts%22%3A%5B%2210000000%22%5D%7D&summary=x&salt=0x0000000000000000000000000000000000000000000000000000000000000001
+   -> 200 {"ok":true,"verb":"quote","instance":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","exists":true,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","paramsHash":"0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8","paramsBytes":"0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000004efbd20fc8c3818c467bf236c1cdc17144d0091700000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000989680","salt":"0x0000000000000000000000000000000000000000000000000000000000000001","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budget":"10000000","budgetUsdc":"10","deadline":"0","calls":[{"to":"0x804808B5801DD784A8b2d08347Da13e280a5C1b8","data":"0xa9059cbb000000000000000000000000b7d2a4d0ad06e9c83e802346f9c2587b6fc6972b0000000000000000000000000000000000000000000000000000000000989680"},{"to":"0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B","data":"0xbe9a6555"}],"propos
+   ok: relay answered ok ()
+   ok: quoting the same (template, params, member, salt) again finds the deployed instance (deterministic address)
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --template Payment --params "{\"recipients\":[\"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917\"],\"amounts\":[\"10000000\"]}" --summary x
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917 | {"instance":"0x0a8653d9aEAbF1c0161Ed2c90af31a483A871d67","exists":false,"codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","paramsHash":"0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budgetUsdc":"10","canPropose":true}
+   ok: the signed intent carries only the template id, the exact abi.encode(params) and a salt (nothing the relay chose)
+
+== step 10: founder votes YES on #1 right after the submission (python3 snippet.py): the relay waits one block (ruling 7)
+   $ python3 snippet.py vote --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key --proposal 1 --approve yes
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"vote","op":2,"member":"0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A","hash":"0xfd67b216a4a183e06c3b2e74c4c7b002985f0d0cd657aad66f418b5a700e328c","blockNumber":"32","gasUsed":"157351","nonceUsed":"0","nextNonce":"1","waitedBlocks":1,"vote":{"proposalId":1,"approved":true,"shares":"50"}}
+   ok: relay answered ok ()
+   ok: the relay waited exactly one block before sending a vote that followed a fresh submission (ruling 7)
+   ok: founder voted YES with 50 shares
+
+== step 11: warp past voting + grace (12 h); T1 agent executes #1 via the relay (explicit 5,000,000 gas)
+   $ node snippet.js execute --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --proposal 1
+[index] scan 31..33 rows=4
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"execute","op":3,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0xd78a259f2d164293a28f153b3a398bb8a56b34e52e416a593e2d70b2dc841134","blockNumber":"34","gasUsed":"297941","nonceUsed":"2","nextNonce":"3","processed":{"proposalId":1,"passed":true,"actionFailed":false}}
+   ok: relay answered ok ()
+   ok: proposal #1 passed and its action executed (fund + start)
+[index] scan 34..34 rows=5
+   /me: usdc 10 shares 100 nav 0.933333 exitValue 93.333333
+   ok: the agent sees the 10 USDC payment
+   ok: the Safe holds 140 USDC (50 + 100 - 10)
+
+== step 12: founder proposes a task via the relay (work: verifiers V1,V2 threshold 2, reward 5 shares): submitTask + sponsorProposal in ONE transaction (ruling 4); founder votes right after (relay waits one block); agent votes; warp; agent executes
+   $ python3 snippet.py work --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key --verifiers 0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2,0xD8eeD3411f8357bCFaE9b5EeB18bD5DFae59B996 --threshold 2 --reward-shares 5000000000000000000 --details "ops: run the relay e2e"
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"work","op":6,"member":"0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A","hash":"0xfd9618a871e2af43359cc20524dd090f61e6a323a38b0a3892f23211b570f9b1","blockNumber":"35","gasUsed":"555964","nonceUsed":"1","nextNonce":"2","proposalId":2,"task":{"taskId":1,"proposalId":2},"sponsored":true}
+   ok: relay answered ok ()
+   ok: task #1 recorded, proposal #2 submitted
+   ok: the same transaction sponsored #2 (SponsorProposal event): no ninth verb
+[index] scan 35..35 rows=8
+   ok: proposal #2 is Voting, sponsored by the founder's own account
+   $ python3 snippet.py vote --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key --proposal 2 --approve yes
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"vote","op":2,"member":"0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A","hash":"0x35261dfc12c116015e81b13060ab9e224e74052805ba44ca8b30e9641f4a7bde","blockNumber":"37","gasUsed":"140263","nonceUsed":"2","nextNonce":"3","waitedBlocks":1,"vote":{"proposalId":2,"approved":true,"shares":"50"}}
+   ok: relay answered ok ()
+   ok: the relay waited exactly one block before sending a vote that followed a fresh submission (ruling 7)
+   $ node snippet.js vote --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --proposal 2 --approve yes
+[index] scan 36..37 rows=9
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"vote","op":2,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0x34f3ec4ee9c5ad00ba296477cb9ef4af1c5b61bade2c829b9380f3b10a89fab5","blockNumber":"38","gasUsed":"123163","nonceUsed":"3","nextNonce":"4","waitedBlocks":0,"vote":{"proposalId":2,"approved":true,"shares":"100"}}
+   ok: relay answered ok ()
+   ok: a vote after a later block exists is sent at once (waitedBlocks 0)
+   $ node snippet.js execute --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --proposal 2
+[index] scan 38..39 rows=10
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"execute","op":3,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0xd6959d85b701dc95ed866d1a15791b2f79db3b76fe8e14af4717b47e7818d55f","blockNumber":"40","gasUsed":"239185","nonceUsed":"4","nextNonce":"5","processed":{"proposalId":2,"passed":true,"actionFailed":false}}
+   ok: relay answered ok ()
+   ok: task proposal executed: task #1 active
+
+== step 13: T1 agent: claim task #1 (task --task 1) and deliver evidence; verifiers confirm via the relay (python); reward mints at the threshold
+   $ node snippet.js task --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --task 1
+[index] scan 40..40 rows=12
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"task","op":7,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0xe4ec905d945e5f4ceb85a4dcead46d0b3551345ace119f53638a2ebc78dad76c","blockNumber":"41","gasUsed":"98187","nonceUsed":"5","nextNonce":"6","claimed":{"taskId":1}}
+   ok: relay answered ok ()
+   ok: agent claimed task #1
+   $ node snippet.js deliver --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --task 1 --evidence "done: relay e2e delivered"
+[index] scan 41..41 rows=13
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"deliver","op":8,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0x8370d3af8709983bdda414456fda4e27440376881097f74dd8f59786920512c9","blockNumber":"42","gasUsed":"82412","nonceUsed":"6","nextNonce":"7","delivered":{"taskId":1,"round":1}}
+   ok: relay answered ok ()
+   ok: delivery round 1 committed
+[index] scan 42..42 rows=14
+   /me myTasks: [{"taskId":1,"proposalId":2,"proposer":"0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A","worker":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","verifiers":["0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2","0xD8eeD3411f8357bCFaE9b5EeB18bD5DFae59B996"],"threshold":2,"confirmations":0,"round":1,"rewardShares":"5000000000000000000","rewardSharesFormatted":"5","status":"Active","evidenceHash":"0x2ddb3e2784a74da
+   ok: /me shows the delivery awaiting verification
+   $ python3 snippet.py join --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v1.key
+   stderr: 0xea6d5e24ff0bfa142a1637b7d057a259d6f11cb2
+   GET http://127.0.0.1:18752/relay?op=join&authorization=eyJjaGFpbklkIjozMTQwMSwi...
+   -> 200 {"ok":true,"verb":"join","address":"0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2","delegated":true,"hash":"0xb7ba16e36a98e6a1a10982af1b540ed5669c1069cc2dbb83b85126238372033d","blockNumber":"43","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   $ python3 snippet.py confirm --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v1.key --task 1 --evidence "done: relay e2e delivered"
+[index] scan 43..43 rows=14
+   stderr: 0xea6d5e24ff0bfa142a1637b7d057a259d6f11cb2
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"confirm","op":9,"member":"0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2","hash":"0x5960fa2955eb59328a0d5c94a73828ff205194d5243b1bf70cfd16b0ea403654","blockNumber":"44","gasUsed":"103387","nonceUsed":"0","nextNonce":"1","confirmed":{"taskId":1,"confirmations":1}}
+   ok: relay answered ok ()
+   ok: first confirmation: nothing minted yet
+   $ python3 snippet.py join --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v2.key
+[index] scan 44..44 rows=15
+   stderr: 0xd8eed3411f8357bcfae9b5eeb18bd5dfae59b996
+   GET http://127.0.0.1:18752/relay?op=join&authorization=eyJjaGFpbklkIjozMTQwMSwi...
+   -> 200 {"ok":true,"verb":"join","address":"0xD8eeD3411f8357bCFaE9b5EeB18bD5DFae59B996","delegated":true,"hash":"0x7027391389784e11458ad4b1786de70abd0ad23dd4ff2bb92e2103dac8669b03","blockNumber":"45","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   $ python3 snippet.py confirm --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v2.key --task 1 --evidence "done: relay e2e delivered"
+[index] scan 45..45 rows=15
+   stderr: 0xd8eed3411f8357bcfae9b5eeb18bd5dfae59b996
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"confirm","op":9,"member":"0xD8eeD3411f8357bCFaE9b5EeB18bD5DFae59B996","hash":"0xe3367ee05814320d6f401087966260f507c7bad6e142951fb16866e65cf7d14c","blockNumber":"46","gasUsed":"293224","nonceUsed":"0","nextNonce":"1","confirmed":{"taskId":1,"confirmations":2},"verified":{"taskId":1,"worker":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","rewardShares":"5"}}
+   ok: relay answered ok ()
+   ok: second confirmation mints exactly 5 shares to the worker
+[index] scan 46..46 rows=18
+   /me: shares 105 (67.7419%) exitValue 94.838709
+   ok: the agent sees 105 shares
+
+== step 14: T0 agent (passphrase, fetch only): identity, join, deposit 20 USDC
+   GET http://127.0.0.1:18752/relay?op=identity&pass=<redacted>
+   -> 200 {"ok":true,"address":"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf","chainId":31401,"adapter":"0x1008f5d6BD6C2b8FA2113a70d33689728daC2742","delegated":false,"nonce":"0","authorizationNonce":0,"chainTime":1789154609,"domain":{"name":"ZeroOneIntent","version":"1","chainId":31401,"verifyingContract":"0x1008f5d6BD6C2b8FA2113a70d33689728daC2742"},"custody":"custodial-lite","me":"/me/pass/6d436aecfe90b7e8af53f2be9f2f7c3c7ddfcc030039eb4953d69d88d73eb334.json"}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18752/relay?op=join&pass=<redacted>
+   -> 200 {"ok":true,"verb":"join","address":"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf","delegated":true,"hash":"0xc4c4cb0804c51d9999998a05ddf6e43ac2f51125bdda7bb34f856d9b422d7bb4","blockNumber":"47","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   ok: T0 account delegated
+   GET http://127.0.0.1:18752/relay?op=deposit&amount=20000000&pass=<redacted>
+[index] scan 47..47 rows=18
+   -> 200 {"ok":true,"verb":"deposit","op":5,"member":"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf","hash":"0x8358835304da50c457e1dd919677c44b72e019fb4028a8ba18d740262d762e8a","blockNumber":"49","gasUsed":"275682","nonceUsed":"0","nextNonce":"1","deposit":{"usdc":"20","sharesMinted":"22.142857142857142857"},"faucet":{"toppedUpUsdc":"20","hash":"0x22d3aaddf8746f4612090875df7c5a517edcb94a2ed1c1f08f069b7a1ae12679"},"custody":"custodial-lite","me":"/me/pass/6d436aecfe90b7e8af53f2be9f2f7c3c7ddfcc030039eb4953d69d88d73eb334.json"}
+   ok: relay answered ok ()
+   T0 deposit -> 22.142857142857142857 shares (raw 22142857142857142857)
+   ok: T0 received 20 x 155 / 140 shares at NAV
+[index] scan 48..49 rows=19
+   /me/pass: custody custodial-lite shares 22.142857142857142857 nonce 1
+   ok: /me/pass/<sha256> reports the T0 shares
+
+== step 15: T1 agent proposes Payment #2 (1 USDC to the T0 address); T0 votes YES then ragequits during voting (allowed); T0 sees 0 shares
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --template Payment --params "{\"recipients\":[\"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf\"],\"amounts\":[\"1000000\"]}" --summary "agent: 1 USDC to the T0 agent"
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917 | {"instance":"0xc00AAc1aEE5Abf045d94593786bD32B7311afF1d","exists":false,"codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","paramsHash":"0x7db50391ca3da5ed61c381b3fcc0d31822519e9ebb834dd36bc0cf98aff63bde","operator":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","budgetUsdc":"1","canPropose":true}
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"propose","op":0,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0xa622b89472ecae5bb2c2fa9432897bdd33a3ba50f7cc77b46c6f73a1de93fad3","blockNumber":"51","gasUsed":"336064","nonceUsed":"7","nextNonce":"8","proposalId":3,"sponsored":true,"instance":"0xc00AAc1aEE5Abf045d94593786bD32B7311afF1d","template":"Payment","codeHash":"0x3e0aa23c54e70090fee07c19d840c124907fd8c9e44137c672526f6882adbeea","deployHash":"0xd023d7fa9b40ffd8108dd92ca10d359ff14039ecb9df792b06390c334f00d674","deployedBy":"relay sponsor"}
+   ok: relay answered ok ()
+   ok: proposal #3 submitted; its instance deployed by the sponsor at the CREATE2 address
+   GET http://127.0.0.1:18752/relay?op=vote&proposalId=3&approve=yes&pass=<redacted>
+[index] scan 50..51 rows=20
+   -> 200 {"ok":true,"verb":"vote","op":2,"member":"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf","hash":"0xb7b90ad7f0bcc51b3978d6b7c8f41a6fb0b88507da6c0a747c5a66ec91343b55","blockNumber":"53","gasUsed":"140251","nonceUsed":"1","nextNonce":"2","waitedBlocks":1,"vote":{"proposalId":3,"approved":true,"shares":"22.142857142857142857"},"custody":"custodial-lite","me":"/me/pass/6d436aecfe90b7e8af53f2be9f2f7c3c7ddfcc030039eb4953d69d88d73eb334.json"}
+   ok: relay answered ok ()
+   ok: the relay waited exactly one block before sending a vote that followed a fresh submission (ruling 7)
+   ok: T0 voted YES on #3
+   GET http://127.0.0.1:18752/relay?op=ragequit&pass=<redacted>
+[index] scan 52..53 rows=21
+   -> 200 {"ok":true,"verb":"ragequit","op":4,"member":"0x1144c84E3E7ad0406894D111f5Dbc94B53B90bbf","hash":"0x36fb1d2ebb7a8146a1b930970ec35937a6e422652dde8af6b8d64373098d02aa","blockNumber":"54","gasUsed":"262981","nonceUsed":"2","nextNonce":"3","ragequit":{"sharesBurned":"22.142857142857142857"},"custody":"custodial-lite","me":"/me/pass/6d436aecfe90b7e8af53f2be9f2f7c3c7ddfcc030039eb4953d69d88d73eb334.json"}
+   ok: relay answered ok ()
+   ok: T0 ragequit all shares
+   T0 usdc 0 -> 19999999
+   ok: T0 received its pro-rata USDC
+[index] scan 54..54 rows=22
+   ok: /me/pass shows 0 shares after ragequit
+
+== step 16: T1 agent ragequits all shares; sees 0 shares and its pro-rata USDC
+   $ node snippet.js ragequit --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"ragequit","op":4,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0x2a5718494e060491184113130bb2e96e1f16ff0f6be82c3b38a07f76e0347506","blockNumber":"55","gasUsed":"211657","nonceUsed":"8","nextNonce":"9","ragequit":{"sharesBurned":"105"}}
+   ok: relay answered ok ()
+   ok: 105 shares burned
+   paid 94838710 (expected 94838710) from treasury 140000001 at supply 155000000000000000000
+   ok: the agent received exactly its pro-rata of the Safe
+[index] scan 55..55 rows=23
+   /me: shares 0 usdc 104.83871 nonce 9
+   ok: /me shows 0 shares
+
+== step 17: readable failures: every rejected request carries a JSON reason (decoded custom error / Baal string), never a bare revert
+   $ node snippet.js execute --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --proposal 3
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4NGVmYmQyMGZjOGMzODE4YzQ2N2JmMjM2YzFjZGMxNzE0NGQwMDkxNyIsIm9wIjozLCJwcm9wb3NhbElkIjozLCJhbW91bnQiOiIwIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMD -> 422 reverted: the proposal is not ready to execute: wait for grace to end, or it was defeated / cancelled / already processed
+   -> 422 {"ok":false,"status":422,"reason":"reverted: the proposal is not ready to execute: wait for grace to end, or it was defeated / cancelled / already processed","error":{"name":"Error","args":{"message":"!ready"}}}
+   ok: relay answered with a JSON reason: reverted: the proposal is not ready to execute: wait for grace to end, or it was defeated / cancelled / already processed
+   ok: execute before grace -> 422 with Baal '!ready' decoded
+   GET http://127.0.0.1:18752/relay?op=vote&proposalId=3&approve=no&pass=<redacted>
+[index] resume 55 scanned=0
+[relay] /relay?op=vote&proposalId=3&approve=no&pass=<redacted> -> 422 reverted: this address already voted on the proposal
+   -> 422 {"ok":false,"status":422,"reason":"reverted: this address already voted on the proposal","error":{"name":"Error","args":{"message":"voted"}}}
+   ok: relay answered with a JSON reason: reverted: this address already voted on the proposal
+   ok: T0 voting twice -> 'voted' decoded
+   $ node snippet.js task --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --task 1
+[index] resume 55 scanned=0
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4NGVmYmQyMGZjOGMzODE4YzQ2N2JmMjM2YzFjZGMxNzE0NGQwMDkxNyIsIm9wIjo3LCJwcm9wb3NhbElkIjowLCJhbW91bnQiOiIxIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMD -> 422 reverted: WrongStatus(taskId=1, expected=2, observed=3)
+   -> 422 {"ok":false,"status":422,"reason":"reverted: WrongStatus(taskId=1, expected=2, observed=3)","error":{"name":"WrongStatus","args":{"taskId":"1","expected":"2","observed":"3"}}}
+   ok: relay answered with a JSON reason: reverted: WrongStatus(taskId=1, expected=2, observed=3)
+   ok: claiming a completed task -> custom error WrongStatus decoded with its arguments
+   $ python3 snippet.py deposit --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v1.key --amount 0
+[index] resume 55 scanned=0
+   stderr: 0xea6d5e24ff0bfa142a1637b7d057a259d6f11cb2
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4ZWE2ZDVlMjRmZjBiZmExNDJhMTYzN2I3ZDA1N2EyNTlkNmYxMWNiMiIsIm9wIjo1LCJwcm9wb3NhbElkIjowLCJhbW91bnQiOiIwIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMD -> 422 reverted: ZeroAmount()
+   -> 422 {"ok":false,"status":422,"reason":"reverted: ZeroAmount()","error":{"name":"ZeroAmount","args":{}}}
+   ok: relay answered with a JSON reason: reverted: ZeroAmount()
+   ok: deposit 0 -> DepositShaman.ZeroAmount decoded
+   GET http://127.0.0.1:18752/relay?op=propose&template=Bogus&params=%7B%7D&pass=<redacted>
+[relay] /relay?op=propose&template=Bogus&params=%7B%7D&pass=<redacted> -> 400 unknown template Bogus; use one of Payment, Strategy, Project, Config
+   -> 400 {"ok":false,"status":400,"reason":"unknown template Bogus; use one of Payment, Strategy, Project, Config"}
+   ok: relay answered with a JSON reason: unknown template Bogus; use one of Payment, Strategy, Project, Config
+   ok: unknown template -> 400 with a reason
+   $ python3 snippet.py propose --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/v1.key --template Payment --params "{\"recipients\":[\"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917\"],\"amounts\":[\"10000000\"]}" --summary "v1: no shares"
+   stderr: 0xea6d5e24ff0bfa142a1637b7d057a259d6f11cb2 | {"instance": "0x45807994269DC04C75Da3d3eD6F69568f12F93f3", "exists": false, "codeHash": "0xf338fb6b704326ae1f876eba88e8a0b407f3e7e11008adb8bd865cf54b4d2e5c", "paramsHash": "0xd0cc0125dee78a2a51ec941537500eecdee92c3241479839bef20c4810d1d6c8", "operator": "0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2", "budgetUsdc": "10", "canPropose": false}
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4ZWE2ZDVlMjRmZjBiZmExNDJhMTYzN2I3ZDA1N2EyNTlkNmYxMWNiMiIsIm9wIjowLCJwcm9wb3NhbElkIjowLCJhbW91bnQiOiIwIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMD -> 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first
+   -> 409 {"ok":false,"status":409,"reason":"propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first"}
+   ok: relay answered with a JSON reason: propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first
+   ok: propose by a member below sponsorThreshold -> 409 (no sponsored deployment, no unsponsorable proposal)
+   GET http://127.0.0.1:18752/relay?op=sponsor&proposalId=3&pass=<redacted>
+[relay] /relay?op=sponsor&proposalId=3&pass=<redacted> -> 400 unknown op sponsor; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm (sponsor no longer exists: work self-sponsors)
+   -> 400 {"ok":false,"status":400,"reason":"unknown op sponsor; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm (sponsor no longer exists: work self-sponsors)"}
+   ok: relay answered with a JSON reason: unknown op sponsor; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm (sponsor no longer exists: work self-sponsors)
+   ok: op=sponsor no longer exists -> 400
+   GET http://127.0.0.1:18752/relay?op=prepare&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x4eFbD20fc8c3818c467BF236c1CDC17144D00917%22%5D%2C%22amounts%22%3A%5B%2210000000%22%5D%7D
+[relay] /relay?op=prepare&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x4eFbD20fc8c3818c467BF236c1CDC17144D00917%22%5D%2C%22amounts%22%3A%5B%221000000 -> 400 expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=quote&member=..&template=..&params=..[&summary=&salt=], or op=<verb>&pass=<secret>
+   -> 400 {"ok":false,"status":400,"reason":"expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=quote&member=..&template=..&params=..[&summary=&salt=], or op=<verb>&pass=<secret>"}
+   ok: relay answered with a JSON reason: expected intent=<base64url envelope>, op=join&authorization=<base64url>, op=quote&member=..&template=..&params=..[&summary=&salt=], or op=<verb>&pass=<secret>
+   ok: op=prepare is retired -> 400
+   GET http://127.0.0.1:18752/relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%220%22%5D%7D
+[relay] /relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%220%22%5D%7 -> 422 reverted: ZeroAmount(index=0)
+   -> 422 {"ok":false,"status":422,"reason":"reverted: ZeroAmount(index=0)","error":{"name":"ZeroAmount","args":{"index":"0"}}}
+   ok: relay answered with a JSON reason: reverted: ZeroAmount(index=0)
+   ok: quote with a zero payment -> the template constructor's ZeroAmount decoded from the factory dry run
+
+== step 18: phase 5 stage C: /pending.json, allowance + delegatecall counted in the treasury effect, an instance name no call touches, Config flags, the T0 entropy floor, the persisted rate counter
+   /pending.json: {"service":"zero-one-relay","chainId":31401,"sponsor":"0xF2b346975148084e6441E09370ED4bDcd494FE8a","queued":0,"inFlight":[],"journal":null,"note":"an intent is answered ok only after its transaction is on chain; anything listed here is unfinished, and anything listed nowhere was never broadcast. The relay operator can delay or drop your intents: verify the hash on chain, and send anything you cannot afford to lose from your own key (T1).","generatedAt":"2026-09-10T19:23:50.818Z"}
+   ok: /pending.json shows nothing in flight once every intent has settled (ruling 7)
+   ok: /pending.json states what a T0 member is trusting the operator with (A5-10)
+   $ node snippet.js deposit --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/agent.key --usdc 1
+   stderr: 0x4efbd20fc8c3818c467bf236c1cdc17144d00917
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"verb":"deposit","op":5,"member":"0x4eFbD20fc8c3818c467BF236c1CDC17144D00917","hash":"0x7f6c9721ec2975eed9875c5c94900da9dc3275006dcc44c7bb6d3a373780fecc","blockNumber":"56","gasUsed":"265776","nonceUsed":"9","nextNonce":"10","deposit":{"usdc":"1","sharesMinted":"1.107142840535714534"}}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 {"ok":true,"replayed":true,"hash":"0x7f6c9721ec2975eed9875c5c94900da9dc3275006dcc44c7bb6d3a373780fecc","status":"success","blockNumber":"56","verb":"deposit"}
+   ok: relay answered ok ()
+   ok: an identical envelope is answered from the recorded receipt (replayed, same hash, with the block it is in)
+   db.json requests["0xb34dab7d89bb..."].hash rewritten to 0xabababababababababababababababababababababababababababababababab (no such transaction)
+   GET http://127.0.0.1:18752/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+[relay] /relay?intent=eyJtZXNzYWdlIjp7Im1lbWJlciI6IjB4NGVmYmQyMGZjOGMzODE4YzQ2N2JmMjM2YzFjZGMxNzE0NGQwMDkxNyIsIm9wIjo1LCJwcm9wb3NhbElkIjowLCJhbW91bnQiOiIxMDAwMDAwIiwiZXZpZGVuY2VIYXNoIjoiMHgwMDAwMDAwMDAwMDAwMD -> 409 nonce changed: expected 10; read /me and sign again
+   -> 409 {"ok":false,"status":409,"reason":"nonce changed: expected 10; read /me and sign again"}
+   ok: relay answered with a JSON reason: nonce changed: expected 10; read /me and sign again
+   ok: a recorded hash that is on no block is never reported as success: nonce changed: expected 10; read /me and sign again
+   ok: the unbacked row is dropped and the intent is broadcast again instead (it then fails on its real reason: the nonce is spent)
+[index] scan 56..58 rows=26
+   ok: both probe proposals are indexed (#4, #5 of 5)
+   hostile #4: effect {"usdcOut":"140000000","usdcOutFormatted":"140","usdcApproved":"340282366920938463463374607431768211456","usdcApprovedFormatted":"340282366920938463463374607431768.211456","usdcAtRisk":"340282366920938463463374607431908211456","usdcAtRiskFormatted":"340282366920938463463374607431908.211456","summary":"140 USDC leaves the Safe; 340282366920938463463374607431768.211456 USDC of allowance is granted on the Safe (the spender pulls it whenever it likes); contains a delegatecall as the Safe; WARNING: 3 flags on this proposal (read flags[])"}
+   hostile #4 flags: ["allowance: 0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)","delegatecall: call 2 would run 0x804808B5801DD784A8b2d08347Da13e280a5C1b8's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)","details: the proposal's details JSON names instance 0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B, which none of this proposal's calls touches; the panel below is built from the decoded calls, so read calls[] and ignore the name (A5-11)"]
+   ok: an approve of 2^128 USDC is counted as treasury effect, not as 0, and adds to the transfer in usdcAtRisk (ruling 6, ECO-06)
+   ok: the proposal carries the allowance, delegatecall and spoofed-instance-name flags
+   ok: the instance panel is bound to the decoded calls: a details JSON naming a benign instance no call touches shows no panel (A5-11)
+   ok: the delegatecall entry is labelled as one (operation 1 is never a bare field)
+   config #5 flags: ["config: voting + grace = 5 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)","config: quorumPercent 101 is above 100, so no proposal can ever reach quorum again, a repair Config included: TERMINAL (T-9b)"]
+   ok: a Config cutting voting+grace to 5 s and quorum to 101 is flagged as both unpollable and terminal (ECO-04, T-9b)
+   /me warnings (5): ["proposal 4 (Submitted, grace ends 0): allowance: 0xEa6D5e24FF0Bfa142a1637b7D057A259D6F11Cb2 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)","proposal 4 (Submitted, grace ends 0): delegatecall: call 2 would run 0x804808B5801DD784A8b2d08347Da13e280a5C1b8's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)","proposal 4 (Submitted, grace ends 0): details: the proposal's details JSON names instance 0xb7d2A4d0ad06e9c83e802346f9C2587B6FC6972B, which none of this proposal's calls touches; 
+   ok: /me carries the same flags as warnings, one line per open proposal (ruling 10)
+   ok: /me exposes the share liability of Active tasks (0)
+   ok: /state.json and /me report the same settled, depositTreasury and shareLiability
+   GET http://127.0.0.1:18752/relay?op=identity&pass=<redacted>
+[relay] /relay?op=identity&pass=<redacted> -> 400 pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words
+   -> 400 {"ok":false,"status":400,"reason":"pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words"}
+   ok: relay answered with a JSON reason: pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words
+   ok: a 44-character sentence is refused before any address is revealed: pass carries about 51 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identi
+   ok: the estimator scores the sentence 52 bits and the E2E's 32 random bytes 256 bits
+[relay] /relay?op=quote -> 400 member (address) is required
+[relay] /relay?op=quote -> 400 member (address) is required
+[relay] /relay?op=quote -> 400 member (address) is required
+[relay] /relay?op=quote -> 400 member (address) is required
+[relay] /relay?op=quote -> 400 member (address) is required
+   persisted per-IP counter: 43 -> 48 after 5 rejected requests
+   ok: every rejected request is counted on disk before it is rejected (A5-09)
+
+== step 19: cross-check: node, python and viem produce byte-identical signatures for the same intent (deterministic RFC 6979)
+   $ node snippet.js vote --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key --proposal 3 --approve no --deadline 1789155243
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   $ python3 snippet.py vote --key /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/keys/founder.key --proposal 3 --approve no --deadline 1789155243
+   stderr: 0x555ae16ad979bc33d1c08a3bf53c555e477c369a
+   ok: node and python snippets sign identically
+   ok: viem's EIP-712 signature equals the snippets' (same digest, same key)
+
+== step 20: phase 3 two-process concurrency, duplicate intents, restart cursor and killed broadcaster recovery
+ASSERT Base policy no faucet; daily=2000000000000000 floor=3000000000000000 maxFee=100000000 priority=1000000
+ASSERT cross-chain state directory startup refused before any transaction
+ASSERT sponsored hash=0x1c6e13a78e3bab661450c0f105c51b294d4adbfdb6605bd7ba3bd68a88173eac replayed=false
+ASSERT sponsored hash=0xfca254e80a63366c9186b20119574eed1c76f8ad58c8350b4b85fb39adafc0e0 replayed=false
+ASSERT sponsored hash=0x738b6c11ec19521caca882dc9885372e8ab26cbf46c3708a5ba680103d62fdaa replayed=false
+[index] scan 61..62 rows=27
+ASSERT sponsored hash=0x372be5f09aa9b1fe0877eb1f610448645c6a0fd21a3c30a2e15fb56ab0edf664 replayed=false
+ASSERT two processes concurrent deposits nonce=32,30 treasuryDelta=2000000 no collision no double spend
+ASSERT sponsored hash=0x5bf02921b83372c50767abb993bbbc2143c628eed05fb32b8006d1977f540e47 replayed=false
+ASSERT sponsored hash=0x777d85c0dc203b13d8680568922a309a424841061e7699f13c4c5be978d2ff31 replayed=false
+ASSERT sponsored hash=0x777d85c0dc203b13d8680568922a309a424841061e7699f13c4c5be978d2ff31 replayed=true
+ASSERT duplicate intent single hash=0x777d85c0dc203b13d8680568922a309a424841061e7699f13c4c5be978d2ff31 treasuryDelta=1000000
+[index] resume 67 scanned=0
+ASSERT restart persisted decoded rows and cursor resumed without historical scan
+ASSERT sponsored hash=none replayed=false
+ASSERT killed owner recovered pid+age signed hash=0xc54bd20e9160d6c7f2094dc62c6c82687a009162cce1f55b3d984557920663fa nonce=36 one mined transaction lock released
+=== RELAY HARDENING: PASS ===
+
+== step 21: phase 4 ledger HTTP: open-budget NAV, actual unsettled deposit refusals, and settlement recovery
+RETENTION proposal=3 chunk=1 gas=138226 tx=0xfad881c17c8e7670a2765b4f0f9467263a41e2b4d54e3c093bc80d72e9fecf22
+   completed prior sponsored proposal #3: 0x6f1a106f1a9498b6f38b849fc92c53a59707b116d9affd15d6f93e228f395f90
+   ledger HTTP tx transfer: 0x30b148a2a7ce6e514e7b425f4b9abd3d71550f0b17d172265f2065f7fdc09bfb block=75
+   ledger HTTP tx submitVote: 0xb27464d6ed5bd1a6ef9afa27bd0b2854feb984a9113042f29d3f3eb780bf0909 block=79
+   ledger HTTP tx processProposal: 0xe478aaa34a6e28c84db895fa801b79f3d578787e39aa8ac006544081a2ef6702 block=81
+[index] scan 68..81 rows=33
+   ASSERT ledger HTTP settled=true safe=39161291 depositTreasury=49161291 block=81
+   ledger HTTP tx run: 0x793593c684c66dcb1cf66da9c689c8793df3e1ec5e0a83203cae2dde89064f26 block=82
+[index] scan 82..82 rows=33
+   ASSERT ledger HTTP settled=false safe=39161291 depositTreasury=47161291 block=82
+[index] scan 83..83 rows=33
+[relay] /relay?op=deposit&amount=1000000&pass=<redacted> -> 422 reverted: TreasuryNotSettled(): deposits resume after a vote settles the registered assets to USDC
+   ASSERT ledger HTTP deposit 422: {"ok":false,"status":422,"reason":"reverted: TreasuryNotSettled(): deposits resume after a vote settles the registered assets to USDC","error":{"name":"TreasuryNotSettled","args":{}}}
+   ledger HTTP tx submitVote: 0x5cffc9580d2b38d99ad0cf97ab540cbb3045c8bac185f71205b7a4dc425abf42 block=87
+   ledger HTTP tx processProposal: 0x599e644fcb51206f16ff55cebf06b735679cbda850d8c3c2b94fe7383982bfcf block=89
+[index] scan 84..89 rows=36
+   ASSERT ledger HTTP settled=false safe=47161291 depositTreasury=47161291 block=89
+[relay] /relay?op=deposit&amount=1000000&pass=<redacted> -> 422 reverted: TreasuryNotSettled(): deposits resume after a vote settles the registered assets to USDC
+   ASSERT ledger HTTP deposit 422: {"ok":false,"status":422,"reason":"reverted: TreasuryNotSettled(): deposits resume after a vote settles the registered assets to USDC","error":{"name":"TreasuryNotSettled","args":{}}}
+   ledger HTTP tx submitVote: 0x31750ad217f2fe955ab051ead20d53ba75a72284d39d375eff6e03c919696940 block=92
+   ledger HTTP tx processProposal: 0xb32ca180b956a66fdfd075f59e8bdc6148c811d6eceb9bef167f03b84ea84775 block=94
+[index] scan 90..94 rows=39
+   ASSERT ledger HTTP settled=true safe=49161291 depositTreasury=49161291 block=94
+   ASSERT ledger HTTP same deposit succeeds after settlement: 0x3d76470d14b319cd977a43e97761319fdf6afb1bce6b14e2b9cbeadd6d3323d4
+=== RELAY LEDGER HTTP: PASS ===
+
+== step 22: rebuild and revalidate the beacon on the finished DAO: the published state.json carries the ledger, the liability and every proposal flag
+[index] scan 25..95 rows=40
+[index] resume 95 scanned=0
+[index] scan 95..95 rows=40
+$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>
+{
+  "result": "PASS",
+  "fetched": 13,
+  "origin": "http://127.0.0.1:18752",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "mirrorProbed": false,
+  "advertised": [
+    "/",
+    "/CONSTITUTION.md",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "offOriginUrls": [
+    "https://zero-one-beacon.vercel.app"
+  ],
+  "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
+  "probes": [
+    {
+      "target": "/README.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 6599
+    },
+    {
+      "target": "/llms.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 1397
+    },
+    {
+      "target": "/snippet.js",
+      "status": 200,
+      "type": "text/javascript; charset=utf-8",
+      "bytes": 11022
+    },
+    {
+      "target": "/snippet.py",
+      "status": 200,
+      "type": "text/x-python; charset=utf-8",
+      "bytes": 10794
+    },
+    {
+      "target": "/CONSTITUTION.md",
+      "status": 200,
+      "type": "text/markdown; charset=utf-8",
+      "bytes": 3115
+    },
+    {
+      "target": "/robots.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 23
+    },
+    {
+      "target": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8",
+      "bytes": 5295
+    },
+    {
+      "target": "/health.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1501
+    },
+    {
+      "target": "/state.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 32844
+    },
+    {
+      "target": "/proposals.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 29321
+    },
+    {
+      "target": "/pending.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 518
+    },
+    {
+      "target": "/me/0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 11053
+    },
+    {
+      "target": "/relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 4831
+    }
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 14,
+  "proposals": 8,
+  "tasks": 1,
+  "members": 6,
+  "block": "95"
+}
+
+   fetching every URL the README advertises on http://127.0.0.1:18752 (9 advertised paths, 13 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (6599 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1397 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10794 bytes)
+   fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
+   fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
+   fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1501 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (32844 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (29321 bytes)
+   fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
+   fetched /me/0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A.json -> 200 application/json; charset=utf-8 (11053 bytes)
+   fetched /relay?op=quote&member=0x555ae16ad979Bc33d1C08A3Bf53c555E477c369A&template=Payment&params=%7B%22recipients%22%3A%5B%220x555ae16ad979Bc33d1C08A3Bf53c555E477c369A%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched http://127.0.0.1:18752/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+$ wc -l README.txt
+      44 /Users/michaelmacmini/srv/zero-one-dao/state/e2e-relay-1789068184855/beacon-final/README.txt
+
+   ok: beacon validator PASS over 8 proposals (44 README lines)
+   ok: the published state.json carries the hostile proposal's three flags, no instance panel and its allowance
+   ok: the published treasury carries settled=true and shareLiability=0
+
+=== RELAY E2E: PASS ===
+

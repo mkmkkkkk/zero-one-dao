@@ -1,0 +1,15 @@
+{
+  "chainId": 84532,
+  "hash": "0xfc389f001b9988afb1ec3eebf692be44c71e11a3f365afba3bfca156171bbe79",
+  "block": "46653066",
+  "results": [
+    {
+      "gas": "270244",
+      "result": "Execution reverted for an unknown reason."
+    },
+    {
+      "gas": "390244",
+      "result": "success"
+    }
+  ]
+}

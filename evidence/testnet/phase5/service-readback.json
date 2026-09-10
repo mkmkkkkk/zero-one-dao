@@ -1,0 +1,22 @@
+{
+  "environment": {
+    "ZERO_ONE_DEPLOYMENT": "deployments/base-sepolia.json",
+    "RELAY_STATE_DIR": "state/relay-base-sepolia-phase5",
+    "RELAY_BEACON_DIR": "beacon/public-phase5",
+    "RELAY_PORT": "18761"
+  },
+  "identity": {
+    "chainId": 84532,
+    "baal": "0x2a97A8DB1797dfD8691668D729eB8291ACE664cb",
+    "sponsor": "0xecA60CAb6dc8fdBdFC9da022f70efa0Ee79A24Bd"
+  },
+  "stateFiles": [
+    "index.lock",
+    "db.json",
+    "identity.json",
+    "index-84532-0x2a97a8db1797dfd8691668d729eb8291ace664cb.json",
+    "secret",
+    "sponsor-pending.json",
+    "sponsor.lock"
+  ]
+}

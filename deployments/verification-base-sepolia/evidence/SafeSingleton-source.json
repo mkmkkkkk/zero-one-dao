@@ -15,10 +15,10 @@
       "Library": "",
       "ContractFileName": "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol",
       "LicenseType": "",
-      "Proxy": "0",
-      "Implementation": "",
       "SwarmSource": "",
-      "SimilarMatch": ""
+      "SimilarMatch": "0xB19AF208048f0a47a117B59aF2299c61A86e16D9",
+      "Proxy": "0",
+      "Implementation": ""
     }
   ]
 }

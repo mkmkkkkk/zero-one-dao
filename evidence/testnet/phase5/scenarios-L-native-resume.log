@@ -1,0 +1,61 @@
+RESUME native fixture scenario-L 0x9361be2d3d73852dD72729ABA94D02f9Fd583626 from evidence/testnet/phase5/scenario-daos/scenario-L-2026-09-10T20-29-31-832Z.json
+   ok: resume begins after completed proposal 9 and S3 buy, before proposal 10
+   tx A submitProposal #10 "stop S3 while it holds only the asset" (baalGas 103372): 0x232cd0e192e5f2b8b12b1bbb2ede1f04cae9eef3df25ef3a08f5b7ca54b66900 (block 46653295, gas 282894)
+   wait +1s (let votingStarts become past) -> block 46653297 timestamp 1789074882 (real 3 s)
+   proposal #10 state = Voting
+   tx A votes YES on #10 -> yes 1000 / no 0: 0xc2fe3887dba79c2f81c857c014d24beb491fd4852be1c08bc8298e00aa4ca3ed (block 46653299, gas 117227)
+   tx B votes YES on #10 -> yes 2000 / no 0: 0x0669fced9f18c7b702375491f9932fbfb3c5c5dd92b463dcca89505eb7e7e688 (block 46653301, gas 100127)
+   ...waiting (past grace of #10): block 46653332 timestamp 1789074952, target 1789075119 (167 s left)
+   ...waiting (past grace of #10): block 46653363 timestamp 1789075014, target 1789075119 (105 s left)
+   ...waiting (past grace of #10): block 46653394 timestamp 1789075076, target 1789075119 (43 s left)
+   wait +227s (past grace of #10) -> block 46653416 timestamp 1789075120 (real 229 s)
+   proposal #10 state = Ready
+   tx W processProposal #10 -> passed=true actionFailed=false state=Processed: 0xb4347c999f55190223072c4b9ff49bd0e05cf17ee77851fb3b718219bbc1cf28 (block 46653419, gas 162090)
+   ok: proposal #10: passed=true actionFailed=false
+   ok: stopped S3 stays open holding its asset
+   tx A submitProposal #11 "migrate stopped S3 -> S4 and start S4 on the migrated asset" (baalGas 331030): 0x90931018058d8fafe165e7634f69f10e65359135df30bb3345578cc4b6865044 (block 46653427, gas 285369)
+   wait +1s (let votingStarts become past) -> block 46653428 timestamp 1789075144 (real 3 s)
+   proposal #11 state = Voting
+   tx A votes YES on #11 -> yes 1000 / no 0: 0x34ea41fb6100a254a73f360568f41b623879988a605940fdf31504d5ea71eccf (block 46653430, gas 117227)
+   tx B votes YES on #11 -> yes 2000 / no 0: 0x7bf1d78a1836cb3481c044ff22117ae57f383d33a817d169d5a7a6ef7c926e28 (block 46653432, gas 100127)
+   ...waiting (past grace of #11): block 46653463 timestamp 1789075214, target 1789075383 (169 s left)
+   ...waiting (past grace of #11): block 46653494 timestamp 1789075276, target 1789075383 (107 s left)
+   ...waiting (past grace of #11): block 46653524 timestamp 1789075336, target 1789075383 (47 s left)
+   wait +229s (past grace of #11) -> block 46653548 timestamp 1789075384 (real 230 s)
+   proposal #11 state = Ready
+   tx W processProposal #11 -> passed=true actionFailed=false state=Processed: 0x6de274039891836060c6ac0720d663d26533fec32b9bae41cf8459d3f4131541 (block 46653551, gas 295750)
+   ok: proposal #11: passed=true actionFailed=false
+   [S3] Strategy @ 0x7d18e8B26cd797739bd8Ca1aCCECA4505B3A2f9c: status Migrated budget 100 deadline 1820608264 operator 0x6167e7562935f4612a656aA78AaC50cCC712f90E params 0x7e6bfb8ac638c8ddff3033ef1b1e22ab647d00c4a426dd84f3fd0f4b3a085de4 held 0 USDC
+   ok: migrate closed S3 and moved the raw asset without touching the venue
+   ok: S4 opened holding the migrated asset; deposits still paused
+   tx A submitProposal #12 "stop S4 and unwind it in the same vote" (baalGas 296005): 0x383c71be4e8decccd0751133b46d3134073f362c71c0e35fdd6da76282cc6adb (block 46653558, gas 284463)
+   wait +1s (let votingStarts become past) -> block 46653559 timestamp 1789075406 (real 3 s)
+   proposal #12 state = Voting
+   tx A votes YES on #12 -> yes 1000 / no 0: 0x05614407a9355863d3a82a5a58f6e19280956bff396eec0908e2530ad609d005 (block 46653562, gas 117227)
+   tx B votes YES on #12 -> yes 2000 / no 0: 0x425f30d36223fa2c4fbb9d7a0994f2c8f29851055ff4b9aa0bdca359ccb2364a (block 46653564, gas 100127)
+   ...waiting (past grace of #12): block 46653595 timestamp 1789075478, target 1789075645 (167 s left)
+   ...waiting (past grace of #12): block 46653626 timestamp 1789075540, target 1789075645 (105 s left)
+   ...waiting (past grace of #12): block 46653656 timestamp 1789075600, target 1789075645 (45 s left)
+   wait +229s (past grace of #12) -> block 46653679 timestamp 1789075646 (real 229 s)
+   proposal #12 state = Ready
+   tx W processProposal #12 -> passed=true actionFailed=false state=Processed: 0x5b25a198f711d30d37ce551f63f9d59672455b1775bba4a6f0f6303791cb1600 (block 46653682, gas 232508)
+   ok: proposal #12: passed=true actionFailed=false
+   [S4] Strategy @ 0xFF3008d42E19367dCB75fc94FF7D48D4b7AC10b1: status Stopped budget 100 deadline 1820608264 operator 0x6167e7562935f4612a656aA78AaC50cCC712f90E params 0x7e6bfb8ac638c8ddff3033ef1b1e22ab647d00c4a426dd84f3fd0f4b3a085de4 held 0 USDC
+   ok: stop + unwind in one vote closed S4 and settled the treasury
+   ok: the successor's asset was sold on the venue and the proceeds reached the Safe
+
+== step 1: NAV-07: one raw unit of a registered asset on the Safe does NOT pause deposits (the gate looks only at open instances)
+   tx one raw unit registered asset dust to Safe: 0x39a08e02a359da0f0790b706e1ae604edfd0c73ceacbb566dbbcbb7678ab14f7 (block 46653687, gas 51214)
+   ok: the Safe holds 1 raw unit of an asset the ledger has registered
+   ok: the treasury is still settled: Safe balances are never consulted
+   tx D approve deposit shaman: 0xd569b8a28c3dcda9d47e41ad128c0cafe1c3416aceb2bdcb799e09d84ea0e63e (block 46653690, gas 45911)
+   tx D deposit 1000 USDC -> 14.661664342526078027 shares (quoted 14.661664342526078027): 0x006a481682e6637e41f98bf22b4938b936d67338d440aea1f6c949ce9f56d624 (block 46653692, gas 238744)
+   ok: a deposit succeeds with dust on the Safe, priced on settlement only (the dust is shared by exit)
+
+== step 2: one transaction deposits then ragequits: measured net USDC and share supply are zero
+   tx fund local round-trip probe with exactly current treasury value: 0xebd15aa226e3f800c0c274fe4ddf7757d5787fd6f80433ba21dd971226704089 (block 46653694, gas 51306)
+   atomic tx 0xb4b762f5bcbce8da53dcf32aac87811b1f17ebf0e000ae8177fa3c0934e6ada7 block 46653697 status success probe before=211050000000 after=211050000000 net=0; event=RoundTrip
+   ok: same-transaction deposit plus ragequit nets exactly zero USDC (event and balances)
+   ok: atomic round trip restores Safe balance and supply, leaving probe with zero shares
+   ok: final ledger is settled with no active instances
+=== SCENARIO L: PASS (original receipts plus resumed final stages) ===

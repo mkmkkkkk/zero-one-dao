@@ -1,15 +1,7 @@
 [
   {
-    "name": "BaalSingleton",
-    "address": "0x60616f7748C8f6Aa60980c9cc58A180E62A356B5",
-    "contractName": "contracts/Baal.sol:Baal",
-    "compiler": "v0.8.10+commit.fc410830",
-    "constructorArguments": "",
-    "inputFile": "BaalSingleton-input.json"
-  },
-  {
     "name": "ModuleProxyFactory",
-    "address": "0x5BcC36484Ea50C7e347A7f1437eBa6Db6E7F5Cf6",
+    "address": "0x383B80c358FADCA4654aCACe047BB706cca1FaD1",
     "contractName": "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol:ModuleProxyFactory",
     "compiler": "v0.8.10+commit.fc410830",
     "constructorArguments": "",
@@ -17,7 +9,7 @@
   },
   {
     "name": "SafeSingleton",
-    "address": "0xB19AF208048f0a47a117B59aF2299c61A86e16D9",
+    "address": "0x604256c90fBe0823cE8AEF6e0563cA689435f994",
     "contractName": "@gnosis.pm/safe-contracts/contracts/GnosisSafe.sol:GnosisSafe",
     "compiler": "v0.8.10+commit.fc410830",
     "constructorArguments": "",
@@ -25,26 +17,18 @@
   },
   {
     "name": "SafeProxyFactory",
-    "address": "0x37b3703468aab5cC7d35Df8Da2194e03d5436336",
+    "address": "0xd0a855D44F2DD6e568Bc534E1E7731276443bF81",
     "contractName": "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol:GnosisSafeProxyFactory",
     "compiler": "v0.8.10+commit.fc410830",
     "constructorArguments": "",
     "inputFile": "SafeProxyFactory-input.json"
   },
   {
-    "name": "MultiSend",
-    "address": "0x1080A4fCa8f1532850C3CE57dd8FA0f60e78FAb5",
-    "contractName": "@gnosis.pm/safe-contracts/contracts/libraries/MultiSend.sol:MultiSend",
-    "compiler": "v0.8.10+commit.fc410830",
-    "constructorArguments": "",
-    "inputFile": "MultiSend-input.json"
-  },
-  {
     "name": "Safe",
-    "address": "0xDc209324Cc42a1cF9cA57a4250Ed99e4347Ed7F3",
+    "address": "0x6a0eFF5Aef13254aef69740392e064695b519A58",
     "contractName": "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxy.sol:GnosisSafeProxy",
     "compiler": "v0.8.10+commit.fc410830",
-    "constructorArguments": "000000000000000000000000b19af208048f0a47a117b59af2299c61a86e16d9",
+    "constructorArguments": "000000000000000000000000604256c90fbe0823ce8aef6e0563ca689435f994",
     "inputFile": "Safe-input.json"
   }
 ]

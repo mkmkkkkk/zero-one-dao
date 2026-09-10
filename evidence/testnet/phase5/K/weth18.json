@@ -1,0 +1,18 @@
+{
+  "chainId": 84532,
+  "safe": "0x3e1408747162D078d96b573F161879de698dceD6",
+  "pool": "0xDEb1Fe2441b6cDFCcc860Ffb255B1fc34c73603c",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "weth": "0x4200000000000000000000000000000000000006",
+  "initialized": "1789069994",
+  "readyAt": "1789071795",
+  "venue": "0xA565A143b13ee8fd11a7868a403d8938051B556A",
+  "unit": "1000000000000000000",
+  "price": "20000372051229657",
+  "acquired": "49974950",
+  "minimum": "49749073",
+  "returned": "999000",
+  "buy": "0xc7700d1c5e23d4626d1afe88ebf7ee2dbf06a27fc307f1af5a7c4e1f2f38f38a",
+  "sell": "0x66e4796a73ca7f836cc7618161be2ff0d2295990d6bfa8a505f59caf99a1c89e",
+  "result": "PASS"
+}

@@ -1,0 +1,5 @@
+ModuleProxyFactory already-verified ModuleProxyFactory
+SafeSingleton already-verified GnosisSafe
+SafeProxyFactory already-verified GnosisSafeProxyFactory
+Safe already-verified GnosisSafeProxy
+{"ModuleProxyFactory": "already-verified", "SafeSingleton": "already-verified", "SafeProxyFactory": "already-verified", "Safe": "already-verified"}

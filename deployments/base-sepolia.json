@@ -1,46 +1,51 @@
 {
   "chain": "Base Sepolia",
+  "fork": false,
+  "sourceCommit": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7",
+  "workingTreeDirty": true,
+  "genesisCommit": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7",
   "chainId": 84532,
   "rpcUrl": "https://sepolia.base.org",
   "explorer": "https://sepolia.basescan.org",
-  "deployedAt": "2026-09-07T23:23:52.638Z",
-  "startBlock": 46527522,
+  "deployedAt": "2026-09-10T19:12:57.015Z",
+  "startBlock": 46649599,
   "deployer": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
   "founder": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
-  "settlement": "0xeb653d48aafa9d13EAdFdC4Eb74c40B82344269b",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
   "settlementNote": "MockUSDC: 6 decimals, mintable by the deployer only (testnet); mainnet uses Circle USDC (docs/PARAMETERS.md)",
-  "safe": "0xDc209324Cc42a1cF9cA57a4250Ed99e4347Ed7F3",
-  "baal": "0xB04C6D1fbd7fB26971b22b37Ea7152cc346fF9B3",
-  "shares": "0xf69bEC6aDDad36A97Ea5A10f164a6427E0c21761",
-  "loot": "0x41c0E07C0151E2dBEb601a9F26CfDA6a8d7863f9",
-  "depositShaman": "0xB6E48B9dC0d90F79e1051dcaed41126840b20d26",
-  "workManager": "0xb62b38ED34b3201C28D67397Daf5Dfa91D1dBCA9",
-  "templateFactory": "0xE5bFC0A6Ed37B26C2511688B01681D15421e0fa8",
+  "safe": "0x6a0eFF5Aef13254aef69740392e064695b519A58",
+  "baal": "0x2a97A8DB1797dfD8691668D729eB8291ACE664cb",
+  "shares": "0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8",
+  "loot": "0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b",
+  "depositShaman": "0xE3041d2FE25987a3941a066Eb980B11BF81E2267",
+  "treasuryLedger": "0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC",
+  "workManager": "0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8",
+  "templateFactory": "0x9FC4166933729E26a73e95645deD9DF15673EDfD",
   "templateDeployers": [
-    "0xaAaF486b519243c669704c93ebFDDf19Ba590381",
-    "0x6C56F4F819B30627526F2a5170a745D53ab3bFd1",
-    "0x813328CF7760e6A118e7A89C905c1A97aE267486",
-    "0x751169E01aE1D57778e071ccB30Ac0843e8d520E"
+    "0x9821F97d84C5ba19F8844c1344635Cd4034415BB",
+    "0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b",
+    "0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1",
+    "0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3"
   ],
-  "intentAccount": "0xCeD89d5A8be2c434228311dD46C4e887ff9d88ce",
+  "intentAccount": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
   "constitution": {
-    "address": "0x4417B5db71EE291c320e8E1af21dC707946679FB",
+    "address": "0xF4cDf63FCD19bBf7285D089b848212ba2C34596F",
     "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
-    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/b095b354519ae3afb500b14cb1ca350f0bf5e315/docs/CONSTITUTION.md",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md",
     "text": "docs/CONSTITUTION.md"
   },
   "singletons": {
-    "baalSingleton": "0x60616f7748C8f6Aa60980c9cc58A180E62A356B5",
-    "moduleProxyFactory": "0x5BcC36484Ea50C7e347A7f1437eBa6Db6E7F5Cf6",
-    "safeSingleton": "0xB19AF208048f0a47a117B59aF2299c61A86e16D9",
-    "safeProxyFactory": "0x37b3703468aab5cC7d35Df8Da2194e03d5436336",
-    "multiSend": "0x1080A4fCa8f1532850C3CE57dd8FA0f60e78FAb5",
+    "baalSingleton": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+    "moduleProxyFactory": "0x383B80c358FADCA4654aCACe047BB706cca1FaD1",
+    "safeSingleton": "0x604256c90fBe0823cE8AEF6e0563cA689435f994",
+    "safeProxyFactory": "0xd0a855D44F2DD6e568Bc534E1E7731276443bF81",
+    "multiSend": "0xc48264D72D2228f94653D02bB845f9C00696BE66",
     "deploymentTransactions": [
-      "0xf0de5bb0c902df2191a65e3a9a0ad62da61b2ba3ac132444ddd06bd8394dc154",
-      "0xdcd8aa50672b19e778dcc02cddc895938cd7cadc8e4b0c125a2ff07d85efb57e",
-      "0x272d972dabf7e2eee7791923244157c877496324dcd7195ad26f4a0b7ebb03d4",
-      "0x03724bb0c3603e6b50f694e9174d70d4bd769eaaf59b0040165b92629c4578eb",
-      "0xab0d5ec863b7900c29fe88e6bfcb35e77b339056e9c1bda45ce195fbf3342838"
+      "0x60b2be47c1fe667adb15eefc67f35985348c5759e28128eb9a1ad2ec6887ad5b",
+      "0x9ccde11bd26bf0304211b63a4257cfb8eef9def601fde3239c29ab1361dd0e1f",
+      "0x329714e98a316a2657dde21d4894b68aa354eeb5dff239490277801463dd1807",
+      "0x62d2697e5a4abc01ea6a5628fa34c26f7b2306e2b3c4db2808338321e7d461cd",
+      "0x2130de636c5598cac86cff57e4b853cbbeeb546ff554ed78c6f99dbedde61b9d"
     ]
   },
   "governance": {
@@ -53,47 +58,47 @@
   },
   "shamans": [
     {
-      "shaman": "0xB6E48B9dC0d90F79e1051dcaed41126840b20d26",
+      "shaman": "0xE3041d2FE25987a3941a066Eb980B11BF81E2267",
       "permission": "2"
     },
     {
-      "shaman": "0xb62b38ED34b3201C28D67397Daf5Dfa91D1dBCA9",
+      "shaman": "0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8",
       "permission": "2"
     }
   ],
   "genesis": {
     "depositUsdc6": "50000000",
     "sharesMinted": "50000000000000000000",
-    "approveHash": "0x6651266e0e59ecf8a2ca589c4a5b168f4cedbea53b214294c643e76b6996f58b",
-    "depositHash": "0xab54fd67cef18063284a3a0ed1521fe87b1a3828c9037f19a209b0841cfa288d"
+    "approveHash": "0x8e86bb303b0104784b668b4527768b9402552110c486efa5f5319ae6dd56e8d0",
+    "depositHash": "0x1664f94fc6563d4fd1941aa1d1274cc8873d8cd132e5313e3019dc05983835e3"
   },
   "sponsorFloat": {
     "to": "0xecA60CAb6dc8fdBdFC9da022f70efa0Ee79A24Bd",
     "usdc": "1000000000000",
-    "hash": "0xe3f573ebf38cb6631e58771ba933db284b16f5ad81b46efd21e7b743148b827b"
+    "hash": "0xe93794f494aeaf2a5f41cf138f0146a54d0603f33a625a91b020e190b04df5a6"
   },
   "txHashes": {
-    "MockUSDC": "0xc596812ec3a61eea0121aad4a7cc44b5cdfe04c3790773151fa0acb43a8beaee",
-    "singleton:Baal": "0xf0de5bb0c902df2191a65e3a9a0ad62da61b2ba3ac132444ddd06bd8394dc154",
-    "singleton:ModuleProxyFactory": "0xdcd8aa50672b19e778dcc02cddc895938cd7cadc8e4b0c125a2ff07d85efb57e",
-    "singleton:GnosisSafe": "0x272d972dabf7e2eee7791923244157c877496324dcd7195ad26f4a0b7ebb03d4",
-    "singleton:GnosisSafeProxyFactory": "0x03724bb0c3603e6b50f694e9174d70d4bd769eaaf59b0040165b92629c4578eb",
-    "singleton:MultiSend": "0xab0d5ec863b7900c29fe88e6bfcb35e77b339056e9c1bda45ce195fbf3342838",
-    "SafeProxy": "0x809776aa973ff2e58ce3b0a2d91a397d03f7872be5769ad7802941f472cb424f",
-    "BaalProxy": "0x53d624d20c3a7c91d83de53b7e7e0643c546e48179b4d36aebe6bf77a327acd7",
-    "NavShareToken": "0x4f92e5a362a2f9e327149fb8a1d41f742151ca81189f4975f4a12c4890e521fc",
-    "LootToken": "0xea1174619ba2ce8ebbfa965a597b1a7216c001360212bbad2c3dcb9ca331ffb8",
-    "DepositShaman": "0x729134ad415ae73afddcb4550d506f0b538f0341495cf2c53ab1aa6642e990d2",
-    "WorkManager": "0x613c771d738d4112093d8442d81c031ff6a4af3a217b1c78b3136a15f04cdaa5",
-    "PaymentDeployer": "0xfd6988a1862e50f91bb6983f2cf6179d3ba61e81db4a18000585048d137dc009",
-    "StrategyDeployer": "0x9c2ce9e04dc0c3c2eed6d68ac81e756850ef612f09c0c5e303c609aa8d2ebd79",
-    "ProjectDeployer": "0x8ddf64624d4b0ba241c481a30a2cbf217f9e94c9337a5044dfd1671d451dcda1",
-    "ConfigDeployer": "0xeb9c84882c36aab396857d1db639e49a6d15e60979e0b0d37a9bd889eb3d947e",
-    "TemplateFactory": "0x1c70d9ae7a61c262b2aa70f628400e6161ee55c26f90e41a87df4c9ddc5791bc",
-    "ZeroOneIntentAccount": "0xf1a3807ca073cfca1cccbfd70104393a136ea3b42e40e296c21905f46187d619",
-    "Constitution": "0x32f7bd6da7154338e2d02e9908f054d85e1ee528da5acec872b0eceaa26a3ba3",
-    "Safe.setup": "0x2de4b9dbacc4e5ab44e4c0a5aa2307139d7487517cf17400d8ae38fbc5c1f882",
-    "Baal.setUp": "0x10266d0d48ac3274d1d087e5b1af71d4a7474104400acfdbaa77d011c5511d85"
+    "MockUSDC": "0xaadb5c58a2943c08cc1ca4760cc2922a08cba0e4e18be5546ec0a85d169a8ed1",
+    "singleton:Baal": "0x60b2be47c1fe667adb15eefc67f35985348c5759e28128eb9a1ad2ec6887ad5b",
+    "singleton:ModuleProxyFactory": "0x9ccde11bd26bf0304211b63a4257cfb8eef9def601fde3239c29ab1361dd0e1f",
+    "singleton:GnosisSafe": "0x329714e98a316a2657dde21d4894b68aa354eeb5dff239490277801463dd1807",
+    "singleton:GnosisSafeProxyFactory": "0x62d2697e5a4abc01ea6a5628fa34c26f7b2306e2b3c4db2808338321e7d461cd",
+    "singleton:MultiSendCallOnly": "0x2130de636c5598cac86cff57e4b853cbbeeb546ff554ed78c6f99dbedde61b9d",
+    "SafeProxy": "0xf634bc1a37f17191d0d3a10fe2b46b867c7631c96872d88076102336aa708cf0",
+    "BaalProxy": "0x65c7bcf37c5112cbb5c1d7ac3c45da483e6ec7d48482f92577cc92b17f1cee5f",
+    "NavShareToken": "0x5dc4994ec7ea01b6db7085c9fe4c3a2c7a83c6be5d9e851570246ff71fddc00f",
+    "LootToken": "0x6a6b585c87a0a8b335ac8e61cfcc8dbb877965067b4446b529958ed3b10e7f76",
+    "DepositShaman": "0xe62b3257b44cda4e078d55f998a2291901366759dc43dd2ff9187e89184542f2",
+    "WorkManager": "0x03bdc886e2fef756cc556266c058b65c85e36581915e8081adcacda9f3691487",
+    "PaymentDeployer": "0xc2c6d03863f31abeecaceb1fb8ff3ae5bcaf602345253f7098dc139d7c8e7db1",
+    "StrategyDeployer": "0x1b37d0ebc849c46014095fdc0e1a9b7f91d0bc350f809f0f434a5638370a6fe6",
+    "ProjectDeployer": "0x30c2f88d0180383257f4ed2b459bf4a6c82e51079e9773aad1262e737e62a47f",
+    "ConfigDeployer": "0x5fd5926ec55ae98b5753b491a1c2a4a8be0fcc461187915b2ea594357b7bc559",
+    "TemplateFactory": "0xe714fbd21f71a2d8513e7fa1c3e0159a8c3069c2e195445387cd542ee29e3143",
+    "ZeroOneIntentAccount": "0x8605c73d07d0aad2fbfe5bf91fc1086eecef9e7761879f314f550437cafa79d9",
+    "Constitution": "0x544b5d20c8b819626371ca8ba62822d1af2208ccaf54bbdd113261c4e73f241c",
+    "Safe.setup": "0xee6cd5a9d6054bf9cfd29b5ffdc97592f1b16a2b17778cf242e860639177fdaa",
+    "Baal.setUp": "0x924f15c0a684f5f6269e2be0f6046011dff723e1cf5024de6c0fd26ac80fc409"
   },
   "compiler": "v0.8.36+commit.8a079791"
 }

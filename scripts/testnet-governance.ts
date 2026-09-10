@@ -21,6 +21,7 @@ import { loadBaalArtifact, type GovernanceConfig } from "../src/baal.js";
 import { keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
 import { awaitRead, simulateSettled } from "../src/onchain.js";
 import { submitTemplateProposal } from "../src/proposals.js";
+import { settleRetention } from "../src/retention.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PROCESS_GAS = 5_000_000n;
@@ -38,10 +39,12 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const deploymentFile = path.resolve(ROOT, args.deployment ?? "deployments/base-sepolia.json");
   const deployment = JSON.parse(readFileSync(deploymentFile, "utf8")) as Deployment;
+  if (deployment.chainId !== 84532) throw new Error("Governance test helper is Base Sepolia only");
   const keyFile = args["key-file"] ?? process.env.ZERO_ONE_DEPLOYER_KEY_FILE ?? path.join(process.env.HOME ?? "", "srv", "aow-exit", ".env.sepolia");
   const chain = liveChain(deployment.chainId, args.rpc);
   const { publicClient, contexts } = liveContexts(chain, [keyFromEnvFile(keyFile, args["key-var"] ?? "ANCHOR_PRIVATE_KEY")]);
   const founder = contexts[0]!;
+  if (await publicClient.getChainId() !== 84532) throw new Error("Governance test RPC chain mismatch");
   const baalAbi = loadBaalArtifact("Baal").abi;
   const readBaal = <T,>(functionName: string, fnArgs: readonly unknown[] = []): Promise<T> => publicClient.readContract({ address: deployment.baal, abi: baalAbi, functionName, args: fnArgs } as never) as Promise<T>;
   const periods = async (): Promise<{ votingPeriod: number; gracePeriod: number }> => ({ votingPeriod: Number(await readBaal<number>("votingPeriod")), gracePeriod: Number(await readBaal<number>("gracePeriod")) });
@@ -62,6 +65,8 @@ async function main(): Promise<void> {
     // Baal reads the proposal data back from the submission event; re-encode via the stored details is impossible, so the caller passes --data.
     const data = args.data as Hex | undefined;
     if (data === undefined) throw new Error("--data <proposalData hex> is required to execute (printed at submission)");
+    const shares = await readBaal<Address>("sharesToken");
+    await settleRetention(founder, shares, id);
     const simulation = await simulateSettled<{ request: Record<string, unknown> }>(founder, { address: deployment.baal, abi: baalAbi, functionName: "processProposal", args: [id, data], gas: PROCESS_GAS });
     const hash = await founder.walletClient.writeContract({ ...simulation.request, gas: PROCESS_GAS, account: founder.account, chain } as never);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });

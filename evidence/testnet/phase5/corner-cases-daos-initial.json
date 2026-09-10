@@ -1,0 +1,208 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-10T20:36:11.790Z",
+  "parts": [
+    [
+      "money",
+      true,
+      ""
+    ],
+    [
+      "trap",
+      true,
+      ""
+    ],
+    [
+      "votes",
+      false,
+      "ASSERTION FAILED: vote-after-voting-ends (reverted with ended)"
+    ],
+    [
+      "absurd",
+      true,
+      ""
+    ],
+    [
+      "templates",
+      true,
+      ""
+    ]
+  ],
+  "rows": [
+    {
+      "id": "deposit-zero",
+      "expected": "simulation decodes ZeroAmount; transaction reverts",
+      "observed": "ZeroAmount; mined reverted at 46650521",
+      "ok": true,
+      "receipt": "0xb59fc8856a4cffec9394680a344cb689665a2209f3609afff4e1b0c071281791"
+    },
+    {
+      "id": "deposit-one-unit",
+      "expected": "1 unit x totalShares / treasury = 1e12 wei-shares at NAV 1 (no revert; ZeroShares only when the quote rounds to 0)",
+      "observed": "minted 1000000000000 wei-shares (quote 1000000000000); NAV 1 USDC/share",
+      "ok": true,
+      "receipt": "0xbb1e03e616469cbe27527593c455d6bcb21c83aef4e4d08a4457653bd38b951e"
+    },
+    {
+      "id": "ragequit-zero-shares",
+      "expected": "mined no-op, nothing moves",
+      "observed": "Safe balance 3050000001",
+      "ok": true,
+      "receipt": "0x2c93b10f26ed168023b221d9329891bdeaa3f9aa58d39cf74f6c87f03be6596c"
+    },
+    {
+      "id": "ragequit-yes-voter-during-voting",
+      "expected": "ragequit succeeds during Voting; yesVotes unchanged (checkpointed weight)",
+      "observed": "A paid 1000 USDC (expected 1000); yes 2000 -> 2000; state Voting",
+      "ok": true,
+      "receipt": "0xfd00b75bcb60a27953ae73a4158fc8ccc0f5b8688888e9b019cd7b4fce8f1bc6"
+    },
+    {
+      "id": "ragequit-during-grace",
+      "expected": "allowed (scenario B): partial exit pays pro-rata during Grace",
+      "observed": "C burned 10 -> 10 USDC; state Grace",
+      "ok": true,
+      "receipt": "0xb6e5fb57aea5b8b5a90fbf1ee11efb9bd1d01a1a6e25257126de921ad2015d56"
+    },
+    {
+      "id": "proposal-survives-exits",
+      "expected": "passes: yes > no and retention >= 66% (A's 1000 + C's 10 of 3050 = 33.1% left)",
+      "observed": "passed=true actionFailed=false",
+      "ok": true,
+      "receipt": "0x6651d656c3279048181c41ec5dd11e7fc9e21294078a9df7754ec5319a3b2bf6"
+    },
+    {
+      "id": "ragequit-second-asset",
+      "expected": "MOCK paid pro-rata only when named in the token list (Baal has no guildTokens registry; a strategy must return USDC or members name the asset)",
+      "observed": "B received 122.549019 MOCK of 500 at 500/2040.000001 shares",
+      "ok": true,
+      "receipt": "0x4141c5e3c2eb4b054f8b4e4522c4a527d87b0032b8e8ca39354ba1172248b208"
+    },
+    {
+      "id": "ragequit-token-order",
+      "expected": "simulation decodes !order; transaction reverts",
+      "observed": "!order; mined reverted at 46650701",
+      "ok": true,
+      "receipt": "0x0e3edba30e471b5bd9ee1c67118f0d9e594bd5a4938c03963c93efc3e76ed7cd"
+    },
+    {
+      "id": "last-member-ragequit",
+      "expected": "supply 0; USDC treasury 0 (dust-free since payouts are exact); DAO alive",
+      "observed": "supply 0; Safe USDC 0; F paid 49.754904",
+      "ok": true,
+      "receipt": "0xb690bea3b6d7620633cbf658ba693c5c2dbfaff19f4db3aa4bdfc41acb7decd4"
+    },
+    {
+      "id": "deposit-after-empty",
+      "expected": "1 USDC -> 1e18 shares again (empty-treasury price)",
+      "observed": "D deposited 3 USDC -> 3 shares",
+      "ok": true,
+      "receipt": "0x09f6d5c42eebb1b3ef28897b57a46f807acfb981596bf98a3899ecf4928521c8"
+    },
+    {
+      "id": "zero-supply-donation-quote",
+      "expected": "50 USDC -> 50e18 shares despite donation",
+      "observed": "50000000000000000000",
+      "ok": true,
+      "receipt": "0x96186e66e1e80f33ad7086630efcd5f68a6a01fe69d6f56f2e67687b123e0870"
+    },
+    {
+      "id": "zero-supply-donation-deposit",
+      "expected": "genesis remains possible; founder receives 50e18",
+      "observed": "50000000000000000000",
+      "ok": true,
+      "receipt": "0x9ed56bc56e9a915d72d5e2d7acbcd30eb5de16912a0039afab7c306c49d8623e"
+    },
+    {
+      "id": "zero-supply-donation-exit",
+      "expected": "founder receives genesis plus donated 1 USDC",
+      "observed": "51000000",
+      "ok": true,
+      "receipt": "0x65c3dae864c75ea90dccc59534a8408ec24f34e53f0a544f4dbc731490328a99"
+    },
+    {
+      "id": "vote-in-submission-block",
+      "expected": "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).",
+      "observed": "submit block 46650840 t=1789069968, vote block 46650840 t=1789069968 (same timestamp), vote status reverted",
+      "ok": true,
+      "receipt": "0x34be9ec10dec2e6078867d16b506de8899124feb6cc41bde8f92b7df21cdaaef"
+    },
+    {
+      "id": "vote-twice",
+      "expected": "simulation decodes voted; transaction reverts",
+      "observed": "voted; mined reverted at 46650846",
+      "ok": true,
+      "receipt": "0x1c725b9ed0cbf549d9012e17d0f541ca3d073164912c1f7dced0c667b5cf2d1f"
+    },
+    {
+      "id": "process-before-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46650849",
+      "ok": true,
+      "receipt": "0xfd55ee8bfe46c38157b96d7c51deea60e44b51dd9b7088076be9ae3954ee4392"
+    },
+    {
+      "id": "absurd-grace-zero-refused",
+      "expected": "Baal.setGovernanceConfig treats 0 as 'unchanged'; ConfigProposal.start() verifies the exact values -> NotApplied -> actionFailed; periods unchanged",
+      "observed": "passed=true actionFailed=true; votingPeriod 120 gracePeriod 120",
+      "ok": true,
+      "receipt": "0xb282822da30bd37eaaeb33fdb801933bea513398196d5e9a9e1c08d74f0ca87c"
+    },
+    {
+      "id": "absurd-config-applied",
+      "expected": "the Config proposal passes and Baal reports votingPeriod 1, gracePeriod 1",
+      "observed": "passed=true actionFailed=false; votingPeriod 1 gracePeriod 1",
+      "ok": true,
+      "receipt": "0x6415c00bd4c5de704cd011ded050a79c01032cecadc4b00a8bfafa62f066870f"
+    },
+    {
+      "id": "absurd-config-consequence",
+      "expected": "with a 1 s voting window no block on a 2 s chain can carry a vote (a vote needs votingStarts < timestamp < votingEnds); 0 yes > 0 no is false, so nothing passes again, a repair included: a terminal state the members chose (mirror anvil mines 1 s blocks and may still fit a vote)",
+      "observed": "state after one block: Defeated; vote -> !voting Error; process reverted: The contract function \"processProposal\" reverted with the fo",
+      "ok": true,
+      "receipt": "0x5a895d4717f808d19a0218927e0b955b4941bbac2b49badd747c25bc9e9eaeea"
+    },
+    {
+      "id": "strategy-deadline-before-first-run",
+      "expected": "start() succeeds (Running, funded); the first run() sees the deadline and unwinds: Complete, budget back in the Safe, nothing bought",
+      "observed": "start passed=true; status Running -> Complete; Safe 2750 -> 3050; instance MOCK 0",
+      "ok": true,
+      "receipt": "0xbdc77eacee280594f187777d354a27a5580cc827d6251d5c84639045e6e71554"
+    },
+    {
+      "id": "strategy-run-spam-stranger",
+      "expected": "simulation decodes WrongStatus; transaction reverts",
+      "observed": "WrongStatus; mined reverted at 46651453",
+      "ok": true,
+      "receipt": "0x9ea0cd18d3a5a606a3abaccfb4cf5ebe60f64510108e87b9f843dc3804bfe2d6"
+    },
+    {
+      "id": "strategy-stop-loss",
+      "expected": "value 120 <= 140 (budget - 30%): run() unwinds, Complete, 120 USDC back to the Safe",
+      "observed": "value 120; status Complete; Safe 2850 -> 2970",
+      "ok": true,
+      "receipt": "0x093039ef92d1fa180cb845e09683ed273eb90607e35224c0e8dad4a6e1ed2a3b"
+    },
+    {
+      "id": "project-topup-beyond-treasury",
+      "expected": "multicall reverts (transfer exceeds balance) -> actionFailed=true, treasury untouched",
+      "observed": "passed=true actionFailed=true; Safe 2970 -> 2970",
+      "ok": true,
+      "receipt": "0xf43db813491b014d47fa9b48e7465a20d988d5e95a8559fdb9403e0b7c67fc29"
+    },
+    {
+      "id": "payment-reverting-recipient",
+      "expected": "ERC20 payment to a contract with no receive function succeeds",
+      "observed": "passed=true actionFailed=false",
+      "ok": true,
+      "receipt": "0xd155898c2f36bbffb3fae02ca424a2c5c2a35a8d10c49c9ab4d2517e33a18371"
+    },
+    {
+      "id": "strategy-migrate-non-template",
+      "expected": "voted migration to EOA transfers exact raw budget",
+      "observed": "EOA received 0",
+      "ok": false,
+      "receipt": "0x897253bcb2090dea69f2ef93178551a590a6ebfa1a94c37f1890e0d7563d6e54"
+    }
+  ]
+}

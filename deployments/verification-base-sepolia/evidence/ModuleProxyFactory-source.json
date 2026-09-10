@@ -15,10 +15,10 @@
       "Library": "",
       "ContractFileName": "@gnosis.pm/zodiac/contracts/factory/ModuleProxyFactory.sol",
       "LicenseType": "",
-      "Proxy": "0",
-      "Implementation": "",
       "SwarmSource": "",
-      "SimilarMatch": ""
+      "SimilarMatch": "0x5BcC36484Ea50C7e347A7f1437eBa6Db6E7F5Cf6",
+      "Proxy": "0",
+      "Implementation": ""
     }
   ]
 }

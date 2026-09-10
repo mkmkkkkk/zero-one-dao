@@ -1,0 +1,78 @@
+{
+  "scenario": "scenario-B",
+  "chainId": 84532,
+  "rpcUrl": "https://sepolia.base.org",
+  "startBlock": 46651492,
+  "deployer": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "founder": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "safe": "0x43563A4A3401a717D350572a3847aa05CE83B885",
+  "baal": "0x83DCE2F8A63da902a8B1c86D3047717D4DD16f89",
+  "shares": "0x32f814CF64e4FC86D07c7BF12a3893D11675B35e",
+  "loot": "0xB4A92B33E632776B3269618E5767639Cf19a88E3",
+  "depositShaman": "0x021c87B6bCA13d77e20E930367a5e4426810B443",
+  "workManager": "0x31493DdebA9446019a64E366eD700b7a34A58603",
+  "treasuryLedger": "0xb936b1FCF0215ACbD85FAc2828360daEA01dFaA4",
+  "templateFactory": "0x4bd110c8eeeE1563DaBFF9684d6F28Dffe60AD77",
+  "templateDeployers": [
+    "0x85C638261708C818814371AF446Cf833b5c4badd",
+    "0x22fb12D28360b34B46D543C0C4a3eA42250F153c",
+    "0x4E17fCf8E6403F8e8dAfB9Dfb749D69272d05520",
+    "0x121565F8bA5cFBD9831335EB8d58e77C621f4DEe"
+  ],
+  "intentAccount": "0xe39534ac67919b126073bc09a5f4a8e7581eD48B",
+  "constitution": {
+    "address": "0xbD5f97174d2F0D8c135b78466E9CEdB4417e19c7",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md",
+    "text": "docs/CONSTITUTION.md"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "singletons": {
+    "baalSingleton": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+    "moduleProxyFactory": "0x383B80c358FADCA4654aCACe047BB706cca1FaD1",
+    "safeSingleton": "0x604256c90fBe0823cE8AEF6e0563cA689435f994",
+    "safeProxyFactory": "0xd0a855D44F2DD6e568Bc534E1E7731276443bF81",
+    "multiSend": "0xc48264D72D2228f94653D02bB845f9C00696BE66",
+    "deploymentTransactions": [
+      "0x60b2be47c1fe667adb15eefc67f35985348c5759e28128eb9a1ad2ec6887ad5b",
+      "0x9ccde11bd26bf0304211b63a4257cfb8eef9def601fde3239c29ab1361dd0e1f",
+      "0x329714e98a316a2657dde21d4894b68aa354eeb5dff239490277801463dd1807",
+      "0x62d2697e5a4abc01ea6a5628fa34c26f7b2306e2b3c4db2808338321e7d461cd",
+      "0x2130de636c5598cac86cff57e4b853cbbeeb546ff554ed78c6f99dbedde61b9d"
+    ]
+  },
+  "txHashes": {
+    "SafeProxy": "0xa85c615691feed07e94de6dd076dc99653c5f1c2df8c4b5a0414a29eddc19006",
+    "BaalProxy": "0x5be3fd2107fd3103a9f9d2f429d43765a222fcba2306f88cab76a091f62f2bd0",
+    "NavShareToken": "0x0bd741e6c87b880c1b4858f72af9eb508706fc9a2c9b7c3383880d43d65805a8",
+    "LootToken": "0x20dfd0d6995604978d2d9ea040015b18ba2f152d1a2b6dc0dd2583e046cd5be2",
+    "DepositShaman": "0xce00362bcd62ab417df0f303b2f9102bef3b6ec4aef9f7e88467572b861769e1",
+    "WorkManager": "0xf3461636b90b1a05c0737e76d0129b86c77d79f41bbb4d2e3b147e7d17bf22b8",
+    "PaymentDeployer": "0x2314cb73ae1fd4332fe99c8b9c68e98fd091b618c00dab4f6d77c6532a09faee",
+    "StrategyDeployer": "0xbd4c7fcfed9b0f62043b9dd2c412a6a96496bc51891f1fb9062737327df35757",
+    "ProjectDeployer": "0x17f4db55a73df7e72b3b8ff444ba906853703e07b020648d684ca79ce3c55534",
+    "ConfigDeployer": "0x1ca64a38de7240901613c09aa4543032de206237eff9ebc5d0a1ff77b105e441",
+    "TemplateFactory": "0x920395be97f33ecf188abb5e85367ad3637a507386fdd1a10ae54670dfde8082",
+    "ZeroOneIntentAccount": "0x4efc2fe36469634f54a7283aceb3c8c95440fe5df4ed39d2d02cc6e813dc7f98",
+    "Constitution": "0x649c0ffc571953f56897fc9da556ed6196ec3bf0449943fe7c07264b9d3a305a",
+    "Safe.setup": "0xc6cb766c938effc6be34c5af86fc8e68321b05cd387a85f5cd97a583711d650f",
+    "Baal.setUp": "0xe25f8fa2d0e4dfb0e7bcd17554f205250e4e1a71ed0dae113fb9446b3d6bdf4f"
+  },
+  "actors": {
+    "F": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+    "A": "0x43cee2F76abd8b974d4b731A708613e30E663Fbf",
+    "B": "0xB210555d689363F820C6227a5bf1e1D7fc72740a",
+    "C": "0x4526D2bDb080CB3587371AAE492037efa8A32eAb",
+    "D": "0xCB7fF6781EeB02E31145C2e0AE72d3701932C6B6",
+    "O": "0x1916a5b32dDEBc1A7a4155f81304BEA8AA9d80b6",
+    "W": "0x9dE600F59834d4877DfBac2525eE8ECce20E5Bc7"
+  }
+}

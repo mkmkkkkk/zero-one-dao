@@ -13,6 +13,7 @@ import { parseArgs } from "../beacon/scripts/build.js";
 import { loadLocalArtifact } from "../src/baal.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
 import { SETTLEMENT_UNIT } from "../src/zeroOne.js";
+import { awaitRead } from "../src/onchain.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -21,17 +22,21 @@ async function main(): Promise<void> {
   const to = getAddress(args.to ?? "");
   const deploymentFile = path.resolve(ROOT, args.deployment ?? "deployments/base-sepolia.json");
   const deployment = JSON.parse(readFileSync(deploymentFile, "utf8")) as { chainId: number; settlement: `0x${string}` };
+  if (deployment.chainId !== 84532) throw new Error("Test funding is Base Sepolia only");
   const keyFile = args["key-file"] ?? process.env.ZERO_ONE_DEPLOYER_KEY_FILE ?? path.join(process.env.HOME ?? "", "srv", "aow-exit", ".env.sepolia");
   const chain = liveChain(deployment.chainId, args.rpc);
   const { publicClient, contexts } = liveContexts(chain, [keyFromEnvFile(keyFile, args["key-var"] ?? "ANCHOR_PRIVATE_KEY")]);
   const deployer = contexts[0]!;
+  if (await publicClient.getChainId() !== 84532) throw new Error("Test funding RPC chain mismatch");
+  let observedBlock = 0n;
   const out: Record<string, unknown> = { to, deployer: deployer.account.address };
   if (args.eth !== undefined) {
     const value = parseEther(args.eth);
     const hash: Hex = await deployer.walletClient.sendTransaction({ account: deployer.account, chain, to, value } as never);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") throw new Error(`ETH transfer reverted: ${hash}`);
-    out.eth = { sent: args.eth, hash, balanceAfter: fmtEth(await publicClient.getBalance({ address: to })) };
+    observedBlock = receipt.blockNumber;
+    out.eth = { sent: args.eth, hash, blockNumber: String(observedBlock), balanceAfter: fmtEth(await awaitRead(() => publicClient.getBalance({ address: to, blockNumber: observedBlock }), () => true)) };
   }
   if (args.usdc !== undefined) {
     const abi = loadLocalArtifact("MockUSDC").abi;
@@ -40,9 +45,10 @@ async function main(): Promise<void> {
     const hash = await deployer.walletClient.writeContract({ ...mint.request, account: deployer.account, chain } as never);
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (receipt.status !== "success") throw new Error(`mint reverted: ${hash}`);
-    out.usdc = { minted: args.usdc, hash, balanceAfter: ((await publicClient.readContract({ address: deployment.settlement, abi, functionName: "balanceOf", args: [to] })) as bigint).toString() };
+    observedBlock = receipt.blockNumber;
+    out.usdc = { minted: args.usdc, hash, blockNumber: String(observedBlock), balanceAfter: (await awaitRead(() => publicClient.readContract({ address: deployment.settlement, abi, functionName: "balanceOf", args: [to], blockNumber: observedBlock }) as Promise<bigint>, () => true)).toString() };
   }
-  out.deployerBalanceEth = fmtEth(await publicClient.getBalance({ address: deployer.account.address }));
+  out.deployerBalanceEth = fmtEth(await awaitRead(() => publicClient.getBalance({ address: deployer.account.address, ...(observedBlock ? { blockNumber: observedBlock } : {}) }), () => true));
   console.log(JSON.stringify(out, null, 2));
 }
 

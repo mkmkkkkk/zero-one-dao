@@ -1,0 +1,31 @@
+   fetched snippet.js (11022 bytes)
+   fetched snippet.py (10794 bytes)
+   fetched llms.txt (1476 bytes)
+   GET http://127.0.0.1:18871/health.json
+   -> 200 (529 ms, 1585 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 84532,
+  "chain": "Base Sepolia",
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "baal": "0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f",
+  "safe": "0xF69F1205bc810e6cb77b884b51aEf2f65b3e104A",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "constitution": {
+    "address": "0x602A41F8F5362bb5969bD92b5d00DDA694EA4837",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892d
+   ok: Sepolia only
+   ok: initial fixture contains 24 distinct proposal receipts
+   $ node snippet.js address --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key
+/Users/michaelmacmini/srv/zero-one-dao/relay/agentio.ts:104
+  if (!url.startsWith("http")) throw new Error(`snippet printed no URL: ${result.stdout}`);
+                                     ^
+
+Error: snippet printed no URL: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5
+
+    at snippet (/Users/michaelmacmini/srv/zero-one-dao/relay/agentio.ts:104:38)
+    at <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/relay/phase5-spam-resume.ts:14:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v26.5.0

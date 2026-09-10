@@ -1,0 +1,16 @@
+RECEIPT probe deploy tx=0x34d8868798b0a54a5d9175ba653dbb31ae763e86cca65227fa85d050d8170e02
+RECEIPT fund probe tx=0x913bfd3ffe412acfa8eb17ea0d36f6862171111c1bb5a64502a42c08b09d2864
+/Users/michaelmacmini/srv/zero-one-dao/src/onchain.ts:90
+  if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash} ${await revertReason(context, hash, receipt)}`);
+                                          ^
+
+Error: Transaction reverted: 0x199ef151695a65a389b6efdfa49bffcf449cdba544bc3a915d9b4c0fd5e3d6df gas=517845/1500000: Execution reverted for an unknown reason. | Raw Call Arguments: |   from:   0x95f646d87e465a4a177a57d3288d1326e3d3a75d
+  to:     0xf0b5b00e03463bb3d43730050b2f62a61bcd4474
+  value:  0 ETH
+  data:   0x81122f460000000000000000000000000da8d8e3b63de048855d311431e8e1f7f3f7dd3a000000000000000000000000fd3b6cd46a9fdf259fb76718dd3f002a8e19dbc7000000000000000000000000519dcca8efc69ba19f94fee1a32b542be56cad9f000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000448d80ff0a0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  gas:    1500000
+    at writeAndWait (/Users/michaelmacmini/srv/zero-one-dao/src/onchain.ts:90:43)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/scenarios/phase5-same-block-vote.ts:31:14)
+
+Node.js v26.5.0

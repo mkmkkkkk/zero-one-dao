@@ -1,0 +1,11 @@
+{
+  "to": "0x8F3ad01830A2d22C313f17eEBafaBfB9d58B248f",
+  "deployer": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "usdc": {
+    "minted": "5000000",
+    "hash": "0xfcfbe9fee1475167e67374d99fdfa4d20dff1899e6bf14351842df4fde483459",
+    "blockNumber": "46651878",
+    "balanceAfter": "5000000000000"
+  },
+  "deployerBalanceEth": "0.001119305366637346"
+}

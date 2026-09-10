@@ -1,0 +1,30 @@
+{
+  "chainId": 84532,
+  "baal": "0x2a97A8DB1797dfD8691668D729eB8291ACE664cb",
+  "block": "46653696",
+  "chainTime": "2026-09-10T21:28:00.000Z",
+  "votingPeriod": 21600,
+  "gracePeriod": 21600,
+  "proposals": [
+    {
+      "id": 1,
+      "state": 2,
+      "votingEnds": 1789089264,
+      "graceEnds": 1789110864,
+      "executableAfter": "2026-09-11T07:14:25.000Z",
+      "processed": false,
+      "passed": false,
+      "actionFailed": false
+    },
+    {
+      "id": 2,
+      "state": 2,
+      "votingEnds": 1789090102,
+      "graceEnds": 1789111702,
+      "executableAfter": "2026-09-11T07:28:23.000Z",
+      "processed": false,
+      "passed": false,
+      "actionFailed": false
+    }
+  ]
+}

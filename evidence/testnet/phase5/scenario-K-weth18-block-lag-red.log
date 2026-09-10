@@ -1,0 +1,21 @@
+ASSERT published Sepolia WETH has 18 decimals
+RECEIPT createPool tx=0x326a9cc892225e2b025ffa0cee2e8cf92389ecff464f1dc4e7bb8ea80570a248 block=46650852 gas=4558754
+RECEIPT initialize tx=0xc2fc793cd4072f42455c154905c9ce2619e263b7c541ed33f2ba7c441402a736 block=46650853 gas=70444
+/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/public/getBlock.ts:128
+  if (!block) throw new BlockNotFoundError({ blockHash, blockNumber })
+                    ^
+
+BlockNotFoundError: Block at number "46650853" could not be found.
+
+Version: viem@2.56.3
+    at getBlock (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/public/getBlock.ts:128:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/scenarios/K-weth18-sepolia.ts:37:20) {
+  details: undefined,
+  docsPath: undefined,
+  metaMessages: undefined,
+  shortMessage: 'Block at number "46650853" could not be found.',
+  version: '2.56.3'
+}
+
+Node.js v26.5.0

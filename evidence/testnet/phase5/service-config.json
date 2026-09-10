@@ -1,0 +1,6 @@
+{
+  "ZERO_ONE_DEPLOYMENT": "deployments/base-sepolia.json",
+  "RELAY_STATE_DIR": "state/relay-base-sepolia-phase5",
+  "RELAY_BEACON_DIR": "beacon/public-phase5",
+  "RELAY_PORT": "18761"
+}

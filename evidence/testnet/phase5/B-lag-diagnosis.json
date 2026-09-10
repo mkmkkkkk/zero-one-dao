@@ -1,0 +1,35 @@
+{
+  "baal": "0xA16e5650588F30953bc51349004b987EA4c5F975",
+  "rows": [
+    {
+      "blockNumber": "46650120",
+      "error": "The contract function \"exitedSince\" reverted."
+    },
+    {
+      "blockNumber": "46650122",
+      "exitedSince": [
+        "1000000000000000000000",
+        "3050000000000000000000"
+      ]
+    },
+    {
+      "blockNumber": "46650216",
+      "exitedSince": [
+        "1000000000000000000000",
+        "3050000000000000000000"
+      ]
+    }
+  ],
+  "settlementReceipts": [
+    {
+      "hash": "0xf9a3eeb5d85e31279adff796b7ca192967488333bcd0fbf703806048d0e1a6e3",
+      "block": "46650121",
+      "status": "success"
+    },
+    {
+      "hash": "0xdf06a573e08c84e51f11fd71716903774e693d9aa220e02464c673d68bd303f4",
+      "block": "46650122",
+      "status": "success"
+    }
+  ]
+}

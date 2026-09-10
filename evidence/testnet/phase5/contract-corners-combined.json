@@ -1,0 +1,279 @@
+{
+  "chainId": 84532,
+  "sources": [
+    "corner-cases-daos-initial.json",
+    "corner-cases-daos-2026-09-10.json",
+    "vote-boundaries-resume.json",
+    "migration-followup.json",
+    "same-block-vote.json"
+  ],
+  "count": 33,
+  "passed": 33,
+  "rows": [
+    {
+      "id": "deposit-zero",
+      "expected": "simulation decodes ZeroAmount; transaction reverts",
+      "observed": "ZeroAmount; mined reverted at 46650521",
+      "ok": true,
+      "receipt": "0xb59fc8856a4cffec9394680a344cb689665a2209f3609afff4e1b0c071281791",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "deposit-one-unit",
+      "expected": "1 unit x totalShares / treasury = 1e12 wei-shares at NAV 1 (no revert; ZeroShares only when the quote rounds to 0)",
+      "observed": "minted 1000000000000 wei-shares (quote 1000000000000); NAV 1 USDC/share",
+      "ok": true,
+      "receipt": "0xbb1e03e616469cbe27527593c455d6bcb21c83aef4e4d08a4457653bd38b951e",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "ragequit-zero-shares",
+      "expected": "mined no-op, nothing moves",
+      "observed": "Safe balance 3050000001",
+      "ok": true,
+      "receipt": "0x2c93b10f26ed168023b221d9329891bdeaa3f9aa58d39cf74f6c87f03be6596c",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "ragequit-yes-voter-during-voting",
+      "expected": "ragequit succeeds during Voting; yesVotes unchanged (checkpointed weight)",
+      "observed": "A paid 1000 USDC (expected 1000); yes 2000 -> 2000; state Voting",
+      "ok": true,
+      "receipt": "0xfd00b75bcb60a27953ae73a4158fc8ccc0f5b8688888e9b019cd7b4fce8f1bc6",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "ragequit-during-grace",
+      "expected": "allowed (scenario B): partial exit pays pro-rata during Grace",
+      "observed": "C burned 10 -> 10 USDC; state Grace",
+      "ok": true,
+      "receipt": "0xb6e5fb57aea5b8b5a90fbf1ee11efb9bd1d01a1a6e25257126de921ad2015d56",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "proposal-survives-exits",
+      "expected": "passes: yes > no and retention >= 66% (A's 1000 + C's 10 of 3050 = 33.1% left)",
+      "observed": "passed=true actionFailed=false",
+      "ok": true,
+      "receipt": "0x6651d656c3279048181c41ec5dd11e7fc9e21294078a9df7754ec5319a3b2bf6",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "ragequit-second-asset",
+      "expected": "MOCK paid pro-rata only when named in the token list (Baal has no guildTokens registry; a strategy must return USDC or members name the asset)",
+      "observed": "B received 122.549019 MOCK of 500 at 500/2040.000001 shares",
+      "ok": true,
+      "receipt": "0x4141c5e3c2eb4b054f8b4e4522c4a527d87b0032b8e8ca39354ba1172248b208",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "ragequit-token-order",
+      "expected": "simulation decodes !order; transaction reverts",
+      "observed": "!order; mined reverted at 46650701",
+      "ok": true,
+      "receipt": "0x0e3edba30e471b5bd9ee1c67118f0d9e594bd5a4938c03963c93efc3e76ed7cd",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "last-member-ragequit",
+      "expected": "supply 0; USDC treasury 0 (dust-free since payouts are exact); DAO alive",
+      "observed": "supply 0; Safe USDC 0; F paid 49.754904",
+      "ok": true,
+      "receipt": "0xb690bea3b6d7620633cbf658ba693c5c2dbfaff19f4db3aa4bdfc41acb7decd4",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "deposit-after-empty",
+      "expected": "1 USDC -> 1e18 shares again (empty-treasury price)",
+      "observed": "D deposited 3 USDC -> 3 shares",
+      "ok": true,
+      "receipt": "0x09f6d5c42eebb1b3ef28897b57a46f807acfb981596bf98a3899ecf4928521c8",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "zero-supply-donation-quote",
+      "expected": "50 USDC -> 50e18 shares despite donation",
+      "observed": "50000000000000000000",
+      "ok": true,
+      "receipt": "0x96186e66e1e80f33ad7086630efcd5f68a6a01fe69d6f56f2e67687b123e0870",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "zero-supply-donation-deposit",
+      "expected": "genesis remains possible; founder receives 50e18",
+      "observed": "50000000000000000000",
+      "ok": true,
+      "receipt": "0x9ed56bc56e9a915d72d5e2d7acbcd30eb5de16912a0039afab7c306c49d8623e",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "zero-supply-donation-exit",
+      "expected": "founder receives genesis plus donated 1 USDC",
+      "observed": "51000000",
+      "ok": true,
+      "receipt": "0x65c3dae864c75ea90dccc59534a8408ec24f34e53f0a544f4dbc731490328a99",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "vote-in-submission-block",
+      "expected": "same-transaction vote refused by timestamp snapshot gate; later block succeeds",
+      "observed": "TimePointNotDetermined event; successful later-block vote",
+      "ok": true,
+      "receipt": "0xe584e4e6c0da44aa3c79c640d33700e62e99e98835ed5d89f9004a10faf71841",
+      "laterVote": "0xafdc7026b271d48dc55f45f2a2ffad976a23942045d9b2d39070450011f5fe85",
+      "source": "same-block-vote.json"
+    },
+    {
+      "id": "vote-twice",
+      "expected": "simulation decodes voted; transaction reverts",
+      "observed": "voted; mined reverted at 46652796",
+      "ok": true,
+      "receipt": "0x03b6a7a6e43324398d200e9f566d439e60f4b68467dd95d0831107dd27d9c957",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "process-before-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652799",
+      "ok": true,
+      "receipt": "0xffda0051c2ff5135f9d1e5e0ee5eae28eb34744323ce9bf8c7230227b39eb720",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "absurd-grace-zero-refused",
+      "expected": "Baal.setGovernanceConfig treats 0 as 'unchanged'; ConfigProposal.start() verifies the exact values -> NotApplied -> actionFailed; periods unchanged",
+      "observed": "passed=true actionFailed=true; votingPeriod 120 gracePeriod 120",
+      "ok": true,
+      "receipt": "0xb282822da30bd37eaaeb33fdb801933bea513398196d5e9a9e1c08d74f0ca87c",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "absurd-config-applied",
+      "expected": "the Config proposal passes and Baal reports votingPeriod 1, gracePeriod 1",
+      "observed": "passed=true actionFailed=false; votingPeriod 1 gracePeriod 1",
+      "ok": true,
+      "receipt": "0x6415c00bd4c5de704cd011ded050a79c01032cecadc4b00a8bfafa62f066870f",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "absurd-config-consequence",
+      "expected": "with a 1 s voting window no block on a 2 s chain can carry a vote (a vote needs votingStarts < timestamp < votingEnds); 0 yes > 0 no is false, so nothing passes again, a repair included: a terminal state the members chose (mirror anvil mines 1 s blocks and may still fit a vote)",
+      "observed": "state after one block: Defeated; vote -> !voting Error; process reverted: The contract function \"processProposal\" reverted with the fo",
+      "ok": true,
+      "receipt": "0x5a895d4717f808d19a0218927e0b955b4941bbac2b49badd747c25bc9e9eaeea",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "strategy-deadline-before-first-run",
+      "expected": "start() succeeds (Running, funded); the first run() sees the deadline and unwinds: Complete, budget back in the Safe, nothing bought",
+      "observed": "start passed=true; status Running -> Complete; Safe 2750 -> 3050; instance MOCK 0",
+      "ok": true,
+      "receipt": "0xbdc77eacee280594f187777d354a27a5580cc827d6251d5c84639045e6e71554",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "strategy-run-spam-stranger",
+      "expected": "simulation decodes WrongStatus; transaction reverts",
+      "observed": "WrongStatus; mined reverted at 46651453",
+      "ok": true,
+      "receipt": "0x9ea0cd18d3a5a606a3abaccfb4cf5ebe60f64510108e87b9f843dc3804bfe2d6",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "strategy-stop-loss",
+      "expected": "value 120 <= 140 (budget - 30%): run() unwinds, Complete, 120 USDC back to the Safe",
+      "observed": "value 120; status Complete; Safe 2850 -> 2970",
+      "ok": true,
+      "receipt": "0x093039ef92d1fa180cb845e09683ed273eb90607e35224c0e8dad4a6e1ed2a3b",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "project-topup-beyond-treasury",
+      "expected": "multicall reverts (transfer exceeds balance) -> actionFailed=true, treasury untouched",
+      "observed": "passed=true actionFailed=true; Safe 2970 -> 2970",
+      "ok": true,
+      "receipt": "0xf43db813491b014d47fa9b48e7465a20d988d5e95a8559fdb9403e0b7c67fc29",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "payment-reverting-recipient",
+      "expected": "ERC20 payment to a contract with no receive function succeeds",
+      "observed": "passed=true actionFailed=false",
+      "ok": true,
+      "receipt": "0xd155898c2f36bbffb3fae02ca424a2c5c2a35a8d10c49c9ab4d2517e33a18371",
+      "source": "corner-cases-daos-initial.json"
+    },
+    {
+      "id": "strategy-migrate-non-template",
+      "expected": "voted migration moves all 100 mock USDC to a non-template contract",
+      "observed": "source zero; recipient increases by 100000000 base units",
+      "ok": true,
+      "receipt": "0x1877ca6a592368ecf55928c3c03a763037a8cbb7dc7735b99dcbe73859520c6d",
+      "source": "migration-followup.json"
+    },
+    {
+      "id": "vote-after-voting-ends",
+      "expected": "simulation decodes !voting; transaction reverts",
+      "observed": "!voting; mined reverted at 46652855",
+      "ok": true,
+      "receipt": "0x1dc2b7bd65e7b90bcec051d53173ab876b14497d9a57f3f3ee14e9367e29fb31",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "process-during-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652856",
+      "ok": true,
+      "receipt": "0x77ad63c1b5993ba875c0441915dc634b64c824cca19eb63fce3d2bc98d42ae5d",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "process-twice",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652917",
+      "ok": true,
+      "receipt": "0x93726f508bd70277bb374aaefde8f78a85d49f5f11f24ee425e7d704684ff9e1",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "multicall-reverts-actionFailed",
+      "expected": "passed=true, actionFailed=true, USDC untouched",
+      "observed": "passed=true actionFailed=true; treasury 3050 -> 3050",
+      "ok": true,
+      "receipt": "0x44771e86c9de2da7987149a613ccdd6b44eca9217e4271c56945be8c4ff19d4d",
+      "source": "corner-cases-daos-2026-09-10.json"
+    },
+    {
+      "id": "minRetention-33.9pct",
+      "expected": "33.9% deficit leaves 66.1%, proposal passes",
+      "observed": "burned 33900000000000000000; supply 100000000000000000000; passed=true",
+      "ok": true,
+      "receipt": "0x6ac73dcd2596d4b5ba4cb43cbc50d7130eda8d940b94028f29fbb0608734a75e",
+      "source": "vote-boundaries-resume.json"
+    },
+    {
+      "id": "minRetention-exactly-34pct",
+      "expected": "remaining 66 of 100 = 66% >= 66% -> passes",
+      "observed": "B exited 34 (34%); passed=true",
+      "ok": true,
+      "receipt": "0x6845eaf580da520d4882650d503d88f4592376572394f6f1d1744cf6bd6f53c6",
+      "source": "vote-boundaries-resume.json"
+    },
+    {
+      "id": "minRetention-over-34pct",
+      "expected": "remaining 66 of 106 = 62.26% < 66% -> fails",
+      "observed": "C exited 40 (37.73%); passed=false",
+      "ok": true,
+      "receipt": "0x1236dc0a892b1bafb0367972f46ac50f69f2f0a61df54806bdb6d7ef986b1468",
+      "source": "vote-boundaries-resume.json"
+    },
+    {
+      "id": "strategy-migrate-EOA-refused",
+      "expected": "EOA rejected with NotAContract; source funds unchanged",
+      "observed": "mined proposal actionFailed; source retains 100000000 base units",
+      "ok": true,
+      "receipt": "0x897253bcb2090dea69f2ef93178551a590a6ebfa1a94c37f1890e0d7563d6e54",
+      "source": "migration-followup.json"
+    }
+  ]
+}

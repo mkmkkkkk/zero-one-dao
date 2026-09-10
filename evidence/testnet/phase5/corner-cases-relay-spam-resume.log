@@ -1,0 +1,113 @@
+   fetched snippet.js (11022 bytes)
+   fetched snippet.py (10794 bytes)
+   fetched llms.txt (1476 bytes)
+   GET http://127.0.0.1:18871/health.json
+   -> 200 (683 ms, 1585 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 84532,
+  "chain": "Base Sepolia",
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "baal": "0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f",
+  "safe": "0xF69F1205bc810e6cb77b884b51aEf2f65b3e104A",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "constitution": {
+    "address": "0x602A41F8F5362bb5969bD92b5d00DDA694EA4837",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892d
+   ok: Sepolia only
+   ok: initial fixture contains 24 distinct proposal receipts
+   ok: resume receipt prefix matches the same fixture
+   GET http://127.0.0.1:18871/proposals.json
+   -> 200 (57901 ms, 454055 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652602",
+    "timestamp": 1789073492,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    98,
+    99,
+    100,
+    101,
+    102
+  ],
+  "total": 102,
+  "proposals": [
+    {
+      "id": 1,
+      "state": "Processed",
+      "sponsor": "0xAd344191b98fE41c9A2D504FD14A020D223C7F1E",
+      "submittedBy": "0xAd344191b98fE41c9A2D504FD14A020D2
+   GET http://127.0.0.1:18871/proposals.json?limit=10
+   -> 200 (4 ms, 45180 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652602",
+    "timestamp": 1789073492,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    98,
+    99,
+    100,
+    101,
+    102
+  ],
+  "total": 102,
+  "proposals": [
+    {
+      "id": 102,
+      "state": "Grace",
+      "sponsor": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+      "submittedBy": "0x2ad5dB5bcD873b1e74737e7a07dfC616287
+   GET http://127.0.0.1:18871/proposals.json?open=1&limit=5
+   -> 200 (3 ms, 22835 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652602",
+    "timestamp": 1789073492,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    98,
+    99,
+    100,
+    101,
+    102
+  ],
+  "total": 102,
+  "proposals": [
+    {
+      "id": 102,
+      "state": "Grace",
+      "sponsor": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+      "submittedBy": "0x2ad5dB5bcD873b1e74737e7a07dfC616287
+   ok: 100 distinct accepted proposals and bounded pagination
+   ok: every phase5 relay corner has current-run evidence
+NATIVE RELAY CORNERS PASS (12/12); 100 distinct proposal receipts
