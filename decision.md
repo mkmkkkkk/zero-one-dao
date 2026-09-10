@@ -493,3 +493,23 @@ Whole-token physical/noncomment nonblank lines: (a) 339/234, (b) 290/211, (c) 28
 Receipts: `evidence/phase5/retention-mechanism.log` and full runs in `evidence/phase5/retention/`; tests and frozen comparison implementations in `evidence/audit/governance-nav/`. The same new t16 counterexample is RED against the original runtime (`40 != 0`) and GREEN against the replacement (`0 == 0`). GOV-03 still processes as failed after another member deposits in the same transaction; GOV-04 still passes despite flash deposit/vote/exit; YES departure, overlapping windows, same-timestamp snapshots, zero exit, registration authorization and 36-step independent multi-account oracle pass. The new t17 empty-DAO zero-exit test is independently RED (division by zero) then GREEN after the Baal early return. A 100-mint/50,000-baalGas test confirms accounting exhaustion reverts without processing. Typecheck, compile, scenarios A–J/L and relay E2E pass. The initial local H seed-deposit revert is retained in `scenarios-red.log`; local scenario sends now leave 120,000 gas for checkpoint append-versus-overwrite variation when estimation and mining cross a second, and the complete local run is green.
 
 **Remaining acceptance: K BLOCKED, not PASS.** `npm run scenarios` only adds K when FORK_RPC is set. K requires the real Base fork at block 51,000,000; that block is absent from the local Anvil cache. With the no-network red line and no answer to the requested read-only-RPC clarification, no upstream access or K transaction was attempted. Thus A–L acceptance is not claimed complete. All performed transactions were on owned local Anvil. No public-network transaction, fetch, push, hook bypass, constitution change or CLAUDE.md change.
+
+## 2026-09-10 retention mechanism accepted (mint journal), and the one hazard it left open is now ruled
+Accepted: the append-only mint journal with growth settled at processing. The measured table decides it — deposit, exit and
+processing are constant whether one proposal is open or a hundred (about 201k, 195k and 163k), while the eager variant costs
+5.5M for a deposit during a storm and the old lots-and-tree costs 740k for an ordinary exit and computes the wrong number.
+The counterexample is red against the old runtime and green against the replacement. GOV-03 and GOV-04 stay closed. The
+report is honest about what it did not run, which is the right behaviour.
+The hazard it declined to mask, correctly, is now mine to close: minting is permissionless, so an attacker can put enough
+records inside a window that settling the growth exceeds the proposal's gas budget, and because Baal processes in
+sponsorship order that griefs every later proposal in the queue. That is the same shape as the capped-gas defect the audit
+found, which we ruled must never be possible. It cannot stand.
+Ruling: bound the work per transaction instead of capping anything. Settlement becomes incremental and permissionless —
+anyone may advance a cursor over the journal window in chunks, and processing requires the cursor to have reached the end.
+No single transaction ever scans an unbounded range, and no deadline is introduced, so a proposal cannot be lost by being
+too expensive to settle at one moment. Add append-time deduplication if it stays simple: an account already recorded inside
+the oldest open window need not be recorded again, which forces an attacker onto fresh addresses. The economics then run our
+way: each spam record costs the attacker a whole deposit while it costs a settler a few thousand gas.
+Exits and deposits must stay constant, which is the property that made this design win; settlement work moves to whoever
+wants the proposal processed. Permission granted explicitly for the blocked test: reading Base mainnet through a public RPC
+to run a local fork is allowed and is not a public-network transaction.
