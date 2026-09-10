@@ -45,8 +45,13 @@ async function main() {
   await send('A','baal','ragequit',[m.actors.A.account.address,40n*UNIT,0n,[m.dao.settlement]]);
   await send('A','settlement','approve',[m.dao.depositShaman,100n*SETTLEMENT_UNIT]);
   await send('A','deposit','deposit',[40n*SETTLEMENT_UNIT]);
+  const interleavedTail=await read<bigint>(m,'shares','journalLength');
+  check(interleavedTail-partial[0]===4n,'interleaved records missing or duplicated at append');
   await settleRetention(m.actors.W,m.dao.shares,1,1n);
+  const replayed=await read<readonly [bigint,bigint]>(m,'shares','settlements',[1]);
+  check(replayed[0]===interleavedTail && replayed[1]===UNIT,'interleaved cursor/growth differs from independent balance oracle');
   check((await read<readonly [bigint,bigint]>(m,'shares','exitedSince',[1]))[0]===0n,'return not restored');
+  console.log(`ASSERT INTERLEAVED pending_records=4 cursor_before=${partial[0]} cursor_after=${replayed[0]} tail=${interleavedTail} growth=${replayed[1]} expected_growth=${UNIT} deficit=0 no_lost_or_duplicate_changes=true`);
   console.log('ASSERT PARTIAL flags unchanged; interleaved mint/burn/exit40-return40 deficit=0');
   const finished=await read<readonly [bigint,bigint]>(m,'shares','settlements',[1]);
   const noop=await send('W','shares','settleRetention',[1,2n**256n-1n]);
