@@ -7,3 +7,9 @@
    tx 0x5d151bace0e4cdb96fefc873f5c1d84853e59526bd6d30981e0c7bc7051d1ce8: yes 2000 no 1; supply at votingStarts 3051, live supply 3051; exitedSince(#1) = 0 (V's 1600 burned shares were minted after votingStarts: not counted); V USDC 2999 -> 2999 (net 0), V shares 1
    passed=true actionFailed=false; O USDC 10000 -> 10100; A+B YES 2000 shares stand against V's 1 share + 1600 USDC for one transaction
    V spent gas + rounding (0 USDC) for nothing
+   tx 0x534f34f5b119381c4d15e2a007f2b9707d14b131c30cdabc1214775f32c1c482: yes 2000 no 1; supply at votingStarts 3051, live supply 3051; exitedSince(#1) = 0 (V's 1600 burned shares were minted after votingStarts: not counted); V USDC 2999 -> 2999 (net 0), V shares 1
+   passed=true actionFailed=false; O USDC 10000 -> 10100; A+B YES 2000 shares stand against V's 1 share + 1600 USDC for one transaction
+   V spent gas + rounding (0 USDC) for nothing
+   tx 0xf4d423e81684246935722add3c61100256d85d653e23608e1194fb80850392bd: yes 2000 no 1; supply at votingStarts 3051, live supply 3051; exitedSince(#1) = 0 (V's 1600 burned shares were minted after votingStarts: not counted); V USDC 2999 -> 2999 (net 0), V shares 1
+   passed=true actionFailed=false; O USDC 10000 -> 10100; A+B YES 2000 shares stand against V's 1 share + 1600 USDC for one transaction
+   V spent gas + rounding (0 USDC) for nothing

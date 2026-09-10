@@ -16,3 +16,21 @@
    B: 1000 shares now worth 0 USDC (was 1000)
    C: 1000 shares now worth 0 USDC (was 1000)
    attacker cost: gas + 1570 USDC exposed for 2 blocks (a 2-block loan); could hold 1 share (1 USDC) and repeat every 12 h
+   X shares 1570 = 33.98% of supply; proposal #1 sponsored by X (threshold 1 share), votingStarts 1789025181
+   yesVotes 1570 (X's snapshot weight) noVotes 0; X USDC 20000 -> 20000 (capital at risk for 2 blocks, net 0); X shares now 0
+   retention: supply 3050 vs 66% of high-water mark 3049.2 -> proposal stays alive
+   processed: passed=true actionFailed=false; Safe USDC 3050 -> 0; X USDC 20000 -> 23050 (profit 3050)
+   F: 50 shares now worth 0 USDC (was 50)
+   A: 1000 shares now worth 0 USDC (was 1000)
+   B: 1000 shares now worth 0 USDC (was 1000)
+   C: 1000 shares now worth 0 USDC (was 1000)
+   attacker cost: gas + 1570 USDC exposed for 2 blocks (a 2-block loan); could hold 1 share (1 USDC) and repeat every 12 h
+   X shares 1570 = 33.98% of supply; proposal #1 sponsored by X (threshold 1 share), votingStarts 1789025695
+   yesVotes 1570 (X's snapshot weight) noVotes 0; X USDC 20000 -> 20000 (capital at risk for 2 blocks, net 0); X shares now 0
+   retention: supply 3050 vs 66% of high-water mark 3049.2 -> proposal stays alive
+   processed: passed=true actionFailed=false; Safe USDC 3050 -> 0; X USDC 20000 -> 23050 (profit 3050)
+   F: 50 shares now worth 0 USDC (was 50)
+   A: 1000 shares now worth 0 USDC (was 1000)
+   B: 1000 shares now worth 0 USDC (was 1000)
+   C: 1000 shares now worth 0 USDC (was 1000)
+   attacker cost: gas + 1570 USDC exposed for 2 blocks (a 2-block loan); could hold 1 share (1 USDC) and repeat every 12 h

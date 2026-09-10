@@ -33,14 +33,17 @@ export async function main(): Promise<void> {
     const data = encodeProposalData([transferCall(mirror, W.account.address, seeded.safeSettlement * 1_000n)]);
     for (let i = 0; i < 20; i += 1) {
       const before = await read<number>(mirror, "baal", "proposalCount");
-      const hash = await W.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 8_000_000n, `spam ${i}`], account: W.account, chain: W.chain });
+      // Registration may cross a timestamp boundary after estimation and write a fresh supply
+      // snapshot. Give this fixture headroom, and never count a reverted submission as a record.
+      const hash = await W.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 8_000_000n, `spam ${i}`], account: W.account, chain: W.chain, gas: 1_000_000n });
       const receipt = await mirror.chain.publicClient.waitForTransactionReceipt({ hash });
+      assert(receipt.status === "success" && Number(await read<number>(mirror, "baal", "proposalCount")) === Number(before) + 1, `spam submit #${Number(before) + 1} status=${receipt.status} gas=${receipt.gasUsed} tx=${hash}`);
       submitGas += receipt.gasUsed;
       spam.push({ id: Number(before) + 1, data, submit: { hash, blockNumber: receipt.blockNumber, gasUsed: receipt.gasUsed } });
     }
     await warp(mirror, 1, "let votingStarts become past");
     for (const p of spam) voteGas += (await vote(mirror, "W", p.id, true)).gasUsed;
-    console.log(`   20 submits: ${submitGas} gas total (${submitGas / 20n} each); 20 YES votes: ${voteGas} gas (${voteGas / 20n} each); at 0.01 gwei + L1 fee this is well under 0.01 USD per proposal`);
+    console.log(`   20 submits: ${submitGas} gas total (${submitGas / 20n} each); 20 YES votes: ${voteGas} gas (${voteGas / 20n} each); public gas price, L1 data fee and USD cost: unknown`);
     const noVote = await vote(mirror, "B", spam[0]!.id, false);
     console.log(`   one NO vote by B costs ${noVote.gasUsed} gas: defending 20 spam proposals costs each awake member ~${noVote.gasUsed * 20n} gas per batch`);
 
@@ -56,6 +59,7 @@ export async function main(): Promise<void> {
     for (const p of spam.slice(1)) {
       const hash = await mirror.actors.A.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "processProposal", args: [p.id, p.data], account: mirror.actors.A.account, chain: mirror.actors.A.chain, gas: 9_000_000n });
       const receipt = await mirror.chain.publicClient.waitForTransactionReceipt({ hash });
+      assert(receipt.status === "success", `spam clear #${p.id} status=${receipt.status} tx=${hash}`);
       clearGas += receipt.gasUsed;
     }
     console.log(`   clearing 19 spam proposals: ${clearGas} gas used (${clearGas / 19n} each) but each needs a gas LIMIT above baalGas 8,000,000 (Baal.processProposal requires gasleft() >= baalGas): above the relay execute cap (8,000,000; relay/server.ts) and the mirror PROCESS_GAS; a member must self-pay with a raised limit, and one Base block (16,777,216) now holds two such clears (phase 5 ruling 1)`);
@@ -64,8 +68,9 @@ export async function main(): Promise<void> {
 
     step("unsponsored submissions are free: proposalOffering = 0");
     const before = await read<number>(mirror, "baal", "proposalCount");
-    const hash = await mirror.actors.D.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 0n, "unsponsored junk"], account: mirror.actors.D.account, chain: mirror.actors.D.chain });
+    const hash = await mirror.actors.D.walletClient.writeContract({ address: mirror.dao.baal, abi: mirror.abi.baal, functionName: "submitProposal", args: [data, 0, 0n, "unsponsored junk"], account: mirror.actors.D.account, chain: mirror.actors.D.chain, gas: 1_000_000n });
     const receipt = await mirror.chain.publicClient.waitForTransactionReceipt({ hash });
+    assert(receipt.status === "success", `unsponsored submit status=${receipt.status} tx=${hash}`);
     assert((await read<number>(mirror, "baal", "proposalCount")) === Number(before) + 1 && (await stateOf(mirror, Number(before) + 1)) === "Submitted", `D (0 shares) submitted #${Number(before) + 1} for ${receipt.gasUsed} gas; it sits in Submitted forever (no expiry, no cancel)`);
     passed = true;
   } finally {

@@ -1,7 +1,7 @@
 {
   "canonicalOrigin": "https://relay-zero.mkyang.ai",
   "mirror": "https://zero-one-beacon.vercel.app",
-  "relayOrigin": "http://127.0.0.1:18751",
+  "relayOrigin": "http://127.0.0.1:18752",
   "chainId": 31401,
   "servedPaths": [
     "/README.txt",
@@ -16,7 +16,7 @@
   "validate": {
     "result": "PASS",
     "fetched": 13,
-    "origin": "http://127.0.0.1:18751",
+    "origin": "http://127.0.0.1:18752",
     "mirror": "https://zero-one-beacon.vercel.app",
     "mirrorProbed": false,
     "advertised": [
@@ -33,7 +33,7 @@
     "offOriginUrls": [
       "https://zero-one-beacon.vercel.app"
     ],
-    "constitutionUrl": "http://127.0.0.1:18751/CONSTITUTION.md",
+    "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
     "probes": [
       {
         "target": "/README.txt",
@@ -102,13 +102,13 @@
         "bytes": 518
       },
       {
-        "target": "/me/0xcA1D25305d5F512A4B6753937536AbC345BE0D1b.json",
+        "target": "/me/0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF.json",
         "status": 200,
         "type": "application/json; charset=utf-8",
         "bytes": 1412
       },
       {
-        "target": "/relay?op=quote&member=0xcA1D25305d5F512A4B6753937536AbC345BE0D1b&template=Payment&params=%7B%22recipients%22%3A%5B%220xcA1D25305d5F512A4B6753937536AbC345BE0D1b%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+        "target": "/relay?op=quote&member=0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF&template=Payment&params=%7B%22recipients%22%3A%5B%220x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
         "status": 200,
         "type": "application/json; charset=utf-8",
         "bytes": 4831
@@ -127,9 +127,9 @@
     "exit": 1
   },
   "coldStart": {
-    "agent": "0x1205ee07f3ea255574cAeF0D8B5681e95fD73198",
+    "agent": "0x0e5a436ebac9E2f4FE521FD22CA65DEF260dAe27",
     "proposalId": 1,
     "readmeLines": 44
   },
-  "generatedAt": "2026-09-09T22:58:22.188Z"
+  "generatedAt": "2026-09-10T07:34:10.804Z"
 }

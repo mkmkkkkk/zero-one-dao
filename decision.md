@@ -513,3 +513,40 @@ way: each spam record costs the attacker a whole deposit while it costs a settle
 Exits and deposits must stay constant, which is the property that made this design win; settlement work moves to whoever
 wants the proposal processed. Permission granted explicitly for the blocked test: reading Base mainnet through a public RPC
 to run a local fork is allowed and is not a public-network transaction.
+
+## 2026-09-10 incremental settlement
+
+Implement Fable's ruling immediately above; it supersedes the earlier acceptance of permanent processing grief and the old K-blocked note. Keep exact live per-account deficits and constant-cost deposit/exit hooks; move arbitrary backlog work into permissionless, resumable transactions, with no new cap, cooldown, lock, minimum deposit or deadline.
+
+`NavShareToken.balanceJournal` records immutable before/after balance transitions for every positive mint **and burn**. Each proposal stores `{cursor,growth}` from registration. `settleRetention(id,maxRecords)` consumes at most the requested record count and telescopes each account's positive-growth delta against its end-of-votingStarts-timestamp balance. Burn transitions are necessary because a previously settled mint's growth can disappear before the next chunk; a mint-only frozen partial sum would be incorrect. Same-timestamp records after registration are consumed but are part of the baseline, not growth. New changes append a suffix; previously settled work is never restarted. Exits and deposits append one record and never visit proposals or history.
+
+`exitedSince` now requires the cursor to equal the **current** journal length before returning `A + growth − S`. Baal checks it before setting any proposal verdict, including failures for quorum/expiration. Its sole executable delta is relocating that call and removing the old per-proposal gas forwarding. All existing ZERO ONE markers, sponsorship hooks, action-gas protections and the zero-exit no-op remain. Processing an unsettled or partially settled window reverts atomically, marks nothing and executes nothing. A completed settlement is a no-op until another positive change arrives. Any caller can batch the final chunk with processing, so the expensive part does not have to fit into `baalGas` and a finite backlog cannot permanently block sponsorship order.
+
+Append-time per-account deduplication is omitted under “if it stays simple”: suppressing or mutating a record that one window has already consumed loses that window's subsequent growth change. Repairing all affected windows would make balance hooks depend on proposal count. The economic test deliberately uses one repeated account, with 0.000001 USDC per deposit, so its result assumes neither fresh addresses nor a deposit minimum. The USDC is recoverable principal, not a fee; local gas units do not imply a known public-chain USD cost.
+
+`src/retention.ts` supplies the explicit permissionless client, defaulting to 128 records per call (a client choice, not a protocol cap). Scenario processing and relay E2E preparation call it. The signed relay execute protocol is unchanged; callers settle before execution, and a new suffix safely refuses stale execution.
+
+Verification: `t18 --legacy` is RED against the frozen previous token because it permits unsettled processing; normal deployment is GREEN only after asserting atomic refusal, mutations between chunks, returned-member zero deficit, no-op completion and a real 5,000-deposit storm followed by both its proposal and its queue successor processing. t16 retains the independent 36-change/6-window oracle and the exit40-return40 counterexample. GOV-03 includes deposit + settle + process in one transaction; GOV-04 retains flash-deposit/vote/exit economics. `scripts/acceptance-retention.py` runs compile/typecheck, scenarios A–L including the warmed Base fork at block 51,000,000, both E2Es, deployment refusals, and all 34 maintained audit tests sequentially with full output and failure propagation.
+
+Completed continuation receipts: `d776548` finishes the storm and strengthens the between-chunk cursor/growth readback; `47ed12c` records independently summed writer/settler economics; `1454d5c` records the worktree's 40/40 acceptance; `48f13ad` records the fresh-clone rerun of `753b470`, also 40/40. The clone starts with empty tracked status, installs via `npm ci`, preserves the canonical origin and moves itself to Trash when finished. Its full output and independently checked receipt sums are committed, not inferred from the process exit code.
+
+Measured storm: 5,000 real deposit records, 40 settlement calls, 41,263,129 total settlement gas (8,252.6258 per record), successful processing and a successful queue successor. Between chunks, burns and the returning deposit advance cursor 4 to tail 8, consume all four pending records and produce growth 1e18 / deficit zero. Partial/unsettled processing changes no flags; a failed chunk preserves its saved progress; completion is a no-op until another change appends work.
+
+Economics: the first completed storm used 487,702,824 writer gas; the independent clone used 484,317,537 (96,863.5074 per record, 11.737295 times the settler's gas). Both contributed 0.005 USDC total, 0.000001 per record, as recoverable principal. In the clone, deposit was 245,235 gas and exit 249,636 gas at quiet / 2,500 / 5,000 records. The first run's exit was 249,624 at all three points; its address arguments contain one extra zero calldata byte, accounting for the 12-gas difference between deployments. Batched writer gas also varies with timestamp checkpoint boundaries. Public gas price, L1 data fees and USD cost remain unknown.
+
+Acceptance output from the independent clone:
+
+```text
+K: PASS
+=== RELAY E2E: PASS ===
+=== ENTRY POINT E2E: PASS ===
+ACCEPTANCE RESULT npm run test:deploy-refusals exit=0
+STORM records=5000 settle_calls=40 settle_total_gas=41263129 settle_gas_per_record=8252.6258 process_gas=147373 processed=true passed=true actionFailed=false
+ACCEPTANCE TOTAL jobs=40 green=40 red=0
+```
+
+All A-L scenarios ran; K and the price-reference audit used owned Base forks pinned at 51,000,000, with actual pool warming (1,627 reads in the final run). The 34 maintained audits include governance/NAV, economic, work-template and account/relay tests. Historical t15 is a tracked lotCount/epoch research prototype targeting removed interfaces; its deficit cases are superseded by t16, and its exclusion is explicit in the runner and logs.
+
+Failures were preserved and fixed in the test/devnet workflow: a cold-fork funding receipt wait timed out despite successful local mining; fork polling and replacement detection were adjusted and failed setup now cleans up its Anvil. The first clone used a local-directory origin and correctly hit the deployment origin gate; the clone workflow now retains the official origin without weakening that gate. The clone also exposed an unchecked T08 submit followed by `!voting`; the fixture now supplies timestamp-boundary gas headroom and verifies every receipt and proposal count. T08's unmeasured dollar-cost assertion was changed to unknown. Targeted reruns and the final fresh-clone suite are green. Contracts remain byte-for-byte unchanged from `75c9ac6` in this continuation.
+
+Specification and proof: `docs/RETENTION_MECHANISM.md`; economics and red/green evidence: `evidence/phase5/incremental/`; independent acceptance receipt: `evidence/phase5/acceptance-rerun-retention.log`, SHA-256 `3e0c8a6b2dd0b9ecd64663e895cc7945fb84df80a0b1714d96d6844670bf14f2`. Reproduce with `python3 scripts/acceptance-clean-retention.py` (authorized read-only fork RPC/proxy settings as documented). No public-chain transaction, push, credential/state commit, hook bypass or live-service change was performed.

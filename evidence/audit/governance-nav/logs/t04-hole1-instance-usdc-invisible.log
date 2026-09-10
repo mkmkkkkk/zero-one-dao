@@ -13,3 +13,13 @@
    D paid 50 USDC for 50 shares = 1.61% of supply (fair: 50 shares)
    Safe 3100 USDC; instance 0 USDC
    D USDC 10000 -> 10000: net 0 USDC on a 50 USDC deposit; F/A/B/C keep their 3050
+   Safe 50 USDC; instance 3000 USDC; ledger depositTreasury 3050 USDC; supply 3050 shares (deposit NAV 1 USDC/share)
+   A burned 1000 shares (32.8% of supply, true value 1000 USDC) and was paid 16.393442 USDC: 983.606558 USDC forfeited to the stayers (exit is pro-rata of the Safe, not of the DAO)
+   D paid 50 USDC for 50 shares = 1.61% of supply (fair: 50 shares)
+   Safe 3100 USDC; instance 0 USDC
+   D USDC 10000 -> 10000: net 0 USDC on a 50 USDC deposit; F/A/B/C keep their 3050
+   Safe 50 USDC; instance 3000 USDC; ledger depositTreasury 3050 USDC; supply 3050 shares (deposit NAV 1 USDC/share)
+   A burned 1000 shares (32.8% of supply, true value 1000 USDC) and was paid 16.393442 USDC: 983.606558 USDC forfeited to the stayers (exit is pro-rata of the Safe, not of the DAO)
+   D paid 50 USDC for 50 shares = 1.61% of supply (fair: 50 shares)
+   Safe 3100 USDC; instance 0 USDC
+   D USDC 10000 -> 10000: net 0 USDC on a 50 USDC deposit; F/A/B/C keep their 3050

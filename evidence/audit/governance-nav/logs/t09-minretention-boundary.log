@@ -1,3 +1,9 @@
    supply 2013 == floor 2013 -> passed=true
    supply 2012.999999999999999999 == floor - 1 wei -> passed=false
    boundary = floor(HWM x 66 / 100) = 2013000000000000000000 wei-shares; the exit that trips it may come from any member, at any time before processProposal (including the proposer's own re-deposit reversing it, see GOV-03)
+   supply 2013 == floor 2013 -> passed=true
+   supply 2012.999999999999999999 == floor - 1 wei -> passed=false
+   boundary = floor(HWM x 66 / 100) = 2013000000000000000000 wei-shares; the exit that trips it may come from any member, at any time before processProposal (including the proposer's own re-deposit reversing it, see GOV-03)
+   supply 2013 == floor 2013 -> passed=true
+   supply 2012.999999999999999999 == floor - 1 wei -> passed=false
+   boundary = floor(HWM x 66 / 100) = 2013000000000000000000 wei-shares; the exit that trips it may come from any member, at any time before processProposal (including the proposer's own re-deposit reversing it, see GOV-03)

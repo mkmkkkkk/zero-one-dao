@@ -84,7 +84,9 @@ export async function fundForkUsdc(devnet: Devnet, to: Address, amount: bigint, 
     await rpc({ method: "anvil_setBalance", params: [holder, "0xde0b6b3a7640000"] });
     const wallet = createWalletClient({ chain: local.chain, transport: http(devnet.rpcUrl), account: holder });
     const hash = await wallet.writeContract({ chain: local.chain, address: BASE_USDC, abi: tokenAbi, functionName: "transfer", args: [to, amount] });
-    const receipt = await local.publicClient.waitForTransactionReceipt({ hash });
+    // This owned impersonation sends one transaction and never replaces it. Avoid the
+    // replacement-lookup race when a cold upstream read delays the single automined block.
+    const receipt = await local.publicClient.waitForTransactionReceipt({ hash, checkReplacement: false });
     const after = await local.publicClient.readContract({ address: BASE_USDC, abi: tokenAbi, functionName: "balanceOf", args: [to] });
     if (receipt.status !== "success" || after - before !== amount) throw new Error("fork USDC funding exact transfer failed");
     console.log(`ASSERT USDC proxy decimals=6 impersonated=${holder} funded=${amount} recipient=${to} tx=${hash}`);
@@ -113,13 +115,13 @@ const poolWarmAbi = parseAbi([
  * Args:
  *   devnet: The owned loopback fork.
  *   pool: The Uniswap v3 pool.
- *   tickRange: Half-width in raw ticks around the current tick to warm (2231 ticks ~ 25% of price).
+ *   tickRange: Half-width in raw ticks; +25% is about 2232 ticks, -25% about 2877.
  *   concurrency: Simultaneous in-flight `eth_call`s.
  *
  * Returns:
  *   The number of slots warmed (tick entries plus bitmap words plus oracle observations).
  */
-export async function warmUniswapPool(devnet: Devnet, pool: Address, tickRange = 2_600, concurrency = 24): Promise<number> {
+export async function warmUniswapPool(devnet: Devnet, pool: Address, tickRange = 3_000, concurrency = 24): Promise<number> {
   await assertBaseFork(devnet.rpcUrl);
   const { publicClient } = connectDevnet(devnet);
   const read = (functionName: string, args: readonly unknown[] = []): Promise<unknown> =>
@@ -135,7 +137,11 @@ export async function warmUniswapPool(devnet: Devnet, pool: Address, tickRange =
   // `observe` binary-searches the ring; warm the whole live window around the current index.
   for (let i = 0; i < Math.min(cardinality, 1_024); i += 1) reads.push(() => read("observations", [BigInt((observationIndex - i + cardinality) % cardinality)]));
   const started = Date.now();
-  for (let i = 0; i < reads.length; i += concurrency) await Promise.all(reads.slice(i, i + concurrency).map((fn) => fn()));
+  console.log(`FORK warm start pool=${pool} tick=${tick} spacing=${spacing} reads=${reads.length}`);
+  for (let i = 0; i < reads.length; i += concurrency) {
+    await Promise.all(reads.slice(i, i + concurrency).map((fn) => fn()));
+    if (i === 0 || (i + concurrency) % 240 === 0) console.log(`FORK warm progress=${Math.min(i + concurrency, reads.length)}/${reads.length}`);
+  }
   console.log(`ASSERT warmed pool=${pool} tick=${tick} spacing=${spacing} slots=${reads.length} in ${((Date.now() - started) / 1000).toFixed(1)}s`);
   return reads.length;
 }

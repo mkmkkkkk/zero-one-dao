@@ -38,7 +38,9 @@ export function connectDevnet(devnet: Devnet): LocalChain {
   // A forked Anvil blocks on upstream archive reads (a 25% pool print crosses hundreds of ticks, each a
   // separate eth_getStorageAt against the fork RPC), so loopback calls need far more than viem's 10 s default.
   const transport = http(devnet.rpcUrl, { timeout: LOOPBACK_TIMEOUT_MS });
-  const publicClient = createPublicClient({ chain, transport, cacheTime: 0 });
+  // Nonfork Anvil mines immediately. Fork mining can wait on upstream state, so keep its
+  // normal cadence; eager block watching can race viem's replacement lookup on a cold fork.
+  const publicClient = createPublicClient({ chain, transport, cacheTime: 0, pollingInterval: devnet.chainId === 8453 ? 4_000 : 100 });
   const accounts = devnet.privateKeys.map((key, index) => {
     const account = privateKeyToAccount(key);
     if (getAddress(account.address) !== getAddress(devnet.addresses[index]!)) {

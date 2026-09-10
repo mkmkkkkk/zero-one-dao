@@ -15,3 +15,13 @@
    processProposal(#1) gas=8500000 status=success gasUsed=148994 passed=true actionFailed=false; O USDC 10001
    processProposal(#2) gas=5000000 status=success state=Processed
    worst case for a member holding 1 share: every later proposal waits until someone pays one 8.5 M gas transaction (Base: cents); never permanent
+   #1 state Ready (baalGas 8000000), #2 state Ready
+   processProposal(#1) gas=5000000 status=reverted
+   processProposal(#1) gas=8500000 status=success gasUsed=153009 passed=true actionFailed=false; O USDC 10001
+   processProposal(#2) gas=5000000 status=success state=Processed
+   worst case for a member holding 1 share: every later proposal waits until someone pays one 8.5 M gas transaction (Base: cents); never permanent
+   #1 state Ready (baalGas 8000000), #2 state Ready
+   processProposal(#1) gas=5000000 status=reverted
+   processProposal(#1) gas=8500000 status=success gasUsed=153009 passed=true actionFailed=false; O USDC 10001
+   processProposal(#2) gas=5000000 status=success state=Processed
+   worst case for a member holding 1 share: every later proposal waits until someone pays one 8.5 M gas transaction (Base: cents); never permanent

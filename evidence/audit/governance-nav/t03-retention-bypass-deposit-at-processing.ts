@@ -1,3 +1,5 @@
+import { encodeFunctionData } from 'viem';
+import { settleRetention } from '../../../src/retention.js';
 /**
  * GOV-03 (phase 5, FLIPPED) — minRetention (66%) cannot be bypassed by a deposit in the same
  * transaction as processProposal.
@@ -72,9 +74,10 @@ export async function main(): Promise<void> {
     const need = (hwm * 66n) / 100n - supplyAfterExits; // shares
     const price = safeAfterExits; // NAV: shares = amount * supply / treasury
     const amount = (need * price + supplyAfterExits - 1n) / supplyAfterExits + 1n; // ceil + 1 unit
+    await settleRetention(mirror.actors.W, mirror.dao.shares, id);
     const exited = (await mirror.chain.publicClient.readContract({ address: mirror.dao.shares, abi: mirror.abi.shares, functionName: "exitedSince", args: [id] } as never)) as readonly [bigint, bigint];
     logLine(LOG, `   exitedSince(#${id}) = ${fmt(exited[0])} of ${fmt(exited[1])} shares at votingStarts (${pct2(exited[0], exited[1])} > 34%)`);
-    const receipt = await runCalls(mirror, "D", helper, [approveCall(mirror, mirror.dao.depositShaman, amount), depositCall(mirror, amount), processCall(mirror, id, submit.proposalData)], `M deposit ${fmtS(amount)} USDC + processProposal #${id}`);
+    const receipt = await runCalls(mirror, "D", helper, [approveCall(mirror, mirror.dao.depositShaman, amount), depositCall(mirror, amount), { to: mirror.dao.shares, data: encodeFunctionData({ abi: mirror.abi.shares, functionName: 'settleRetention', args: [id, 128n] }) }, processCall(mirror, id, submit.proposalData)], `M deposit ${fmtS(amount)} USDC + processProposal #${id}`);
     const info = await proposalInfo(mirror, id);
     const mEnd = await usdcOf(mirror, M);
     const safeEnd = await safeUsdc(mirror);

@@ -4,3 +4,15 @@
    C still exits: paid 1000 USDC for 1000 shares (exit is unaffected)
    votingPeriod 4294967295 s
    submitProposal by a member now reverts: Arithmetic operation resulted in underflow or overflow.
+   votingPeriod 1 s, gracePeriod 1 s
+   #2 state one block later: Grace
+   #2 state after grace: Defeated (0 yes > 0 no is false): the repair is dead; every later proposal meets the same fate
+   C still exits: paid 1000 USDC for 1000 shares (exit is unaffected)
+   votingPeriod 4294967295 s
+   submitProposal by a member now reverts: Arithmetic operation resulted in underflow or overflow.
+   votingPeriod 1 s, gracePeriod 1 s
+   #2 state one block later: Grace
+   #2 state after grace: Defeated (0 yes > 0 no is false): the repair is dead; every later proposal meets the same fate
+   C still exits: paid 1000 USDC for 1000 shares (exit is unaffected)
+   votingPeriod 4294967295 s
+   submitProposal by a member now reverts: Arithmetic operation resulted in underflow or overflow.

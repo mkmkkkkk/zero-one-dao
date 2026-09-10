@@ -5,7 +5,7 @@ import type { Abi, Hex } from 'viem';
 import type { Mirror } from '../../../../scenarios/lib.js';
 export async function installVariant(m: Mirror, variant: string) {
   if (!m.devnet || !m.devnet.rpcUrl.startsWith('http://127.0.0.1:')) throw new Error('owned local Anvil only');
-  const source = readFileSync(`evidence/audit/governance-nav/retention/${variant === 'a' ? 'EpochLots' : 'Eager'}.sol.txt`, 'utf8');
+  const source = readFileSync(`evidence/audit/governance-nav/retention/${variant === 'a' ? 'EpochLots' : variant === 'legacy' ? 'Monolithic' : 'Eager'}.sol.txt`, 'utf8');
   const sources: Record<string, {content: string}> = { 'contracts/NavShareToken.sol': { content: source } };
   if (variant === 'b') {
     let baal = readFileSync('contracts/vendor/Baal.sol', 'utf8');

@@ -1,3 +1,4 @@
+import { settleRetention } from '../src/retention.js';
 /**
  * Entry-point E2E (decision.md 2026-09-10 "the agent entry point must not sit behind a bot challenge"):
  * proves, on a fresh anvil and against a real relay process, that the relay IS the beacon and that one
@@ -288,6 +289,7 @@ async function main(): Promise<void> {
 
     step("warp past voting + grace (mirror only) and execute");
     await increaseTime(F, dao.params.governance.votingPeriod + dao.params.governance.gracePeriod + 60);
+    await settleRetention(F, dao.shares, proposalId);
     const executed = await get(snippet("node", work, ["execute", "--key", keyFile, "--proposal", String(proposalId)]));
     const processed = executed.processed as { passed: boolean; actionFailed: boolean };
     assert(processed.passed === true && processed.actionFailed === false, "the proposal passed and its action executed");

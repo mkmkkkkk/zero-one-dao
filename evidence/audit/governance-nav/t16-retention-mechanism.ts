@@ -1,3 +1,4 @@
+import { settleRetention } from '../../../src/retention.js';
 /** Exact-deficit oracle and quiet/100-open-proposal gas receipts. Local Anvil only. */
 import { boot, shutdown, fund, deposit, vote, warp, warpPastGrace, read, fmt, UNIT, SETTLEMENT_UNIT, transferCall, type ActorName, type Proposal } from '../../../scenarios/lib.js';
 import { encodeProposalData } from '../../../src/baal.js';
@@ -25,12 +26,12 @@ async function main() {
    const submit = await raw('A','baal','submitProposal',[data,0,budget,'retention exactness']);
    const id = Number(await read(m,'baal','proposalCount')); await warp(m,2); return { id, data, submit };
   };
-  const processP = async (p: Proposal) => { await warpPastGrace(m,p.id); const r = await raw('A','baal','processProposal',[p.id,p.data]); return r; };
+  const processP = async (p: Proposal) => { await warpPastGrace(m,p.id); if(variant==='c') await settleRetention(m.actors.W,m.dao.shares,p.id); const r = await raw('A','baal','processProposal',[p.id,p.data]); return r; };
   let base = await rpc('evm_snapshot');
   const reset = async () => { check(await rpc('evm_revert',[base]),'reset'); base = await rpc('evm_snapshot'); };
   const mint = async (n: bigint, who: ActorName = 'A') => { await warp(m,2); await raw(who,'settlement','approve',[m.dao.depositShaman,n*SETTLEMENT_UNIT]); return raw(who,'deposit','deposit',[n*SETTLEMENT_UNIT]); };
   const burn = async (n: bigint, who: ActorName = 'A') => { await warp(m,2); return raw(who,'baal','ragequit',[m.actors[who].account.address,n*UNIT,0n,[m.dao.settlement]]); };
-  const result = (id: number) => read<readonly [bigint,bigint]>(m,'shares','exitedSince',[id]);
+  const result = async (id: number) => { if(variant==='c' && id!==999) await settleRetention(m.actors.W,m.dao.shares,id); return read<readonly [bigint,bigint]>(m,'shares','exitedSince',[id]); };
   const equal = async (label: string, id: number, expected: bigint, supply?: bigint) => { const [actual, a] = await result(id); console.log(`ASSERT ${label}: exited=${fmt(actual)} expected=${expected} supplyAtStart=${fmt(a)}`); check(actual === expected*UNIT && (supply === undefined || a === supply*UNIT),label); };
   if (!gasOnly) {
    let p = await start(); await vote(m,'A',p.id,true); await burn(40n); await mint(40n);
@@ -80,14 +81,14 @@ async function main() {
     for(const w of windows) { const expected=w.balances.reduce((sum,b,j)=>sum+(b>current[j]?b-current[j]:0n),0n); const [actual,a]=await result(w.p.id);check(actual===expected && a===w.balances.reduce((x,y)=>x+y,0n),`oracle step ${i} window ${w.p.id}`); }
    }
    console.log('ASSERT ORACLE 36 changes / 6 overlapping windows: exact per-account deficits and supply');
-   // Budget exhaustion must not accept a partial sum or set processed. 100 later mints cost the processor.
+   // Unsettled growth must revert processing atomically; separate settlement removes the old budget failure.
    if (variant === 'c') {
    await reset(); p=await start(50_000n); await vote(m,'A',p.id,true);
    for(let i=0;i<100;i++) await mint(1n,'B'); await warpPastGrace(m,p.id);
    const c=m.actors.A; const hash=await c.walletClient.writeContract({address:m.dao.baal,abi:m.abi.baal,functionName:'processProposal',args:[p.id,p.data],gas:5_000_000n,account:c.account,chain:c.chain} as never);
-   const failed=await c.publicClient.waitForTransactionReceipt({hash}); check(failed.status==='reverted','budget should exhaust');
+   const failed=await c.publicClient.waitForTransactionReceipt({hash}); check(failed.status==='reverted','unsettled must revert');
    check(!(await read<readonly boolean[]>(m,'baal','getProposalStatus',[p.id]))[1],'incomplete scan processed');
-   await equal('budget exhausted but full read exact',p.id,0n,100n); console.log(`ASSERT BUDGET exhaustion reverts atomically processed=false gas=${failed.gasUsed}`);
+   await equal('separately settled read exact',p.id,0n,100n); console.log(`ASSERT UNSETTLED reverts atomically processed=false gas=${failed.gasUsed}`);
   }
   }
   // One window vs 100, same state shape. Snapshot isolates each measured operation.

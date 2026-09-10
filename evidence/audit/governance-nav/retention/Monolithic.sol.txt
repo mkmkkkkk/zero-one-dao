@@ -12,7 +12,7 @@ import {IERC20Metadata} from "./Interfaces.sol";
 ///
 /// Retention is the exact balance deficit at the voting timestamp, not cumulative burns.
 /// exitedSince uses A - S + growth; only recipients of a positive mint after the timestamp
-/// can contribute growth. Permissionless chunks replay balance changes; exits never scan history.
+/// can contribute growth. The append-only journal is scanned by the processor, never by exits.
 contract NavShareToken {
     using Math for uint256;
 
@@ -21,16 +21,9 @@ contract NavShareToken {
         uint256 votes;
     }
 
-    struct BalanceRecord {
+    struct MintRecord {
         uint32 timePoint;
         address account;
-        uint256 beforeBalance;
-        uint256 afterBalance;
-    }
-
-    struct Settlement {
-        uint256 cursor;
-        uint256 growth;
     }
 
     string public name;
@@ -48,9 +41,9 @@ contract NavShareToken {
 
     /// @notice Sponsorship timestamp; all snapshots use the end of that timestamp, like Baal votes.
     mapping(uint256 => uint256) public votingStarts;
-    /// @dev Immutable mint AND burn transitions, so changes between chunks cannot stale a sum.
-    BalanceRecord[] public balanceJournal;
-    mapping(uint256 => Settlement) public settlements;
+    MintRecord[] public mintJournal;
+    /// @dev One-based index of the account's latest positive mint; deduplicates the journal scan.
+    mapping(address => uint256) public lastMintIndex;
     /// @dev End-of-timestamp supply, initialized at registration even when no balance changes.
     mapping(uint256 => uint256) private _supplyAtTime;
     mapping(address account => uint256) public balanceOf;
@@ -67,14 +60,12 @@ contract NavShareToken {
     error SupplyCapExceeded(uint256 attemptedSupply);
     error AlreadyRegistered(uint256 proposalId);
     error NotRegistered(uint256 proposalId);
-    error RetentionUnsettled(uint256 proposalId, uint256 cursor, uint256 end);
 
     event Transfer(address indexed from, address indexed to, uint256 amount);
     event Approval(address indexed owner, address indexed spender, uint256 amount);
     event SharesBurned(address indexed account, uint256 amount, uint256 cumulativeBurned);
     event DelegateVotesChanged(address indexed delegate, uint256 previousBalance, uint256 newBalance);
     event ProposalRegistered(uint256 indexed proposalId, uint256 votingStarts);
-    event RetentionSettled(uint256 indexed proposalId, uint256 cursor, uint256 end, uint256 growth);
 
     modifier onlyBaal() {
         if (msg.sender != baal) revert OnlyBaal(msg.sender);
@@ -153,7 +144,6 @@ contract NavShareToken {
             balanceOf[account] = available - amount;
             totalSupply -= amount;
         }
-        balanceJournal.push(BalanceRecord(uint32(block.timestamp), account, available, available - amount));
         totalBurned += amount;
         _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(account, available, available - amount);
@@ -167,55 +157,35 @@ contract NavShareToken {
     function registerProposal(uint256 proposalId) external onlyBaal {
         if (votingStarts[proposalId] != 0) revert AlreadyRegistered(proposalId);
         votingStarts[proposalId] = block.timestamp;
-        settlements[proposalId].cursor = balanceJournal.length;
         _supplyAtTime[block.timestamp] = totalSupply;
         emit ProposalRegistered(proposalId, block.timestamp);
     }
 
-    /// @notice Permissionlessly replay at most maxRecords changes. No deadline or fixed work cap.
-    /// @dev Each transition changes positive growth by g(after)-g(before) at this window's baseline.
-    /// Immutable records telescope even across calls, including returns and burns of already settled mints.
-    function settleRetention(uint256 proposalId, uint256 maxRecords) external {
-        uint256 start = _retentionStart(proposalId);
-        Settlement storage progress = settlements[proposalId];
-        uint256 cursor = progress.cursor;
-        uint256 end = balanceJournal.length;
-        uint256 count = Math.min(maxRecords, end - cursor);
-        if (count == 0) return;
-        uint256 stop = cursor + count;
-        uint256 growth = progress.growth;
-        for (; cursor < stop; ++cursor) {
-            BalanceRecord storage record = balanceJournal[cursor];
-            // Later changes in the sponsorship second are part of the end-of-second baseline.
-            if (record.timePoint <= start) continue;
-            uint256 baseline = _past(_checkpoints[record.account], start);
-            uint256 beforeGrowth = record.beforeBalance > baseline ? record.beforeBalance - baseline : 0;
-            uint256 afterGrowth = record.afterBalance > baseline ? record.afterBalance - baseline : 0;
-            growth = growth + afterGrowth - beforeGrowth;
-        }
-        progress.cursor = cursor;
-        progress.growth = growth;
-        emit RetentionSettled(proposalId, cursor, end, growth);
-    }
-
-    function journalLength() external view returns (uint256) {
-        return balanceJournal.length;
-    }
-
-    function _retentionStart(uint256 proposalId) private view returns (uint256 start) {
-        start = votingStarts[proposalId];
+    /// @notice Exact sum of max(0, balanceAtStart - balanceNow), and supply at the same timestamp.
+    /// @dev Scan only post-start mints, counting each recipient once at its latest journal index.
+    /// If this call exhausts the caller's gas budget it reverts; no partial result can be accepted.
+    function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
+        uint256 start = votingStarts[proposalId];
         if (start == 0) revert NotRegistered(proposalId);
         if (start >= block.timestamp) revert TimePointNotDetermined(start, block.timestamp);
-    }
-
-    /// @notice Exact current deficit. Constant work; a partial/stale sum is never returned.
-    function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
-        uint256 start = _retentionStart(proposalId);
-        Settlement storage progress = settlements[proposalId];
-        uint256 end = balanceJournal.length;
-        if (progress.cursor != end) revert RetentionUnsettled(proposalId, progress.cursor, end);
         supplyAtStart = _supplyAtTime[start];
-        exited = supplyAtStart + progress.growth - totalSupply;
+        uint256 lower;
+        uint256 upper = mintJournal.length;
+        while (lower < upper) {
+            uint256 mid = lower + (upper - lower) / 2;
+            if (mintJournal[mid].timePoint <= start) lower = mid + 1;
+            else upper = mid;
+        }
+        uint256 growth;
+        for (uint256 i = lower; i < mintJournal.length; ++i) {
+            address account = mintJournal[i].account;
+            if (lastMintIndex[account] != i + 1) continue;
+            uint256 beforeBalance = _past(_checkpoints[account], start);
+            uint256 current = balanceOf[account];
+            if (current > beforeBalance) growth += current - beforeBalance;
+        }
+        // A + growth >= S by the identity; do not subtract A - S in unsigned arithmetic.
+        exited = supplyAtStart + growth - totalSupply;
     }
 
     // ---------------------------------------------------------------- Votes (timestamp checkpoints)
@@ -298,7 +268,8 @@ contract NavShareToken {
         unchecked {
             balanceOf[recipient] = previous + amount;
         }
-        balanceJournal.push(BalanceRecord(uint32(block.timestamp), recipient, previous, previous + amount));
+        mintJournal.push(MintRecord(uint32(block.timestamp), recipient));
+        lastMintIndex[recipient] = mintJournal.length;
         _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(recipient, previous, previous + amount);
         emit Transfer(address(0), recipient, amount);
