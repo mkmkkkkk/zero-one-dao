@@ -6,8 +6,7 @@
  * votingStarts leave; a member with 1 share cannot stop a proposal the others support.
  *
  * Fix (decision.md phase 5 ruling 2): the Zero One Baal fork compares NavShareToken.exitedSince(id)
- * (shares that existed at votingStarts and were burned since; shares minted after votingStarts are
- * held in newer lots and their burn never counts) with 34% of the supply at votingStarts. There is no
+ * (the sum of each account's positive balance deficit relative to votingStarts) with 34% of the supply at votingStarts. There is no
  * high-water mark to push up, and V's 1600 fresh shares are not "exits".
  *
  * Steps: seed → contract V holds 1 share → A proposes "pay O 100 USDC", A and B YES (2000 vs 0) → V in

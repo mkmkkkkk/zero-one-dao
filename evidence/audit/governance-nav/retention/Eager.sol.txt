@@ -10,20 +10,14 @@ import {IERC20Metadata} from "./Interfaces.sol";
 /// mint. Every share is minted through Baal by a shaman the DAO chose, and every share is exitable
 /// through Baal.ragequit at any time. Votes equal balance (self-delegated, no delegation).
 ///
-/// Retention is the exact balance deficit at the voting timestamp, not cumulative burns.
-/// exitedSince uses A - S + growth; only recipients of a positive mint after the timestamp
-/// can contribute growth. The append-only journal is scanned by the processor, never by exits.
+/// Rejected comparison fixture (b): eager growth contributions for open windows.
+/// Last-mint shortcut makes old holders cheap; recipients inside a window still scan proposals.
 contract NavShareToken {
     using Math for uint256;
 
     struct Checkpoint {
         uint32 fromTimePoint;
         uint256 votes;
-    }
-
-    struct MintRecord {
-        uint32 timePoint;
-        address account;
     }
 
     string public name;
@@ -41,9 +35,12 @@ contract NavShareToken {
 
     /// @notice Sponsorship timestamp; all snapshots use the end of that timestamp, like Baal votes.
     mapping(uint256 => uint256) public votingStarts;
-    MintRecord[] public mintJournal;
-    /// @dev One-based index of the account's latest positive mint; deduplicates the journal scan.
-    mapping(address => uint256) public lastMintIndex;
+    uint256[] private _open;
+    mapping(uint256 => uint256) private _growth;
+    mapping(uint256 => mapping(address => uint256)) private _contribution;
+    mapping(address => uint256) private _lastMint;
+    mapping(uint256 => bool) private _closed;
+    uint256 private _oldest;
     /// @dev End-of-timestamp supply, initialized at registration even when no balance changes.
     mapping(uint256 => uint256) private _supplyAtTime;
     mapping(address account => uint256) public balanceOf;
@@ -147,6 +144,7 @@ contract NavShareToken {
         totalBurned += amount;
         _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(account, available, available - amount);
+        _updateGrowth(account);
         emit Transfer(account, address(0), amount);
         emit SharesBurned(account, amount, totalBurned);
     }
@@ -158,34 +156,37 @@ contract NavShareToken {
         if (votingStarts[proposalId] != 0) revert AlreadyRegistered(proposalId);
         votingStarts[proposalId] = block.timestamp;
         _supplyAtTime[block.timestamp] = totalSupply;
+        _open.push(proposalId);
         emit ProposalRegistered(proposalId, block.timestamp);
     }
 
     /// @notice Exact sum of max(0, balanceAtStart - balanceNow), and supply at the same timestamp.
-    /// @dev Scan only post-start mints, counting each recipient once at its latest journal index.
-    /// If this call exhausts the caller's gas budget it reverts; no partial result can be accepted.
+    /// @dev Balance hooks maintain the exact stored growth for each window.
     function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart) {
         uint256 start = votingStarts[proposalId];
         if (start == 0) revert NotRegistered(proposalId);
         if (start >= block.timestamp) revert TimePointNotDetermined(start, block.timestamp);
         supplyAtStart = _supplyAtTime[start];
-        uint256 lower;
-        uint256 upper = mintJournal.length;
-        while (lower < upper) {
-            uint256 mid = lower + (upper - lower) / 2;
-            if (mintJournal[mid].timePoint <= start) lower = mid + 1;
-            else upper = mid;
-        }
-        uint256 growth;
-        for (uint256 i = lower; i < mintJournal.length; ++i) {
-            address account = mintJournal[i].account;
-            if (lastMintIndex[account] != i + 1) continue;
-            uint256 beforeBalance = _past(_checkpoints[account], start);
+        exited = supplyAtStart + _growth[proposalId] - totalSupply;
+    }
+
+    // Benchmark cleanup hook, invoked through the Baal fixture when a proposal is processed/cancelled.
+    function closeProposal(uint256 id) external onlyBaal {
+        _closed[id] = true;
+        while (_oldest < _open.length && _closed[_open[_oldest]]) ++_oldest;
+    }
+
+    function _updateGrowth(address account) private {
+        if (_oldest == _open.length || _lastMint[account] <= votingStarts[_open[_oldest]]) return;
+        for (uint256 i = _oldest; i < _open.length; ++i) {
+            uint256 id = _open[i];
+            if (_closed[id]) continue;
+            uint256 beforeBalance = _past(_checkpoints[account], votingStarts[id]);
             uint256 current = balanceOf[account];
-            if (current > beforeBalance) growth += current - beforeBalance;
+            uint256 next = current > beforeBalance ? current - beforeBalance : 0;
+            _growth[id] = _growth[id] + next - _contribution[id][account];
+            _contribution[id][account] = next;
         }
-        // A + growth >= S by the identity; do not subtract A - S in unsigned arithmetic.
-        exited = supplyAtStart + growth - totalSupply;
     }
 
     // ---------------------------------------------------------------- Votes (timestamp checkpoints)
@@ -268,10 +269,10 @@ contract NavShareToken {
         unchecked {
             balanceOf[recipient] = previous + amount;
         }
-        mintJournal.push(MintRecord(uint32(block.timestamp), recipient));
-        lastMintIndex[recipient] = mintJournal.length;
+        _lastMint[recipient] = block.timestamp;
         _supplyAtTime[block.timestamp] = totalSupply;
         _writeCheckpoint(recipient, previous, previous + amount);
+        _updateGrowth(recipient);
         emit Transfer(address(0), recipient, amount);
     }
 

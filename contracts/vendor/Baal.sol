@@ -25,7 +25,7 @@ import "./interfaces/IBaalToken.sol";
 
 /// ZERO ONE: retention accounting surface of NavShareToken (ruling 2).
 interface IZeroOneShares {
-    function registerProposal(uint256 proposalId) external returns (uint32);
+    function registerProposal(uint256 proposalId) external;
     function exitedSince(uint256 proposalId) external view returns (uint256 exited, uint256 supplyAtStart);
 }
 
@@ -367,7 +367,7 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
 
         if (selfSponsor) {
             latestSponsoredProposalId = proposalCount;
-            IZeroOneShares(address(sharesToken)).registerProposal(proposalCount); /* ZERO ONE: retention epoch (ruling 2) */
+            IZeroOneShares(address(sharesToken)).registerProposal(proposalCount); /* ZERO ONE: retention timestamp (ruling 2) */
         }
 
         emit SubmitProposal(
@@ -414,7 +414,7 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
         prop.maxTotalSharesAndLootAtVote = totalSupply(); // updaed in votes for min retention
         prop.maxTotalSharesAtSponsor = totalShares(); // for yes vote quorum
         latestSponsoredProposalId = id;
-        IZeroOneShares(address(sharesToken)).registerProposal(id); /* ZERO ONE: retention epoch (ruling 2) */
+        IZeroOneShares(address(sharesToken)).registerProposal(id); /* ZERO ONE: retention timestamp (ruling 2) */
 
         emit SponsorProposal(_msgSender(), id, block.timestamp);
     }
@@ -551,10 +551,10 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
         if (okToExecute && prop.yesVotes * 100 < quorumPercent * prop.maxTotalSharesAtSponsor)
             okToExecute = false;
 
-        // ZERO ONE (ruling 2): fail if shares that existed at votingStarts and were burned since exceed
-        // (100 - minRetentionPercent)% of the supply at votingStarts. Deposits move neither side.
+        // ZERO ONE: exact balance deficit at votingStarts; the processor pays the mint-journal scan.
+        // A nonzero baalGas bounds this call; exhaustion reverts without deciding on a partial sum.
         if (okToExecute) {
-            (uint256 exited, uint256 supplyAtStart) = IZeroOneShares(address(sharesToken)).exitedSince(id);
+            (uint256 exited, uint256 supplyAtStart) = IZeroOneShares(address(sharesToken)).exitedSince{gas: prop.baalGas == 0 ? gasleft() : prop.baalGas}(id);
             if (exited * 100 > (100 - minRetentionPercent) * supplyAtStart) okToExecute = false;
         }
 
@@ -632,6 +632,7 @@ contract Baal is Module, EIP712Upgradeable, ReentrancyGuardUpgradeable, BaseRela
         uint256 lootToBurn,
         address[] calldata tokens
     ) external nonReentrant {
+        if (sharesToBurn == 0 && lootToBurn == 0) return; /* ZERO ONE: zero exit is a no-op even at zero supply */
         for (uint256 i = 1; i < tokens.length; i++) {
                 require(tokens[i] > tokens[i - 1], "!order");
         }

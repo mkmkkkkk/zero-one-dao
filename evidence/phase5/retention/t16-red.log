@@ -1,0 +1,50 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x4b0bb54adEF1CCAC22A65F982cA550927E00b871 baal 0x3583a57AA8FcB8365603BAE2C0de9A139e8dd7fF shares 0xE64DC90fC7278198908FDEcaBc7d219BFEC853b9 settlement 0x0d50c19871c92e4081Dd3508B2568ebC61B94BB5
+          depositShaman 0x41A7b13e8d5f4F63bE73800EBF6Cd6D89145E2Dd workManager 0xBc9beB3917FF0ac611594E64C276f7F1B9c452c6 constitution 0x2D6c653629437057030610EDF4bAB92e0F8Ec4aF
+          templateFactory 0x570A9b7Bc56361B20594580E8bdaAc296caf3C0d deployers 0xea91dfDfa45a2631b12b47D8b8C7425D1B04eb49 0x41977E5E72b9916c753073741db0b06a711cf5db 0xaE6B3284a9a8d90a43A038182a5b2c5F7c34b278 0x7C54B4F6aE6D9012d507CafB869eCEe758CeEB7e intentAccount 0x1e372999078494a608119b3413b7C3a416449251
+   F = 0x1e6E60ba1f51e5A760C429a13aD008f6bf2D795E  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xcDf36CBa6CD1536896F00A78c7Df5B95d74b2ea8  member agent A
+   B = 0x20642599e9Bf1FaFF0A083B268a7d46f3713155F  member agent B
+   C = 0x21770D16f9E0Ff2cd7Cd566324f4774B610839a0  member agent C
+   D = 0xE7A145a2EC231F5d8Aa185d484cA9801CE6a5f85  depositor D (joins later)
+   O = 0xf18fa710D94feB53AC235e518e4EB2c28C8DcF84  operator O (mandate recipient)
+   W = 0xE1088783c11aB0c8A0Af3fB9522631D662A78907  worker W (task deliverer)
+   shaman 0x41A7b13e8d5f4F63bE73800EBF6Cd6D89145E2Dd permission 2 (DepositShaman)
+   shaman 0xBc9beB3917FF0ac611594E64C276f7F1B9c452c6 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xea91dfDfa45a2631b12b47D8b8C7425D1B04eb49
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x41977E5E72b9916c753073741db0b06a711cf5db
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xaE6B3284a9a8d90a43A038182a5b2c5F7c34b278
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x7C54B4F6aE6D9012d507CafB869eCEe758CeEB7e
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+FIXTURE a: real compiled runtime installed in EMPTY local DAO; receipt=0x874a7eb0571c1acd9b9ae5a19690d4afdc90de5e15d3d6b1618952cbaade26ea
+   tx fund A with 100000 USDC: 0xf641cc1741f6eb715184c23d9c5b9aa861eba80d4a46d104bca0e563cd3b1ede (block 23, gas 51250)
+   tx fund B with 100000 USDC: 0x390114738ccd1984f538e5cdd3fe479a4de0cf36e327c96dff6ab4ec05217d63 (block 24, gas 51250)
+   tx fund C with 100000 USDC: 0x5dc51709242c2d99e0c3f491f6671211ebfe134b291b978ca44218fbdca56fb1 (block 25, gas 51250)
+   tx A approve deposit shaman: 0x513963a7d93ed9e8fd26dfb0954de9a76f376ffe4af80b7928fa67fe78973def (block 26, gas 45889)
+   tx A deposit 100 USDC -> 100 shares (quoted 100): 0xdda8b3fed88442c096a647a928b30535db1a4d412291b002ed7dd17eaf8eb038 (block 27, gas 259000)
+   warp +2s -> block 28 timestamp 1788993709
+   warp +2s -> block 30 timestamp 1788993711
+   tx A votes YES on #1 -> yes 100 / no 0: 0xe3ed4179ef996d05d4d759c185b8d5c81f795fc111b9df49a430e61615865239 (block 31, gas 117190)
+   warp +2s -> block 32 timestamp 1788993713
+   warp +2s -> block 34 timestamp 1788993715
+ASSERT COUNTEREXAMPLE exit40 return40 balance100: exited=40 expected=0 supplyAtStart=100
+anvil stopped (http://127.0.0.1:11545)
+Error: COUNTEREXAMPLE exit40 return40 balance100
+    at check (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t16-retention-mechanism.ts:10:72)
+    at equal (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t16-retention-mechanism.ts:35:229)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (/Users/michaelmacmini/srv/zero-one-phase4/evidence/audit/governance-nav/t16-retention-mechanism.ts:39:4)

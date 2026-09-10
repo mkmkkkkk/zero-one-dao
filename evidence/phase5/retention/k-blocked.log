@@ -1,0 +1,9 @@
+K: BLOCKED (not executed; result unknown)
+scenarios/run-all.ts adds K only when FORK_RPC is set.
+scenarios/K-uniswap-v3-fork.ts uses published Base Uniswap contracts.
+src/baseFork.ts pins BASE_FORK_BLOCK = 51_000_000n and requires a Base upstream fork.
+Local cache check: ~/.foundry/cache/rpc/base/51000000/storage.json does not exist.
+Cached blocks observed: 51039292, 51039416, 51039441, 51039475, 51039482,
+51039564, 51039700, 51039737, 51051722, 51082849, 51082879.
+No read-only RPC clarification reply received; no network call attempted under the no-network red line.
+A-J/L PASS does not mean A-L PASS. No mock result or previous run was substituted for K.
