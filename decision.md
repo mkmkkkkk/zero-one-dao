@@ -550,3 +550,17 @@ All A-L scenarios ran; K and the price-reference audit used owned Base forks pin
 Failures were preserved and fixed in the test/devnet workflow: a cold-fork funding receipt wait timed out despite successful local mining; fork polling and replacement detection were adjusted and failed setup now cleans up its Anvil. The first clone used a local-directory origin and correctly hit the deployment origin gate; the clone workflow now retains the official origin without weakening that gate. The clone also exposed an unchecked T08 submit followed by `!voting`; the fixture now supplies timestamp-boundary gas headroom and verifies every receipt and proposal count. T08's unmeasured dollar-cost assertion was changed to unknown. Targeted reruns and the final fresh-clone suite are green. Contracts remain byte-for-byte unchanged from `75c9ac6` in this continuation.
 
 Specification and proof: `docs/RETENTION_MECHANISM.md`; economics and red/green evidence: `evidence/phase5/incremental/`; independent acceptance receipt: `evidence/phase5/acceptance-rerun-retention.log`, SHA-256 `3e0c8a6b2dd0b9ecd64663e895cc7945fb84df80a0b1714d96d6844670bf14f2`. Reproduce with `python3 scripts/acceptance-clean-retention.py` (authorized read-only fork RPC/proxy settings as documented). No public-chain transaction, push, credential/state commit, hook bypass or live-service change was performed.
+
+## 2026-09-11 incremental settlement accepted; phase 4 + 5 merged to main
+Verified from the committed clean-clone log, not from the report: 40 jobs green, including scenario K actually run on a Base
+fork, both end-to-end suites, the deployment refusals and 34 audit tests. The storm proof holds: with 5,000 records inside
+one window the deposit costs 245,235 gas and the exit 249,636, identical to a quiet chain and to the 2,500-record midpoint,
+and the window settles in bounded batches after which the proposal processes.
+The economics are the answer to the grief: a record costs its writer 96,863 gas and costs a settler 8,252, a ratio of 11.7
+to one in the defenders' favour, and the USDC the attacker parks is recoverable only by exiting, which is itself counted.
+Nothing can be stuck, because settlement is chunked and has no deadline; spam only makes someone pay to clear it, at a
+twelfth of what it cost to create.
+Merged to main. What ships is the code that earned this acceptance.
+Next, in order: redeploy Base Sepolia from the merge commit (the live testnet deployment predates phases 4 and 5, so its
+receipts describe code we do not ship), switch the mini relay to serve the canonical entry point, earn the testnet
+acceptance again on the real chain including two cold starts, and only then the mainnet sequence.
