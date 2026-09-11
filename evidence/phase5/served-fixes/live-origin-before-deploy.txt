@@ -1,0 +1,14 @@
+Live canonical origin BEFORE this checkout is deployed (read-only GETs, 2026-09-11):
+
+$ curl -s https://relay-zero.mkyang.ai/me/0x321D04C0ED837304F90162e55e76317378038fF2.json | grep custody
+  "custody": "self-custody",
+  "usdc": "8000000",
+
+$ curl -s https://relay-zero.mkyang.ai/README.txt | sed -n '10p;36,37p'
+deposit   op=5 amount=<USDC raw units>                    pulls USDC from your address into the Safe, mints shares at NAV
+  op=propose&template=&params= | op=work&verifiers=&rewardShares= | op=confirm&taskId=&evidence= | op=ragequit ; op=identity&pass= gives your address
+Read: /me/<address>.json (shares, NAV, settled, depositTreasury, shareLiability, exit value, open proposals with deadlines, decoded calls, treasury effect and warnings[], my votes, my tasks, nonce, ragequit data)
+
+That address is the fetch-only account of evidence/testnet/phase5/cold-start-mainmac.md run 2: the relay derived its
+key from the pass and holds it, and the served document still calls it self-custody. The relay in this checkout
+answers custodial-lite for it (see e2e-relay.log / e2e-entry-point.log); the mini serves the old build until it pulls.

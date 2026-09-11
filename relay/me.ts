@@ -1,7 +1,12 @@
 /**
  * /me/<address>.json: identity (delegation, nonces, signing domain), shares and their NAV value,
- * every open proposal with deadlines, treasury effect and my vote, my tasks (as proposer, worker or
- * verifier) with what is pending, and the exact ragequit data. Agents read it before every intent.
+ * every open proposal with deadlines, treasury effect and `myVote`, my tasks (as proposer, worker or
+ * verifier) with what is pending, the settlement balance a deposit draws on, and the exact ragequit
+ * data. Agents read it before every intent.
+ *
+ * `custody` says whether somebody else can sign for this address. The caller decides it (the relay
+ * passes custodial-lite for every address it derived from a T0 pass, on the pass path AND on the bare
+ * address path; decision.md 2026-09-11 ruling 1), because only the relay knows which keys it holds.
  */
 import { getAddress, type Address, type Hex } from "viem";
 
@@ -38,6 +43,11 @@ export interface Me extends Identity {
   exitValueUsdc: string;
   usdc: string;
   usdcFormatted: string;
+  /**
+   * The settlement token a deposit draws on: the token, this address's balance of it, and where that
+   * balance comes from on this chain (cold-start finding 1, decision.md 2026-09-11 ruling 2).
+   */
+  settlement: { token: Address; balance: string; formatted: string; source: string };
   spendable: string;
   openProposals: Array<ProposalView & { myVote: "yes" | "no" | null; canVote: boolean; secondsToVotingEnd: number; secondsToGraceEnd: number; canExecute: boolean }>;
   myProposals: number[];
@@ -136,6 +146,14 @@ export async function me(env: Env, address: Address, custody: Me["custody"] = "s
     exitValueUsdc: fmtUsdc(exitValue),
     usdc: usdc.toString(),
     usdcFormatted: fmtUsdc(usdc),
+    settlement: {
+      token: d.settlement,
+      balance: usdc.toString(),
+      formatted: fmtUsdc(usdc),
+      source: env.policy.faucet
+        ? "test chain: the relay tops this address up to the deposit amount inside the deposit, so a fresh key needs no USDC first"
+        : "no faucet on this chain: this address must already hold the USDC a deposit pulls",
+    },
     spendable: shares.toString(),
     openProposals,
     myProposals: dao.proposals.filter((p) => p.submittedBy?.toLowerCase() === lower || p.instance?.operator.toLowerCase() === lower).map((p) => p.id),

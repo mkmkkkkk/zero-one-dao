@@ -1,7 +1,7 @@
-$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
+$ beacon/scripts/validate.ts --custodial <T0 address>
 {
   "result": "PASS",
-  "fetched": 14,
+  "fetched": 15,
   "origin": "http://127.0.0.1:18751",
   "mirror": "https://zero-one-beacon.vercel.app",
   "mirrorProbed": false,
@@ -22,7 +22,7 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
   "constitutionUrl": "http://127.0.0.1:18751/CONSTITUTION.md",
   "custodyProbed": {
     "selfCustody": "0x00000000000000000000000000000000C0FFEE01",
-    "custodialLite": null
+    "custodialLite": "0xfD51EE54aE158d89C7837073AeeC161c8C92c6be"
   },
   "probes": [
     {
@@ -71,19 +71,19 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
       "target": "/health.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1502
+      "bytes": 1501
     },
     {
       "target": "/state.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 2168
+      "bytes": 32844
     },
     {
       "target": "/proposals.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 430
+      "bytes": 29321
     },
     {
       "target": "/pending.json",
@@ -95,13 +95,19 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
       "target": "/me/0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1692
+      "bytes": 11333
     },
     {
       "target": "/me/0x00000000000000000000000000000000C0FFEE01.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1590
+      "bytes": 10341
+    },
+    {
+      "target": "/me/0xfD51EE54aE158d89C7837073AeeC161c8C92c6be.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 10372
     },
     {
       "target": "/relay?op=quote&member=0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD&template=Payment&params=%7B%22recipients%22%3A%5B%220x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
@@ -112,14 +118,17 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
   ],
   "readmeLines": 44,
   "readmeLineLimit": 44,
-  "addressesWithCode": 11,
-  "proposals": 0,
-  "tasks": 0,
-  "members": 1,
-  "block": "24"
+  "addressesWithCode": 14,
+  "proposals": 8,
+  "tasks": 1,
+  "members": 6,
+  "block": "99"
 }
 
-   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 14 probes)
+
+$ beacon/scripts/validate.ts --custodial <T1 self-custody address>
+exit 1
+   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 15 probes)
    fetched /README.txt -> 200 text/plain; charset=utf-8 (7270 bytes)
    fetched /llms.txt -> 200 text/plain; charset=utf-8 (1811 bytes)
    fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
@@ -127,13 +136,26 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
    fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
    fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
    fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
-   fetched /health.json -> 200 application/json; charset=utf-8 (1502 bytes)
-   fetched /state.json -> 200 application/json; charset=utf-8 (2168 bytes)
-   fetched /proposals.json -> 200 application/json; charset=utf-8 (430 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1501 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (32844 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (29321 bytes)
    fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
-   fetched /me/0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD.json -> 200 application/json; charset=utf-8 (1692 bytes)
-   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (1590 bytes)
-   fetched /relay?op=quote&member=0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD&template=Payment&params=%7B%22recipients%22%3A%5B%220x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
-   fetched http://127.0.0.1:18751/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
-$ wc -l README.txt
-      44 /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-relay-1789113138554/beacon/README.txt
+   fetched /me/0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD.json -> 200 application/json; charset=utf-8 (11333 bytes)
+   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (10341 bytes)
+AssertionError [ERR_ASSERTION]: /me/0x0D93D33Aa5523208B74493b20AE08779fFbB124C.json reports custody "self-custody" for a T0 account whose key this relay derived and holds (decision.md 2026-09-11 ruling 1: the advertised member document must not publish an address the relay can sign for as self-custody)
++ actual - expected
+
++ 'self-custody'
+- 'custodial-lite'
+
+    at assertCustody (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:102:10)
+    at Object.check (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:183:54)
+    at runProbe (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:228:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async validateBeacon (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:337:44) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'self-custody',
+  expected: 'custodial-lite',
+  operator: 'strictEqual'
+}

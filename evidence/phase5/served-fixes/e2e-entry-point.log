@@ -1,0 +1,484 @@
+
+> zero-one-dao@0.1.0 e2e:entry-point
+> tsx relay/e2e-entry-point.ts
+
+
+== step 1: deploy Zero One on a fresh anvil (prague) + genesis: founder deposits 50 USDC
+   ok: founder holds 50e18 shares
+
+== step 2: start the relay with RELAY_BEACON_DIR pointing at a directory that does not exist yet
+{
+  "listening": "127.0.0.1:18751",
+  "startedAt": "2026-09-11T07:51:49.329Z",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "sponsor": "0xB2bFF19d61AE9281D7010ed52A5f3196867f7b25",
+  "deployment": "/Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json",
+  "stateDir": "/Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/relay",
+  "beaconDir": "/Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon",
+  "beaconPaths": [
+    "/",
+    "/index.html",
+    "/README.txt",
+    "/llms.txt",
+    "/robots.txt",
+    "/snippet.js",
+    "/snippet.py",
+    "/CONSTITUTION.md"
+  ],
+  "beaconBuilt": false
+}
+
+
+== step 3: no build present: every beacon path answers 404 in the JSON error shape, and the dynamic endpoints still work
+   GET http://127.0.0.1:18751/health.json
+   -> 200 (3 ms, 1503 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 31401,
+  "chain": "local mirror",
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "baal": "0x0f8E4415599DaD1101f09E743a8
+   ok: /health.json reports the beacon as not built
+[relay] /README.txt -> 404 /README.txt is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no README.txt. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /README.txt -> 404 {ok:false,status:404} with no build
+   ok: /README.txt 404 reason tells the operator to build and carries no stack trace
+   ok: /README.txt 404 is JSON, not HTML
+[relay] /llms.txt -> 404 /llms.txt is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no llms.txt. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /llms.txt -> 404 {ok:false,status:404} with no build
+   ok: /llms.txt 404 reason tells the operator to build and carries no stack trace
+   ok: /llms.txt 404 is JSON, not HTML
+[relay] /robots.txt -> 404 /robots.txt is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no robots.txt. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /robots.txt -> 404 {ok:false,status:404} with no build
+   ok: /robots.txt 404 reason tells the operator to build and carries no stack trace
+   ok: /robots.txt 404 is JSON, not HTML
+[relay] /snippet.js -> 404 /snippet.js is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no snippet.js. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /snippet.js -> 404 {ok:false,status:404} with no build
+   ok: /snippet.js 404 reason tells the operator to build and carries no stack trace
+   ok: /snippet.js 404 is JSON, not HTML
+[relay] /snippet.py -> 404 /snippet.py is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no snippet.py. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /snippet.py -> 404 {ok:false,status:404} with no build
+   ok: /snippet.py 404 reason tells the operator to build and carries no stack trace
+   ok: /snippet.py 404 is JSON, not HTML
+[relay] /CONSTITUTION.md -> 404 /CONSTITUTION.md is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no CONSTITUTION.md. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /CONSTITUTION.md -> 404 {ok:false,status:404} with no build
+   ok: /CONSTITUTION.md 404 reason tells the operator to build and carries no stack trace
+   ok: /CONSTITUTION.md 404 is JSON, not HTML
+[relay] /index.html -> 404 /index.html is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no index.html. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: /index.html -> 404 {ok:false,status:404} with no build
+   ok: /index.html 404 reason tells the operator to build and carries no stack trace
+   ok: /index.html 404 is JSON, not HTML
+[relay] / -> 404 / is not built: this relay serves the beacon out of the directory named by RELAY_BEACON_DIR, which holds no index.html. The operator rebuilds it with: npm run beacon:build -- --deployment <file> --origin <this origin> --out <that directory>. The relay's own endpoints are unaffected: /health.json, /me/<address>.json, /proposals.json, /state.json, /pending.json, /relay
+   ok: / -> 404 {ok:false,status:404} with no build
+   ok: / 404 reason tells the operator to build and carries no stack trace
+   ok: / 404 is JSON, not HTML
+   GET http://127.0.0.1:18751/state.json
+[index] scan 0..24 rows=1
+   -> 200 (125 ms, 2168 bytes) {
+  "chain": {
+    "id": 31401,
+    "blockNumber": "24",
+    "timestamp": 1789113108,
+    "name": "local mirror"
+  },
+  "contracts": {
+    "treasuryLedger": "0x88e796778229b3D54e15E78f0873642dF3A6242A
+   ok: /state.json answers live with no beacon build present
+
+== step 4: a build with no --origin names the canonical origin https://relay-zero.mkyang.ai (this is what the mini build produces)
+   ok: beacon:build with no --origin succeeded: [index] scan 0..24 rows=1
+{
+  "out": "/Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon-canonical",
+  "origin": "https://relay-zero.mkyang.ai",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "24",
+  "members": 1,
+  "proposals": 0,
+  "tasks": 0
+}
+   ok: README names https://relay-zero.mkyang.ai as the relay
+   ok: every verb URL in the README points at the canonical origin
+   ok: the README names the mirror https://zero-one-beacon.vercel.app in one line
+   ok: the canonical README is 44 lines (limit 44)
+   ok: the constitution URL of a deployment with a repo-relative textUrl points at the canonical origin
+   $ tsx beacon/scripts/validate.ts --deployment /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json --out /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon-canonical --no-fetch 1 -> exit 0
+   ok: the canonical build passes the offline half of the validator (nothing is fetched from the production host by this test)
+
+== step 5: build the beacon for this relay origin and serve it from the relay: one content type per path, no redirect, no request header read
+[index] resume 24 scanned=0
+   ok: /README.txt -> 200
+   ok: /README.txt content type text/plain; charset=utf-8 matches /^text\/plain; charset=utf-8$/u
+   ok: /README.txt sets no cookie
+   ok: /README.txt is not a redirect
+   ok: /llms.txt -> 200
+   ok: /llms.txt content type text/plain; charset=utf-8 matches /^text\/plain; charset=utf-8$/u
+   ok: /llms.txt sets no cookie
+   ok: /llms.txt is not a redirect
+   ok: /robots.txt -> 200
+   ok: /robots.txt content type text/plain; charset=utf-8 matches /^text\/plain; charset=utf-8$/u
+   ok: /robots.txt sets no cookie
+   ok: /robots.txt is not a redirect
+   ok: /snippet.js -> 200
+   ok: /snippet.js content type text/javascript; charset=utf-8 matches /^text\/javascript; charset=utf-8$/u
+   ok: /snippet.js sets no cookie
+   ok: /snippet.js is not a redirect
+   ok: /snippet.py -> 200
+   ok: /snippet.py content type text/x-python; charset=utf-8 matches /^text\/x-python; charset=utf-8$/u
+   ok: /snippet.py sets no cookie
+   ok: /snippet.py is not a redirect
+   ok: /CONSTITUTION.md -> 200
+   ok: /CONSTITUTION.md content type text/markdown; charset=utf-8 matches /^text\/markdown; charset=utf-8$/u
+   ok: /CONSTITUTION.md sets no cookie
+   ok: /CONSTITUTION.md is not a redirect
+   ok: /index.html -> 200
+   ok: /index.html content type text/html; charset=utf-8 matches /^text\/html; charset=utf-8$/u
+   ok: /index.html sets no cookie
+   ok: /index.html is not a redirect
+   ok: / -> 200
+   ok: / content type text/html; charset=utf-8 matches /^text\/html; charset=utf-8$/u
+   ok: / sets no cookie
+   ok: / is not a redirect
+   ok: README.txt is byte-identical with no user-agent, a browser user-agent and a script user-agent
+   GET http://127.0.0.1:18751/health.json
+   -> 200 (1 ms, 1502 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 31401,
+  "chain": "local mirror",
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "baal": "0x0f8E4415599DaD1101f09E743a8
+   ok: /health.json now reports the beacon as built
+
+== step 6: the build's static state.json / proposals.json can never shadow the relay's live routes
+   GET http://127.0.0.1:18751/state.json
+   -> 200 (0 ms, 2168 bytes) {
+  "chain": {
+    "id": 31401,
+    "blockNumber": "24",
+    "timestamp": 1789113108,
+    "name": "local mirror"
+  },
+  "contracts": {
+    "treasuryLedger": "0x88e796778229b3D54e15E78f0873642dF3A6242A
+   GET http://127.0.0.1:18751/proposals.json
+   -> 200 (1 ms, 430 bytes) {
+  "chain": {
+    "id": 31401,
+    "blockNumber": "24",
+    "timestamp": 1789113108,
+    "name": "local mirror"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "propos
+   ok: /state.json is the relay's live answer, not the sentinel file
+   ok: /proposals.json is the relay's live answer, not the sentinel file
+[index] resume 24 scanned=0
+
+== step 7: beacon:validate against the relay origin: it fetches every URL the README advertises
+   $ tsx beacon/scripts/validate.ts --deployment /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json --out /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon --origin http://127.0.0.1:18751 -> exit 0
+   ok: validate exited 0:    fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 14 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (7270 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1811 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10794 bytes)
+   fetched /CO
+   ok: validate PASS after fetching 14 URLs; advertised ["/","/CONSTITUTION.md","/me/<address>.json","/pending.json","/proposals.json","/relay","/snippet.js","/snippet.py","/state.json"]
+   ok: validate fetched from the origin under test
+
+== step 8: negative control: the same validator against an origin that answers Vercel's bot challenge must FAIL, not pass
+   ok: the stub reproduces 403 x-vercel-mitigated: challenge for a plain GET
+   $ tsx beacon/scripts/validate.ts --deployment /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json --out /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon --origin http://127.0.0.1:19751 -> exit 1
+   ok: validate against a challenged origin exits non-zero (1)
+   ok: and says why: AssertionError [ERR_ASSERTION]: origin did not answer 200 for http://127.0.0.1:19751/README.txt -> 403 text/html; charset=utf-8 [x-vercel-mitigated: challenge] body: <!DOCTYPE html><html><head><title>Vercel Security Checkpoint</title></head><body><p>Verifying your browser...</p></body></html>
+
+== step 9: cold start: an agent that has only the served README.txt and the served snippets
+   fetched snippet.js (11022 bytes)
+   fetched snippet.py (10794 bytes)
+   fetched llms.txt (1811 bytes)
+   ok: the README fetched from the relay names its own origin (http://127.0.0.1:18751)
+   ok: the served README is 44 lines
+   ok: node snippet fetched from the relay selftests: JavaScript keccak and curve vectors PASS
+   ok: python snippet fetched from the relay selftests: Python keccak and curve vectors PASS
+
+== step 10: join (node snippet.js join): the adapter is attached to a key that has never held ETH
+   $ node snippet.js join --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key
+[index] resume 24 scanned=0
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0
+   GET http://127.0.0.1:18751/relay?op=join&authorization=eyJjaGFpbklkIjozMTQwMSwi...
+   -> 200 (4156 ms) {"ok":true,"verb":"join","address":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","delegated":true,"hash":"0x4a3a448cb57672e184b49ba29ac010d5a0702bf26b4c382b9153c1d24b9aff3f","blockNumber":"25","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   ok: delegated, 0 shares
+
+== step 11: deposit 100 USDC (the mirror faucet tops the agent up first)
+   $ node snippet.js deposit --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key --usdc 100
+[index] scan 25..25 rows=1
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0
+   GET http://127.0.0.1:18751/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (119 ms) {"ok":true,"verb":"deposit","op":5,"member":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","hash":"0x864ebe7180b736d06ceae593791afd1da009a9416f82fed2000f83c3a421bd78","blockNumber":"27","gasUsed":"292782","nonceUsed":"0","nextNonce":"1","deposit":{"usdc":"100","sharesMinted":"100"},"faucet":{"toppedUpUsdc":"100","hash":"0xd462413f36ec9e5341aa164a88f3142b015db6510138c464fc3933b0f2da2f89"}}
+   ok: relay answered ok ()
+   ok: 100 USDC at NAV 1 -> 100 shares
+   GET http://127.0.0.1:18751/me/0xE2be4071d0060A50AfcB9AED45b583e193ab30a0.json
+[index] scan 26..27 rows=2
+   -> 200 (102 ms, 1655 bytes) {
+  "address": "0xE2be4071d0060A50AfcB9AED45b583e193ab30a0",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "1",
+  "authorizationNonce": 1,
+  "chainTime": 1789113117,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 31401,
+    "verifyingContract": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4"
+  },
+  "dao": 
+   ok: /me: 100 shares, NAV 1 USDC per share
+
+== step 12: propose a Payment of 10 USDC to itself with ONE signed intent (op=quote -> sign -> submit)
+   $ node snippet.js propose --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key --template Payment --params "{\"recipients\":[\"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0\"],\"amounts\":[\"10000000\"]}" --summary "entry point: pay me 10 USDC"
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0 | {"instance":"0x549958f8bcE041Cc21AA7Ce0E2133C0D92151464","exists":false,"codeHash":"0x3e4ca9eac88f22b38316c3d47a5ebc5afe8087993b09a10d7f7094793a43cb19","paramsHash":"0x17d4ae8c1b1a5f78760e8065bc990afe25d1eef935e9740d6ca5aba7121aced1","operator":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","budgetUsdc":"10","canPropose":true}
+   GET http://127.0.0.1:18751/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (120 ms) {"ok":true,"verb":"propose","op":0,"member":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","hash":"0x5f874c04fb036ec8ba4b21bf979c412879a39d9ce868755991188f8b1477f872","blockNumber":"29","gasUsed":"355952","nonceUsed":"1","nextNonce":"2","proposalId":1,"sponsored":true,"instance":"0x549958f8bcE041Cc21AA7Ce0E2133C0D92151464","template":"Payment","codeHash":"0x3e4ca9eac88f22b38316c3d47a5ebc5afe8087993b09a10d7f7094793a43cb19","deployHash":"0x019d999deabd51af96c77978c6953966c7a39425e7fe89006832af106fb91f61","deployedBy":"relay sponsor"}
+   ok: relay answered ok ()
+   ok: proposal #1 submitted and self-sponsored; instance 0x549958f8bcE041Cc21AA7Ce0E2133C0D92151464
+
+== step 13: vote YES right after the submission (the relay holds it for the next block; the mirror mines it)
+   $ node snippet.js vote --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key --proposal 1 --approve yes
+[index] scan 28..29 rows=3
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0
+   GET http://127.0.0.1:18751/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (1614 ms) {"ok":true,"verb":"vote","op":2,"member":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","hash":"0x3b55d1dcb54b2bc523c343d7b0b89b55205a978ae37e44959d74ff19e655121a","blockNumber":"31","gasUsed":"140263","nonceUsed":"2","nextNonce":"3","waitedBlocks":1,"vote":{"proposalId":1,"approved":true,"shares":"100"}}
+   ok: relay answered ok ()
+   ok: voted YES; the relay waited exactly one block (ruling 7)
+
+== step 14: warp past voting + grace (mirror only) and execute
+   $ node snippet.js execute --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key --proposal 1
+[index] scan 30..32 rows=4
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0
+   GET http://127.0.0.1:18751/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (133 ms) {"ok":true,"verb":"execute","op":3,"member":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","hash":"0xb1cbf4a2958927ba4bf1e209d742a92c0b086ec3fa7b8f2e96faf155896f9e1e","blockNumber":"33","gasUsed":"297941","nonceUsed":"3","nextNonce":"4","processed":{"proposalId":1,"passed":true,"actionFailed":false}}
+   ok: relay answered ok ()
+   ok: the proposal passed and its action executed
+   GET http://127.0.0.1:18751/me/0xE2be4071d0060A50AfcB9AED45b583e193ab30a0.json
+[index] scan 33..33 rows=5
+   -> 200 (101 ms, 1693 bytes) {
+  "address": "0xE2be4071d0060A50AfcB9AED45b583e193ab30a0",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "4",
+  "authorizationNonce": 1,
+  "chainTime": 1789156381,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 31401,
+    "verifyingContract": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4"
+  },
+  "dao": 
+   ok: /me shows the payment (usdc 10)
+
+== step 15: ragequit all shares; /me shows 0 shares
+   $ node snippet.js ragequit --key /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/cold-start/agent.key
+   stderr: 0xe2be4071d0060a50afcb9aed45b583e193ab30a0
+   GET http://127.0.0.1:18751/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (95 ms) {"ok":true,"verb":"ragequit","op":4,"member":"0xE2be4071d0060A50AfcB9AED45b583e193ab30a0","hash":"0xaaf3b4d6138030cfa2640f556b5f0b188216c024ea5e82bcf194e7588c19c4cf","blockNumber":"34","gasUsed":"245845","nonceUsed":"4","nextNonce":"5","ragequit":{"sharesBurned":"100"}}
+   ok: relay answered ok ()
+   ok: burned 100 shares
+   GET http://127.0.0.1:18751/me/0xE2be4071d0060A50AfcB9AED45b583e193ab30a0.json
+[index] scan 34..34 rows=6
+   -> 200 (95 ms, 1639 bytes) {
+  "address": "0xE2be4071d0060A50AfcB9AED45b583e193ab30a0",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "5",
+  "authorizationNonce": 1,
+  "chainTime": 1789156381,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 31401,
+    "verifyingContract": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4"
+  },
+  "dao": 
+   ok: /me shows 0 shares; usdc 103.333333
+
+== step 16: fetch-only (T0) account: what the served instructions now say about custody, units and the settlement token
+   GET http://127.0.0.1:18751/relay?op=identity&pass=4a5bfcfab36e2558426a1fb419690de8171428b2625e03b128092d89f19087dd
+   -> 200 (81 ms, 528 bytes) {
+  "ok": true,
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": false,
+  "nonce": "0",
+  "authorizationNonce": 0,
+  "chainTime": 1789156381,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 31401,
+    "verifyingContract": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4"
+   ok: op=identity says custodial-lite for 0x9e13F69919861739d5eba158848c34475c52120C
+   GET http://127.0.0.1:18751/me/0x9e13F69919861739d5eba158848c34475c52120C.json
+   -> 200 (2 ms, 1597 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": false,
+  "nonce": "0",
+  "authorizationNonce": 0,
+  "chainTime": 1789156381,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "
+   ok: before the relay has signed for it, /me reports the derived address as self-custody (no key of ours is recorded for it yet)
+   GET http://127.0.0.1:18751/relay?op=join&pass=4a5bfcfab36e2558426a1fb419690de8171428b2625e03b128092d89f19087dd
+   -> 200 (4103 ms, 447 bytes) {
+  "ok": true,
+  "verb": "join",
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "delegated": true,
+  "hash": "0x6696531158dcf6871a63221adafbcfc776652b81b3a9ceb13544e0abfa0dc301",
+  "blockNumber": "35",
+  "nonce": "0",
+  "shares": "0",
+  "note": "mints nothing; deposit at NAV or earn shares by verified work",
+  "custody": "custodial-lite",
+  "me": "/me/pass/9fa855931e7970ef838e0a682c
+   ok: T0 join: the relay signed the EIP-7702 authorization with the key it derived
+   GET http://127.0.0.1:18751/me/0x9e13F69919861739d5eba158848c34475c52120C.json
+[index] scan 35..35 rows=6
+   -> 200 (118 ms, 1598 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "0",
+  "authorizationNonce": 1,
+  "chainTime": 1789156382,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "c
+   ok: /me/<address>.json reports custodial-lite for the account the relay can sign for
+   GET http://127.0.0.1:18751/me/0xE2be4071d0060A50AfcB9AED45b583e193ab30a0.json
+   -> 200 (4 ms, 1639 bytes) {
+  "address": "0xE2be4071d0060A50AfcB9AED45b583e193ab30a0",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "5",
+  "authorizationNonce":
+   ok: /me/<address>.json still reports self-custody for the keyed agent
+   ok: a fresh key holds no USDC and /me settlement.balance says so
+   ok: /me says where the USDC comes from on this chain: test chain: the relay tops this address up to the deposit amount inside the deposit, so a fresh key needs no USDC first
+   ok: the served README says it too, testnet against mainnet
+   GET http://127.0.0.1:18751/relay?op=deposit&amount=100&pass=4a5bfcfab36e2558426a1fb419690de8171428b2625e03b128092d89f19087dd
+[relay] /relay?op=deposit&amount=100&pass=<redacted> -> 400 amount is in USDC raw units (6 decimals), not whole USDC: amount=100 is 0.0001 USDC. For 100 USDC send amount=100000000. If you really meant 0.0001 USDC, repeat the same request with &units=raw.
+   -> 400 (115 ms, 245 bytes) {
+  "ok": false,
+  "status": 400,
+  "reason": "amount is in USDC raw units (6 decimals), not whole USDC: amount=100 is 0.0001 USDC. For 100 USDC send amount=100000000. If you really meant 0.0001 USDC, repeat the same request with &units=raw."
+}
+
+   ok: a fetch-only deposit of amount=100 is refused with the unit it is in
+   ok: the reason carries both ways out: the raw amount for 100 USDC, and units=raw for a depositor who meant 0.0001
+   GET http://127.0.0.1:18751/me/0x9e13F69919861739d5eba158848c34475c52120C.json
+   -> 200 (3 ms, 1598 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864
+   ok: nothing was mined for the refused deposit
+   GET http://127.0.0.1:18751/relay?op=deposit&amount=500000&units=raw&pass=4a5bfcfab36e2558426a1fb419690de8171428b2625e03b128092d89f19087dd
+   -> 200 (111 ms, 603 bytes) {
+  "ok": true,
+  "verb": "deposit",
+  "op": 5,
+  "member": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "hash": "0x49505756925baa17800d53a4cdddd69c75fade210c442a962dcebd2c84fa4b91",
+  "blockNumber": "37",
+  "gasUsed": "292782",
+  "nonceUsed": "0",
+  "nextNonce": "1",
+  "deposit": {
+    "usdc": "0.5",
+    "sharesMinted": "0.535714281887755129"
+  },
+  "faucet": {
+    "toppedUpUsdc": "0.5",
+    "
+   ok: a deliberate 0.5 USDC deposit (units=raw) is mined, not refused
+   GET http://127.0.0.1:18751/me/0x9e13F69919861739d5eba158848c34475c52120C.json
+[index] scan 36..37 rows=7
+   -> 200 (140 ms, 1675 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864
+   GET http://127.0.0.1:18751/relay?op=ragequit&amount=267857140943877564&pass=4a5bfcfab36e2558426a1fb419690de8171428b2625e03b128092d89f19087dd
+   -> 200 (123 ms, 459 bytes) {
+  "ok": true,
+  "verb": "ragequit",
+  "op": 4,
+  "member": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "hash": "0x9604547a2e434c2aea06270a2ae3d4f10462129994eb636b71a3461072c3afeb",
+  "blockNumber": "38",
+  "gasUsed": "231078",
+  "nonceUsed": "1",
+  "nextNonce": "2",
+  "ragequit": {
+    "sharesBurned": "0.267857140943877564"
+  },
+  "custody": "custodial-lite",
+  "me": "/me/pass/9fa855931e7970
+   ok: op=ragequit&amount= burned 0.267857140943877564 of 535714281887755129 shares
+   GET http://127.0.0.1:18751/me/0x9e13F69919861739d5eba158848c34475c52120C.json
+[index] scan 38..38 rows=8
+   -> 200 (96 ms, 1695 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "2",
+  "authorizationNonce":
+   ok: a partial exit left the rest of the stake and the membership in place
+   ok: the served README documents that parameter where the fetch-only verb is described
+   ok: the served README says the snippet writes the key file when it is missing
+   ok: the member-by-pass path relay responses point at is advertised in the README
+   ok: the identity response points at /me/pass/9fa855931e7970ef838e0a682c8a2679244e081442f9d6b140a2d95a15605557.json, which the README now names
+   ok: the join response points at /me/pass/9fa855931e7970ef838e0a682c8a2679244e081442f9d6b140a2d95a15605557.json, which the README now names
+   ok: the ragequit response points at /me/pass/9fa855931e7970ef838e0a682c8a2679244e081442f9d6b140a2d95a15605557.json, which the README now names
+   GET http://127.0.0.1:18751/me/pass/9fa855931e7970ef838e0a682c8a2679244e081442f9d6b140a2d95a15605557.json
+   -> 200 (2 ms, 1695 bytes) {
+  "address": "0x9e13F69919861739d5eba158848c34475c52120C",
+  "chainId": 31401,
+  "adapter": "0x8C8AE5B46326caAa6eF3864793188a0061175ee4",
+  "delegated": true,
+  "nonce": "2",
+  "authorizationNonce":
+   ok: and that path answers for the same account with the same custody
+   ok: the README names myVote, which is the field /me delivers
+   ok: and every open proposal in /me carries that field
+
+== step 17: beacon:validate --custodial: the custody the relay reports is asserted against a known custodial address
+[index] scan 25..38 rows=8
+   $ tsx beacon/scripts/validate.ts --deployment /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json --out /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon --origin http://127.0.0.1:18751 --custodial 0x9e13F69919861739d5eba158848c34475c52120C -> exit 0
+   ok: validate PASS with the custody probes: )
+   fetched /relay?op=quote&member=0x3722a1675bCcA7cfe11E36F1969692E0083CFD36&template=Payment&params=%7B%22recipients%22%3A%5B%220x3722a1675bCcA7cfe11E36F1969692E0083CFD36%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched http://127.0.0.1:18751/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+
+   ok: the run fetched /me for the custodial address and required custodial-lite
+   $ tsx beacon/scripts/validate.ts --deployment /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/deployment.json --out /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-entry-point-1789113107854/beacon --origin http://127.0.0.1:18751 --custodial 0xE2be4071d0060A50AfcB9AED45b583e193ab30a0 -> exit 1
+   ok: negative control: the same check against a self-custody address exits 1 instead of passing
+
+== step 18: summary
+   receipts in evidence/phase5/entry-point
+
+=== ENTRY POINT E2E: PASS ===
+

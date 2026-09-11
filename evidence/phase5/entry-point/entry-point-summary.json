@@ -1,7 +1,7 @@
 {
   "canonicalOrigin": "https://relay-zero.mkyang.ai",
   "mirror": "https://zero-one-beacon.vercel.app",
-  "relayOrigin": "http://127.0.0.1:18752",
+  "relayOrigin": "http://127.0.0.1:18751",
   "chainId": 31401,
   "servedPaths": [
     "/README.txt",
@@ -15,8 +15,8 @@
   ],
   "validate": {
     "result": "PASS",
-    "fetched": 13,
-    "origin": "http://127.0.0.1:18752",
+    "fetched": 14,
+    "origin": "http://127.0.0.1:18751",
     "mirror": "https://zero-one-beacon.vercel.app",
     "mirrorProbed": false,
     "advertised": [
@@ -33,19 +33,23 @@
     "offOriginUrls": [
       "https://zero-one-beacon.vercel.app"
     ],
-    "constitutionUrl": "http://127.0.0.1:18752/CONSTITUTION.md",
+    "constitutionUrl": "http://127.0.0.1:18751/CONSTITUTION.md",
+    "custodyProbed": {
+      "selfCustody": "0x00000000000000000000000000000000C0FFEE01",
+      "custodialLite": null
+    },
     "probes": [
       {
         "target": "/README.txt",
         "status": 200,
         "type": "text/plain; charset=utf-8",
-        "bytes": 6539
+        "bytes": 7270
       },
       {
         "target": "/llms.txt",
         "status": 200,
         "type": "text/plain; charset=utf-8",
-        "bytes": 1397
+        "bytes": 1811
       },
       {
         "target": "/snippet.js",
@@ -102,13 +106,19 @@
         "bytes": 518
       },
       {
-        "target": "/me/0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF.json",
+        "target": "/me/0x3722a1675bCcA7cfe11E36F1969692E0083CFD36.json",
         "status": 200,
         "type": "application/json; charset=utf-8",
-        "bytes": 1412
+        "bytes": 1692
       },
       {
-        "target": "/relay?op=quote&member=0x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF&template=Payment&params=%7B%22recipients%22%3A%5B%220x05Ae0c51454294CF1E2F7C96E62cc9805fF547DF%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+        "target": "/me/0x00000000000000000000000000000000C0FFEE01.json",
+        "status": 200,
+        "type": "application/json; charset=utf-8",
+        "bytes": 1590
+      },
+      {
+        "target": "/relay?op=quote&member=0x3722a1675bCcA7cfe11E36F1969692E0083CFD36&template=Payment&params=%7B%22recipients%22%3A%5B%220x3722a1675bCcA7cfe11E36F1969692E0083CFD36%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
         "status": 200,
         "type": "application/json; charset=utf-8",
         "bytes": 4831
@@ -127,9 +137,28 @@
     "exit": 1
   },
   "coldStart": {
-    "agent": "0x0e5a436ebac9E2f4FE521FD22CA65DEF260dAe27",
+    "agent": "0xE2be4071d0060A50AfcB9AED45b583e193ab30a0",
     "proposalId": 1,
     "readmeLines": 44
   },
-  "generatedAt": "2026-09-10T07:34:10.804Z"
+  "servedFixes": {
+    "custodial": "0x9e13F69919861739d5eba158848c34475c52120C",
+    "custodyByAddress": "custodial-lite",
+    "custodyOfKeyedAgent": "self-custody",
+    "settlementOnJoin": {
+      "token": "0x8097d068580F52929A1c6198Ebc13b55eEe3f334",
+      "balance": "0",
+      "formatted": "0",
+      "source": "test chain: the relay tops this address up to the deposit amount inside the deposit, so a fresh key needs no USDC first"
+    },
+    "wholeUnitDepositRefused": "amount is in USDC raw units (6 decimals), not whole USDC: amount=100 is 0.0001 USDC. For 100 USDC send amount=100000000. If you really meant 0.0001 USDC, repeat the same request with &units=raw.",
+    "deliberateTinyDeposit": "0.5",
+    "partialExit": {
+      "burned": "0.267857140943877564",
+      "left": "0.267857140943877565"
+    },
+    "validateWithCustodial": 0,
+    "validateAgainstSelfCustody": 1
+  },
+  "generatedAt": "2026-09-11T07:52:07.272Z"
 }

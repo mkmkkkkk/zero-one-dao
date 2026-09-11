@@ -1,0 +1,33 @@
+$ tsx beacon/scripts/validate.ts --out <beacon> --origin http://127.0.0.1:18751 --custodial 0xE2be4071d0060A50AfcB9AED45b583e193ab30a0 (a self-custody address)
+exit 1
+   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 15 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (7270 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1811 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10794 bytes)
+   fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
+   fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
+   fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1501 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (7080 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (5114 bytes)
+   fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
+   fetched /me/0x3722a1675bCcA7cfe11E36F1969692E0083CFD36.json -> 200 application/json; charset=utf-8 (1705 bytes)
+   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (1597 bytes)
+AssertionError [ERR_ASSERTION]: /me/0xE2be4071d0060A50AfcB9AED45b583e193ab30a0.json reports custody "self-custody" for a T0 account whose key this relay derived and holds (decision.md 2026-09-11 ruling 1: the advertised member document must not publish an address the relay can sign for as self-custody)
++ actual - expected
+
++ 'self-custody'
+- 'custodial-lite'
+
+    at assertCustody (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:102:10)
+    at Object.check (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:183:54)
+    at runProbe (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:228:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async validateBeacon (/Users/michaelyang/Documents/Workspace/zero-one-dao/beacon/scripts/validate.ts:337:44) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'self-custody',
+  expected: 'custodial-lite',
+  operator: 'strictEqual'
+}

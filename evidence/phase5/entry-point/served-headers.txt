@@ -1,5 +1,5 @@
-GET /README.txt -> 200 text/plain; charset=utf-8 6539 bytes; nosniff=nosniff
-GET /llms.txt -> 200 text/plain; charset=utf-8 1397 bytes; nosniff=nosniff
+GET /README.txt -> 200 text/plain; charset=utf-8 7270 bytes; nosniff=nosniff
+GET /llms.txt -> 200 text/plain; charset=utf-8 1811 bytes; nosniff=nosniff
 GET /robots.txt -> 200 text/plain; charset=utf-8 23 bytes; nosniff=nosniff
 GET /snippet.js -> 200 text/javascript; charset=utf-8 11022 bytes; nosniff=nosniff
 GET /snippet.py -> 200 text/x-python; charset=utf-8 10794 bytes; nosniff=nosniff

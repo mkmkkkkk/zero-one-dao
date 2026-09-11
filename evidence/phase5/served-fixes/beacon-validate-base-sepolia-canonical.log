@@ -1,0 +1,29 @@
+
+> zero-one-dao@0.1.0 beacon:validate
+> tsx beacon/scripts/validate.ts --deployment deployments/base-sepolia.json --out /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/beacon-sepolia --no-fetch 1
+
+   SKIPPED the live fetches against https://relay-zero.mkyang.ai (--no-fetch); a beacon whose origin answers a bot challenge would pass this run
+{
+  "result": "PASS",
+  "fetched": "SKIPPED",
+  "origin": "https://relay-zero.mkyang.ai",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "advertised": [
+    "/",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 15,
+  "proposals": 4,
+  "tasks": 0,
+  "members": 4,
+  "block": "46672511"
+}
+

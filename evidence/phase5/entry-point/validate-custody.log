@@ -1,7 +1,8 @@
-$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
+$ tsx beacon/scripts/validate.ts --out <beacon> --origin http://127.0.0.1:18751 --custodial 0x9e13F69919861739d5eba158848c34475c52120C
+exit 0
 {
   "result": "PASS",
-  "fetched": 14,
+  "fetched": 15,
   "origin": "http://127.0.0.1:18751",
   "mirror": "https://zero-one-beacon.vercel.app",
   "mirrorProbed": false,
@@ -22,7 +23,7 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
   "constitutionUrl": "http://127.0.0.1:18751/CONSTITUTION.md",
   "custodyProbed": {
     "selfCustody": "0x00000000000000000000000000000000C0FFEE01",
-    "custodialLite": null
+    "custodialLite": "0x9e13F69919861739d5eba158848c34475c52120C"
   },
   "probes": [
     {
@@ -71,19 +72,19 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
       "target": "/health.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1502
+      "bytes": 1501
     },
     {
       "target": "/state.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 2168
+      "bytes": 7080
     },
     {
       "target": "/proposals.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 430
+      "bytes": 5114
     },
     {
       "target": "/pending.json",
@@ -92,19 +93,25 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
       "bytes": 518
     },
     {
-      "target": "/me/0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD.json",
+      "target": "/me/0x3722a1675bCcA7cfe11E36F1969692E0083CFD36.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1692
+      "bytes": 1705
     },
     {
       "target": "/me/0x00000000000000000000000000000000C0FFEE01.json",
       "status": 200,
       "type": "application/json; charset=utf-8",
-      "bytes": 1590
+      "bytes": 1597
     },
     {
-      "target": "/relay?op=quote&member=0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD&template=Payment&params=%7B%22recipients%22%3A%5B%220x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "target": "/me/0x9e13F69919861739d5eba158848c34475c52120C.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1695
+    },
+    {
+      "target": "/relay?op=quote&member=0x3722a1675bCcA7cfe11E36F1969692E0083CFD36&template=Payment&params=%7B%22recipients%22%3A%5B%220x3722a1675bCcA7cfe11E36F1969692E0083CFD36%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
       "status": 200,
       "type": "application/json; charset=utf-8",
       "bytes": 4831
@@ -112,14 +119,14 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
   ],
   "readmeLines": 44,
   "readmeLineLimit": 44,
-  "addressesWithCode": 11,
-  "proposals": 0,
+  "addressesWithCode": 12,
+  "proposals": 1,
   "tasks": 0,
-  "members": 1,
-  "block": "24"
+  "members": 2,
+  "block": "38"
 }
 
-   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 14 probes)
+   fetching every URL the README advertises on http://127.0.0.1:18751 (9 advertised paths, 15 probes)
    fetched /README.txt -> 200 text/plain; charset=utf-8 (7270 bytes)
    fetched /llms.txt -> 200 text/plain; charset=utf-8 (1811 bytes)
    fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11022 bytes)
@@ -127,13 +134,12 @@ $ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>
    fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
    fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
    fetched / -> 200 text/html; charset=utf-8 (5295 bytes)
-   fetched /health.json -> 200 application/json; charset=utf-8 (1502 bytes)
-   fetched /state.json -> 200 application/json; charset=utf-8 (2168 bytes)
-   fetched /proposals.json -> 200 application/json; charset=utf-8 (430 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1501 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (7080 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (5114 bytes)
    fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
-   fetched /me/0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD.json -> 200 application/json; charset=utf-8 (1692 bytes)
-   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (1590 bytes)
-   fetched /relay?op=quote&member=0x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD&template=Payment&params=%7B%22recipients%22%3A%5B%220x83dC8D07e277d9f9dBEa3C6127Feb51EeEc7e1FD%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
+   fetched /me/0x3722a1675bCcA7cfe11E36F1969692E0083CFD36.json -> 200 application/json; charset=utf-8 (1705 bytes)
+   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (1597 bytes)
+   fetched /me/0x9e13F69919861739d5eba158848c34475c52120C.json -> 200 application/json; charset=utf-8 (1695 bytes)
+   fetched /relay?op=quote&member=0x3722a1675bCcA7cfe11E36F1969692E0083CFD36&template=Payment&params=%7B%22recipients%22%3A%5B%220x3722a1675bCcA7cfe11E36F1969692E0083CFD36%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4831 bytes)
    fetched http://127.0.0.1:18751/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
-$ wc -l README.txt
-      44 /Users/michaelyang/Documents/Workspace/zero-one-dao/state/e2e-relay-1789113138554/beacon/README.txt

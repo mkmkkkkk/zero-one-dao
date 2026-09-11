@@ -41,6 +41,21 @@ function duration(seconds: number): string {
 }
 
 /**
+ * Where the settlement token a deposit pulls comes from on this chain (cold-start finding 1,
+ * decision.md 2026-09-11 ruling 2: nothing served said it, so an agent that checked its balance first
+ * concluded it could not join). A test chain's relay faucets the depositing address inside the deposit;
+ * mainnet has no faucet and the address must already hold the USDC.
+ *
+ * @param faucet Whether this chain's relay policy runs a settlement faucet.
+ * @returns One sentence for the README's deposit line.
+ */
+export function settlementSource(faucet: boolean): string {
+  return faucet
+    ? "Test chain: a fresh key needs no USDC, the relay tops this address up to amount inside the deposit (mainnet has no faucet: hold the USDC first; /me settlement.balance is what you hold)."
+    : "Mainnet: hold that USDC before you deposit, this chain has no faucet (/me settlement.balance is what you hold); only a test chain lets the relay top your address up.";
+}
+
+/**
  * Fill a template with deployment facts.
  *
  * @param text Template text with {{PLACEHOLDERS}}.
@@ -89,6 +104,7 @@ export async function buildBeacon(options: { deployment: string; origin?: string
     LEDGER: deployment.treasuryLedger ?? "unknown",
     ADAPTER: deployment.intentAccount,
     FACTORY: deployment.templateFactory,
+    SETTLEMENT_SOURCE: settlementSource(env.policy.faucet),
     SPONSOR_THRESHOLD: fmtShares(BigInt(state.governance.sponsorThreshold)),
     VOTING_PERIOD: duration(state.governance.votingPeriod),
     GRACE_PERIOD: duration(state.governance.gracePeriod),

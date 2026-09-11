@@ -628,3 +628,20 @@ to six hours; the beacon is rebuilt so the README states the periods that are ac
 step the cold-start row is still missing. Mainnet never carries such a proposal.
 The agent declined to mark the row passed because no run has proved execution. That is the correct call and the row stays
 partial until the chain shows otherwise.
+
+## 2026-09-11 what shipped against those rulings (implementation note)
+All six are fixed in the served files and the relay, in one 44-line README (lines traded, none appended) and with the
+validator and both E2Es asserting each one. 1. `custodyOf()` in `relay/server.ts` answers `/me/<address>.json` from the
+same record every other path uses (`db.passes` / `db.accounts[..].custodial`, read from disk), so an address the relay
+can sign for is never published as self-custody; `beacon/scripts/validate.ts` fetches `/me` for an address no relay can
+derive (must be self-custody) and, with `--custodial`, for a real T0 account (must be custodial-lite), and both E2Es run
+the negative control that a self-custody address in that flag exits non-zero. 2. The README's deposit line carries a
+built-in sentence, testnet tops you up and mainnet does not (`settlementSource()` from the chain's own faucet policy, so
+a mainnet build cannot inherit the testnet claim), and `/me.settlement` carries the token, the balance and where it comes
+from. 3. Every amount in the README names its unit, and a fetch-only deposit of 0 < amount < 1,000,000 raw units is
+refused with the unit, the raw amount for that many whole USDC and `&units=raw` for a depositor who means a sub-USDC
+amount; `amount=0` still reaches the contract's `ZeroAmount`. 4. The fetch-only exit is documented as
+`op=ragequit[&amount=<shares raw units; default all>]`. 5. The README says the snippet writes the key file, advertises
+`/me/pass/<sha256 of your pass>.json` (and the T0 join response now points at it like every other T0 answer), and names
+`myVote`, the field `/me` delivers. The custody defect is fixed in this checkout only: the canonical relay keeps serving
+the old README and answering self-custody until the mini pulls.

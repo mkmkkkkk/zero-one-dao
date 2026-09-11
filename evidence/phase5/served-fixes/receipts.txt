@@ -1,0 +1,37 @@
+Six defects the 2026-09-11 cold start found in what we serve; what each fix is and which run proves it.
+Rulings: decision.md "2026-09-11 what the cold start found in what we serve"; findings: evidence/testnet/phase5/cold-start-mainmac.md.
+
+1  custody misreported          relay/server.ts custodyOf() -> /me/<address>.json
+   e2e-relay.log                "/me/<address>.json reports custodial-lite for a T0 account whose key the relay derived and holds"
+                                "/me/<address>.json still reports self-custody for the T1 agent, whose key the relay never had"
+   e2e-entry-point.log          same pair, plus /me/pass/<hash>.json agreeing with the address path
+   validate-custody-entry-point.log          beacon:validate --custodial <T0 address> -> exit 0, custodyProbed.custodialLite set
+   validate-custody-control-entry-point.log  the same validator with a self-custody address in that flag -> exit 1
+   beacon-validate-custody-control.log       the same pair from npm run e2e:relay (final revalidate of the finished DAO)
+   live-origin-before-deploy.txt             the canonical origin still answers self-custody: this checkout is not deployed
+
+2  settlement token undocumented  README deposit line (built per chain) + /me.settlement
+   README-base-sepolia-canonical.txt line 10 and line 37
+   e2e-entry-point.log          "a fresh key holds no USDC and /me settlement.balance says so"
+                                "/me says where the USDC comes from on this chain: test chain: the relay tops this address up ..."
+                                "the served README says it too, testnet against mainnet"
+   e2e-relay.log                "/me carries the settlement token and this address's balance of it (what a deposit pulls)"
+
+3  amount units ambiguous        unit named at every amount + the fetch-only whole-unit refusal
+   e2e-relay.log                400 "amount is in USDC raw units (6 decimals), not whole USDC: amount=100 is 0.0001 USDC.
+                                For 100 USDC send amount=100000000. If you really meant 0.0001 USDC, repeat ... &units=raw."
+   e2e-entry-point.log          the same refusal, then "nothing was mined for the refused deposit", then
+                                "a deliberate 0.5 USDC deposit (units=raw) is mined, not refused"
+
+4  partial fetch-only exit       README op=ragequit[&amount=<shares raw units; default all>]
+   e2e-entry-point.log          "op=ragequit&amount= burned 0.267857140943877564 of 535714281887755129 shares"
+                                "a partial exit left the rest of the stake and the membership in place"
+
+5  three small ones              key file / /me/pass advertised / myVote
+   e2e-entry-point.log          "the served README says the snippet writes the key file when it is missing"
+                                "the member-by-pass path relay responses point at is advertised in the README"
+                                identity, join and ragequit responses all point at /me/pass/<hash>.json
+                                "the README names myVote, which is the field /me delivers"
+
+Line budget: the README is exactly 44 lines in every run above (lines traded, none appended).
+beacon-validate-base-sepolia-canonical.log: the canonical Base Sepolia build off the live chain, validator PASS, 44 lines.

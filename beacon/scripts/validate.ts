@@ -12,7 +12,11 @@
  * the one the README itself names (`--origin` overrides it, e.g. to test the mirror); the fetches are
  * skipped only when `--no-fetch 1` is passed, and the summary then says `fetched: "SKIPPED"`.
  * stdout stays exactly one JSON document (the summary); the per-URL progress goes to stderr.
- * Usage: tsx beacon/scripts/validate.ts --deployment <file> [--out <dir>] [--origin <url>] [--no-fetch 1]
+ * Custody (decision.md 2026-09-11 ruling 1): `/me/<address>.json` is the only member document the
+ * README advertises, and it reported self-custody for an account whose key the relay holds. The
+ * validator therefore fetches it for an address no relay can derive (must be self-custody) and, given
+ * `--custodial <address>`, for one this relay derived from a T0 pass (must be custodial-lite).
+ * Usage: tsx beacon/scripts/validate.ts --deployment <file> [--out <dir>] [--origin <url>] [--no-fetch 1] [--custodial <address>]
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -81,6 +85,24 @@ export function advertisedPaths(readme: string, origin: string): { paths: string
 }
 
 /**
+ * An address no relay can have derived from a T0 pass: the custody negative control. A relay that
+ * hardcodes a custody label answers the same thing here as for a real custodial account.
+ */
+const NOT_DERIVABLE = getAddress("0x00000000000000000000000000000000c0ffee01");
+
+/**
+ * Assert the custody label of one `/me` document.
+ *
+ * @param parsed The parsed `/me` body.
+ * @param expected The custody the relay must report for this address.
+ * @param why What makes it that (for the failure message).
+ */
+function assertCustody(parsed: unknown, expected: "self-custody" | "custodial-lite", why: string): void {
+  const body = parsed as { address?: string; custody?: string };
+  assert.equal(body.custody, expected, `/me/${String(body.address)}.json reports custody ${JSON.stringify(body.custody)} for ${why} (decision.md 2026-09-11 ruling 1: the advertised member document must not publish an address the relay can sign for as self-custody)`);
+}
+
+/**
  * Build the probe table for one origin.
  *
  * @param origin Origin under test.
@@ -88,9 +110,11 @@ export function advertisedPaths(readme: string, origin: string): { paths: string
  * @param chainId The deployment's chain id.
  * @param builtReadme The README bytes this build produced (the served one must be identical).
  * @param constitutionHash The on-chain constitution hash.
+ * @param custodial An address this relay derived from a T0 pass and can sign for, when one is known
+ *   (`--custodial`): `/me/<it>.json` must report custodial-lite.
  * @returns The probes.
  */
-function probesFor(origin: string, member: string, chainId: number, builtReadme: string, constitutionHash: string): Probe[] {
+function probesFor(origin: string, member: string, chainId: number, builtReadme: string, constitutionHash: string, custodial?: string): Probe[] {
   const quoteParams = encodeURIComponent(JSON.stringify({ recipients: [member], amounts: ["1000000"] }));
   return [
     {
@@ -132,8 +156,32 @@ function probesFor(origin: string, member: string, chainId: number, builtReadme:
       target: `/me/${member}.json`,
       covers: ["/me/<address>.json"],
       kind: "json",
-      check: (_text, parsed) => assert.equal(getAddress(String((parsed as { address: string }).address)), getAddress(member), "/me answered for another address"),
+      check: (_text, parsed) => {
+        const body = parsed as { address: string; custody?: string; usdc?: string; settlement?: { token?: string; balance?: string } };
+        assert.equal(getAddress(String(body.address)), getAddress(member), "/me answered for another address");
+        assert(body.custody === "self-custody" || body.custody === "custodial-lite", `/me carries no custody label (got ${JSON.stringify(body.custody)})`);
+        // Ruling 2: an agent must be able to see what its deposit will draw on without a chain read.
+        assert(body.settlement !== undefined && typeof body.settlement.balance === "string" && /^\d+$/u.test(body.settlement.balance), "/me carries no settlement.balance (the USDC a deposit pulls)");
+        assert(typeof body.settlement.token === "string" && isAddress(body.settlement.token), "/me settlement carries no token address");
+        assert.equal(body.settlement.balance, body.usdc, "/me settlement.balance and usdc disagree about the same balance");
+      },
     },
+    {
+      // Custody negative control: an address the relay cannot have derived must read self-custody.
+      target: `/me/${NOT_DERIVABLE}.json`,
+      covers: ["/me/<address>.json"],
+      kind: "json",
+      check: (_text, parsed) => assertCustody(parsed, "self-custody", "an address no relay holds a key for"),
+    },
+    ...(custodial === undefined
+      ? []
+      : [{
+          // Ruling 1: the advertised member document, for an address this relay derived from a T0 pass.
+          target: `/me/${getAddress(custodial)}.json`,
+          covers: ["/me/<address>.json"],
+          kind: "json",
+          check: (_text: string, parsed: unknown) => assertCustody(parsed, "custodial-lite", "a T0 account whose key this relay derived and holds"),
+        } satisfies Probe]),
     {
       // The README's own read-only relay URL: it proves /relay is reachable and answers JSON, which is
       // exactly what a challenge page does not do. Nothing is signed and nothing is deployed.
@@ -186,10 +234,11 @@ async function runProbe(origin: string, probe: Probe): Promise<Record<string, un
  * Run every check; throws on the first failure.
  *
  * @param options Deployment file, beacon output directory, the origin to fetch from (default: the one
- *   the README names), and `noFetch` to skip the live fetches.
+ *   the README names), `noFetch` to skip the live fetches, and `custodial`: an address this origin's
+ *   relay derived from a T0 pass, whose `/me` must report custodial-lite (ruling 1).
  * @returns A summary of the checks that passed.
  */
-export async function validateBeacon(options: { deployment: string; out: string; origin?: string; noFetch?: boolean }): Promise<Record<string, unknown>> {
+export async function validateBeacon(options: { deployment: string; out: string; origin?: string; noFetch?: boolean; custodial?: string }): Promise<Record<string, unknown>> {
   const deployment = loadDeployment(options.deployment);
   const env = connect(deployment);
   const readme = readFileSync(path.join(options.out, "README.txt"), "utf8");
@@ -207,6 +256,19 @@ export async function validateBeacon(options: { deployment: string; out: string;
   assert(!/[—\p{Extended_Pictographic}]/u.test(readme), "README contains an em dash or emoji");
   assert(!/op=1\b|\bsponsor\s+op=|op=prepare/u.test(readme), "README still mentions the retired sponsor verb (op 1) or op=prepare");
   assert(/op=quote/u.test(readme) && /abi\.encode\(uint8 template,bytes params,bytes32 salt\)/u.test(readme), "README lacks the one-intent propose format (op=quote, abi.encode(template, params, salt))");
+
+  // What the 2026-09-11 cold start found missing in the 44 served lines (decision.md rulings 1..5).
+  // Each defect is one assertion, so losing the sentence again fails here instead of in a cold start.
+  assert(/custody self-custody or custodial-lite/u.test(readme), "README does not say /me reports custody (ruling 1)");
+  assert(/faucet/u.test(readme) && /[Mm]ainnet/u.test(readme), "README does not say where the USDC a deposit pulls comes from, test chain against mainnet (ruling 2: a fresh key holds none and there is no public faucet)");
+  assert(/settlement\.balance/u.test(readme), "README does not point at the settlement balance /me carries (ruling 2)");
+  assert(/deposit\s+op=5 amount=<USDC raw units/u.test(readme), "README does not name the unit on the deposit intent (ruling 3)");
+  assert(/op=deposit&amount=<USDC raw units>/u.test(readme), "README does not name the unit on the fetch-only deposit (ruling 3: amount=100 deposits 0.0001 USDC in a mined transaction)");
+  assert(/--usdc 100 \(whole USDC/u.test(readme), "README does not say the keyed snippet takes whole USDC while the fetch-only path takes raw units (ruling 3)");
+  assert(/op=ragequit\[&amount=/u.test(readme), "README does not document the partial amount the fetch-only exit honours (ruling 4)");
+  assert(/creates the key file at 0600/u.test(readme), "README does not say the snippet writes the key file when it is missing (ruling 5)");
+  assert(/\/me\/pass\//u.test(readme), "README does not advertise /me/pass/<hash>.json, which relay responses point at (ruling 5)");
+  assert(/myVote/u.test(readme) && !/my votes/u.test(readme), "README names a member's own vote something other than the myVote field /me delivers (ruling 5)");
 
   // Entry point (decision.md 2026-09-10): the README names the canonical origin it is served from and,
   // in one line, the mirror; the origin under test is the one it names unless --origin overrides it.
@@ -261,7 +323,8 @@ export async function validateBeacon(options: { deployment: string; out: string;
   // Live checks. Without these a beacon whose origin challenges a plain GET validates green.
   const { paths, offOrigin } = advertisedPaths(readme, origin);
   const member = state.members[0]?.address ?? deployment.founder;
-  const probes = probesFor(origin, getAddress(member), deployment.chainId, readme, state.constitution.textHash);
+  if (options.custodial !== undefined && !isAddress(options.custodial)) throw new Error(`--custodial must be an address, got ${options.custodial}`);
+  const probes = probesFor(origin, getAddress(member), deployment.chainId, readme, state.constitution.textHash, options.custodial);
   const covered = new Set(probes.flatMap((probe) => probe.covers));
   const uncovered = paths.filter((advertised) => !covered.has(advertised));
   assert.deepEqual(uncovered, [], `the README advertises ${JSON.stringify(uncovered)} on ${origin} and this validator does not fetch it: add it to probesFor()`);
@@ -292,6 +355,7 @@ export async function validateBeacon(options: { deployment: string; out: string;
     advertised: paths,
     offOriginUrls: offOrigin,
     constitutionUrl,
+    custodyProbed: { selfCustody: NOT_DERIVABLE, custodialLite: options.custodial === undefined ? null : getAddress(options.custodial) },
     probes: fetched,
     readmeLines: lines.length,
     readmeLineLimit: 44,
@@ -310,6 +374,7 @@ if (process.argv[1] !== undefined && path.resolve(process.argv[1]) === path.reso
     out: path.resolve(ROOT, args.out ?? "beacon/public"),
     origin: args.origin === "mirror" ? MIRROR_ORIGIN : args.origin,
     noFetch: args["no-fetch"] === "1",
+    custodial: args.custodial,
   })
     .then((summary) => console.log(json(summary)))
     .catch((error) => {

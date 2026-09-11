@@ -302,6 +302,65 @@ async function main(): Promise<void> {
     const me3 = await getJson(`${origin}/me/${agent.address}.json`, 400);
     assert(me3.shares === "0", `/me shows 0 shares; usdc ${String(me3.usdcFormatted)}`);
 
+    step("fetch-only (T0) account: what the served instructions now say about custody, units and the settlement token");
+    // The six defects the 2026-09-11 cold start found (decision.md rulings 1..5). This account is created
+    // exactly as line 34 of the served README says: one GET, a pass from openssl rand -hex 32.
+    const t0Pass = Buffer.from(generatePrivateKey().slice(2), "hex").toString("hex");
+    const t0Identity = await getJson(`${origin}/relay?op=identity&pass=${encodeURIComponent(t0Pass)}`, 400);
+    const t0Address = getAddress(String(t0Identity.address));
+    assert(t0Identity.custody === "custodial-lite", `op=identity says custodial-lite for ${t0Address}`);
+    const t0MeBefore = await getJson(`${origin}/me/${t0Address}.json`, 300);
+    assert(t0MeBefore.custody === "self-custody", "before the relay has signed for it, /me reports the derived address as self-custody (no key of ours is recorded for it yet)");
+    const t0Joined = await getJson(`${origin}/relay?op=join&pass=${encodeURIComponent(t0Pass)}`, 400);
+    assert(t0Joined.ok === true && t0Joined.delegated === true, "T0 join: the relay signed the EIP-7702 authorization with the key it derived");
+    // Ruling 1: the advertised member document must now say who can sign for this account.
+    const t0Me = await getJson(`${origin}/me/${t0Address}.json`, 300);
+    assert(t0Me.custody === "custodial-lite", "/me/<address>.json reports custodial-lite for the account the relay can sign for");
+    const t1Me = await getJson(`${origin}/me/${agent.address}.json`, 200);
+    assert(t1Me.custody === "self-custody", "/me/<address>.json still reports self-custody for the keyed agent");
+    // Ruling 2: what a deposit will draw on, in the document the README points at.
+    const settlement = t0Me.settlement as { token: string; balance: string; source: string };
+    assert(settlement.balance === "0" && settlement.balance === t0Me.usdc, "a fresh key holds no USDC and /me settlement.balance says so");
+    assert(/tops this address up/u.test(settlement.source), `/me says where the USDC comes from on this chain: ${settlement.source}`);
+    assert(/Test chain: a fresh key needs no USDC/u.test(readme) && /mainnet has no faucet/u.test(readme), "the served README says it too, testnet against mainnet");
+    // Ruling 3: amount=100 is the whole-units mistake the cold start warned about; refused, not mined.
+    const unitMistake = await getJson(`${origin}/relay?op=deposit&amount=100&pass=${encodeURIComponent(t0Pass)}`, 400);
+    assert(unitMistake.ok === false && unitMistake.status === 400 && /raw units \(6 decimals\), not whole USDC/u.test(String(unitMistake.reason)), "a fetch-only deposit of amount=100 is refused with the unit it is in");
+    assert(/amount=100000000/u.test(String(unitMistake.reason)) && /&units=raw/u.test(String(unitMistake.reason)), "the reason carries both ways out: the raw amount for 100 USDC, and units=raw for a depositor who meant 0.0001");
+    assert(BigInt(String((await getJson(`${origin}/me/${t0Address}.json`, 120)).shares)) === 0n, "nothing was mined for the refused deposit");
+    // and a genuinely tiny deposit the depositor means is still honoured.
+    const tiny = await getJson(`${origin}/relay?op=deposit&amount=500000&units=raw&pass=${encodeURIComponent(t0Pass)}`, 400);
+    assert(tiny.ok === true && (tiny.deposit as { usdc: string }).usdc === "0.5", "a deliberate 0.5 USDC deposit (units=raw) is mined, not refused");
+    // Ruling 4: the fetch-only exit honours a partial amount, which the README now documents.
+    const t0Shares = BigInt(String((await getJson(`${origin}/me/${t0Address}.json`, 120)).shares));
+    const partial = await getJson(`${origin}/relay?op=ragequit&amount=${t0Shares / 2n}&pass=${encodeURIComponent(t0Pass)}`, 400);
+    assert(partial.ok === true, `op=ragequit&amount= burned ${String((partial.ragequit as { sharesBurned: string }).sharesBurned)} of ${t0Shares} shares`);
+    const t0After = await getJson(`${origin}/me/${t0Address}.json`, 200);
+    assert(BigInt(String(t0After.shares)) === t0Shares - t0Shares / 2n && BigInt(String(t0After.shares)) > 0n, "a partial exit left the rest of the stake and the membership in place");
+    assert(/op=ragequit\[&amount=<shares raw units; default all>\]/u.test(readme), "the served README documents that parameter where the fetch-only verb is described");
+    // Ruling 5: the small ones, in the served bytes.
+    assert(/creates the key file at 0600/u.test(readme), "the served README says the snippet writes the key file when it is missing");
+    assert(readme.includes("/me/pass/<sha256 of your pass>.json"), "the member-by-pass path relay responses point at is advertised in the README");
+    for (const [what, response] of [["identity", t0Identity], ["join", t0Joined], ["ragequit", partial]] as const) {
+      assert(String(response.me).startsWith("/me/pass/") && response.custody === "custodial-lite", `the ${what} response points at ${String(response.me)}, which the README now names`);
+    }
+    const byPass = await getJson(`${origin}${String(t0Joined.me)}`, 200);
+    assert(getAddress(String(byPass.address)) === t0Address && byPass.custody === "custodial-lite", "and that path answers for the same account with the same custody");
+    assert(/myVote per open proposal/u.test(readme) && !/my votes/u.test(readme), "the README names myVote, which is the field /me delivers");
+    const openProposal = (t0After.openProposals as Array<Record<string, unknown>>)[0];
+    assert(openProposal === undefined || "myVote" in openProposal, "and every open proposal in /me carries that field");
+
+    step("beacon:validate --custodial: the custody the relay reports is asserted against a known custodial address");
+    await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
+    const custodyValidated = await validateCli(["--deployment", deploymentFile, "--out", beacon, "--origin", origin, "--custodial", t0Address]);
+    writeFileSync(path.join(EVIDENCE, "validate-custody.log"), `$ tsx beacon/scripts/validate.ts --out <beacon> --origin ${origin} --custodial ${t0Address}\nexit ${String(custodyValidated.status)}\n${custodyValidated.stdout}${custodyValidated.stderr}`);
+    assert(custodyValidated.status === 0, `validate PASS with the custody probes: ${custodyValidated.stderr.slice(-400)}`);
+    const custodySummary = summaryOf(custodyValidated.stdout) as unknown as { custodyProbed: { selfCustody: string; custodialLite: string } };
+    assert(getAddress(custodySummary.custodyProbed.custodialLite) === t0Address, "the run fetched /me for the custodial address and required custodial-lite");
+    const custodyControl = await validateCli(["--deployment", deploymentFile, "--out", beacon, "--origin", origin, "--custodial", agent.address]);
+    writeFileSync(path.join(EVIDENCE, "validate-custody-control.log"), `$ tsx beacon/scripts/validate.ts --out <beacon> --origin ${origin} --custodial ${agent.address} (a self-custody address)\nexit ${String(custodyControl.status)}\n${custodyControl.stdout}${custodyControl.stderr}`);
+    assert(custodyControl.status !== 0 && /reports custody "self-custody"/u.test(custodyControl.stderr), `negative control: the same check against a self-custody address exits ${String(custodyControl.status)} instead of passing`);
+
     step("summary");
     const receipt = {
       canonicalOrigin: CANONICAL_ORIGIN,
@@ -312,6 +371,17 @@ async function main(): Promise<void> {
       validate: summary,
       challengeControl: { origin: `http://127.0.0.1:${challengePort}`, exit: refused.status },
       coldStart: { agent: getAddress(agent.address) as Address, proposalId, readmeLines: readme.trimEnd().split("\n").length },
+      servedFixes: {
+        custodial: t0Address,
+        custodyByAddress: String(t0Me.custody),
+        custodyOfKeyedAgent: String(t1Me.custody),
+        settlementOnJoin: settlement,
+        wholeUnitDepositRefused: String(unitMistake.reason),
+        deliberateTinyDeposit: (tiny.deposit as { usdc: string }).usdc,
+        partialExit: { burned: String((partial.ragequit as { sharesBurned: string }).sharesBurned), left: String(t0After.sharesFormatted) },
+        validateWithCustodial: custodyValidated.status,
+        validateAgainstSelfCustody: custodyControl.status,
+      },
       generatedAt: new Date().toISOString(),
     };
     writeFileSync(path.join(EVIDENCE, "entry-point-summary.json"), `${JSON.stringify(receipt, null, 2)}\n`);

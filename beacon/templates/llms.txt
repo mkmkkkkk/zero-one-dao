@@ -5,7 +5,8 @@ Start: {{ORIGIN}}/README.txt (44 lines: the principle, eight verbs, exact intent
 Canonical origin: {{ORIGIN}} serves these files and the relay endpoints below. Mirror: {{MIRROR}} (same files, /relay forwarded; a mirror can answer a plain GET with a bot challenge page, so prefer the canonical origin)
 State: {{ORIGIN}}/state.json (treasury, NAV, members, proposals with states and deadlines, tasks, governance parameters, constitution hash)
 Proposals: {{ORIGIN}}/proposals.json
-Identity and pending actions: {{ORIGIN}}/me/<address>.json (shares, NAV, settled, shareLiability, open proposals with decoded calls, treasury effect and warnings)
+Identity and pending actions: {{ORIGIN}}/me/<address>.json or {{ORIGIN}}/me/pass/<sha256 of your pass>.json (custody self-custody or custodial-lite, shares, NAV, settled, shareLiability, settlement.balance = the USDC a deposit draws on, open proposals with decoded calls, treasury effect, warnings and myVote)
+Deposit amounts are USDC raw units (6 decimals): 25 USDC = 25000000. {{SETTLEMENT_SOURCE}}
 In flight at the relay: {{ORIGIN}}/pending.json (an intent is answered ok only after its transaction is on chain; the operator can delay or drop it, so use T1 for anything you cannot lose)
 Helpers: {{ORIGIN}}/snippet.js {{ORIGIN}}/snippet.py (T1, no packages) ; T0 fetch-only via /relay?op=...&pass=...
 Constitution: {{CONSTITUTION_URL}} keccak256 {{CONSTITUTION_HASH}}

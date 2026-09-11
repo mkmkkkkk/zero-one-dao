@@ -92,6 +92,54 @@ let queued = 0;
 const hashPass = (pass: string): string => createHash("sha256").update(pass).digest("hex");
 
 /**
+ * Custody of an address, by the same test every other path uses: the relay answers custodial-lite for
+ * an address it derived from a T0 pass and can therefore sign for (`db.passes`, written by `join` and
+ * `record`; `db.accounts[..].custodial` is the same fact seen from the transaction side), and
+ * self-custody only for an address whose key it does not hold.
+ *
+ * The cold start of 2026-09-11 found `/me/<address>.json` hardcoding self-custody for a T0 account,
+ * contradicting the README's own disclosure that the relay's secret is every T0 key (decision.md
+ * 2026-09-11 ruling 1). This is read from db.json on disk rather than the module-level `db`, so a
+ * second relay process sharing the state directory cannot answer with a stale view.
+ *
+ * @param address The address `/me` was asked about.
+ * @returns "custodial-lite" when the relay can sign for it, otherwise "self-custody".
+ */
+function custodyOf(address: Address): Me["custody"] {
+  const lower = address.toLowerCase();
+  const onDisk = existsSync(dbFile) ? (JSON.parse(readFileSync(dbFile, "utf8")) as Db) : db;
+  if (onDisk.accounts[lower]?.custodial === true) return "custodial-lite";
+  return Object.values(onDisk.passes).some((derived) => derived.toLowerCase() === lower) ? "custodial-lite" : "self-custody";
+}
+
+/**
+ * Smallest fetch-only deposit accepted without `units=raw`: 1 USDC (1,000,000 raw units).
+ *
+ * The keyed snippet takes whole USDC (`--usdc 100`) and the fetch-only path takes raw units, so an
+ * agent that copies the visible example sends `amount=100` and deposits 0.0001 USDC in a mined
+ * transaction (cold-start finding 5, decision.md 2026-09-11 ruling 3).
+ */
+const DEPOSIT_RAW_UNIT_FLOOR = 1_000_000n;
+
+/**
+ * Refuse a fetch-only deposit whose magnitude is what whole units would look like, and say which unit
+ * to use. Zero is not refused here (it is a real ZeroAmount revert, not a unit mistake), and a
+ * depositor who means a sub-USDC amount says so with `units=raw`: the guard costs that caller one
+ * query parameter and saves everyone else a mined ten-thousandth of the deposit they intended.
+ *
+ * @param q The query of a T0 `op=deposit` request.
+ * @throws RelayError 400 when the amount looks like whole USDC and `units=raw` is absent.
+ */
+function assertDepositUnits(q: URLSearchParams): void {
+  const raw = q.get("amount");
+  if (raw === null || !/^(0|[1-9][0-9]{0,77})$/u.test(raw)) return; // buildIntent reports a malformed amount
+  const amount = BigInt(raw);
+  if (amount === 0n || amount >= DEPOSIT_RAW_UNIT_FLOOR) return;
+  if ((q.get("units") ?? "").toLowerCase() === "raw") return;
+  fail(400, `amount is in USDC raw units (6 decimals), not whole USDC: amount=${raw} is ${fmtUsdc(amount)} USDC. For ${raw} USDC send amount=${amount * 1_000_000n}. If you really meant ${fmtUsdc(amount)} USDC, repeat the same request with &units=raw.`);
+}
+
+/**
  * Derive the custodial-lite key from the service secret and the pass (HMAC-SHA256).
  *
  * `op=identity&pass=` maps a pass to its address for free, so a guessable pass is a guessable member
@@ -620,7 +668,10 @@ async function custodial(q: URLSearchParams): Promise<Record<string, unknown>> {
   if (op === "identity") return { ok: true, ...id, custody: "custodial-lite", me: `/me/pass/${ph}.json` };
   const authorization = id.delegated ? undefined : await key.signAuthorization({ contractAddress: adapter, chainId: D.chainId, nonce: id.authorizationNonce });
   const auth = authorization ? { chainId: D.chainId, address: adapter, nonce: authorization.nonce, r: authorization.r, s: authorization.s, yParity: authorization.yParity as 0 | 1 } : undefined;
-  if (op === "join") return join(key.address, auth, true, ph);
+  // Every T0 answer points at the same member document, join included (ruling 5: the path responses
+  // point at is now advertised in the README, so it must be the one every response names).
+  if (op === "join") return { ...(await join(key.address, auth, true, ph)), custody: "custodial-lite", me: `/me/pass/${ph}.json` };
+  if (op === "deposit") assertDepositUnits(q);
   if (!(VERBS as string[]).includes(op)) fail(400, `unknown op ${op}; T0 verbs: join, deposit, task, deliver, propose, vote, execute, ragequit, work, confirm (sponsor no longer exists: work self-sponsors)`);
   const state = await readDaoState(env);
   let query = q;
@@ -697,13 +748,12 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse): Prom
     }
     if (u.pathname.startsWith("/me/")) {
       let address = /^\/me\/(0x[0-9a-fA-F]{40})\.json$/u.exec(u.pathname)?.[1];
-      let custody: Me["custody"] = "self-custody";
       const ph = /^\/me\/pass\/([0-9a-f]{64})\.json$/u.exec(u.pathname)?.[1];
-      if (ph !== undefined) {
-        address = db.passes[ph];
-        custody = "custodial-lite";
-      }
+      if (ph !== undefined) address = db.passes[ph];
       if (address === undefined || !isAddress(address)) fail(404, "unknown address or pass hash");
+      // Ruling 1: the bare address path reports custody by the same test as the pass path, so an
+      // address the relay can sign for is never published as self-custody.
+      const custody: Me["custody"] = ph !== undefined ? "custodial-lite" : custodyOf(getAddress(address));
       return send(200, json(await me(env, getAddress(address), custody, undefined, await settledIdentity(getAddress(address)))));
     }
     // The beacon's static files, matched only AFTER every dynamic route above: /state.json and

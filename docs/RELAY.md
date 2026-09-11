@@ -40,9 +40,12 @@ in `relay/common.ts`.
 ## Endpoints (GET only, JSON, `Cache-Control: no-store`, CORS `*`)
 - `/health.json`: service, chain, adapter, Baal, Safe, settlement, constitution, sponsor address and balance, policy, verbs, queue.
 - `/me/<address>.json`, `/me/pass/<sha256(pass)>.json`: identity (`delegated`, intent `nonce`, `authorizationNonce`,
-  `chainTime`, EIP-712 `domain`), `shares`, `percent`, `navUsdcPerShare` (deposit NAV per share, divided by shares +
+  `chainTime`, EIP-712 `domain`), `custody` (`self-custody` or `custodial-lite`; BOTH paths answer `custodial-lite` for
+  an address the relay derived from a T0 pass and can sign for, decision.md 2026-09-11 ruling 1), `shares`, `percent`,
+  `navUsdcPerShare` (deposit NAV per share, divided by shares +
   `shareLiability` as DepositShaman prices it), `settled`, `depositTreasury` (raw USDC), `shareLiability` (rewardShares of
-  Active tasks), `exitValueUsdc` (Safe only), `usdc`, `openProposals`
+  Active tasks), `exitValueUsdc` (Safe only), `usdc`, `settlement` (`token`, `balance`, `formatted`, `source`: the USDC a
+  deposit draws on and where it comes from on this chain, ruling 2), `openProposals`
   (state, `votingEnds`, `graceEnds`, seconds remaining, decoded `calls`, `treasuryEffect`, `flags`, `myVote`, `canVote`,
   `canExecute`, `proposalData`), `warnings` (one line per flag of every open proposal), `myProposals`, `myTasks` (role +
   what is pending), `openTasks`, `ragequit.data` (the exact `abi.encode(address[])`), `pollSeconds: 3600`.
@@ -88,7 +91,7 @@ the receipt and decodes what happened. An identical envelope sent twice returns 
 | verb (op) | fields | effect |
 |---|---|---|
 | join | `op=join&authorization=` (no intent) | attaches the adapter to the key (EIP-7702, one no-op tx); mints nothing; `alreadyJoined` if delegated |
-| deposit (5) | `amount` = USDC raw units | `USDC.approve(DepositShaman)` + `deposit(amount)` from the member's address; shares at NAV; test chains: the relay's faucet tops the member up first |
+| deposit (5) | `amount` = USDC raw units (6 dec) | `USDC.approve(DepositShaman)` + `deposit(amount)` from the member's address; shares at NAV; test chains: the relay's faucet tops the member up first, mainnet does not (the README's deposit line says which, and `/me.settlement` carries the balance and its source) |
 | task (7) | `amount` = taskId | `WorkManager.claim` |
 | deliver (8) | `amount` = taskId, `evidenceHash` = keccak256(evidence) | `WorkManager.deliver` |
 | confirm (9) | `amount` = taskId, `data` = evidence bytes | `WorkManager.confirm` (named verifier; mints at threshold) |
@@ -128,9 +131,15 @@ authorization and every intent with it and records `sha256(pass)` -> address for
 service can sign for these accounts; a pass in a URL can land in fetch/proxy logs. What the operator can and cannot do
 is in the README: it cannot substitute code or targets (the signature binds them), and it can delay or drop an intent,
 so anything a T0 member cannot afford to lose goes through T1 (own key). Verbs and query parameters:
-`join`, `identity`, `deposit&amount=`, `vote&proposalId=&approve=yes|no`, `execute&proposalId=[&data=]`,
+`join`, `identity`, `deposit&amount=[&units=raw]`, `vote&proposalId=&approve=yes|no`, `execute&proposalId=[&data=]`,
 `task&taskId=`, `deliver&taskId=&evidence=|evidenceHash=`, `confirm&taskId=&evidence=`, `ragequit[&amount=|all][&tokens=]`,
 `work&verifiers=a,b&threshold=&rewardShares=&details=[&expiration=]`, `propose&template=&params=[&summary=&salt=]`.
+Every T0 answer carries `custody: "custodial-lite"` and `me: /me/pass/<sha256(pass)>.json`, the path the README now
+advertises (ruling 5). Units (ruling 3): the keyed snippet takes whole USDC (`--usdc 100`) and this path takes raw
+units, so `op=deposit&amount=100` used to mine a deposit of 0.0001 USDC. A fetch-only deposit of `0 < amount <
+1,000,000` raw units is now refused `400` naming the unit, the raw amount for that many whole USDC, and `&units=raw`
+for a depositor who really means a sub-USDC amount; `amount=0` is left to the contract's `ZeroAmount`. `op=ragequit`
+takes an optional `amount` (shares, raw 18-dec; default: the whole stake), which is a partial exit (ruling 4).
 
 ### Helpers (T1, no packages)
 `beacon/templates/snippet.js` / `snippet.py` (published at `/snippet.js`, `/snippet.py` with the chain id, settlement
@@ -170,8 +179,12 @@ deployment is unchanged: its own files then name itself and its rewrites forward
 line count (<= 44, the count is in the output as `readmeLines`) and content -- the principle, the eight verbs, the
 intent type, the constitution hash, every address, the phase 5 settlement rule, the exit rule, the T0 operator line
 ("the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1"), the 128-bit
-pass floor, `/pending.json`, and the entry-point lines (which host is canonical, and a `Mirror <url>` line naming a
-different host) -- that every address in `state.json` (contracts and template instances) has code on the chain, that
+pass floor, `/pending.json`, the entry-point lines (which host is canonical, and a `Mirror <url>` line naming a
+different host), and one assertion per defect the 2026-09-11 cold start found (custody in `/me`; where the settlement
+token comes from, test chain against mainnet, plus `settlement.balance`; the unit named at every amount, including
+`--usdc 100 (whole USDC)` against `op=deposit&amount=<USDC raw units>`; the partial `op=ragequit[&amount=]`; the
+snippet writing the key file; `/me/pass/` advertised; `myVote`) -- that every address in `state.json` (contracts and
+template instances) has code on the chain, that
 `state.json` carries `settled`, `depositTreasury`, `shareLiability` and, per proposal, `flags` and
 `treasuryEffect.usdcApproved` with the instance panel bound to the proposal's own calls, no unfilled placeholders, the
 dashboard's design rules, and that the published constitution bytes hash to the on-chain hash.
@@ -180,7 +193,10 @@ It then FETCHES, from the origin the README names (or `--origin`, or `--origin m
 advertises on that origin: `/README.txt` (byte-identical to the build), `/llms.txt`, `/snippet.js`, `/snippet.py`,
 `/CONSTITUTION.md` (bytes hashed against the chain), `/robots.txt`, `/`, `/health.json`, `/state.json`,
 `/proposals.json`, `/pending.json`, `/me/<a member>.json` and one read-only `/relay?op=quote`, plus the constitution
-URL wherever it points. Each must answer 200 with the right content type, a parseable body for the JSON endpoints, no
+URL wherever it points. Two more `/me` fetches carry the custody check (ruling 1): an address no relay can have derived
+must answer `self-custody`, and `--custodial <address>` (an account this origin's relay derived from a T0 pass) must
+answer `custodial-lite`. `npm run e2e:relay` and `npm run e2e:entry-point` both pass a real T0 address in that flag and
+both assert the negative control, a self-custody address in the same flag, exits non-zero. Each must answer 200 with the right content type, a parseable body for the JSON endpoints, no
 bot-mitigation header and no challenge page; a path the README advertises and the probe table does not cover is itself
 a failure, so the table cannot silently fall behind the README. The summary carries `origin`, `mirror`, `advertised`,
 `offOriginUrls` and one row per probe. Without this the old validator passed against an origin agents could not read:

@@ -331,6 +331,17 @@ async function main(): Promise<void> {
     const t0Me = (await (await fetch(`${origin}${String(t0.me)}`)).json()) as Record<string, unknown>;
     console.log(`   /me/pass: custody ${t0Me.custody} shares ${t0Me.sharesFormatted} nonce ${t0Me.nonce}`);
     assert(t0Me.custody === "custodial-lite" && BigInt(String(t0Me.shares)) === t0Shares, "/me/pass/<sha256> reports the T0 shares");
+    // Ruling 1 (cold-start finding 2): the ADVERTISED member document, fetched by address with no pass,
+    // must not tell a T0 agent it is self-custody while the relay holds its key.
+    const t0MeByAddress = (await (await fetch(`${origin}/me/${t0Address}.json`)).json()) as Record<string, unknown>;
+    console.log(`   /me/<address>: custody ${t0MeByAddress.custody} settlement ${JSON.stringify(t0MeByAddress.settlement)}`);
+    assert(t0MeByAddress.custody === "custodial-lite", "/me/<address>.json reports custodial-lite for a T0 account whose key the relay derived and holds");
+    const agentMe = (await (await fetch(`${origin}/me/${agent.address}.json`)).json()) as Record<string, unknown>;
+    assert(agentMe.custody === "self-custody", "/me/<address>.json still reports self-custody for the T1 agent, whose key the relay never had");
+    // Ruling 2: what the next deposit will draw on is in the document, not only on chain.
+    const t0Settlement = t0MeByAddress.settlement as { token: string; balance: string; source: string };
+    assert(getAddress(t0Settlement.token) === getAddress(dao.settlement) && t0Settlement.balance === String(await usdcOf(t0Address)) && t0Settlement.balance === t0MeByAddress.usdc, "/me carries the settlement token and this address's balance of it (what a deposit pulls)");
+    assert(/tops this address up/u.test(t0Settlement.source), `/me says where that balance comes from on a faucet chain: ${t0Settlement.source}`);
 
     step("T1 agent proposes Payment #2 (1 USDC to the T0 address); T0 votes YES then ragequits during voting (allowed); T0 sees 0 shares");
     const p2Params = JSON.stringify({ recipients: [t0Address], amounts: [SETTLEMENT_UNIT.toString()] });
@@ -369,6 +380,11 @@ async function main(): Promise<void> {
     assert((reclaim.error as { name: string })?.name === "WrongStatus", "claiming a completed task -> custom error WrongStatus decoded with its arguments");
     const badDeposit = await get(snippet("python", beacon, ["deposit", "--key", v1File, "--amount", "0"]), false);
     assert((badDeposit.error as { name: string })?.name === "ZeroAmount", "deposit 0 -> DepositShaman.ZeroAmount decoded");
+    // Ruling 3 (cold-start finding 5): the keyed snippet takes whole USDC and this path takes raw units,
+    // so amount=100 means 0.0001 USDC. Refused before anything is signed, naming the unit to use.
+    const wholeUnits = await get(`${origin}/relay?op=deposit&amount=100&pass=${encodeURIComponent(pass)}`, false);
+    assert(wholeUnits.status === 400 && /raw units \(6 decimals\), not whole USDC/u.test(String(wholeUnits.reason)) && /amount=100000000/u.test(String(wholeUnits.reason)), "a fetch-only deposit of amount=100 is refused with the unit and the amount to send for 100 USDC");
+    assert(/&units=raw/u.test(String(wholeUnits.reason)), "and tells a depositor who really meant 0.0001 USDC how to say so");
     const badTemplate = await get(`${origin}/relay?op=propose&template=Bogus&params=%7B%7D&pass=${encodeURIComponent(pass)}`, false);
     assert(String(badTemplate.reason).includes("unknown template"), "unknown template -> 400 with a reason");
     const noShares = await get(snippet("python", beacon, ["propose", "--key", v1File, "--template", "Payment", "--params", paymentParams, "--summary", "v1: no shares"]), false);
@@ -484,12 +500,19 @@ async function main(): Promise<void> {
     // The validator fetches the README from the origin and requires it to be the one just built, so the
     // directory the relay serves is refreshed from the same state.
     await buildBeacon({ deployment: deploymentFile, origin, out: beacon });
-    const finalValidation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal], { encoding: "utf8", env: NO_PROXY });
+    const finalValidation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal, "--custodial", t0Address], { encoding: "utf8", env: NO_PROXY });
     const finalCount = spawnSync("wc", ["-l", path.join(beaconFinal, "README.txt")], { encoding: "utf8" });
     const finalReceipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>\n${finalValidation.stdout}${finalValidation.stderr}$ wc -l README.txt\n${finalCount.stdout}`;
     console.log(finalReceipt);
     writeFileSync(path.join(ROOT, process.env.ZERO_ONE_RELAY_EVIDENCE ?? "evidence/phase5", "beacon-validate-stageC.log"), finalReceipt);
     assert(finalValidation.status === 0 && JSON.parse(finalValidation.stdout).result === "PASS", `beacon validator PASS over ${finalState.proposals.length} proposals (${JSON.parse(finalValidation.stdout || "{}").readmeLines} README lines)`);
+    assert(JSON.parse(finalValidation.stdout).custodyProbed.custodialLite === getAddress(t0Address), "the passing run fetched /me for the T0 address and required custodial-lite (ruling 1)");
+    // Negative control: the same assertion pointed at a self-custody address must FAIL, or it proves nothing.
+    const custodyControl = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beaconFinal, "--custodial", agent.address], { encoding: "utf8", env: NO_PROXY });
+    assert(custodyControl.status !== 0 && /reports custody "self-custody"/u.test(custodyControl.stderr), `the custody check has teeth: validating the T1 agent as custodial exits ${String(custodyControl.status)} naming the label it got`);
+    const servedFixes = path.join(ROOT, "evidence", "phase5", "served-fixes");
+    mkdirSync(servedFixes, { recursive: true });
+    writeFileSync(path.join(servedFixes, "beacon-validate-custody-control.log"), `$ beacon/scripts/validate.ts --custodial <T0 address>\n${finalValidation.stdout}\n$ beacon/scripts/validate.ts --custodial <T1 self-custody address>\nexit ${String(custodyControl.status)}\n${custodyControl.stderr}`);
     const publishedSpoof = finalState.proposals.find((proposal) => proposal.proposalData.toLowerCase() === hostile.toLowerCase())!;
     assert(publishedSpoof.flags.length === 3 && publishedSpoof.instance === undefined && publishedSpoof.treasuryEffect.usdcApproved === (2n ** 128n).toString(), "the published state.json carries the hostile proposal's three flags, no instance panel and its allowance");
     assert(/^\d+$/u.test(finalState.treasury.shareLiability) && finalState.treasury.settled === true, `the published treasury carries settled=${finalState.treasury.settled} and shareLiability=${finalState.treasury.shareLiability}`);
