@@ -1,0 +1,21 @@
+{
+  "portal": "0x49f53e41452C74589E85cA1677426Ba426459e85",
+  "portalVersion": "5.2.0",
+  "address": "0x71208DBf8DD681c5FC2998c8192B633677BFcc10",
+  "l1": {
+    "chainId": 11155111,
+    "hash": "0xb813a281f772fb11904bee1a707f2b98a9d7b865bc46494da0b16bc6904dc678",
+    "blockNumber": "11680928",
+    "gasUsed": "90299",
+    "maxFeePerGasGwei": "3.710053508",
+    "bridgedEth": "0.012738603419843215",
+    "balanceBeforeEth": "0.013152867994546495",
+    "balanceAfterEth": "0.000272865235425677"
+  },
+  "l2": {
+    "chainId": 84532,
+    "balanceBeforeEth": "0.000898124954079328",
+    "balanceAfterEth": "0.013636728373922543",
+    "credited": true
+  }
+}

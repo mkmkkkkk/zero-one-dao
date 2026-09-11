@@ -1,0 +1,4 @@
+balance 0.023191149621950376
+0.02 ETH: 24754842 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.005 gwei live base fee (latest block 46675160) x 5 = 0.00061887105 ETH, floor 0.02 ETH governs
+ASSERT deployer 0x71208DBf8DD681c5FC2998c8192B633677BFcc10 holds 0.023191149621950376 ETH, at or above the 0.02 ETH: 24754842 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.005 gwei live base fee (latest block 46675160) x 5 = 0.00061887105 ETH, floor 0.02 ETH governs
+GATE PASSES
