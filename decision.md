@@ -645,3 +645,25 @@ amount; `amount=0` still reaches the contract's `ZeroAmount`. 4. The fetch-only 
 `/me/pass/<sha256 of your pass>.json` (and the T0 join response now points at it like every other T0 answer), and names
 `myVote`, the field `/me` delivers. The custody defect is fixed in this checkout only: the canonical relay keeps serving
 the old README and answering self-custody until the mini pulls.
+
+## 2026-09-11 deployer funding gate: the constant is gone, the requirement is read from the chain
+Implementation of the 2026-09-10 ruling. `MIN_DEPLOYER_WEI` (0.005 ETH) is deleted; `src/deployerGate.ts` computes
+`required = max(measured deployment gas x live base fee x 5, 0.02 ETH)` and `deployNetwork` refuses on it before any
+write. The gas is read from `evidence/phase5/base-fork/measurements.json` (24,778,573 over 22 transactions), not written
+down a second time, and the refusal names that file, the live base fee it used and what the deployer holds. The base fee
+comes from the latest block of the target chain at the moment of the check; a chain reporting no `baseFeePerGas` falls
+back to `eth_gasPrice` and the message says so; if neither answers, the run refuses rather than guessing. Answers:
+0.02 ETH at 0.006 gwei (computed 0.00074335719) and at 0.05 gwei (computed 0.00619464325) — the floor governs — and
+0.0619464325 ETH at 0.5 gwei, where the computed part governs; crossover about 0.161 gwei. One rule on every chain, so a
+Base Sepolia deployer also needs 0.02 ETH of test ETH.
+Proof: `npm run test:deploy-refusals` gained four fork cases that move only the base fee and the balance — pass at
+0.05 gwei holding 0.03 ETH, refuse the same 0.03 ETH at 0.5 gwei, refuse one wei under the requirement, pass at exactly
+the requirement — each asserting the full message, with the predicted Safe poisoned first so no case can deploy.
+Receipts `evidence/phase5/deployer-gate/`. The fork rehearsal re-ran: the gate passed at Base's live 0.003935754 gwei and
+the deployment completed, 22 transactions, 24,754,770 gas, 50 USDC genesis, verification inputs written.
+Two things found while proving it, both pre-existing and neither fixed here beyond the first: (a) the refusals test's
+constitution-URL case had gone vacuous — it pinned HEAD as the "other" commit, which equals the genesis commit whenever
+HEAD is itself pushed, so the gate it claimed to prove was never reached; it now pins HEAD's parent and the refusal fires.
+(b) `scripts/e2e-base-fork.ts` still calls `NavShareToken.lotCount`, which the incremental-settlement redesign removed, so
+the rehearsal dies after the deployment section. The lot concept is gone from the contract, so what that ragequit
+measurement should now measure is a design question for the retention review, not a rename.

@@ -8,13 +8,13 @@ import { concatHex, encodeAbiParameters, erc20Abi, getAddress, getContractAddres
 import { parseArgs } from "../beacon/scripts/build.js";
 import { deployLocal } from "../src/onchain.js";
 import { fmtEth, keyFromEnvFile, liveChain, liveContexts } from "../src/live.js";
+import { assertDeployerFunded, DEPLOYER_FLOOR_WEI, DEPLOYER_GAS_FACTOR, MEASUREMENT_FILE } from "../src/deployerGate.js";
 import { BASE_USDC, constitutionHash, DEFAULT_PARAMS, deployZeroOne, enumerateShamans, GENESIS_DEPOSIT, genesisDeposit, proxySaltNonce, SETTLEMENT_UNIT } from "../src/zeroOne.js";
 import { constructorArguments, writeVerificationInputs, type VerificationRecord } from "../src/verification.js";
 import { loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 import { assertBaseFork } from "../src/baseFork.js";
-const MIN_DEPLOYER_WEI = 5_000_000_000_000_000n; // 0.005 ETH
 
 /**
  * Deploy, run genesis, write the record and the verification inputs.
@@ -28,7 +28,8 @@ export async function deployNetwork(CHAIN_ID: 8453 | 84532, argv = process.argv.
 Base mainnet refuses unless all five preconditions hold:
 1. HEAD is pushed to origin (constitution URL pins that genesis commit).
 2. Constitution URL bytes hash to Constitution.textHash.
-3. Deployer holds >= 50 USDC and >= 0.005 ETH; proxy decimals must be 6.
+3. Deployer holds >= 50 USDC and >= the requirement computed from the chain it is about to deploy to:
+   measured deployment gas (${MEASUREMENT_FILE}) x the live base fee x ${DEPLOYER_GAS_FACTOR}, floor ${fmtEth(DEPLOYER_FLOOR_WEI)} ETH. Proxy decimals must be 6.
 4. CREATE2-predicted Safe holds exactly 0 USDC before deployment.
 5. --i-confirmed-parameters is passed (checked before key access or RPC).
 A public deployment additionally requires a clean working tree.
@@ -114,7 +115,7 @@ Sepolia accepts --sponsor <address> --sponsor-usdc <units>; Base forbids both.`)
   if (await publicClient.getChainId() !== CHAIN_ID) throw new Error("RPC chainId mismatch");
   const balance = await publicClient.getBalance({ address: deployer.account.address });
   console.log(`deployer ${deployer.account.address} balance ${fmtEth(balance)} ETH on ${chain.name} (${chain.rpcUrls.default.http[0]})`);
-  if (balance < MIN_DEPLOYER_WEI) throw new Error(`deployer holds ${fmtEth(balance)} ETH, below the ${fmtEth(MIN_DEPLOYER_WEI)} ETH floor`);
+  await assertDeployerFunded(publicClient, deployer.account.address, balance);
 
   const supply = 100_000_000n * SETTLEMENT_UNIT;
   let predictedSafe: Address | undefined;

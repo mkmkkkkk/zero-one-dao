@@ -80,3 +80,18 @@ export function fmtEth(wei: bigint): string {
   const frac = (wei % 10n ** 18n).toString().padStart(18, "0").replace(/0+$/u, "");
   return `${whole}${frac ? `.${frac}` : ""}`;
 }
+
+/**
+ * Wei as a decimal gwei string (9 decimals, trailing zeros trimmed).
+ *
+ * Used for the live base fee the deployer funding gate names in its refusal: gwei is the unit a fee
+ * is quoted in, and printing it as ETH would hide the number an operator has to compare.
+ *
+ * @param wei Wei per gas.
+ * @returns The same quantity in gwei, e.g. `500000000n` -> `"0.5"`.
+ */
+export function fmtGwei(wei: bigint): string {
+  const whole = wei / 10n ** 9n;
+  const frac = (wei % 10n ** 9n).toString().padStart(9, "0").replace(/0+$/u, "");
+  return `${whole}${frac ? `.${frac}` : ""}`;
+}

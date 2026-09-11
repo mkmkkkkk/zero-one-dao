@@ -1,67 +1,68 @@
 FORK attempt https://mainnet.base.org
 ASSERT fork upstream=https://mainnet.base.org chainId=8453 block=51000000 loopback=http://127.0.0.1:11545
 ASSERT before any write: loopback http://127.0.0.1:11545 chainId=8453 forkedNetwork=8453
-ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x7FE535fe057Ef3be2bdD948eEC3c9d956A742788 tx=0x1af2ed3e67944b29f4f9a968e5b63ccb23859d86b8cd745b728a8b4bf43baba6
-ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x15dA4f7600B602826b4E421EA59AB65fd7CC22bC tx=0x33f5c2a80df76d059b72acb897d9230246a1902de45bdb25125987984d1745d7
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x458160805dD2D84aA219C60115F73894ee8A9e2c tx=0x97f125b5a15d244ee3fdda50c3f0666ee53e3a7092b59c62e2917d0405b47189
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x6545C7Cbae375effd7882B8A010c8191605CE5df tx=0x3bd3b04fa24970f9341102a24396508944fc9e1263f63af839b77335a1dfae49
 superseded the previous fork record -> evidence/phase5/base-fork/deploy-base-fork.superseded.json
-ASSERT constitution pins dcb3e83d209fc4c1cd4eab5f20434eeb632b5678 (newest pushed ancestor; local HEAD 4ad81a6e4a9bfd092f1a4ccd32652ad0108e8e52 is 5 unpublished commit(s) ahead)
-ASSERT genesis commit dcb3e83d209fc4c1cd4eab5f20434eeb632b5678 advertised by public origin (local HEAD 4ad81a6e4a9bfd092f1a4ccd32652ad0108e8e52, fork rehearsal pinned to a pushed ancestor)
-constitution https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/dcb3e83d209fc4c1cd4eab5f20434eeb632b5678/docs/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (matches local bytes)
-deployer 0x7FE535fe057Ef3be2bdD948eEC3c9d956A742788 balance 1000 ETH on Base (http://127.0.0.1:11545)
-ASSERT CREATE2-predicted Safe 0x535f428B69C90e43DBd1A9449735fFD2AAe47bdF USDC=0 before deployment
-ASSERT CREATE2-predicted Safe 0x535f428B69C90e43DBd1A9449735fFD2AAe47bdF USDC=0 before deployment
-safe 0x535f428B69C90e43DBd1A9449735fFD2AAe47bdF baal 0x9Fdaa7EEFB3b0B5631be39be7aE137375fe0Fe6E shares 0xb2e180d8876a9d430Ed83340E00738CBf7f13424 factory 0x88D12B38a6749F5569587fc4f1Abe5D1d5ABe47c adapter 0x7310a419f0045F5602d021832D6222B3739F2509 constitution 0x5F1D184d22455Fbf912499e72aD7eDc599DDb2Ad
-genesis: 50000000000000000000 shares to the founder (approve 0x5e5feb8d73466d10e6e1c919da7d5c8750f3f074f4e5e19945c3c7caa8bf0ea3, deposit 0x2cd03158e2305835d6a99a3dcab1646c0c2300a20294345028be44885f36846f)
-ASSERT the only shamans Baal ever granted are DepositShaman 0x43D1db6527f31d2171E993CAA588C1a957920876 and WorkManager 0xD6F9f7830BE9F8d87B99edFD63D30215C7686e30, both permission 2 (manager)
+ASSERT constitution pins 229b3865515a61aef119b5fde5f0a862e9305550 (= local HEAD, pushed)
+ASSERT genesis commit 229b3865515a61aef119b5fde5f0a862e9305550 advertised by public origin (local HEAD 229b3865515a61aef119b5fde5f0a862e9305550, fork rehearsal pinned to a pushed ancestor)
+constitution https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/229b3865515a61aef119b5fde5f0a862e9305550/docs/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (matches local bytes)
+deployer 0x458160805dD2D84aA219C60115F73894ee8A9e2c balance 1000 ETH on Base (http://127.0.0.1:11545)
+ASSERT deployer 0x458160805dD2D84aA219C60115F73894ee8A9e2c holds 1000 ETH, at or above the 0.02 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.003935754 gwei live base fee (latest block 51000002) x 5 = 0.00048761183899521 ETH, floor 0.02 ETH governs
+ASSERT CREATE2-predicted Safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 USDC=0 before deployment
+ASSERT CREATE2-predicted Safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 USDC=0 before deployment
+safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 baal 0x6A5Ee5D57366d914A78eBe3d78cb226DE716F2c4 shares 0x6a5880e842f6b0c200E657F8C3b90FDEc252f29a factory 0xE9C1A7cE380bCeCDE482aeb273242E8b74Fc88D8 adapter 0x94A1350548230DF0005519Ed47D19A77dB1d6893 constitution 0x78a9b05e97C111C947EAaa58b17b5a9c531074bE
+genesis: 50000000000000000000 shares to the founder (approve 0x4e9ea966d06994808d607afd83c3aaeab09f2287e6f18583f82a8793a6cb9ff3, deposit 0x5ddb20ffa1775940be11e957693824e500ab26ebb1d75dc1ff1722df6474e80d)
+ASSERT the only shamans Baal ever granted are DepositShaman 0x80C35608C70A588271a099ae99D55973B7AC58B3 and WorkManager 0x97008DA0594DAF26b82AC49281A2C0528a6eB3b6, both permission 2 (manager)
 verification inputs: /Users/michaelyang/Documents/Workspace/zero-one-dao/evidence/phase5/base-fork/verification-base (60 source units, compiler v0.8.36+commit.8a079791)
 {
   "chain": "Base",
   "fork": true,
-  "sourceCommit": "4ad81a6e4a9bfd092f1a4ccd32652ad0108e8e52",
+  "sourceCommit": "229b3865515a61aef119b5fde5f0a862e9305550",
   "workingTreeDirty": true,
-  "genesisCommit": "dcb3e83d209fc4c1cd4eab5f20434eeb632b5678",
+  "genesisCommit": "229b3865515a61aef119b5fde5f0a862e9305550",
   "chainId": 8453,
   "rpcUrl": "http://127.0.0.1:11545",
   "explorer": "https://basescan.org",
-  "deployedAt": "2026-09-09T22:26:39.105Z",
+  "deployedAt": "2026-09-11T08:17:54.906Z",
   "startBlock": 51000002,
-  "deployer": "0x7FE535fe057Ef3be2bdD948eEC3c9d956A742788",
-  "founder": "0x7FE535fe057Ef3be2bdD948eEC3c9d956A742788",
+  "deployer": "0x458160805dD2D84aA219C60115F73894ee8A9e2c",
+  "founder": "0x458160805dD2D84aA219C60115F73894ee8A9e2c",
   "settlement": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   "settlementNote": "Circle USDC on Base; no mint or faucet",
-  "safe": "0x535f428B69C90e43DBd1A9449735fFD2AAe47bdF",
-  "baal": "0x9Fdaa7EEFB3b0B5631be39be7aE137375fe0Fe6E",
-  "shares": "0xb2e180d8876a9d430Ed83340E00738CBf7f13424",
-  "loot": "0xfE295747231de47412bE12683A5240238135497a",
-  "depositShaman": "0x43D1db6527f31d2171E993CAA588C1a957920876",
-  "treasuryLedger": "0x2DaF66158ff67F49dA65C9593d9e79f3cEF254bB",
-  "workManager": "0xD6F9f7830BE9F8d87B99edFD63D30215C7686e30",
-  "templateFactory": "0x88D12B38a6749F5569587fc4f1Abe5D1d5ABe47c",
+  "safe": "0x18c69e2760c88A2B991e8A854Fcbf01c3032f566",
+  "baal": "0x6A5Ee5D57366d914A78eBe3d78cb226DE716F2c4",
+  "shares": "0x6a5880e842f6b0c200E657F8C3b90FDEc252f29a",
+  "loot": "0xF8F3a89C7B3b25E9BFfC0FC55785f419f427F585",
+  "depositShaman": "0x80C35608C70A588271a099ae99D55973B7AC58B3",
+  "treasuryLedger": "0xfE92e5F7A67a8b4C1246368fC90ee52FF57f4d51",
+  "workManager": "0x97008DA0594DAF26b82AC49281A2C0528a6eB3b6",
+  "templateFactory": "0xE9C1A7cE380bCeCDE482aeb273242E8b74Fc88D8",
   "templateDeployers": [
-    "0x6dFbdA0B2C9f8385E394Af90a7e93d69bfaAa9F0",
-    "0x5a9608c0F2dF457E284D5C5851a7C14Eba9369aB",
-    "0xb699C36A56F3146ceeC6e2fe7573F77d59869F00",
-    "0x831F787391e8cdcBcc0Ae874a6e878B1046813A7"
+    "0x7BC2C32d5D875172a0bED25A3c7d71d8d2636270",
+    "0x99d8163586D66b5Ef8172f6B7016dc09e834bbc8",
+    "0x4DDf86f97c169c00c5aBe8dd2e7EF92334afa3Cf",
+    "0xe9605A45F23F478245A5185E867000D0ee3e4da2"
   ],
-  "intentAccount": "0x7310a419f0045F5602d021832D6222B3739F2509",
+  "intentAccount": "0x94A1350548230DF0005519Ed47D19A77dB1d6893",
   "constitution": {
-    "address": "0x5F1D184d22455Fbf912499e72aD7eDc599DDb2Ad",
+    "address": "0x78a9b05e97C111C947EAaa58b17b5a9c531074bE",
     "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
-    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/dcb3e83d209fc4c1cd4eab5f20434eeb632b5678/docs/CONSTITUTION.md",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/229b3865515a61aef119b5fde5f0a862e9305550/docs/CONSTITUTION.md",
     "text": "docs/CONSTITUTION.md"
   },
   "singletons": {
-    "baalSingleton": "0x3d5573B66A55D5746a282828Eb38e494111c28A1",
-    "moduleProxyFactory": "0xa73ECB386d8f9a1C28998533FDe7735c603Eac3a",
-    "safeSingleton": "0xD771Ad001ceF67e2096dBB85980483b928C94A74",
-    "safeProxyFactory": "0x00eDd78bffCd0edC294a7783bA99377740D35596",
-    "multiSend": "0xD34DFcC9f7abDd04cA1c5D1dC2Ca32C69d93f271",
+    "baalSingleton": "0x5853DB2FF58309c5C342f97Bc44C2238ad03A559",
+    "moduleProxyFactory": "0x258f59592cfba43006cD7378988A81AEF1dC4625",
+    "safeSingleton": "0xC783647E796D3E4C4aC6ADF023DBA716D577Ca32",
+    "safeProxyFactory": "0x30D53Baa745246E45dEc985e03965136D1Ebc497",
+    "multiSend": "0x3Be5cfcF987031e531704B6e69C4a36829403094",
     "deploymentTransactions": [
-      "0x8eb32d91954ed2bedb5740b07eaa901d392e88944528b48045c9d0db00fdfaf4",
-      "0xc9d461eef851c6d469fd8949e61ab33a050eeca8d36f8f09b42c1b745177b07b",
-      "0x32b501c6eb75a0204b526b3803a27df17e02beb66976b24a58461e705f2e9e2c",
-      "0xf28004a44b878cec77daf2737f5e79e0047f5f689d32db0f41683b371e7c477a",
-      "0x9020a02ddd0462d080dda42b09b554848909b4808abe9a4cec4d236b1f7ee863"
+      "0x44ae0060d82ad9f31909887cad748b2dfdc34af1de3d1a24045bc2c14df1523d",
+      "0xa2f017a69dd40fe61a77210c4a11e42baf670da2a729f71578e714b06a16bfae",
+      "0x08efdba9f3a37bdb8e24f3180ec25b56dac75593b09af964f59a53adbd6df862",
+      "0x32f0fc4b75dd17a9d3841ebca38c7682201f586bcf03d4611eb6732eac3988de",
+      "0x0a13e24c4357abc7400864eeebfe589143f2d9d9e3e7e2694319faed237e726e"
     ]
   },
   "governance": {
@@ -74,108 +75,95 @@ verification inputs: /Users/michaelyang/Documents/Workspace/zero-one-dao/evidenc
   },
   "shamans": [
     {
-      "shaman": "0x43D1db6527f31d2171E993CAA588C1a957920876",
+      "shaman": "0x80C35608C70A588271a099ae99D55973B7AC58B3",
       "permission": "2"
     },
     {
-      "shaman": "0xD6F9f7830BE9F8d87B99edFD63D30215C7686e30",
+      "shaman": "0x97008DA0594DAF26b82AC49281A2C0528a6eB3b6",
       "permission": "2"
     }
   ],
   "genesis": {
     "depositUsdc6": "50000000",
     "sharesMinted": "50000000000000000000",
-    "approveHash": "0x5e5feb8d73466d10e6e1c919da7d5c8750f3f074f4e5e19945c3c7caa8bf0ea3",
-    "depositHash": "0x2cd03158e2305835d6a99a3dcab1646c0c2300a20294345028be44885f36846f"
+    "approveHash": "0x4e9ea966d06994808d607afd83c3aaeab09f2287e6f18583f82a8793a6cb9ff3",
+    "depositHash": "0x5ddb20ffa1775940be11e957693824e500ab26ebb1d75dc1ff1722df6474e80d"
   },
   "txHashes": {
-    "singleton:Baal": "0x8eb32d91954ed2bedb5740b07eaa901d392e88944528b48045c9d0db00fdfaf4",
-    "singleton:ModuleProxyFactory": "0xc9d461eef851c6d469fd8949e61ab33a050eeca8d36f8f09b42c1b745177b07b",
-    "singleton:GnosisSafe": "0x32b501c6eb75a0204b526b3803a27df17e02beb66976b24a58461e705f2e9e2c",
-    "singleton:GnosisSafeProxyFactory": "0xf28004a44b878cec77daf2737f5e79e0047f5f689d32db0f41683b371e7c477a",
-    "singleton:MultiSendCallOnly": "0x9020a02ddd0462d080dda42b09b554848909b4808abe9a4cec4d236b1f7ee863",
-    "SafeProxy": "0x6fa31d8ef971f81ee942148edb9722924a8590d4aeb8e19a1577c13591586991",
-    "BaalProxy": "0x92732732d303b41316dd5aead0cc944189464dd12dbcc5c61d7803d258047b4f",
-    "NavShareToken": "0xc6bf7df3d884b847667dae878054a691f11c38642ff33af9199659e5344b2ac6",
-    "LootToken": "0xda776deaf41d660216b89516238468f3c1bac291dec83388ffa758f4fd77c371",
-    "DepositShaman": "0x1acbf6eff994a9b1188a7bc2e96d820d7708e507e29230699270b2c9c3f5a4e3",
-    "WorkManager": "0x4c446fe2d0a39cd6b6c223097326ab5022c17422f77e8cd9f6fcd6d28ba404f5",
-    "PaymentDeployer": "0xec32674516eb8e72b020a381a656127cb9032e08083378d1568f65b2c8945508",
-    "StrategyDeployer": "0x6ee4b5d391f03fccb1d2d582ec5626170824b4b900b83361e6260875c4c0ec4c",
-    "ProjectDeployer": "0xdbe78aac34b09cd79c602936f6f6d1457bfc5be9b4da3f2d9bc6bd33f7cbaf2d",
-    "ConfigDeployer": "0xd25d9a53da7b8c9e9dfe6f341a0486926214708681d0e44966e0945762d3bfac",
-    "TemplateFactory": "0x28f741918ecad07411b2eb5d1e9e8fc0834c7aadf2d0cbd43dc1b2d953b45c20",
-    "ZeroOneIntentAccount": "0xea50beb1cb912ef0d649cb0c94280d6ad9d5244615e83ea4f259174ee300ed44",
-    "Constitution": "0xaaffaffab9241417720f6a26486886c840dfe5d072bdae9f3b8b48df8891e0a2",
-    "Safe.setup": "0x5881328b572f28451dd775b7d40e6fec8ca4413c2bae935d01fffea3ca99e4cc",
-    "Baal.setUp": "0x4eeba0531d19888b61b0d85b1aea471d8c70b05315d1eb369578ffba66a8b5d9"
+    "singleton:Baal": "0x44ae0060d82ad9f31909887cad748b2dfdc34af1de3d1a24045bc2c14df1523d",
+    "singleton:ModuleProxyFactory": "0xa2f017a69dd40fe61a77210c4a11e42baf670da2a729f71578e714b06a16bfae",
+    "singleton:GnosisSafe": "0x08efdba9f3a37bdb8e24f3180ec25b56dac75593b09af964f59a53adbd6df862",
+    "singleton:GnosisSafeProxyFactory": "0x32f0fc4b75dd17a9d3841ebca38c7682201f586bcf03d4611eb6732eac3988de",
+    "singleton:MultiSendCallOnly": "0x0a13e24c4357abc7400864eeebfe589143f2d9d9e3e7e2694319faed237e726e",
+    "SafeProxy": "0xd64a7132c152538c2b6207f0691836eb7a6beb5298334bf1d584770e38bf8d3f",
+    "BaalProxy": "0xef2608c8455721cf624f056f9532d2491b1350cfed88d70a7fe0d51f0e0f94e8",
+    "NavShareToken": "0xd720e43c4eab3236e919095f2ad889837fb49724074a1d44a4e68cdb609d8a6f",
+    "LootToken": "0x82a2bc24323fcd669b661dd5a34d6736fd9a9c332919ea279ed61a5ee06f5ebd",
+    "DepositShaman": "0x2f53f36a489d20c0d137de353e368a2c8aca6c65ea2fac479725ead7951f3b61",
+    "WorkManager": "0x2abc478afe47ffa295127e36dd5258dff78d02eeb8cb8e26062338c76679820a",
+    "PaymentDeployer": "0x9a7b997608426ecac41044019b84fcfc85e6a396fd12d64821647e22664079dc",
+    "StrategyDeployer": "0x04c5aabc758dcade39a8fa816b10d7fd6ee277d103fe61a37ccd5581bccc446e",
+    "ProjectDeployer": "0x5bb732cde6325739ccd12bf1f76c503b4d97c9d9d44d91b3c7ee5a2736cec8a3",
+    "ConfigDeployer": "0x35f9bea5ead2ccaaca4ed80d61b36ae1838e87633b3235c836c9f68fc8788905",
+    "TemplateFactory": "0xd4b56bc02168d050a6d76a6a035e31b6e6e5326dc92b838375ed13babab7b245",
+    "ZeroOneIntentAccount": "0x0e3d0db5bcc91285fe2f3928d537686c93b6056ac30d520aef775ff5c2ea23cd",
+    "Constitution": "0x24b40a6d0bf462761192b9a1e31383b66d42f016443fc6954c85c817ad291c98",
+    "Safe.setup": "0x1619249133b5d2df959746b17a762b893b18893012ebb2d6662caf9d0a089f93",
+    "Baal.setUp": "0x65bfd017582a11ca3919e1933057849c68173792b6daae2b2dda42f3b0a83ef9"
   },
   "compiler": "v0.8.36+commit.8a079791"
 }
-ASSERT deployment + genesis total gas 24778573 over 22 transactions, in chain order (the record's txHashes are the same set and sum)
-   gas   4295260 singleton:Baal
+ASSERT deployment + genesis total gas 24754770 over 22 transactions, in chain order (the record's txHashes are the same set and sum)
+   gas   4267378 singleton:Baal
    gas    268875 singleton:ModuleProxyFactory
    gas   2738930 singleton:GnosisSafe
    gas    610833 singleton:GnosisSafeProxyFactory
    gas    131115 singleton:MultiSendCallOnly
-   gas    105340 SafeProxy
+   gas    105352 SafeProxy
    gas     72265 BaalProxy
-   gas   1311898 NavShareToken
+   gas   1271442 NavShareToken
    gas    575817 LootToken
-   gas   1526142 WorkManager
+   gas   1526152 WorkManager
    gas   1751439 PaymentDeployer
    gas   2189002 StrategyDeployer
    gas   2667360 ProjectDeployer
    gas   1620021 ConfigDeployer
-   gas   1545207 TemplateFactory
-   gas    697889 DepositShaman
-   gas   1343692 ZeroOneIntentAccount
+   gas   1545195 TemplateFactory
+   gas    697887 DepositShaman
+   gas   1343680 ZeroOneIntentAccount
    gas    327872 Constitution
    gas    174438 Safe.setup
-   gas    502424 Baal.setUp
+   gas    502400 Baal.setUp
    gas     55449 genesis:approve
-   gas    267305 genesis:deposit
-ASSERT Baal fork runtime 19497 bytes < 24576 at 0x3d5573B66A55D5746a282828Eb38e494111c28A1; MultiSendCallOnly runtime 360 bytes at 0xD34DFcC9f7abDd04cA1c5D1dC2Ca32C69d93f271
+   gas    311868 genesis:deposit
+ASSERT Baal fork runtime 19368 bytes < 24576 at 0x5853DB2FF58309c5C342f97Bc44C2238ad03A559; MultiSendCallOnly runtime 360 bytes at 0x3Be5cfcF987031e531704B6e69C4a36829403094
 ASSERT the Baal fork caps baalGas at 8000000: a submitProposal one wei of gas above it reverts "baalGas to high"
 
 == Payment round (the phase 3 rehearsal's step, on the phase 5 relay of contracts)
-ASSERT Payment 1 USDC: proposal #1 processed passed=true actionFailed=false vote=0xb9f84d7f60a56e0bb72f583f49eda2a422f6a8744563161e31b1084966472caf process=0x9890611acd4752aecaabaa0f9eee4f8cec3cc0954f5eea506ef86afba81e9ead gas=271917
+ASSERT Payment 1 USDC: proposal #1 processed passed=true actionFailed=false vote=0xa385d62035fbde7bed5a5ef3123e02558b98d57d66da124e4a81dd956adc1ec6 process=0xf7dc6f563e620841d856938f145a4f6dfa43827f9130712de7d8da3fbb81380e gas=275100
 
 == Project round: a voted instance holds settlement outside the Safe, inside the ledger
-ASSERT Project start: proposal #2 processed passed=true actionFailed=false vote=0x1b4cc73f3a60520662715535c1ea926974411ac0a5ddd9a46708795dcfe10356 process=0xb938bd470831f38a74db3b0909929241d32589dfd59d8116027948d54fd4e4dc gas=301578
-ASSERT ledger NAV 49000000 > Safe 39000000; instance 0xec5Bc1Eef9b8Bea9E184A346dE577be5ef8E782D holds 10000000
+ASSERT Project start: proposal #2 processed passed=true actionFailed=false vote=0x9b5e0d3ab64c3c40a09fa775ae7e8df823ec4e21e29efb38cba26da8d09b97c0 process=0x2bd4370abf1204cca564ce128f2645aafebf609cb37d7a8aabcb6f4b0f265d94 gas=305581
+ASSERT ledger NAV 49000000 > Safe 39000000; instance 0x255Ca04A600c01c216CeDeF05fb78f297ecCFF7F holds 10000000
 
 == Task round: the reward of an Active task is an unminted share liability
-   WorkManager holds no shares, so the founder sponsors proposal #3 (tx 0x4ec37d9bcd91446d2825e331d6d28c14178b71d0fe4e25642aff3b733a2109d8)
-ASSERT Task activation: proposal #3 processed passed=true actionFailed=false vote=0x1ec3dfb0ab7833960e7aa3878111007cab4dc1aa439af7d6b8483e0b7c0903ed process=0xca23a6a46640a77fa5514df9cc835a0053d1ea23f0a106bd4018ca799772b9e5 gas=214164
+   WorkManager holds no shares, so the founder sponsors proposal #3 (tx 0x5a49451e05f79413ec719515b04002a9f6455d2b2e95ae3f0e311dcb3e20dab0)
+ASSERT Task activation: proposal #3 processed passed=true actionFailed=false vote=0xfe717d6d65386c2ee4e5aa9a1521db35898e62532b82ffdcecf75437c0bc1943 process=0x4bb6d5a835562137dd2bf0284111bddb2271b767a4680b3b9bfb03603d100dae gas=215782
 
 == Deposit priced by the TreasuryLedger and by the task liability
-ASSERT deposit #1 (25 USDC): 25000000 USDC -> 30612244897959183673 shares at ledger NAV 49000000 (Safe 64000000) with liability 10000000000000000000; tx 0xc791c4331f6063bf36c0cd70dba066065816f69a2231e38635c130b7e1acd479
-ASSERT phase 5 pricing bites: 30612244897959183673 minted, supply-only would be 25510204081632653061, Safe-only NAV would be 38461538461538461538
+ASSERT deposit #1 (25 USDC): 25000000 USDC -> 30612244897959183673 shares at ledger NAV 49000000 (Safe 64000000) with liability 10000000000000000000; tx 0xb96f7fa4ce0f3f0f9bddf1cdcb4bcc64781611e89111523b043a4a84651ebc20
+AbiFunctionNotFoundError: Function "lotCount" not found on ABI.
+Make sure you are using the correct ABI and that the function exists on it.
 
-== The task is delivered: exactly the voted reward mints and the liability clears
-ASSERT task #1 Complete: 10000000000000000000 shares minted to the worker, liability back to 0
-
-== Three more voted Payment rounds, each stamping a new retention epoch, each followed by a deposit
-ASSERT Payment 1 USDC (round 2): proposal #4 processed passed=true actionFailed=false vote=0x6ba743b6819a9a9da35c23041859fc3afdef85e1d06b8a77cbfca03c65c8a8c7 process=0x6c5773154d1ab1369983098a82fd7efe60e95cd5ab8c6ace9808f032537df3a6 gas=244573
-ASSERT deposit #2 (10 USDC): 10000000 USDC -> 12412636287391668996 shares at ledger NAV 73000000 (Safe 73000000) with liability 0; tx 0x9908084e8538d29f5417c9f94ce5b5294d4fa004d005099a71595cd5787807e1
-ASSERT Payment 1 USDC (round 3): proposal #5 processed passed=true actionFailed=false vote=0xcaa574796255a4a929c70114c1c89a6b39740762d2186933872fe6af2a594dde process=0x8358714b39a51c8122cd988d23f926d1f4c27920646ccaa995fbd078bcbf0c3e gas=246472
-ASSERT deposit #3 (10 USDC): 10000000 USDC -> 12564009900652543008 shares at ledger NAV 82000000 (Safe 82000000) with liability 0; tx 0xb0fd7fc91503ea3ae241c7182986c862c2fd7e8389a5a59e76e3bab102da82e9
-ASSERT Payment 1 USDC (round 4): proposal #6 processed passed=true actionFailed=false vote=0x3ef8e284858b40aa9dad236e1bd90c725ef046239adb8b97ed806521fd1b6fff process=0xb0b46b90e9f91e05c46d40166d0bf840f6d97118e9f2a9614842943681ad3c03 gas=246472
-ASSERT deposit #4 (5 USDC): 5000000 USDC -> 6351037971758428333 shares at ledger NAV 91000000 (Safe 86000000) with liability 0; tx 0x8b81ce3216ddf44b267f99ca6c5d8056f0d92b812e2378f23e789520e7d7690e
-ASSERT the member holds 61939929057761824010 shares in 4 lots from 4 different proposal epochs (epoch now 6)
-
-== Retention: a proposal is sponsored, then the multi-lot member exits during its vote
-ASSERT ragequit: member with 4 lots (first exit of this DAO, cold retention tree): burned 61939929057761824010 shares from 4 lots, paid 43684082 USDC, gas 796184 (tx 0x347c21d178bf4078e225eb5bf1756cc67d6505bf0a5c60d964382045fcafa94f)
-ASSERT retention rule on the fork: 61939929057761824010 exited of 121939929057761824010 at votingStarts, bound (100-66)% -> proposal must fail
-ASSERT retention verdict on proposal #7: proposal #7 processed passed=false actionFailed=false vote=0x (voted earlier) process=0x05d911d6b0393dfac367065baa1dec7f3da9bc5111d992a4971ad3606cf5faae gas=118441
-ASSERT ragequit: worker with 1 lot (warm retention tree): burned 10000000000000000000 shares from 1 lots, paid 7052653 USDC, gas 282408 (tx 0x4067bd33c93c3c6debe82ec45691bdb89b014a67a9f716944997cbe26762867b)
-ASSERT ragequit: founder with 1 genesis lot (warm retention tree): burned 50000000000000000000 shares from 1 lots, paid 35263265 USDC, gas 317590 (tx 0x1aa5bc5734b83dc8719e1067ea1525bf40e77e374cafcbc4061852851946d900)
-
-== Control: the same exit with a single genesis lot, on a fresh DAO whose retention tree is also cold
-ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x7FE535fe057Ef3be2bdD948eEC3c9d956A742788 tx=0x1abe81237c911e5ff919631d7a52fb5db74aad7f61ce05abb6d172e3daf4fae9
-ASSERT ragequit: 1 genesis lot, fresh DAO (cold retention tree): burned 50000000000000000000 shares from 1 lots, paid 50000000 USDC, gas 683699 (tx 0x6eb5fb434d86b79a459220ca719395ab3a21aa9523e030171389699095364df3)
-
-ASSERT phase 5 Base fork rehearsal PASS: deployment 24778573 gas, Baal fork 19497 bytes, ragequit 796184 gas with 4 lots
-ASSERT no Etherscan verification invoked and no public-network transaction sent
-scenario K skipped (set FORK_SCENARIO_K=1 to append the real Uniswap v3 rehearsal to this fork)
+Docs: https://viem.sh/docs/contract/encodeFunctionData
+Version: viem@2.56.3
+    at prepareEncodeFunctionData (/Users/michaelyang/Documents/Workspace/zero-one-dao/node_modules/viem/utils/abi/prepareEncodeFunctionData.ts:100:22)
+    at <anonymous> (/Users/michaelyang/Documents/Workspace/zero-one-dao/node_modules/viem/utils/abi/encodeFunctionData.ts:84:12)
+    at encodeFunctionData (/Users/michaelyang/Documents/Workspace/zero-one-dao/node_modules/viem/utils/abi/encodeFunctionData.ts:85:5)
+    at readContract (/Users/michaelyang/Documents/Workspace/zero-one-dao/node_modules/viem/actions/public/readContract.ts:118:20)
+    at Object.readContract (/Users/michaelyang/Documents/Workspace/zero-one-dao/node_modules/viem/clients/decorators/public.ts:2358:29)
+    at at (/Users/michaelyang/Documents/Workspace/zero-one-dao/scripts/e2e-base-fork.ts:185:20)
+    at shares (/Users/michaelyang/Documents/Workspace/zero-one-dao/scripts/e2e-base-fork.ts:188:80)
+    at deposit (/Users/michaelyang/Documents/Workspace/zero-one-dao/scripts/e2e-base-fork.ts:314:60)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async main (/Users/michaelyang/Documents/Workspace/zero-one-dao/scripts/e2e-base-fork.ts:319:19)

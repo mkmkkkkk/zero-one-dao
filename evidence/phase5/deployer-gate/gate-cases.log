@@ -1,0 +1,8 @@
+PASS   the gate passes a funded deployer at a realistic Base base fee (0.05 gwei; the 0.02 ETH floor governs)
+       ASSERT deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.03 ETH, at or above the 0.02 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.05 gwei live base fee (latest block 51000003) x 5 = 0.00619464325 ETH, floor 0.02 ETH governs
+REFUSE the same deployer with the same balance is refused once the base fee is high (0.5 gwei)
+       REFUSED: deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.03 ETH, below the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000004) x 5 = 0.0619464325 ETH, floor 0.02 ETH
+REFUSE a deployer one wei under the computed requirement is refused (0.5 gwei)
+       REFUSED: deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.061946432499999999 ETH, below the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000005) x 5 = 0.0619464325 ETH, floor 0.02 ETH
+PASS   the same deployer at exactly the computed requirement passes (0.5 gwei)
+       ASSERT deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.0619464325 ETH, at or above the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000006) x 5 = 0.0619464325 ETH, floor 0.02 ETH

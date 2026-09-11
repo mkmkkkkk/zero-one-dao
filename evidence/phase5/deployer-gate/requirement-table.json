@@ -1,0 +1,76 @@
+{
+  "rule": "required = max(measured deployment gas x live base fee x 5, 0.02 ETH floor)",
+  "ruling": "decision.md 2026-09-10, phase 5 Base fork rehearsal review",
+  "implementation": "src/deployerGate.ts, called by scripts/deploy-network.ts before any write",
+  "measurement": {
+    "file": "evidence/phase5/base-fork/measurements.json",
+    "totalGas": "24778573",
+    "transactions": 22
+  },
+  "factor": 5,
+  "floorEth": "0.02",
+  "table": [
+    {
+      "baseFeeGwei": "0.006",
+      "computedEth": "0.00074335719",
+      "requiredEth": "0.02",
+      "governedBy": "floor"
+    },
+    {
+      "baseFeeGwei": "0.05",
+      "computedEth": "0.00619464325",
+      "requiredEth": "0.02",
+      "governedBy": "floor"
+    },
+    {
+      "baseFeeGwei": "0.5",
+      "computedEth": "0.0619464325",
+      "requiredEth": "0.0619464325",
+      "governedBy": "computed"
+    }
+  ],
+  "liveCases": [
+    {
+      "case": "the gate passes a funded deployer at a realistic Base base fee (0.05 gwei; the 0.02 ETH floor governs)",
+      "verdict": "pass",
+      "baseFeeGwei": "0.05",
+      "holdsEth": "0.03",
+      "requiredEth": "0.02",
+      "computedEth": "0.00619464325",
+      "governedBy": "floor",
+      "message": "ASSERT deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.03 ETH, at or above the 0.02 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.05 gwei live base fee (latest block 51000003) x 5 = 0.00619464325 ETH, floor 0.02 ETH governs"
+    },
+    {
+      "case": "the same deployer with the same balance is refused once the base fee is high (0.5 gwei)",
+      "verdict": "refuse",
+      "baseFeeGwei": "0.5",
+      "holdsEth": "0.03",
+      "requiredEth": "0.0619464325",
+      "computedEth": "0.0619464325",
+      "governedBy": "computed",
+      "message": "REFUSED: deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.03 ETH, below the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000004) x 5 = 0.0619464325 ETH, floor 0.02 ETH"
+    },
+    {
+      "case": "a deployer one wei under the computed requirement is refused (0.5 gwei)",
+      "verdict": "refuse",
+      "baseFeeGwei": "0.5",
+      "holdsEth": "0.061946432499999999",
+      "requiredEth": "0.0619464325",
+      "computedEth": "0.0619464325",
+      "governedBy": "computed",
+      "message": "REFUSED: deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.061946432499999999 ETH, below the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000005) x 5 = 0.0619464325 ETH, floor 0.02 ETH"
+    },
+    {
+      "case": "the same deployer at exactly the computed requirement passes (0.5 gwei)",
+      "verdict": "pass",
+      "baseFeeGwei": "0.5",
+      "holdsEth": "0.0619464325",
+      "requiredEth": "0.0619464325",
+      "computedEth": "0.0619464325",
+      "governedBy": "computed",
+      "message": "ASSERT deployer 0xa24b363e7C334aE0BFAD8BBd4C305354C74af8a9 holds 0.0619464325 ETH, at or above the 0.0619464325 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.5 gwei live base fee (latest block 51000006) x 5 = 0.0619464325 ETH, floor 0.02 ETH"
+    }
+  ],
+  "producedBy": "npm run test:deploy-refusals",
+  "producedAt": "2026-09-11T08:17:10.599Z"
+}

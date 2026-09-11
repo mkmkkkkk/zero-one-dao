@@ -44,9 +44,27 @@ runs because constructor arguments carry run-specific addresses.
 | | **total** | **24,778,573** | |
 
 Budget: 24.78 M gas is 0.000149 ETH at a 0.006 gwei base fee, 0.00124 ETH at 0.05 gwei and 0.0124 ETH
-at 0.5 gwei. The script's `MIN_DEPLOYER_WEI` floor of 0.005 ETH only guarantees the run *starts*;
-fund the deployer with **0.02 ETH** so a fee spike cannot strand the deployment half-built, and check
-the live base fee on the day.
+at 0.5 gwei. The script no longer takes a written-down floor on trust. `deployNetwork` refuses to
+start, before any write, unless the deployer holds
+
+> **required = max(measured deployment gas x the live base fee x 5, 0.02 ETH)**
+
+with the gas read from the committed measurement above (`evidence/phase5/base-fork/measurements.json`,
+so there is no second copy of the number) and the base fee read from the chain it is about to deploy
+to, at the moment of the check (`src/deployerGate.ts`; ruling decision.md 2026-09-10). The refusal
+states the requirement, the live base fee it used and what the deployer actually holds.
+
+What that requires at the three fee points above: **0.02 ETH at 0.006 gwei** (computed part
+0.00074335719 ETH, the floor governs), **0.02 ETH at 0.05 gwei** (computed part 0.00619464325 ETH, the
+floor governs) and **0.0619464325 ETH at 0.5 gwei** (the computed part governs). The crossover is at
+about 0.161 gwei. The fixed 0.005 ETH constant this replaces was the hazard itself: at 0.5 gwei the
+deployment costs 0.0124 ETH, so a deployer funded to the old floor would have started, run out and
+stranded a half-built stack with the 50 genesis USDC already deposited in it.
+
+Fund the mainnet deployer with at least the number the gate prints on the day; 0.02 ETH covers every
+base fee Base has shown recently (the 2026-09-11 fork rehearsal read 0.003935754 gwei live). Base
+Sepolia runs the same rule, so a testnet deployer needs 0.02 ETH of test ETH too: at Sepolia fees the
+computed part is a rounding error and the floor is the whole requirement.
 
 Post-conditions asserted inside the run: `totalShares == 0` after `setUp` (every share comes from a
 shaman), the on-chain `Constitution.textHash` equals the local file's keccak256, every `ShamanSet` the
@@ -193,6 +211,7 @@ restore on Sepolia); the per-scenario DAOs under `evidence/testnet/scenario-daos
   the four upstream addresses from the real deployment.
 - **The mainnet relay, tunnel, sponsor key and beacon project do not exist.** Nothing in this plan
   has touched a live relay, launchd service, tunnel or sponsor account.
-- **`MIN_DEPLOYER_WEI` is 0.005 ETH**, which the measured 24.78 M gas outgrows above ~0.2 gwei. The
-  plan compensates by asking for 0.02 ETH; raising the constant is a parameter decision for the
-  design authority, not a fix.
+- ~~**`MIN_DEPLOYER_WEI` is 0.005 ETH**, which the measured 24.78 M gas outgrows above ~0.2 gwei.~~
+  Closed by the 2026-09-10 ruling: the constant is gone and the requirement is computed from the live
+  base fee of the target chain (see Budget above, `src/deployerGate.ts`, receipts in
+  `evidence/phase5/deployer-gate/`).

@@ -1,0 +1,46 @@
+# npm run e2e:base-fork, 2026-09-11T08:19:09Z — the deployment section, with the computed deployer funding gate in it
+# Full transcript: evidence/phase5/base-fork/e2e-base-fork.log; record: evidence/phase5/base-fork/deploy-base-fork.json
+
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 block=51000000 loopback=http://127.0.0.1:11545
+ASSERT before any write: loopback http://127.0.0.1:11545 chainId=8453 forkedNetwork=8453
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x458160805dD2D84aA219C60115F73894ee8A9e2c tx=0x97f125b5a15d244ee3fdda50c3f0666ee53e3a7092b59c62e2917d0405b47189
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0x6545C7Cbae375effd7882B8A010c8191605CE5df tx=0x3bd3b04fa24970f9341102a24396508944fc9e1263f63af839b77335a1dfae49
+superseded the previous fork record -> evidence/phase5/base-fork/deploy-base-fork.superseded.json
+ASSERT constitution pins 229b3865515a61aef119b5fde5f0a862e9305550 (= local HEAD, pushed)
+ASSERT genesis commit 229b3865515a61aef119b5fde5f0a862e9305550 advertised by public origin (local HEAD 229b3865515a61aef119b5fde5f0a862e9305550, fork rehearsal pinned to a pushed ancestor)
+constitution https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/229b3865515a61aef119b5fde5f0a862e9305550/docs/CONSTITUTION.md keccak256 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a (matches local bytes)
+deployer 0x458160805dD2D84aA219C60115F73894ee8A9e2c balance 1000 ETH on Base (http://127.0.0.1:11545)
+ASSERT deployer 0x458160805dD2D84aA219C60115F73894ee8A9e2c holds 1000 ETH, at or above the 0.02 ETH: 24778573 gas (measured over 22 transactions, evidence/phase5/base-fork/measurements.json) x 0.003935754 gwei live base fee (latest block 51000002) x 5 = 0.00048761183899521 ETH, floor 0.02 ETH governs
+ASSERT CREATE2-predicted Safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 USDC=0 before deployment
+ASSERT CREATE2-predicted Safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 USDC=0 before deployment
+safe 0x18c69e2760c88A2B991e8A854Fcbf01c3032f566 baal 0x6A5Ee5D57366d914A78eBe3d78cb226DE716F2c4 shares 0x6a5880e842f6b0c200E657F8C3b90FDEc252f29a factory 0xE9C1A7cE380bCeCDE482aeb273242E8b74Fc88D8 adapter 0x94A1350548230DF0005519Ed47D19A77dB1d6893 constitution 0x78a9b05e97C111C947EAaa58b17b5a9c531074bE
+genesis: 50000000000000000000 shares to the founder (approve 0x4e9ea966d06994808d607afd83c3aaeab09f2287e6f18583f82a8793a6cb9ff3, deposit 0x5ddb20ffa1775940be11e957693824e500ab26ebb1d75dc1ff1722df6474e80d)
+ASSERT the only shamans Baal ever granted are DepositShaman 0x80C35608C70A588271a099ae99D55973B7AC58B3 and WorkManager 0x97008DA0594DAF26b82AC49281A2C0528a6eB3b6, both permission 2 (manager)
+verification inputs: /Users/michaelyang/Documents/Workspace/zero-one-dao/evidence/phase5/base-fork/verification-base (60 source units, compiler v0.8.36+commit.8a079791)
+
+ASSERT deployment + genesis total gas 24754770 over 22 transactions, in chain order (the record's txHashes are the same set and sum)
+   gas   4267378 singleton:Baal
+   gas    268875 singleton:ModuleProxyFactory
+   gas   2738930 singleton:GnosisSafe
+   gas    610833 singleton:GnosisSafeProxyFactory
+   gas    131115 singleton:MultiSendCallOnly
+   gas    105352 SafeProxy
+   gas     72265 BaalProxy
+   gas   1271442 NavShareToken
+   gas    575817 LootToken
+   gas   1526152 WorkManager
+   gas   1751439 PaymentDeployer
+   gas   2189002 StrategyDeployer
+   gas   2667360 ProjectDeployer
+   gas   1620021 ConfigDeployer
+   gas   1545195 TemplateFactory
+   gas    697887 DepositShaman
+   gas   1343680 ZeroOneIntentAccount
+   gas    327872 Constitution
+   gas    174438 Safe.setup
+   gas    502400 Baal.setUp
+   gas     55449 genesis:approve
+   gas    311868 genesis:deposit
+ASSERT Baal fork runtime 19368 bytes < 24576 at 0x5853DB2FF58309c5C342f97Bc44C2238ad03A559; MultiSendCallOnly runtime 360 bytes at 0x3Be5cfcF987031e531704B6e69C4a36829403094
+ASSERT the Baal fork caps baalGas at 8000000: a submitProposal one wei of gas above it reverts "baalGas to high"
