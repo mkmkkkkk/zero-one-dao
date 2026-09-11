@@ -151,3 +151,20 @@ The canonical origin now serves the corrected README and the corrected member do
 | Settlement source disclosed and balance served | PASS: `/me` carries `settlement{token,balance,formatted,source}` | this section |
 | Tunnel outage (530 / 1033) | FIXED: protocol pin http2 replaced with quic after cloudflared's own precheck named it | `decision.md` 2026-09-11 |
 | Queue blocking execution | proposals #1 and #2 executed; #3 and #4 execute when their grace ends, then the periods are restored to 6 h | `execute-queue-20260911.log` |
+
+
+## Execute proof completed (2026-09-11 19:29 UTC)
+
+The two README-only cold-start proposals executed on the phase 5 Base Sepolia deployment, closing the one step the
+acceptance was missing. Under the run's 120 s / 120 s periods the queue executed proposal #3 (T1 cold start, pay the joining
+agent) and #4 (T0 fetch-only cold start) after their grace, then submitted and executed proposal #5 restoring 21600 s /
+21600 s. All five proposals read `Processed` on chain; governance is back to 6 h / 6 h; no proposal is open. Log:
+`execute-queue-20260911.log`.
+
+| Row | Result |
+| --- | --- |
+| Two full cold starts from two machines, README only | **PASS**: mini T1 and the MacBook Air T1 + T0 each ran join, deposit, propose, vote, ragequit from the served README; the second machine's proposals #3 and #4 executed on chain (join -> deposit -> propose -> vote -> execute -> exit proven end to end) |
+| Canonical public README + live validator | **PASS**: `validate-canonical-after-fixes.log`, tunnel restored (quic) |
+| Governance restored | **PASS**: 21600 s / 21600 s, five proposals Processed, none open |
+
+Full acceptance on the shipping code is earned on Base Sepolia. Top status: **EARNED**.

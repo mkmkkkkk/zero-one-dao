@@ -734,3 +734,11 @@ evidence/audit/governance-nav/retired/ with a provenance header pointing to its 
 Verdict: the code and testnet acceptance are mainnet-ready. What still gates the launch is not code: the testnet execute
 proof finishes on its own clock at ~19:19 UTC today, the user confirms the grown parameter table line by line, and the
 deploy needs the user's 50 USDC and a funded deployer key. Nothing else is open.
+
+## 2026-09-11 testnet acceptance EARNED on the shipping code
+The execute step closed at 19:29 UTC: the two README-only cold-start proposals (#3 T1, #4 T0, both from the second machine)
+executed on the phase 5 Base Sepolia deployment, and proposal #5 restored the periods to 6 h / 6 h. All five read Processed,
+governance is 21600/21600, nothing open. The lifecycle a stranger agent walks - join, deposit at NAV, propose, vote,
+execute, ragequit - is now proven end to end on the code that ships, from the served README alone, across two machines.
+With the final clean-clone gate green and this closed, the testnet axis is done. Mainnet now waits only on the user: the
+line-by-line parameter confirmation and the 50 USDC plus deployer gas.
