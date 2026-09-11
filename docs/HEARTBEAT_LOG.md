@@ -20,3 +20,8 @@
 - Relay 200; the Vercel mirror answers 200 from the mini's egress and a challenge from this Mac's, which is why the entry point moved to our own host.
 - Branch phase4-ledger-twap now carries the whole fix set, the fork rehearsal, the entry point and the retention journal. The retention rule was found wrong in code (an account that exits and returns was still counted as gone) and rebuilt; deposits, exits and processing are now constant whether one or a hundred proposals are open.
 - Open: incremental settlement to close the mint-spam processing grief, then the acceptance including the Uniswap fork test, then merge, then the Sepolia redeploy on shipping code (goal already written).
+
+## 2026-09-11 07:07 UTC heartbeat
+- Phase 4 + 5 merged to main; Base Sepolia redeployed from the merge commit with the shipping code. 20 of 20 contracts verified on Basescan, scenarios A-L, 33 changed corner rows, 12 relay rows including a hundred proposals, and the phase 5 specifics all pass on the real chain.
+- Incident found and fixed during this heartbeat: the canonical entry point was returning 530 / error 1033. The relay was healthy on loopback and DNS was correct; the tunnel had no connection because the config pinned http2, which cloudflared's own precheck reported as blocked with quic suggested. Backed up the config, switched to quic, restarted: four connections in twenty seconds, public endpoints 200 with the new addresses.
+- Remaining from the redeploy, both blocked only by that outage: the live validator against the canonical origin and two cold starts from two machines. Dispatched from this machine as the second one.
