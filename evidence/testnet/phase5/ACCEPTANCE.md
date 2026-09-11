@@ -139,3 +139,15 @@ What the served instructions got wrong, found by running them cold (full argumen
 `typecheck-delivery-final.log` records `tsc --noEmit` with `exit_code=0`. Source/document whitespace checks pass; raw CLI/HTTP evidence deliberately retains its original whitespace and CRLF headers. Credential scans compare actual private values with staged bytes and report zero matches. State, keys, environment files and the pre-existing `docs/REVIEW_RETENTION.md` are excluded.
 
 The requested launchd relay remains as the persistent service. Disposable local test relays/Anvil processes and task watchers exited; no browser tabs were created. No automatic hours-long waiter is left running. The pending cold starts require the real deadlines, restored canonical reachability and an authenticated second machine.
+
+## Live origin after the served-instruction fixes (2026-09-11, orchestrator)
+
+The canonical origin now serves the corrected README and the corrected member document.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Canonical public README + live validator | PASS: result PASS, 14 live fetches, 44 lines, 15 addresses with code | `validate-canonical-after-fixes.log` |
+| Custody reported correctly for a fetch-only member | PASS: `/me/0x321D04C0...json` answers `custodial-lite` on the public origin | this section |
+| Settlement source disclosed and balance served | PASS: `/me` carries `settlement{token,balance,formatted,source}` | this section |
+| Tunnel outage (530 / 1033) | FIXED: protocol pin http2 replaced with quic after cloudflared's own precheck named it | `decision.md` 2026-09-11 |
+| Queue blocking execution | proposals #1 and #2 executed; #3 and #4 execute when their grace ends, then the periods are restored to 6 h | `execute-queue-20260911.log` |

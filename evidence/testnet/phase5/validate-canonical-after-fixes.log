@@ -1,0 +1,136 @@
+   fetching every URL the README advertises on https://relay-zero.mkyang.ai (8 advertised paths, 14 probes)
+   fetched /README.txt -> 200 text/plain; charset=utf-8 (7383 bytes)
+   fetched /llms.txt -> 200 text/plain; charset=utf-8 (1944 bytes)
+   fetched /snippet.js -> 200 text/javascript; charset=utf-8 (11028 bytes)
+   fetched /snippet.py -> 200 text/x-python; charset=utf-8 (10800 bytes)
+   fetched /CONSTITUTION.md -> 200 text/markdown; charset=utf-8 (3115 bytes)
+   fetched /robots.txt -> 200 text/plain; charset=utf-8 (23 bytes)
+   fetched / -> 200 text/html; charset=utf-8 (5374 bytes)
+   fetched /health.json -> 200 application/json; charset=utf-8 (1585 bytes)
+   fetched /state.json -> 200 application/json; charset=utf-8 (22698 bytes)
+   fetched /proposals.json -> 200 application/json; charset=utf-8 (20328 bytes)
+   fetched /pending.json -> 200 application/json; charset=utf-8 (518 bytes)
+   fetched /me/0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96.json -> 200 application/json; charset=utf-8 (11369 bytes)
+   fetched /me/0x00000000000000000000000000000000C0FFEE01.json -> 200 application/json; charset=utf-8 (11274 bytes)
+   fetched /relay?op=quote&member=0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96&template=Payment&params=%7B%22recipients%22%3A%5B%220x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe -> 200 application/json; charset=utf-8 (4832 bytes)
+   fetched https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md -> 200 (4475 bytes, hash matches on chain)
+{
+  "result": "PASS",
+  "fetched": 14,
+  "origin": "https://relay-zero.mkyang.ai",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "mirrorProbed": false,
+  "advertised": [
+    "/",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "offOriginUrls": [
+    "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md",
+    "https://zero-one-beacon.vercel.app"
+  ],
+  "constitutionUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md",
+  "custodyProbed": {
+    "selfCustody": "0x00000000000000000000000000000000C0FFEE01",
+    "custodialLite": null
+  },
+  "probes": [
+    {
+      "target": "/README.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 7383
+    },
+    {
+      "target": "/llms.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 1944
+    },
+    {
+      "target": "/snippet.js",
+      "status": 200,
+      "type": "text/javascript; charset=utf-8",
+      "bytes": 11028
+    },
+    {
+      "target": "/snippet.py",
+      "status": 200,
+      "type": "text/x-python; charset=utf-8",
+      "bytes": 10800
+    },
+    {
+      "target": "/CONSTITUTION.md",
+      "status": 200,
+      "type": "text/markdown; charset=utf-8",
+      "bytes": 3115
+    },
+    {
+      "target": "/robots.txt",
+      "status": 200,
+      "type": "text/plain; charset=utf-8",
+      "bytes": 23
+    },
+    {
+      "target": "/",
+      "status": 200,
+      "type": "text/html; charset=utf-8",
+      "bytes": 5374
+    },
+    {
+      "target": "/health.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 1585
+    },
+    {
+      "target": "/state.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 22698
+    },
+    {
+      "target": "/proposals.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 20328
+    },
+    {
+      "target": "/pending.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 518
+    },
+    {
+      "target": "/me/0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 11369
+    },
+    {
+      "target": "/me/0x00000000000000000000000000000000C0FFEE01.json",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 11274
+    },
+    {
+      "target": "/relay?op=quote&member=0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96&template=Payment&params=%7B%22recipients%22%3A%5B%220x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=beacon%20validate%20probe",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "bytes": 4832
+    }
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 15,
+  "proposals": 4,
+  "tasks": 0,
+  "members": 4,
+  "block": "46672737"
+}
+
