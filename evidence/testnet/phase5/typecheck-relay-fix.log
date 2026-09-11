@@ -1,0 +1,5 @@
+
+> zero-one-dao@0.1.0 typecheck
+> tsc --noEmit
+
+relay/e2e-local.ts(474,11): error TS2304: Cannot find name 'settleRetention'.

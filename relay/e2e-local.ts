@@ -22,7 +22,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 import { encodeProposalData, loadBaalArtifact, loadLocalArtifact } from "../src/baal.js";
 import { chooseFreePort, startDevnet, stopDevnet } from "../src/devnet.js";
-import { connectDevnet, increaseTime, writeAndWait } from "../src/onchain.js";
+import { connectDevnet, deployLocal, increaseTime, writeAndWait } from "../src/onchain.js";
 import { DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, HOUR, SETTLEMENT_UNIT, UNIT } from "../src/zeroOne.js";
 import { buildBeacon } from "../beacon/scripts/build.js";
 
@@ -187,8 +187,9 @@ async function main(): Promise<void> {
     const validation = spawnSync(process.execPath, ["--import", "tsx", path.join(ROOT, "beacon/scripts/validate.ts"), "--deployment", deploymentFile, "--out", beacon], { encoding: "utf8", env: NO_PROXY });
     const count = spawnSync("wc", ["-l", path.join(beacon, "README.txt")], { encoding: "utf8" });
     const receipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon>\n${validation.stdout}${validation.stderr}$ wc -l README.txt\n${count.stdout}`;
-    mkdirSync(path.join(ROOT, "evidence/phase4"), { recursive: true });
-    writeFileSync(path.join(ROOT, "evidence/phase4/beacon-validate.log"), receipt);
+    const evidenceDir = path.resolve(ROOT, process.env.ZERO_ONE_RELAY_EVIDENCE ?? "evidence/phase4");
+    mkdirSync(evidenceDir, { recursive: true });
+    writeFileSync(path.join(evidenceDir, "beacon-validate.log"), receipt);
     console.log(receipt);
     assert(validation.status === 0 && JSON.parse(validation.stdout).result === "PASS", "beacon validator CLI produced PASS");
     assert(count.status === 0, "README line count command succeeds");
@@ -268,7 +269,12 @@ async function main(): Promise<void> {
     step("warp past voting + grace (12 h); T1 agent executes #1 via the relay (explicit 5,000,000 gas)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
-    await settleRetention(F, dao.shares, 1);
+    // A real post-registration mint/burn makes settlement mandatory without changing final balances.
+    const retentionProbe = await deployLocal(F, "LedgerProbe");
+    await writeAndWait(F, { address: dao.settlement, abi: settlementAbi, functionName: "transfer", args: [retentionProbe.address, SETTLEMENT_UNIT] });
+    const journalMutation = await writeAndWait(F, { address: retentionProbe.address, abi: retentionProbe.artifact.abi, functionName: "roundTrip", args: [dao.depositShaman, dao.baal, SETTLEMENT_UNIT] });
+    console.log(`RECEIPT post-registration journal mutation ${journalMutation.hash}`);
+    // The README-only caller relies on the relay for permissionless settlement.
     const executed = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "1"]));
     const processed = executed.processed as { passed: boolean; actionFailed: boolean };
     assert(processed.passed === true && processed.actionFailed === false, "proposal #1 passed and its action executed (fund + start)");
@@ -289,7 +295,7 @@ async function main(): Promise<void> {
     assert(agentVote2.waitedBlocks === 0, "a vote after a later block exists is sent at once (waitedBlocks 0)");
     await increaseTime(F, 12 * HOUR + 5);
     await sleep(2_500);
-    await settleRetention(F, dao.shares, 2);
+    // No out-of-band repo helper may prepare retention for an outside agent.
     const activated = await get(snippet("node", beacon, ["execute", "--key", agentFile, "--proposal", "2"]));
     assert((activated.processed as { passed: boolean; actionFailed: boolean }).passed === true && (activated.processed as { actionFailed: boolean }).actionFailed === false, "task proposal executed: task #1 active");
 
@@ -482,7 +488,7 @@ async function main(): Promise<void> {
     const finalCount = spawnSync("wc", ["-l", path.join(beaconFinal, "README.txt")], { encoding: "utf8" });
     const finalReceipt = `$ beacon/scripts/validate.ts --deployment <mirror> --out <mirror-beacon-final>\n${finalValidation.stdout}${finalValidation.stderr}$ wc -l README.txt\n${finalCount.stdout}`;
     console.log(finalReceipt);
-    writeFileSync(path.join(ROOT, "evidence/phase5/beacon-validate-stageC.log"), finalReceipt);
+    writeFileSync(path.join(ROOT, process.env.ZERO_ONE_RELAY_EVIDENCE ?? "evidence/phase5", "beacon-validate-stageC.log"), finalReceipt);
     assert(finalValidation.status === 0 && JSON.parse(finalValidation.stdout).result === "PASS", `beacon validator PASS over ${finalState.proposals.length} proposals (${JSON.parse(finalValidation.stdout || "{}").readmeLines} README lines)`);
     const publishedSpoof = finalState.proposals.find((proposal) => proposal.proposalData.toLowerCase() === hostile.toLowerCase())!;
     assert(publishedSpoof.flags.length === 3 && publishedSpoof.instance === undefined && publishedSpoof.treasuryEffect.usdcApproved === (2n ** 128n).toString(), "the published state.json carries the hostile proposal's three flags, no instance panel and its allowance");

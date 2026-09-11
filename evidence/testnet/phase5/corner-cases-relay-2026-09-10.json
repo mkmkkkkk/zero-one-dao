@@ -1,0 +1,80 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-10T20:09:47.508Z",
+  "rows": [
+    {
+      "id": "weak-T0-pass",
+      "expected": "400 rejects predictable T0 identity before sponsorship",
+      "observed": "400 pass carries about 9 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words",
+      "ok": true
+    },
+    {
+      "id": "relay-down-direct-reads",
+      "expected": "the README's Baal address answers eth_call without the relay",
+      "observed": "Baal 0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f proposalCount = 1 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory)",
+      "ok": true
+    },
+    {
+      "id": "replay-signed-intent",
+      "expected": "the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged",
+      "observed": "replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000",
+      "ok": true
+    },
+    {
+      "id": "intent-other-chain-id",
+      "expected": "401 signature mismatch (EIP-712 domain is chain-bound)",
+      "observed": "401 signature mismatch: the intent was not signed by intent.member for this chain and adapter",
+      "ok": true
+    },
+    {
+      "id": "intent-undelegated-address",
+      "expected": "400 'not delegated: join first (op=join) or attach an EIP-7702 authorization'",
+      "observed": "400 address 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D is not delegated: join first (op=join) or attach an EIP-7702 authoriz",
+      "ok": true
+    },
+    {
+      "id": "work-below-threshold",
+      "expected": "reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged",
+      "observed": "422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0",
+      "ok": true
+    },
+    {
+      "id": "propose-below-threshold",
+      "expected": "quote answers canPropose=false; propose -> 409; the quoted address stays empty",
+      "observed": "quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0x6F05f7A1013ABD3c0584586324D4fcC4D4845CD6: none",
+      "ok": true
+    },
+    {
+      "id": "duplicate-instance-proposal",
+      "expected": "second quote exists=true at the same address; second propose -> 409 naming the prior proposal",
+      "observed": "first #2 (relay sponsor); quote2 exists=true same=true; second 409 instance 0xB67BC346dE7ed8833CB1bA64d61839C06aF97628 is already the subject of proposal #2 (Voting); ",
+      "ok": true,
+      "receipt": "0x1b3d43d450eb7a2f48b6f7579443c02d7e445201e9c3c18b8d9151af98e9341d"
+    },
+    {
+      "id": "spam-100-proposals",
+      "expected": "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open",
+      "observed": "24 submitted in 532 s with 0 429 waits; stopped by the sponsor cap: 503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals); total 26; ?limit=10 -> 10 newest, nextBefore 17; ?open=1&limit=5 -> 5",
+      "ok": false,
+      "receipt": "0xc4e1a46859c2ec3ddd220764e9dac0c92f6cf6dbbcf6124304a6cee0547c9cd2"
+    },
+    {
+      "id": "rate-limit-per-address",
+      "expected": "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice",
+      "observed": "429 rate limit; retry after 60 seconds (statuses 422 422 422 422 422 422 429 429 503 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does",
+      "ok": true
+    },
+    {
+      "id": "sponsor-cap-exhausted",
+      "expected": "current-run 503 with a readable sponsor budget/reserve reason",
+      "observed": "503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals)",
+      "ok": true
+    },
+    {
+      "id": "beacon-state-json",
+      "expected": "proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here",
+      "observed": "proposal fields: state=Processed votingEnds=1789069532 graceEnds=1789069652 yesVotes=2000000000000000000000; generatedAt 2026-09-10T20:09:45.904Z staleAfter 2026-09-10T21:09:45.904Z; README keccak256 0xdb359d474e8eed462b6567803f43156074d61b991793f65bff5c7c1d03e0a07b",
+      "ok": true
+    }
+  ]
+}

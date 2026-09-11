@@ -1,0 +1,12 @@
+Temporary relay http://127.0.0.1:18871 DAO=0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f state=state/relay-phase5-contract-corners
+Temporary relay stopped: http://127.0.0.1:18871
+/Users/michaelmacmini/srv/zero-one-dao/scripts/phase5-relay-corners.ts:18
+async function command(args:string[],file:string){const fd=openSync(file,'a');const p=spawn(process.execPath,['--import','tsx',...args],{env,stdio:['ignore',fd,fd]});try{const [code]=await once(p,'exit');if(code!==0)throw Error(`${args[0]} exited ${code}; ${file}`);}finally{closeSync(fd);}}
+                                                                                                                                                                                                                              ^
+
+Error: relay/corner-cases-relay.ts exited 1; evidence/testnet/phase5/corner-cases-relay.log
+    at command (/Users/michaelmacmini/srv/zero-one-dao/scripts/phase5-relay-corners.ts:18:223)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/scripts/phase5-relay-corners.ts:29:2)
+
+Node.js v26.5.0

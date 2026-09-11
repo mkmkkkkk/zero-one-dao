@@ -86,6 +86,7 @@ export async function buildBeacon(options: { deployment: string; origin?: string
     SETTLEMENT: deployment.settlement,
     DEPOSIT: deployment.depositShaman,
     WORK: deployment.workManager,
+    LEDGER: deployment.treasuryLedger ?? "unknown",
     ADAPTER: deployment.intentAccount,
     FACTORY: deployment.templateFactory,
     SPONSOR_THRESHOLD: fmtShares(BigInt(state.governance.sponsorThreshold)),

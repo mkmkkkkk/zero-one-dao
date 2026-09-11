@@ -40,5 +40,5 @@ Process: submit (self-sponsored: >= {{SPONSOR_THRESHOLD}} share) -> voting {{VOT
 A vote in the block of the submission is impossible (share checkpoint); the relay waits for the next block before sending it.
 T0: the relay operator can delay or drop your intents; anything you cannot afford to lose goes through T1. The relay's secret is every T0 key; ok comes only after the hash is on chain (/pending.json).
 Addresses: Safe {{SAFE}} | Baal {{BAAL}} | Shares {{SHARES}} | USDC {{SETTLEMENT}}
-           DepositShaman {{DEPOSIT}} | WorkManager {{WORK}} | Adapter {{ADAPTER}} | TemplateFactory {{FACTORY}}
+           DepositShaman {{DEPOSIT}} | WorkManager {{WORK}} | TreasuryLedger {{LEDGER}} | Adapter {{ADAPTER}} | TemplateFactory {{FACTORY}}
 Relay down or budget exhausted? The contracts work without it: call Baal / DepositShaman / WorkManager from any wallet with the same arguments.

@@ -62,17 +62,20 @@ for contract in json.loads((base / records_file).read_text()):
         (base / "evidence" / (contract["name"] + "-source.json")).write_text(json.dumps(already, indent=2) + "\n")
         time.sleep(0.5)
         continue
-    result = api(action="verifysourcecode",
+    submission_file = base / "evidence" / (contract["name"] + "-submission.json")
+    result = json.loads(submission_file.read_text()) if submission_file.exists() else api(action="verifysourcecode",
                  contractaddress=contract["address"],
                  sourceCode=source if args.group == "local" else (base / contract["inputFile"]).read_text(),
                  codeformat="solidity-standard-json-input",
                  contractname=contract["contractName"],
                  compilerversion=contract["compiler"],
                  constructorArguements=contract["constructorArguments"])
+    if result["status"] == "1":
+        submission_file.write_text(json.dumps(result, indent=2) + "\n")
     print(contract["name"], "submission", json.dumps(result))
     if result["status"] == "1":
         guid = result["result"]
-        for _attempt in range(40):
+        for _attempt in range(240):
             time.sleep(5)
             status = api(action="checkverifystatus", guid=guid)
             print(contract["name"], "verification-status", json.dumps(status))

@@ -1,0 +1,17 @@
+{
+  "chainId": 84532,
+  "dao": "0xabC37D9d141C150054fc9D7085e21B3515f76f26",
+  "safe": "0x3e1408747162D078d96b573F161879de698dceD6",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "asset": "0x5664707e0E204112a8DFCa18d88EEf96b51c4ACA",
+  "pool": "0xc2aaa41adcdb029810fC42cc61dE60a6c81BBcCc",
+  "initialized": "1789068518",
+  "readyAt": "1789070319",
+  "dependencies": {
+    "factory": "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24",
+    "router": "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4",
+    "quoter": "0xC5290058841028F1614F3A6F0F5816cAd0df5E27",
+    "manager": "0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2"
+  },
+  "source": "https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments"
+}

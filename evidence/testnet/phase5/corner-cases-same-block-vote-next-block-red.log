@@ -1,0 +1,17 @@
+RECEIPT probe deploy tx=0x790ff11f11be2992466f0c5bbff5565478cd7dde30afbc616e6420cf0bfa4eff
+RECEIPT fund probe tx=0x059069a9e37907a3add2ad59007d7dfe3f01d493e6da16c7240cae4cdd4a55c2
+RECEIPT same-block refusal tx=0xe584e4e6c0da44aa3c79c640d33700e62e99e98835ed5d89f9004a10faf71841
+/Users/michaelmacmini/srv/zero-one-dao/src/onchain.ts:90
+  if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash} ${await revertReason(context, hash, receipt)}`);
+                                          ^
+
+Error: Transaction reverted: 0x2616a492ad24ce327bf9204f554b650eb925dd7a196366a4acb1a61dfad55931 gas=61119/500000: Execution reverted with reason: !voting. | Raw Call Arguments: |   from:   0x95f646d87e465a4a177a57d3288d1326e3d3a75d
+  to:     0xe28a8ce3760fa7ab1b7c0a4e8b586ae14721167f
+  value:  0 ETH
+  data:   0xbc2f3db7000000000000000000000000519dcca8efc69ba19f94fee1a32b542be56cad9f0000000000000000000000000000000000000000000000000000000000000067
+  gas:    500000
+    at writeAndWait (/Users/michaelmacmini/srv/zero-one-dao/src/onchain.ts:90:43)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/scenarios/phase5-same-block-vote.ts:34:13)
+
+Node.js v26.5.0

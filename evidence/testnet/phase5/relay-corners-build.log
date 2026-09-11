@@ -1,0 +1,55 @@
+[index] scan 46650479..46650998 rows=17
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5-corners",
+  "origin": "http://127.0.0.1:18871",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46650998",
+  "members": 1,
+  "proposals": 1,
+  "tasks": 0
+}
+
+[index] scan 46651348..46651492 rows=43
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5-corners",
+  "origin": "http://127.0.0.1:18871",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46651492",
+  "members": 2,
+  "proposals": 26,
+  "tasks": 0
+}
+
+[index] scan 46651493..46651550 rows=43
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5-corners",
+  "origin": "http://127.0.0.1:18871",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46651550",
+  "members": 2,
+  "proposals": 26,
+  "tasks": 0
+}
+
+[index] scan 46651551..46651618 rows=43
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5-corners",
+  "origin": "http://127.0.0.1:18871",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46651618",
+  "members": 2,
+  "proposals": 26,
+  "tasks": 0
+}
+
+[index] scan 46652531..46652571 rows=119
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5-corners",
+  "origin": "http://127.0.0.1:18871",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46652571",
+  "members": 2,
+  "proposals": 102,
+  "tasks": 0
+}
+

@@ -10,15 +10,15 @@
       "CompilerType": "solc-j",
       "OptimizationUsed": "1",
       "Runs": "200",
-      "ConstructorArguments": "000000000000000000000000b19af208048f0a47a117b59af2299c61a86e16d9",
+      "ConstructorArguments": "",
       "EVMVersion": "london",
       "Library": "",
       "ContractFileName": "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxy.sol",
       "LicenseType": "",
-      "Proxy": "0",
-      "Implementation": "",
       "SwarmSource": "",
-      "SimilarMatch": ""
+      "SimilarMatch": "0xDc209324Cc42a1cF9cA57a4250Ed99e4347Ed7F3",
+      "Proxy": "0",
+      "Implementation": ""
     }
   ]
 }

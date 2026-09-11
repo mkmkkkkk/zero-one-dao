@@ -1,0 +1,5 @@
+
+> zero-one-dao@0.1.0 typecheck
+> tsc --noEmit
+
+scenarios/testnet-corner-cases.ts(303,115): error TS2741: Property 'releaseAt' is missing in type '{ amount: bigint; releaseType: "verifiers"; verifiers: `0x${string}`[]; threshold: number; }' but required in type 'Tranche'.

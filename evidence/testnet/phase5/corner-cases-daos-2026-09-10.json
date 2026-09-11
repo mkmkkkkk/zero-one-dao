@@ -1,0 +1,62 @@
+{
+  "host": "Michaels-Mac-mini.local",
+  "at": "2026-09-10T21:07:01.538Z",
+  "parts": [
+    [
+      "votes",
+      false,
+      "Transaction reverted: 0xfc389f001b9988afb1ec3eebf692be44c71e11a3f365afba3bfca156171bbe79"
+    ]
+  ],
+  "rows": [
+    {
+      "id": "vote-in-submission-block",
+      "expected": "a vote in a block whose timestamp equals votingStarts reverts (NavShareToken TimePointNotDetermined: the checkpoint is not determined yet); a later timestamp succeeds. The relay waits for a later block (ruling 7).",
+      "observed": "submit block 46652791 t=1789073870, vote block 46652792 t=1789073872 (later timestamp), vote status success",
+      "ok": true,
+      "receipt": "0x4831b562bb9c4d686b3c6d0c977457a881b0ea0032b6bcb68976f07646000ef9"
+    },
+    {
+      "id": "vote-twice",
+      "expected": "simulation decodes voted; transaction reverts",
+      "observed": "voted; mined reverted at 46652796",
+      "ok": true,
+      "receipt": "0x03b6a7a6e43324398d200e9f566d439e60f4b68467dd95d0831107dd27d9c957"
+    },
+    {
+      "id": "process-before-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652799",
+      "ok": true,
+      "receipt": "0xffda0051c2ff5135f9d1e5e0ee5eae28eb34744323ce9bf8c7230227b39eb720"
+    },
+    {
+      "id": "vote-after-voting-ends",
+      "expected": "simulation decodes !voting; transaction reverts",
+      "observed": "!voting; mined reverted at 46652855",
+      "ok": true,
+      "receipt": "0x1dc2b7bd65e7b90bcec051d53173ab876b14497d9a57f3f3ee14e9367e29fb31"
+    },
+    {
+      "id": "process-during-grace",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652856",
+      "ok": true,
+      "receipt": "0x77ad63c1b5993ba875c0441915dc634b64c824cca19eb63fce3d2bc98d42ae5d"
+    },
+    {
+      "id": "process-twice",
+      "expected": "simulation decodes !ready; transaction reverts",
+      "observed": "!ready; mined reverted at 46652917",
+      "ok": true,
+      "receipt": "0x93726f508bd70277bb374aaefde8f78a85d49f5f11f24ee425e7d704684ff9e1"
+    },
+    {
+      "id": "multicall-reverts-actionFailed",
+      "expected": "passed=true, actionFailed=true, USDC untouched",
+      "observed": "passed=true actionFailed=true; treasury 3050 -> 3050",
+      "ok": true,
+      "receipt": "0x44771e86c9de2da7987149a613ccdd6b44eca9217e4271c56945be8c4ff19d4d"
+    }
+  ]
+}

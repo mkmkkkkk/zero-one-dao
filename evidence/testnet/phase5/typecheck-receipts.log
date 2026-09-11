@@ -1,0 +1,5 @@
+
+> zero-one-dao@0.1.0 typecheck
+> tsc --noEmit
+
+scripts/audit-phase5-receipts.ts(32,222): error TS18046: 'r.logs' is of type 'unknown'.

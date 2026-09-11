@@ -1,0 +1,23 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "SameBlockProbe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\ninterface T {function approve(address,uint256)external returns(bool);}\ninterface D {function deposit(uint256)external returns(uint256);}\ninterface B {function submitProposal(bytes calldata,uint32,uint256,string calldata)external payable returns(uint32);function proposalCount()external view returns(uint32);function submitVote(uint32,bool)external;}\ncontract SameBlockProbe {\nevent Refused(uint32 proposal,bytes reason);\nfunction check(address token,address shaman,B baal,bytes calldata data)external returns(uint32 id){T(token).approve(shaman,50e6);D(shaman).deposit(50e6);baal.submitProposal(data,0,100000,\"phase5 same-block vote probe\");id=baal.proposalCount();(bool ok,bytes memory reason)=address(baal).call(abi.encodeCall(B.submitVote,(id,true)));require(!ok,\"same-block vote accepted\");require(bytes4(reason)==bytes4(keccak256(\"TimePointNotDetermined(uint256,uint256)\")),\"wrong refusal\");emit Refused(id,reason);}\nfunction vote(B baal,uint32 id)external{baal.submitVote(id,true);}\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "cancun",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode.object"
+        ]
+      }
+    }
+  }
+}

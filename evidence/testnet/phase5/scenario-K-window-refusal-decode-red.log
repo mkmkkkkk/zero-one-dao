@@ -1,0 +1,10 @@
+{"chainId":84532,"hash":"0x5b09e1ca71c2fac399d6bea3562e36e3f01aec234c7d462ab7877f0253c965c6","blockNumber":"46651094","status":"reverted","reason":"unknown","pool":"0xDEb1Fe2441b6cDFCcc860Ffb255B1fc34c73603c"}
+/Users/michaelmacmini/srv/zero-one-dao/scenarios/K-weth18-window-refusal.ts:23
+if(receipt.status!=='reverted'||reason!=='WindowUnavailable')throw Error('mined short-window refusal not proven');
+                                                                   ^
+
+Error: mined short-window refusal not proven
+    at <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/scenarios/K-weth18-window-refusal.ts:23:68)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v26.5.0

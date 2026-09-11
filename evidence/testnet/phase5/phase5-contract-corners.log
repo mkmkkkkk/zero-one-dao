@@ -1,0 +1,522 @@
+generated actor keys -> /Users/michaelmacmini/srv/zero-one-dao/state/testnet-phase5-corners/actors.json (0600)
+live chain Base Sepolia (84532) rpc https://sepolia.base.org; founder 0x7598604daBA8678f95f1fDBBF49dbbB2Ab73Ecb5 0.001 ETH
+   tx fund A 0xAd344191b98fE41c9A2D504FD14A020D223C7F1E with 0.00004 ETH: 0x55e7018a4a11dbca421a01d75b099f22d0a51f50dc8ae3cb1f4695470dbc24c6 (block 46650396)
+   tx fund B 0x8808e9BBc646Fc2FE4b8C531E836ae814263B499 with 0.00004 ETH: 0x9004d23d012bacb5c5c7b8e41d6934c5f8ba964ea8ee85fbb85d5798809b99f1 (block 46650397)
+   tx fund C 0x28C96D3e2A27599f46446433D0ca48D576374A8b with 0.00004 ETH: 0xab1c4b2cd993ebdda6e0a7d422feebaaeaf350459236277226e1acedf1ea7e77 (block 46650398)
+   tx fund D 0x1Ae5685349b232ABaBc50E8515a83A90274744d8 with 0.00004 ETH: 0xe4b697b2ef732398bf3ec266ba1709f93648918b0b90fafdab60b92e6ecd3a9d (block 46650399)
+   tx fund O 0xbE977DA12995Ab7288711FD2670878C2a71EC434 with 0.00004 ETH: 0x5a9eadb82a312798bb2dc0e85519bc61ac0800a185ea0e3861afd3ca3f4cf130 (block 46650400)
+   tx fund W 0xE19a006E6032981135f86b6A22c296197aCf7235 with 0.00004 ETH: 0x285171bbf7b4193807e8c1900b98035c9cf9050ca58dbcba77dc639ce11770aa (block 46650400)
+   scenario DAO record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/phase5-contract-corners-2026-09-10T19-39-06-782Z.json
+   tx deploy SafeProxy: 0x0ca88f2d278517af99899ee0f06af818ad30d46995b47972080f4cdfe4aa9dad
+   tx deploy BaalProxy: 0x4dcac3d168353b41913bac791d35832f7aa59b25bf2e004d4e292d26246ba4dc
+   tx deploy NavShareToken: 0x5567d685edaed8380e1c9d48d04f03ef653edccb62c79d5c774adf68449c1a42
+   tx deploy LootToken: 0xb0c3ec3b1eb83ddde566a8f7414742729a30a9cb8025ff73f0cb1f587e37e788
+   tx deploy DepositShaman: 0x460fa0d114b25b2b2361da4420c455654ea4f5bbb53b001c1c9d9c0ced8bb93e
+   tx deploy WorkManager: 0xe2da45724814d1ad89be27183c866f2f72e4743c080c423dd3997caa2fa040a6
+   tx deploy PaymentDeployer: 0x96a1e7d8f111ef0cb59cab052566bb449d363816c26d63d110c04d0c9d405641
+   tx deploy StrategyDeployer: 0x0b6fa542a85e660829a8416e02b06d0790d9fa860cd5836c504213ba4008c88f
+   tx deploy ProjectDeployer: 0xe2918d107e80b189380dab83c32c63595aae38e34c11e021f22b35f4042acbb0
+   tx deploy ConfigDeployer: 0x91b689a56e7730b2d9ce6fe8125af4117a4513a72befa0e5465807948c1caef1
+   tx deploy TemplateFactory: 0x8611ba457b25376b3f01913bcdddb87ca06ff840223d25fbac8fcde56a3e8549
+   tx deploy ZeroOneIntentAccount: 0xd02334efd347211563b1515755b8f511d58c71699a40f007682843c4156873a9
+   tx deploy Constitution: 0x8f04924d4dd3dcd9c32ace17f9b024b26d59ca4ce9e57e34bc45a3b4752d40e9
+   tx deploy Safe.setup: 0x7654271a41ddef9b5f6a6df30d272cf6389ff4d232c696afbcc73b3bce746793
+   tx deploy Baal.setUp: 0x6fadc02faebb16091374a1d1bc2c791a4d56704087018c0f47f2e496486394dd
+deployed: safe 0xaD3E636cf96f669749D79A638Badb0b3770aB15d baal 0xe3897254572d0Eb400BE8B3dD9d862cd92369B13 shares 0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8 settlement 0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a
+          depositShaman 0xFF67D5cec3Ed2E921730a36238a05623292c1a16 workManager 0xb3E5040991868651f53db41845150C6fd75fD8ce constitution 0x6DEa6EAb629FE90FBd259c7690EEC5349dd86cA0
+          templateFactory 0xD0f1A32b2a897d65D63F958137F3358e27C297e1 deployers 0xd62AA38Fe06CfE9933470a3855e7B7E6CacA1269 0x41cfAdD6a5988Cf7c502e38948D6777813eAedcc 0x922b318CEe2407e0b05ED56c3953e6A8796cF5b2 0xa9384aE7f79A1ae2d3A6c44Fd8e55f18Ff0072e0 intentAccount 0xAa9aB4C4Acd3dE631F4651F5fc6C38b8063641F3
+   F = 0x7598604daBA8678f95f1fDBBF49dbbB2Ab73Ecb5  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xAd344191b98fE41c9A2D504FD14A020D223C7F1E  member agent A
+   B = 0x8808e9BBc646Fc2FE4b8C531E836ae814263B499  member agent B
+   C = 0x28C96D3e2A27599f46446433D0ca48D576374A8b  member agent C
+   D = 0x1Ae5685349b232ABaBc50E8515a83A90274744d8  depositor D (joins later)
+   O = 0xbE977DA12995Ab7288711FD2670878C2a71EC434  operator O (mandate recipient)
+   W = 0xE19a006E6032981135f86b6A22c296197aCf7235  worker W (task deliverer)
+   shaman 0xFF67D5cec3Ed2E921730a36238a05623292c1a16 permission 2 (DepositShaman)
+   shaman 0xb3E5040991868651f53db41845150C6fd75fD8ce permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xd62AA38Fe06CfE9933470a3855e7B7E6CacA1269
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x41cfAdD6a5988Cf7c502e38948D6777813eAedcc
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x922b318CEe2407e0b05ED56c3953e6A8796cF5b2
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xa9384aE7f79A1ae2d3A6c44Fd8e55f18Ff0072e0
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xb7ca0e40ffcc0ec73cd3ca9a0bbd2109ad13c85d199124fe486a1077fc6135ca (block 46650437, gas 51294)
+   tx fund B with 10000 USDC: 0x53636ed702c0496103b1acc22da36cf678145a838d02e2127f222dd0b90cc243 (block 46650439, gas 51294)
+   tx fund C with 10000 USDC: 0x0b70a0c85cc2a762d9662775c3d6b48bed94b844c9f6195fedca66c07fd8a632 (block 46650440, gas 51294)
+   tx fund D with 10000 USDC: 0xce34080c621e42b0a438d68ac6ba0fad9ae241c828c5e7a1768a44f83c7efff5 (block 46650441, gas 51294)
+   tx fund O with 10000 USDC: 0x6d331411fd922cae94fcf5c1f83a263fc46ed3baa9885d8e88c6a47b46cc00ff (block 46650443, gas 51294)
+   tx fund W with 10000 USDC: 0x24ccf71a948f44c02e3daa7a6eedea87570a896b44c770153aaa4fbc0040df89 (block 46650445, gas 51282)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x44b2121415091a5adf754339f91a863e083297da236e499637b74b8b8463e0f9 (block 46650446, gas 45923)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x4e291ff308656afaba38c9bd4979e76c47a397de44ffbbd5bd960e3592b94e4a (block 46650448, gas 301884)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xd8d6f75b8a89e362bc1c3912bf45f5a3a7bf5118a04500c605232e948213920d (block 46650450, gas 45911)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x213374470b02beef7b2cdc8ecb75a954e672ab0c6aab741f4a5caf21c85fdac2 (block 46650452, gas 250662)
+   tx B approve deposit shaman: 0xd1944483ec1779b7e7e408e143211e69ca15f8249be582da5e6a975b9220c232 (block 46650454, gas 45911)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0xa20fcc7dd14afd0cd80c23156b5ba7b6f5502cf62818a0d4ddfcf140545759f5 (block 46650456, gas 250662)
+   tx C approve deposit shaman: 0x6a9a45109f2d148f45eb0865e6269255ca6bc3a6b9d7f47153c12b2a4d611099 (block 46650458, gas 45911)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x04a98670d5ba0243b637f1a58604b691e8af934077fab8d7b8f9a825c3da7e95 (block 46650460, gas 250662)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+   tx A submitProposal #1 "phase5 retention: account deficit and exit-return" (baalGas 56674): 0x36ddf2baaa2df9ba02e0b346db9164c165c799344d0a4dc650ee4f37ce60ea4c (block 46650467, gas 281458)
+   wait +1s (let votingStarts become past) -> block 46650468 timestamp 1789069224 (real 2 s)
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x71ad2bcf43649de5425214f81fd222e6dc43f9a080d72e2f60ce16ec178ea3cf (block 46650470, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x7b785826257f8e46c30168469492ba218702092e9a62ea754156df8ce98a43e7 (block 46650472, gas 100127)
+   tx A ragequit 1000 shares -> paid 1000 USDC (pro-rata of 3050 at supply 3050): 0x4fa4583a92f9c20392cdc343506de984a029c6e6c0ff742634db6adfa8c3c1c3 (block 46650475, gas 222236)
+   tx C ragequit 100 shares -> paid 100 USDC (pro-rata of 2050 at supply 2050): 0x6b51e343475b06d1e2671f34f9608732bf39a56a3d6a36f9e557fa152931459a (block 46650477, gas 249736)
+live scenario DAO left on chain: baal 0xe3897254572d0Eb400BE8B3dD9d862cd92369B13 safe 0xaD3E636cf96f669749D79A638Badb0b3770aB15d (record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/phase5-contract-corners-2026-09-10T19-39-06-782Z.json)
+ContractFunctionExecutionError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+
+This error could arise when the account does not have enough funds to:
+ - pay for the total gas fee,
+ - pay for the value to send.
+ 
+The cost of the transaction is calculated as `gas * gas fee + value`, where:
+ - `gas` is the amount of gas needed for transaction to execute,
+ - `gas fee` is the gas fee,
+ - `value` is the amount of ether to send to the recipient.
+ 
+Request Arguments:
+  chain:  Base Sepolia (id: 84532)
+  from:   0xE19a006E6032981135f86b6A22c296197aCf7235
+  to:     0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8
+  data:   0xd87d971200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080
+  gas:    8000000
+ 
+Contract Call:
+  address:   0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8
+  function:  settleRetention(uint256 proposalId, uint256 maxRecords)
+  args:                     (1, 128)
+  sender:    0xE19a006E6032981135f86b6A22c296197aCf7235
+
+Docs: https://viem.sh/docs/contract/writeContract
+Details: insufficient funds for gas * price + value: have 40000000000000 want 57600000000000
+Version: viem@2.56.3
+    at getContractError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getContractError.ts:82:10)
+    at writeContract.internal (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/writeContract.ts:241:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async settleRetention (/Users/michaelmacmini/srv/zero-one-dao/src/retention.ts:19:18)
+    at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/phase5-live.ts:22:5) {
+  cause: TransactionExecutionError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+  
+  This error could arise when the account does not have enough funds to:
+   - pay for the total gas fee,
+   - pay for the value to send.
+   
+  The cost of the transaction is calculated as `gas * gas fee + value`, where:
+   - `gas` is the amount of gas needed for transaction to execute,
+   - `gas fee` is the gas fee,
+   - `value` is the amount of ether to send to the recipient.
+   
+  Request Arguments:
+    chain:  Base Sepolia (id: 84532)
+    from:   0xE19a006E6032981135f86b6A22c296197aCf7235
+    to:     0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8
+    data:   0xd87d971200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080
+    gas:    8000000
+  
+  Details: insufficient funds for gas * price + value: have 40000000000000 want 57600000000000
+  Version: viem@2.56.3
+      at getTransactionError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:44:10)
+      at sendTransaction (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/sendTransaction.ts:405:11)
+      ... 3 lines matching cause stack trace ...
+      at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/phase5-live.ts:22:5) {
+    cause: InsufficientFundsError: The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.
+    
+    This error could arise when the account does not have enough funds to:
+     - pay for the total gas fee,
+     - pay for the value to send.
+     
+    The cost of the transaction is calculated as `gas * gas fee + value`, where:
+     - `gas` is the amount of gas needed for transaction to execute,
+     - `gas fee` is the gas fee,
+     - `value` is the amount of ether to send to the recipient.
+    
+    Details: insufficient funds for gas * price + value: have 40000000000000 want 57600000000000
+    Version: viem@2.56.3
+        at getNodeError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getNodeError.ts:103:12)
+        at <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:37:19)
+        at getTransactionError (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/utils/errors/getTransactionError.ts:43:5)
+        at sendTransaction (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/sendTransaction.ts:405:11)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async writeContract.internal (/Users/michaelmacmini/srv/zero-one-dao/node_modules/viem/actions/wallet/writeContract.ts:230:14)
+        at async settleRetention (/Users/michaelmacmini/srv/zero-one-dao/src/retention.ts:19:18)
+        at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/phase5-live.ts:22:5) {
+      details: 'insufficient funds for gas * price + value: have 40000000000000 want 57600000000000',
+      docsPath: undefined,
+      metaMessages: [Array],
+      shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+      version: '2.56.3',
+      [cause]: [TransactionRejectedRpcError]
+    },
+    details: 'insufficient funds for gas * price + value: have 40000000000000 want 57600000000000',
+    docsPath: undefined,
+    metaMessages: [
+      'This error could arise when the account does not have enough funds to:',
+      ' - pay for the total gas fee,',
+      ' - pay for the value to send.',
+      ' ',
+      'The cost of the transaction is calculated as `gas * gas fee + value`, where:',
+      ' - `gas` is the amount of gas needed for transaction to execute,',
+      ' - `gas fee` is the gas fee,',
+      ' - `value` is the amount of ether to send to the recipient.',
+      ' ',
+      'Request Arguments:',
+      '  chain:  Base Sepolia (id: 84532)\n' +
+        '  from:   0xE19a006E6032981135f86b6A22c296197aCf7235\n' +
+        '  to:     0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8\n' +
+        '  data:   0xd87d971200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080\n' +
+        '  gas:    8000000'
+    ],
+    shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+    version: '2.56.3'
+  },
+  details: 'insufficient funds for gas * price + value: have 40000000000000 want 57600000000000',
+  docsPath: '/docs/contract/writeContract',
+  metaMessages: [
+    'This error could arise when the account does not have enough funds to:',
+    ' - pay for the total gas fee,',
+    ' - pay for the value to send.',
+    ' ',
+    'The cost of the transaction is calculated as `gas * gas fee + value`, where:',
+    ' - `gas` is the amount of gas needed for transaction to execute,',
+    ' - `gas fee` is the gas fee,',
+    ' - `value` is the amount of ether to send to the recipient.',
+    ' ',
+    'Request Arguments:',
+    '  chain:  Base Sepolia (id: 84532)\n' +
+      '  from:   0xE19a006E6032981135f86b6A22c296197aCf7235\n' +
+      '  to:     0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8\n' +
+      '  data:   0xd87d971200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080\n' +
+      '  gas:    8000000',
+    ' ',
+    'Contract Call:',
+    '  address:   0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8\n' +
+      '  function:  settleRetention(uint256 proposalId, uint256 maxRecords)\n' +
+      '  args:                     (1, 128)\n' +
+      '  sender:    0xE19a006E6032981135f86b6A22c296197aCf7235'
+  ],
+  shortMessage: 'The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.',
+  version: '2.56.3',
+  abi: [
+    {
+      inputs: [Array],
+      stateMutability: 'nonpayable',
+      type: 'constructor'
+    },
+    { inputs: [Array], name: 'AlreadyRegistered', type: 'error' },
+    { inputs: [], name: 'EmptyName', type: 'error' },
+    { inputs: [], name: 'EmptySymbol', type: 'error' },
+    { inputs: [Array], name: 'InsufficientBalance', type: 'error' },
+    { inputs: [], name: 'NonTransferable', type: 'error' },
+    { inputs: [Array], name: 'NotRegistered', type: 'error' },
+    { inputs: [Array], name: 'OnlyBaal', type: 'error' },
+    { inputs: [], name: 'PermanentlyUnpaused', type: 'error' },
+    { inputs: [Array], name: 'RetentionUnsettled', type: 'error' },
+    { inputs: [Array], name: 'SupplyCapExceeded', type: 'error' },
+    { inputs: [Array], name: 'TimePointNotDetermined', type: 'error' },
+    { inputs: [], name: 'ZeroAddress', type: 'error' },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'Approval',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'DelegateVotesChanged',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'ProposalRegistered',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'RetentionSettled',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'SharesBurned',
+      type: 'event'
+    },
+    {
+      anonymous: false,
+      inputs: [Array],
+      name: 'Transfer',
+      type: 'event'
+    },
+    {
+      inputs: [Array],
+      name: 'allowance',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'approve',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'baal',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'balanceJournal',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'balanceOf',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'burn',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'decimals',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'delegates',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'exitedSince',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'getCheckpoint',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'getPastVotes',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'getVotes',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'journalLength',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'mint',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'name',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'navSharesFor',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'navValueForShares',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'numCheckpoints',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'pause',
+      outputs: [],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'paused',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'registerProposal',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'safe',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'settleRetention',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'settlementToken',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'settlementUnit',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'settlements',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'symbol',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'totalBurned',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'totalSupply',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'transfer',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'transferFrom',
+      outputs: [Array],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'treasuryValue',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    },
+    {
+      inputs: [],
+      name: 'unpause',
+      outputs: [],
+      stateMutability: 'pure',
+      type: 'function'
+    },
+    {
+      inputs: [Array],
+      name: 'votingStarts',
+      outputs: [Array],
+      stateMutability: 'view',
+      type: 'function'
+    }
+  ],
+  args: [ 1n, 128n ],
+  contractAddress: '0x9A7776073F940eb8aAd6c3db7b0f22008ebcEBA8',
+  formattedArgs: undefined,
+  functionName: 'settleRetention',
+  sender: '0xE19a006E6032981135f86b6A22c296197aCf7235'
+}

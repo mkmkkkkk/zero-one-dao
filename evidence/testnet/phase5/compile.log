@@ -1,0 +1,192 @@
+
+> zero-one-dao@0.1.0 compile
+> tsx scripts/compile.ts
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+  --> @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol:23:26:
+   |
+23 |     function _throwError(RecoverError error) private pure {
+   |                          ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+  --> @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol:89:29:
+   |
+89 |         (address recovered, RecoverError error) = tryRecover(hash, signature);
+   |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+   --> @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol:121:29:
+    |
+121 |         (address recovered, RecoverError error) = tryRecover(hash, r, vs);
+    |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+   --> @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol:170:29:
+    |
+170 |         (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
+    |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+  --> @openzeppelin/contracts/utils/cryptography/ECDSA.sol:23:26:
+   |
+23 |     function _throwError(RecoverError error) private pure {
+   |                          ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+  --> @openzeppelin/contracts/utils/cryptography/ECDSA.sol:89:29:
+   |
+89 |         (address recovered, RecoverError error) = tryRecover(hash, signature);
+   |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+   --> @openzeppelin/contracts/utils/cryptography/ECDSA.sol:121:29:
+    |
+121 |         (address recovered, RecoverError error) = tryRecover(hash, r, vs);
+    |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+   --> @openzeppelin/contracts/utils/cryptography/ECDSA.sol:170:29:
+    |
+170 |         (address recovered, RecoverError error) = tryRecover(hash, v, r, s);
+    |                             ^^^^^^^^^^^^^^^^^^
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+   --> @openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol:211:13:
+    |
+211 |             assembly {
+    |             ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol:24:13:
+   |
+24 |             assembly {
+   |             ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol:30:17:
+   |
+30 |                 assembly {
+   |                 ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol:63:13:
+   |
+63 |             assembly {
+   |             ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts/utils/Create2.sol:38:9:
+   |
+38 |         assembly {
+   |         ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts/utils/Create2.sol:62:9:
+   |
+62 |         assembly {
+   |         ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts/utils/Strings.sol:24:13:
+   |
+24 |             assembly {
+   |             ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts/utils/Strings.sol:30:17:
+   |
+30 |                 assembly {
+   |                 ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: Natspec memory-safe-assembly special comment for inline assembly is deprecated and scheduled for removal. Use the memory-safe block annotation instead.
+  --> @openzeppelin/contracts/utils/cryptography/ECDSA.sol:63:13:
+   |
+63 |             assembly {
+   |             ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Warning: 'send' is deprecated and scheduled for removal. Use 'call{value: <amount>}("")' instead.
+   --> @gnosis.pm/safe-contracts/contracts/GnosisSafe.sol:208:21:
+    |
+208 |             require(receiver.send(payment), "GS011");
+    |                     ^^^^^^^^^^^^^
+
+
+Warning: Unreachable code.
+  --> contracts/ProposalBase.sol:45:9:
+   |
+45 |         _entered = 1;
+   |         ^^^^^^^^^^^^
+
+
+Warning: Unreachable code.
+  --> contracts/ProposalBase.sol:92:9:
+   |
+92 |         emit ToppedUp(amount, budget);
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+ConfigProposal: runtime 5122 bytes
+Constitution: runtime 678 bytes
+DepositShaman: runtime 2827 bytes
+IBaalV3: runtime 0 bytes
+IDepositShaman: runtime 0 bytes
+IERC20Metadata: runtime 0 bytes
+IERC20Minimal: runtime 0 bytes
+INavShareToken: runtime 0 bytes
+IWorkManager: runtime 0 bytes
+IProposalContract: runtime 0 bytes
+LootToken: runtime 2130 bytes
+MockDex: runtime 1846 bytes
+MockUSDC: runtime 1823 bytes
+NavShareToken: runtime 5268 bytes
+PaymentProposal: runtime 5099 bytes
+ProjectProposal: runtime 8127 bytes
+ProposalBase: runtime 0 bytes
+IStrategyVenue: runtime 0 bytes
+StrategyProposal: runtime 7575 bytes
+ConfigDeployer: runtime 7263 bytes
+ITemplateDeployer: runtime 0 bytes
+PaymentDeployer: runtime 7874 bytes
+ProjectDeployer: runtime 12115 bytes
+StrategyDeployer: runtime 9924 bytes
+TemplateDeployer: runtime 0 bytes
+TemplateFactory: runtime 3572 bytes
+LedgerProbe: runtime 1460 bytes
+IProbePool: runtime 0 bytes
+IProbeStrategy: runtime 0 bytes
+IProbeWeth: runtime 0 bytes
+TwapSandwichProbe: runtime 3891 bytes
+TestToken: runtime 1575 bytes
+TickMath: runtime 57 bytes
+ILedgerFactory: runtime 0 bytes
+ILedgerInstance: runtime 0 bytes
+TreasuryLedger: runtime 3015 bytes
+IV3Factory: runtime 0 bytes
+IV3Pool: runtime 0 bytes
+IV3Quoter: runtime 0 bytes
+IV3Router: runtime 0 bytes
+UniswapV3Venue: runtime 7648 bytes
+Baal: runtime 19368 bytes
+IZeroOneShares: runtime 0 bytes
+IBaalToken: runtime 0 bytes
+MultiSendCallOnly: runtime 360 bytes
+WorkManager: runtime 6676 bytes
+ZeroOneIntentAccount: runtime 5940 bytes
+Wrote 47 local artifacts with 0.8.36+commit.8a079791.Emscripten.clang

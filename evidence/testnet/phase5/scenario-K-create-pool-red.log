@@ -1,0 +1,100 @@
+generated actor keys -> /Users/michaelmacmini/srv/zero-one-dao/state/testnet-phase5-k/actors.json (0600)
+live chain Base Sepolia (84532) rpc https://sepolia.base.org; founder 0x95F646D87e465a4a177a57d3288d1326e3d3a75d 0.001 ETH
+   tx fund A 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a with 0.00004 ETH: 0x52317d725b7634497c1ae73de3deb6e787230c72f6635f3517bda336cf47d4d2 (block 46649923)
+   tx fund B 0x857A8c21822cDF4BFF2a3dD661E21f293ba8e0Bc with 0.00004 ETH: 0x4dece5aadf3077d994831b346572fcfd63c3cbe93f26fd5938cd81f5fd30b68f (block 46649924)
+   tx fund C 0x0703Df74D5e94C469A14aeBF790055F2E10cAA22 with 0.00004 ETH: 0xc2453a19a45f6e8b296cc0315c527e86cb0a1d3d9238b85cb5e7566af6daa277 (block 46649925)
+   tx fund D 0xFa6800cE6Bb0F879cB504065B5AbdF23a9005559 with 0.00004 ETH: 0x2162728b1b7a807e105fae833b7b5ef0d49b303685ac075cadd0a09214413a46 (block 46649926)
+   tx fund O 0x5531307642877686C837c205796C8e25CfD0017E with 0.00004 ETH: 0xda08329b85a48320bab7f5bd98835d98952759db3a69a6d84b765d33a28f5098 (block 46649926)
+   tx fund W 0x46Ef823B5f3e8A141BfB7A723773e6185A204C6a with 0.00004 ETH: 0x0f1a3bbba9b1067f078ebf06c51ee40b7217de1c087f1e254f1c39680fe1b1f9 (block 46649927)
+   scenario DAO record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-K-native-sepolia-2026-09-10T19-23-24-956Z.json
+   tx deploy SafeProxy: 0x1e2878c55556570e3e4b59aad6eabbc42c6a4ff322d413002c62d3500bed87c5
+   tx deploy BaalProxy: 0xa9e366cbaaa7594b56f72284a1cbbd5acb86d664725ad5fddaa19f6b78839ffb
+   tx deploy NavShareToken: 0x05ca49d9141f512ec0cef808b11ca5822b036500dca254b2eb1aaf32b8ceaa08
+   tx deploy LootToken: 0xce71c2d605ea958022b20851372bf5d9f7c83eea1a99809b3c8dd145281cd3d9
+   tx deploy DepositShaman: 0x1ac2d227d9b1fab2b8e694bc9283ccd3288b033454fb7406c56b463e83255390
+   tx deploy WorkManager: 0xba4176dd24c79603f97c2baac739bce3b51c6b028a81cf3a20acd7109bc299bc
+   tx deploy PaymentDeployer: 0x7819d3eb84710225edd226f4e6ddd86f4acaa7542f7ba8b77d03495ae0032b7f
+   tx deploy StrategyDeployer: 0xf7e6d1db613b18f8523db4179ac4c6156eec36018b3b25facb77dac1730d6fc1
+   tx deploy ProjectDeployer: 0x3519e2c69a424875d293b123eac69fcaf24c0042cf393c751d8931ddc8a08c50
+   tx deploy ConfigDeployer: 0xa473b10905fc2ea1cc1faf5d56cbf4ef48f2893a157ce23c5d0757779fcad125
+   tx deploy TemplateFactory: 0x5325aaa3a5896acf22bb281211cee61bb4af7fbad38d9a315b3131ef995c97d6
+   tx deploy ZeroOneIntentAccount: 0xc8e5ea78065de97798cfb9e0a3fa646f8560e18ac1e6a58e3c71402974600d03
+   tx deploy Constitution: 0xf88e52e7d7a64ff513b07d5a467f752ab7c2138b473e8f26054adf215a283aca
+   tx deploy Safe.setup: 0xeb79b4b4a3c33133527b49993c9700ddeee126d9aa377b8efc03d3993ac31296
+   tx deploy Baal.setUp: 0x00088a0fe5d94e3caaff15a69296b50c7bcf89a0f0820a87ebbd5a61c39b8f4d
+deployed: safe 0x1c34E8c2ba7F5eAD8556b895DbB5e4450014B490 baal 0xA75AA4d63ab08494412bC65f112bfdEdA342dC40 shares 0xF1820Bf41A3eFD38477E48DD489ae3014c9F35F8 settlement 0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a
+          depositShaman 0xe2C6C61ED3B04dEBAB1360445aFd27C76f0add1B workManager 0x82BDab5179A0738030e9cC563bAA7Bd7B2feb362 constitution 0x8Ced10d7B2E6BE553C05b5e7FDF42dADdC5592BF
+          templateFactory 0x3FE43F5E307287b150083389B46b7A6a6D031475 deployers 0xC20CE9cFb9f816cB27f43743Bf6E5001AAa7c1d0 0xd63f8C4e8acAA2435ADf5D7169F75dC42a276274 0xB124c9bCAa1d57fD3edfb215583096b787D40dB1 0xD0Fe99a1F4FaF15B1862fB3F62633108D28a1b03 intentAccount 0xca55CDBA16c4D0B27B75e109F2BE071FAA028a14
+   F = 0x95F646D87e465a4a177a57d3288d1326e3d3a75d  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xEdA4b8A4186A5C44aaf6A02812139d92990a9D2a  member agent A
+   B = 0x857A8c21822cDF4BFF2a3dD661E21f293ba8e0Bc  member agent B
+   C = 0x0703Df74D5e94C469A14aeBF790055F2E10cAA22  member agent C
+   D = 0xFa6800cE6Bb0F879cB504065B5AbdF23a9005559  depositor D (joins later)
+   O = 0x5531307642877686C837c205796C8e25CfD0017E  operator O (mandate recipient)
+   W = 0x46Ef823B5f3e8A141BfB7A723773e6185A204C6a  worker W (task deliverer)
+   shaman 0xe2C6C61ED3B04dEBAB1360445aFd27C76f0add1B permission 2 (DepositShaman)
+   shaman 0x82BDab5179A0738030e9cC563bAA7Bd7B2feb362 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xC20CE9cFb9f816cB27f43743Bf6E5001AAa7c1d0
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xd63f8C4e8acAA2435ADf5D7169F75dC42a276274
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xB124c9bCAa1d57fD3edfb215583096b787D40dB1
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xD0Fe99a1F4FaF15B1862fB3F62633108D28a1b03
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xb2c50f11bc6e1368c236059569f8aa0d327095733a0198e69a87dd08344f958a (block 46649966, gas 51294)
+   tx fund B with 10000 USDC: 0x495a0c740072e73541bcf7a524bb077faab7c58ba6a32daac6bc0121c8920a43 (block 46649968, gas 51294)
+   tx fund C with 10000 USDC: 0x4d9b9104282a7276e8541fc9e4ce9ad8b472764031da214f31bd86d11e7e1253 (block 46649970, gas 51282)
+   tx fund D with 10000 USDC: 0xd0925265dd96c8917e79580adf43844501be72a904fb7f26e60a593d55a03fca (block 46649972, gas 51270)
+   tx fund O with 10000 USDC: 0xa3eddfdc1f640d3520e13284f8dcb2bb0c927cbafb810c644426c2427db54b0b (block 46649974, gas 51294)
+   tx fund W with 10000 USDC: 0x320b3c10c0ce3a85a95f59672b9a1fad114bd1f7e6901e6c5c8de497bb800eaf (block 46649976, gas 51294)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0xa1fbf76511b9d9ab9b25882e7df2784e217fc307328c1d6dc6b201f1d599cfe2 (block 46649977, gas 45923)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xb14bb437d38ad2f290d0ce681fb4f029ba4199976853963873bdbbc3575b6a90 (block 46649979, gas 301884)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xc5d7c54491c7a62592789c5d78735edf037bc025220a0cf0e336599eecc5afd1 (block 46649981, gas 45911)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0xddb95983098fd85bdb9630743c74129430bd4b31d0f46e59466d72374320aca2 (block 46649983, gas 250662)
+   tx B approve deposit shaman: 0x7364f02474d40f89fa8b83c57b73e49253b7664ebe06f54d9ba432131ea426e7 (block 46649984, gas 45911)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x621b1f9aed266659c720c514d5d675c7836d477b28da7c2e5ef4f89037c7c0e0 (block 46649986, gas 250662)
+   tx C approve deposit shaman: 0xee3fdb08d608905b317611f7fd7e2d7b8c895b24ae3b570b8d5f467498cb65dc (block 46649988, gas 45911)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xbe689a888a61237417c7ce1595294e2f8551cd5106397e09fc602fe2cb354bdf (block 46649991, gas 250662)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Sepolia factory has code 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
+   ok: published Sepolia router has code 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4
+   ok: published Sepolia quoter has code 0xC5290058841028F1614F3A6F0F5816cAd0df5E27
+   ok: published Sepolia manager has code 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2
+   ok: published dependency factory matches
+   ok: published dependency factory matches
+RECEIPT K asset deploy 0x10af8592f9ce32328faa5675efea9035d6a3b376dfdc3b0b8227ed5a82908154 address=0xD980e71Bea00A56862E289ce585324e53e6e0bbd
+live scenario DAO left on chain: baal 0xA75AA4d63ab08494412bC65f112bfdEdA342dC40 safe 0x1c34E8c2ba7F5eAD8556b895DbB5e4450014B490 (record /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/scenario-daos/scenario-K-native-sepolia-2026-09-10T19-23-24-956Z.json)
+Error: Transaction reverted: 0x676d39b2c424e6f7592e151d5a6ba695180d2d29923f041f4ad49188004c5faa gas=2955313/3000000: Execution reverted for an unknown reason. | Raw Call Arguments: |   from:   0x95f646d87e465a4a177a57d3288d1326e3d3a75d
+  to:     0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24
+  value:  0 ETH
+  data:   0xa16712950000000000000000000000000da8d8e3b63de048855d311431e8e1f7f3f7dd3a000000000000000000000000d980e71bea00a56862e289ce585324e53e6e0bbd00000000000000000000000000000000000000000000000000000000000001f4
+  gas:    3000000
+    at writeAndWait (/Users/michaelmacmini/srv/zero-one-dao/src/onchain.ts:90:43)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async tx (/Users/michaelmacmini/srv/zero-one-dao/scenarios/K-uniswap-v3-sepolia.ts:23:12)
+    at async main (/Users/michaelmacmini/srv/zero-one-dao/scenarios/K-uniswap-v3-sepolia.ts:31:3)

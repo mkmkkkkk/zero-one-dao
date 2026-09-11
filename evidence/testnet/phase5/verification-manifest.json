@@ -1,0 +1,105 @@
+{
+  "chainId": 84532,
+  "contracts": [
+    {
+      "name": "Baal",
+      "address": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+      "url": "https://sepolia.basescan.org/address/0x458Bb655AEF64A58Fb5473F52d2C469234746807#code"
+    },
+    {
+      "name": "MultiSendCallOnly",
+      "address": "0xc48264D72D2228f94653D02bB845f9C00696BE66",
+      "url": "https://sepolia.basescan.org/address/0xc48264D72D2228f94653D02bB845f9C00696BE66#code"
+    },
+    {
+      "name": "MockUSDC",
+      "address": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+      "url": "https://sepolia.basescan.org/address/0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a#code"
+    },
+    {
+      "name": "NavShareToken",
+      "address": "0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8",
+      "url": "https://sepolia.basescan.org/address/0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8#code"
+    },
+    {
+      "name": "LootToken",
+      "address": "0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b",
+      "url": "https://sepolia.basescan.org/address/0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b#code"
+    },
+    {
+      "name": "TreasuryLedger",
+      "address": "0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC",
+      "url": "https://sepolia.basescan.org/address/0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC#code"
+    },
+    {
+      "name": "DepositShaman",
+      "address": "0xE3041d2FE25987a3941a066Eb980B11BF81E2267",
+      "url": "https://sepolia.basescan.org/address/0xE3041d2FE25987a3941a066Eb980B11BF81E2267#code"
+    },
+    {
+      "name": "WorkManager",
+      "address": "0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8",
+      "url": "https://sepolia.basescan.org/address/0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8#code"
+    },
+    {
+      "name": "PaymentDeployer",
+      "address": "0x9821F97d84C5ba19F8844c1344635Cd4034415BB",
+      "url": "https://sepolia.basescan.org/address/0x9821F97d84C5ba19F8844c1344635Cd4034415BB#code"
+    },
+    {
+      "name": "StrategyDeployer",
+      "address": "0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b",
+      "url": "https://sepolia.basescan.org/address/0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b#code"
+    },
+    {
+      "name": "ProjectDeployer",
+      "address": "0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1",
+      "url": "https://sepolia.basescan.org/address/0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1#code"
+    },
+    {
+      "name": "ConfigDeployer",
+      "address": "0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3",
+      "url": "https://sepolia.basescan.org/address/0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3#code"
+    },
+    {
+      "name": "TemplateFactory",
+      "address": "0x9FC4166933729E26a73e95645deD9DF15673EDfD",
+      "url": "https://sepolia.basescan.org/address/0x9FC4166933729E26a73e95645deD9DF15673EDfD#code"
+    },
+    {
+      "name": "ZeroOneIntentAccount",
+      "address": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+      "url": "https://sepolia.basescan.org/address/0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8#code"
+    },
+    {
+      "name": "Constitution",
+      "address": "0xF4cDf63FCD19bBf7285D089b848212ba2C34596F",
+      "url": "https://sepolia.basescan.org/address/0xF4cDf63FCD19bBf7285D089b848212ba2C34596F#code"
+    },
+    {
+      "name": "ModuleProxyFactory",
+      "address": "0x383B80c358FADCA4654aCACe047BB706cca1FaD1",
+      "url": "https://sepolia.basescan.org/address/0x383B80c358FADCA4654aCACe047BB706cca1FaD1#code"
+    },
+    {
+      "name": "SafeSingleton",
+      "address": "0x604256c90fBe0823cE8AEF6e0563cA689435f994",
+      "url": "https://sepolia.basescan.org/address/0x604256c90fBe0823cE8AEF6e0563cA689435f994#code"
+    },
+    {
+      "name": "SafeProxyFactory",
+      "address": "0xd0a855D44F2DD6e568Bc534E1E7731276443bF81",
+      "url": "https://sepolia.basescan.org/address/0xd0a855D44F2DD6e568Bc534E1E7731276443bF81#code"
+    },
+    {
+      "name": "Safe",
+      "address": "0x6a0eFF5Aef13254aef69740392e064695b519A58",
+      "url": "https://sepolia.basescan.org/address/0x6a0eFF5Aef13254aef69740392e064695b519A58#code"
+    }
+  ],
+  "baalProxy": {
+    "address": "0x2a97A8DB1797dfD8691668D729eB8291ACE664cb",
+    "implementation": "0x458Bb655AEF64A58Fb5473F52d2C469234746807",
+    "url": "https://sepolia.basescan.org/address/0x2a97A8DB1797dfD8691668D729eB8291ACE664cb#code"
+  }
+}

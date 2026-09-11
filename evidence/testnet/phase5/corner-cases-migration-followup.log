@@ -1,0 +1,17 @@
+ASSERT mined EOA migration is actionFailed and leaves all 100 USDC in the source
+ASSERT EOA refusal decodes NotAContract
+RECEIPT EOA refusal tx=0x897253bcb2090dea69f2ef93178551a590a6ebfa1a94c37f1890e0d7563d6e54
+RECEIPT migration proposal tx=0x60beba3f5f66be37ecd4451b3a91debcdf7b2816f0a52f7f34e75d27986c1848 id=7
+RECEIPT vote tx=0xcdb76378ba3de4da7b505b7e7be8bfd68d89764712703c285f3cafe43bb07850
+RECEIPT vote tx=0xbb8ba0e3a7b25f55fc780806616a5374048685bff4efaf7865dd06cb394b46c8
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+WAIT real grace until 2026-09-10T20:42:53.000Z
+RECEIPT contract migration tx=0x1877ca6a592368ecf55928c3c03a763037a8cbb7dc7735b99dcbe73859520c6d
+ASSERT voted migration to a non-template contract moves exactly 100 USDC
+NATIVE MIGRATION CORNERS PASS

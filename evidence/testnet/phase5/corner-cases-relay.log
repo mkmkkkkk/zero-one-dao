@@ -1,0 +1,378 @@
+relay corner cases from Michaels-Mac-mini.local at 2026-09-10T19:58:09.679Z; beacon http://127.0.0.1:18871; work dir /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z
+
+== step 1: beacon: README, snippets, /health.json; the addresses an agent has if the relay is down
+   fetched snippet.js (11022 bytes)
+   fetched snippet.py (10794 bytes)
+   fetched llms.txt (1476 bytes)
+   GET http://127.0.0.1:18871/health.json
+   -> 200 (498 ms, 1585 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 84532,
+  "chain": "Base Sepolia",
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "baal": "0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f",
+  "safe": "0xF69F1205bc810e6cb77b884b51aEf2f65b3e104A",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "constitution": {
+    "address": "0x602A41F8F5362bb5969bD92b5d00DDA694EA4837",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892d
+   ok: relay acceptance is Base Sepolia only
+   GET http://127.0.0.1:18871/relay?op=identity&pass=<redacted>
+   -> 400 (44 ms) {"ok":false,"status":400,"reason":"pass carries about 9 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words"}
+   ok: relay answered with a JSON reason: pass carries about 9 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words
+   CASE weak-T0-pass | expected: 400 rejects predictable T0 identity before sponsorship | observed: 400 pass carries about 9 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words | OK
+   CASE relay-down-direct-reads | expected: the README's Baal address answers eth_call without the relay | observed: Baal 0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f proposalCount = 1 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory) | OK
+
+== step 2: fresh T1 agent: join, deposit 10 USDC (faucet) so it holds >= 1 share; a second fresh key that never joins; two T0 passes
+   $ node snippet.js join --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5
+   GET http://127.0.0.1:18871/relay?op=join&authorization=eyJjaGFpbklkIjo4NDUzMiwi...
+   -> 200 (5363 ms) {"ok":true,"verb":"join","address":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","delegated":true,"hash":"0x0f8f5fd4feec59d4b2ee6ee5af787f40554316a0353a4e1e8969a2f06f5b0647","blockNumber":"46651006","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   $ node snippet.js deposit --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --usdc 10
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (8910 ms) {"ok":true,"verb":"deposit","op":5,"member":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","hash":"0x7e936ae005008ac380a5b390bb3b5136952c342ae20d972d1281d4864c871edd","blockNumber":"46651014","gasUsed":"291101","nonceUsed":"0","nextNonce":"1","deposit":{"usdc":"10","sharesMinted":"10"},"faucet":{"toppedUpUsdc":"10","hash":"0xe7025ded7b84a6894089f04bae8a589a9ad9e8c54f4e75b1818c259f0ae706e3"}}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18871/relay?op=identity&pass=<redacted>
+   -> 200 (839 ms) {"ok":true,"address":"0x90444Fa7F5069C62eD65e28938186Ad8503cCe21","chainId":84532,"adapter":"0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c","delegated":false,"nonce":"0","authorizationNonce":0,"chainTime":1789070314,"domain":{"name":"ZeroOneIntent","version":"1","chainId":84532,"verifyingContract":"0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c"},"custody":"custodial-lite","me":"/me/pass/529ace1aa42e064ecd3ae6935bc2ef4cec8e068d9a4fc340a02bd690a3f6f101.json"}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18871/relay?op=join&pass=<redacted>
+   -> 200 (6450 ms) {"ok":true,"verb":"join","address":"0x90444Fa7F5069C62eD65e28938186Ad8503cCe21","delegated":true,"hash":"0x6fc894f8137360d7db2be7a2b26ce98d1f2d633ed8f782d1439dbc0234357995","blockNumber":"46651017","nonce":"0","shares":"0","note":"mints nothing; deposit at NAV or earn shares by verified work"}
+   ok: relay answered ok ()
+   agent 0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5 (10 shares), stranger 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D, T0 0x90444Fa7F5069C62eD65e28938186Ad8503cCe21
+
+== step 3: replay of a signed intent: the deposit URL that just succeeded is sent again
+   GET http://127.0.0.1:18871/me/0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5.json
+   -> 200 (4306 ms, 1395 bytes) {
+  "address": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "delegated": true,
+  "nonce": "1",
+  "authorizationNonce": 1,
+  "chainTime": 1789070322,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "10000000000000000000",
+
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (304 ms) {"ok":true,"replayed":true,"hash":"0x7e936ae005008ac380a5b390bb3b5136952c342ae20d972d1281d4864c871edd","status":"success","blockNumber":"46651014","verb":"deposit"}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18871/me/0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5.json
+   -> 200 (1503 ms, 1395 bytes) {
+  "address": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "delegated": true,
+  "nonce": "1",
+  "authorizationNonce": 1,
+  "chainTime": 1789070326,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "10000000000000000000",
+
+   CASE replay-signed-intent | expected: the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged | observed: replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000 | OK
+
+== step 4: intent signed for another chain id (31401) and the same adapter
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 401 (53 ms) {"ok":false,"status":401,"reason":"signature mismatch: the intent was not signed by intent.member for this chain and adapter"}
+   ok: relay answered with a JSON reason: signature mismatch: the intent was not signed by intent.member for this chain and adapter
+   CASE intent-other-chain-id | expected: 401 signature mismatch (EIP-712 domain is chain-bound) | observed: 401 signature mismatch: the intent was not signed by intent.member for this chain and adapter | OK
+
+== step 5: intent from an address with no code (never joined) and no authorization attached (the snippets attach one automatically, so the envelope is built by hand)
+   GET http://127.0.0.1:18871/me/0x2724B76bDB25C070EF3Ade544178ab63152c7A8D.json
+   -> 200 (4324 ms, 1336 bytes) {
+  "address": "0x2724B76bDB25C070EF3Ade544178ab63152c7A8D",
+  "chainId": 84532,
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "delegated": false,
+  "nonce": "0",
+  "authorizationNonce": 0,
+  "chainTime": 1789070328,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c"
+  },
+  "dao": {
+    "name": "Zero One",
+    "principle": "Any member can propose anything; only the other members' votes or exits can stop it."
+  },
+  "custody": "self-custody",
+  "shares": "0",
+  "sharesFormatted
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 400 (838 ms) {"ok":false,"status":400,"reason":"address 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D is not delegated: join first (op=join) or attach an EIP-7702 authorization to this envelope"}
+   ok: relay answered with a JSON reason: address 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D is not delegated: join first (op=join) or attach an EIP-7702 authorization to this envelope
+   CASE intent-undelegated-address | expected: 400 'not delegated: join first (op=join) or attach an EIP-7702 authorization' | observed: 400 address 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D is not delegated: join first (op=join) or attach an EIP-7702 authoriz | OK
+
+== step 6: work below sponsorThreshold: a T0 account with 0 shares submits a task; op 6 (submitTask + sponsorProposal) reverts as a whole, no task recorded
+   GET http://127.0.0.1:18871/relay?op=work&verifiers=0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5,0x2724B76bDB25C070EF3Ade544178ab63152c7A8D&threshold=2&rewardShares=1000000000000000000&details=corner%3A%20work%20with%200%20shares&pass=<redacted>
+   -> 422 (16098 ms) {"ok":false,"status":422,"reason":"reverted: sponsoring needs at least sponsorThreshold shares","error":{"name":"Error","args":{"message":"!sponsor"}}}
+   ok: relay answered with a JSON reason: reverted: sponsoring needs at least sponsorThreshold shares
+   CASE work-below-threshold | expected: reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged | observed: 422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0 | OK
+
+== step 7: propose below sponsorThreshold through the relay: 409, no sponsored deployment
+   GET http://127.0.0.1:18871/relay?op=quote&member=0x90444Fa7F5069C62eD65e28938186Ad8503cCe21&template=Payment&params=%7B%22recipients%22%3A%5B%220x90444Fa7F5069C62eD65e28938186Ad8503cCe21%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=x
+   -> 200 (2116 ms) {"ok":true,"verb":"quote","instance":"0x6F05f7A1013ABD3c0584586324D4fcC4D4845CD6","exists":false,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0x6d9f7c6ed70c4b9cdd88a9b28fd2b30bd223ebc8d0621d993925d2f019dcad04","paramsHash":"0x99194c3c7d8c224b5899f879f3bdaae62030063557fd6a105022c4d7dcd01451","paramsBytes":"0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000100000000000000000000000090444fa7f5069c62ed65e28938186ad8503cce21000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x0000000000000000000000000000000000000000000000000000000000000000","operator":"0x90444Fa7F5069C62eD65e28938186Ad8503cCe21","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a","data":"0xa9059cbb0000000000000000000000006f05f7a1013abd3c0584586324d4fcc4d4845cd600000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0x6F05f7A1013ABD3c0584586324D4fcC4D4845CD6","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f2000da8d8e3b63de048855d311431e8e1f7f3f7dd3a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18871/relay?op=propose&template=Payment&params=%7B%22recipients%22%3A%5B%220x90444Fa7F5069C62eD65e28938186Ad8503cCe21%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=x&pass=<redacted>
+   -> 409 (7970 ms) {"ok":false,"status":409,"reason":"propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first"}
+   ok: relay answered with a JSON reason: propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit first
+   CASE propose-below-threshold | expected: quote answers canPropose=false; propose -> 409; the quoted address stays empty | observed: quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0x6F05f7A1013ABD3c0584586324D4fcC4D4845CD6: none | OK
+
+== step 8: the same (template, params, member, salt) proposed twice: second quote finds the instance; second propose refused
+   GET http://127.0.0.1:18871/relay?op=quote&member=0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5&template=Payment&params=%7B%22recipients%22%3A%5B%220x3a552353bF9a7cEC0394F7a327ecc7231053B1f5%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=corner%3A%20dup&salt=0x00000000000000000000000000000000000000000000000000000000000000aa
+   -> 200 (2180 ms) {"ok":true,"verb":"quote","instance":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","exists":false,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","paramsBytes":"0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000003a552353bf9a7cec0394f7a327ecc7231053b1f5000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x00000000000000000000000000000000000000000000000000000000000000aa","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a","data":"0xa9059cbb000000000000000000000000b67bc346de7ed8833cb1ba64d61839c06af9762800000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f2000da8d8e3b63de048855d311431e8e1f7f3f7dd3a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: dup" --salt 0x00000000000000000000000000000000000000000000000000000000000000aa
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 200 (10691 ms) {"ok":true,"verb":"propose","op":0,"member":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","hash":"0x1b3d43d450eb7a2f48b6f7579443c02d7e445201e9c3c18b8d9151af98e9341d","blockNumber":"46651048","gasUsed":"355332","nonceUsed":"1","nextNonce":"2","proposalId":2,"sponsored":true,"instance":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","template":"Payment","codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","deployHash":"0xca090365749ce7196493b6abeaf7d34422f37d99638c778e2d506031cae6de3d","deployedBy":"relay sponsor"}
+   ok: relay answered ok ()
+   GET http://127.0.0.1:18871/relay?op=quote&member=0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5&template=Payment&params=%7B%22recipients%22%3A%5B%220x3a552353bF9a7cEC0394F7a327ecc7231053B1f5%22%5D%2C%22amounts%22%3A%5B%221000000%22%5D%7D&summary=corner%3A%20dup&salt=0x00000000000000000000000000000000000000000000000000000000000000aa
+   -> 200 (4827 ms) {"ok":true,"verb":"quote","instance":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","exists":true,"template":"Payment","templateId":0,"contract":"PaymentProposal","codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","paramsBytes":"0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000003a552353bf9a7cec0394f7a327ecc7231053b1f5000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000f4240","salt":"0x00000000000000000000000000000000000000000000000000000000000000aa","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budget":"1000000","budgetUsdc":"1","deadline":"0","calls":[{"to":"0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a","data":"0xa9059cbb000000000000000000000000b67bc346de7ed8833cb1ba64d61839c06af9762800000000000000000000000000000000000000000000000000000000000f4240"},{"to":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","data":"0xbe9a6555"}],"proposalData":"0x8d80ff0a000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000f2000da8d8e3b63de048855d311431e8e1f7f3f7dd3a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+   ok: relay answered ok ()
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: dup again" --salt 0x00000000000000000000000000000000000000000000000000000000000000aa
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xB67BC346dE7ed8833CB1bA64d61839C06aF97628","exists":true,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   GET http://127.0.0.1:18871/relay?intent=eyJtZXNzYWdlIjp7Im1lbWJl...
+   -> 409 (5125 ms) {"ok":false,"status":409,"reason":"instance 0xB67BC346dE7ed8833CB1bA64d61839C06aF97628 is already the subject of proposal #2 (Voting); quote again with a new salt (op=quote picks a fresh one when salt is omitted)"}
+   ok: relay answered with a JSON reason: instance 0xB67BC346dE7ed8833CB1bA64d61839C06aF97628 is already the subject of proposal #2 (Voting); quote again with a new salt (op=quote picks a fresh one when salt is omitted)
+   CASE duplicate-instance-proposal | expected: second quote exists=true at the same address; second propose -> 409 naming the prior proposal | observed: first #2 (relay sponsor); quote2 exists=true same=true; second 409 instance 0xB67BC346dE7ed8833CB1bA64d61839C06aF97628 is already the subject of proposal #2 (Voting);  | OK | receipt: 0x1b3d43d450eb7a2f48b6f7579443c02d7e445201e9c3c18b8d9151af98e9341d
+
+== step 9: spam: 100 text-only proposals by one member through the relay (sponsor pays gas; the relay rate limit per address applies)
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 1"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xCA80B84c00368C7844D7a7cba29816E6C772A994","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 1 tx=0x8b4c54434cf43dfd6f9ed309433d709add23065c5697c888bd026420e9531a9e deploy=0x1e9cf2c37458eb2b8833de9baa69f58842be838e0df4fd8c15992927a0f82544
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 2"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x77F46Dbf4FBa9879e2182c67c0A7150C43D9E080","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 2 tx=0x0d961b8f127380ee8fac1720fcbc218bcdcb07e6cc21acd3bd95c71ebd7a8a46 deploy=0x0863b8de994d6c3529460623315f2a9c137880fd6efe81e096ce97aa95b3582e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 3"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x7822A457C21cef1B8D066A8E3b1DF2745F58D597","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 3 tx=0xd42326df9345291ff789b6aa3025761f58ca6904a3086bad7a23046307e94e00 deploy=0x1104cd3128fd84c4ad2329b1a49e26cbde5b44f28b8a4a3c57a7c652599844ad
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 4"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x44EbB3C2A3949D0c0e12A2cad227d2c6eb444fDa","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 4 tx=0xa425de7a8054dbfc729c1286ecaef23daf24b9e63b525a0c56929b7e7975aa16 deploy=0xfcd28e9a40a4a62ef622d5285418e3e78a182a7a9a88751a37f4c6059a0065e3
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 5"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x99D7d65006F71D22cFc5654c6F46Db2Eec97aACC","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 5 tx=0xb8d7fd1be74e67a639ca22aa14192af4e58e3bbfeb542aab757258d42d3c5bda deploy=0x1a0366f63c5d230cb593479579f6b01c2a4f088d59adbd5286e5857733720f0b
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 6"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x4Ba53349259AeC42477905E3e928e47fF251e9f5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 6 tx=0xb4815e8363c0c32453ebea1cf781d2dc4046c9b8ea7bcd20a45cfb8819b9cb91 deploy=0x8c0914d8557f720234fea97018fd7835cd1d1ea28000c48e59df90e632c9393d
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 7"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x8bc1D2625Ac24104E0B94E7c5686AeD0dfdcEcE5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 7 tx=0x954f281181f85953f8339dbf9d78cedb1eca7598e9b36bc0337b21462921c00d deploy=0x0361b22d164961f647fa0453468e4031d422f5903489a8004ac16ff2f9b0fdb1
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 8"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xF339F07f4e3Bc26009E75763AAa0F34B3D28f9C8","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 8 tx=0xc84e0dfd35327be687570aae985165454a07731cc0df28410cd170eb04d7bd04 deploy=0x34543223bc124dc78c32f758de8e44b5f701c68a67ccab6ca033bdf4b2513365
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 9"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x3627E3A16f1D0208f4e8d209C5Fd6CF4D15e6342","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 9 tx=0x5336c15c832d2fb06a119701ceb12aacf799f150b1edacd8ad8a9d9dc20e99f8 deploy=0x41c450bc22fac968c3d5f7988ba60aacc787f62ab75696d055d3a3ffe21cdff4
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 10"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x38a794CF330C179d0464FdAF62e89Cd4406bCc2D","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 10 tx=0x1718a2dc8f00b26fe45eed2cbe59d40aba23a81f135a6e1ffdfcb9622af1d4c4 deploy=0x89dfe3c56aefbea14a54bda29e89650abf6149a515771092c8dd7106de5c69c3
+   10/100 submitted (0 rate-limited waits) after 211 s
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 11"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xedB838a23b306580bAc390D582ddEBf60af28930","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 11 tx=0x189d440053dcd1bd8b4acd31b2f08483477a728131a50bc1e44bcb217f6fc908 deploy=0x56c4f880389887c2a594b28e1bd4876aee699a515b82dac61542f671b7dd214f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 12"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x6B1091582c6C95025d4105275e3358e7A9fD65dB","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 12 tx=0xa503e88affd88e8ebfb5f2371eaa336693631a166662748943b557ee8914dfdc deploy=0xd7deefa5802babdc366a7e78a091bb494813ded43bca0292772b458c0f6e6bd7
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 13"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xd6E6b320af16D71204C8bA20003AbD4761993bA0","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 13 tx=0x6881c957a8400f10d1eef7514ce4109e008d9304488b0892fa9dcb21f486928e deploy=0xc011023f63e76ed18b8eb4b14c885e28ce1dd53fedde841fb7a6c62d1414a49d
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 14"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x887f47d4AA09F06a0d652D25f7210f478F11303c","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 14 tx=0x9c7e83c8538373d232999cb117b2974dada084f7027a1e287003939ba39031f6 deploy=0x4e7690f8b99de7283802a09a29d9d9dbf6c3058b88e68e3930c3546fd010ac36
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 15"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xB3908C26aA0358DDeE9672D8715264a0C80C9ee9","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 15 tx=0xa6b29d934867711adee58b93e3b79c433b90dc3d1d1562a45ddcc7fb01784470 deploy=0x39f7be026faabc562746ecaaeb2b1ee70fdb43071c1df8dc9bcdda3e14d6f22e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 16"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x65D6A6126d182Efed9475757C09e98A2618EA206","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 16 tx=0x46c561e705ed8387c313cb105d9633e917c2580b5bffa1ce2dc011268ca77661 deploy=0xa8bbaa007c2253bfcc90a38237bc54f81c382f24ece69215349e05d1447c999b
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 17"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xD6eEFc2932Af9987dBe061B8Ee949643465a6416","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 17 tx=0x67afbed06a5ed9438cfa7e64ae59ce6a5e7c1fdd2c6792ae805f19b2aa0067da deploy=0x09982acd95d10612093fc30bf0acc7000b984ad981bd65df75d3320a0f056cc0
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 18"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x7363e88F15464952A5EeC432bb8A244ef9fed2f2","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 18 tx=0x1483e24fd4890b5fc08db173c7187e612dcc431d0d2f20dfb20b6d79270940cf deploy=0x3837e5b9b09eb4c2df7e1c781347ece88c839302a131f1a1d09645c8f5d8f083
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 19"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x90505e3209D4b08d40038171C41E3F8dAE963a56","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 19 tx=0x3aa24adaef80081b8011fcbe9fbdf78973ed9860c05d17057ed988c428225517 deploy=0x1ae658d9c9dfde8ecfa3e4f0d239c7c2acbe8da30d240a8f62ee2117ce7af1cf
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 20"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x0B760Cc918fa1ccBe0bBCB3D85eE560D6C1D180A","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 20 tx=0xfeea890d374694d1c656ff9c9405e82f07ca87281385beb823d1ce8872ab9cf9 deploy=0x0567e5734cc540bcd95e8d0879a2ff7bb5bb9b2afaa02b9c1c20b16712105539
+   20/100 submitted (0 rate-limited waits) after 426 s
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 21"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x06c5151258a1ff0B8643251F408B429B01578fCE","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 21 tx=0x06f299ab01be4860a74f6c15ca61b642cd429b8be9bb23ab5d94b908c235d4dc deploy=0x19b282836717d4106bfc55bc953035a6c8df49d2b8bdc1364e6823136a016d3a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 22"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xf0d760d476a6d56c7eF59902bC4f0724Ad6fAc5D","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 22 tx=0x743d339497b607e6d063b2be2284a4a940570066749e6bb9cdda9398d28bb9be deploy=0xf1ecb9504801757548c9ca2656dd30a82fb28b72f54796a9cc389877040a3114
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 23"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x5F358109e1234c2d32bDb209B12B18307EeCd7B7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 23 tx=0x926a34c601824d7f92c074a13ced294a16b04e1f977707bf521033219b1b19d6 deploy=0x2e4b864f340cf586721807e111e4671b4b5e07b9949145d934300155bf4388e5
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 24"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x4bb293eAb2C30E801c97Ad02702ed058A441D72e","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+RECEIPT spam 24 tx=0xc4e1a46859c2ec3ddd220764e9dac0c92f6cf6dbbcf6124304a6cee0547c9cd2 deploy=0xabfc3521b52a10dd66d2aa49cafe526cd844bfb117f3bb38cc878cdee1e3e0ca
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 25"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xaB8420E2D71CE190ebF46F43addB63D280C2a8C7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   sponsor cap hit: 503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals)
+   GET http://127.0.0.1:18871/proposals.json
+   -> 200 (3668 ms, 114438 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46651320",
+    "timestamp": 1789070928,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "prop
+   GET http://127.0.0.1:18871/proposals.json?limit=10
+   -> 200 (4 ms, 45210 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46651320",
+    "timestamp": 1789070928,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "prop
+   GET http://127.0.0.1:18871/proposals.json?open=1&limit=5
+   -> 200 (3 ms, 22880 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46651320",
+    "timestamp": 1789070928,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "prop
+   CASE spam-100-proposals | expected: every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open | observed: 24 submitted in 532 s with 0 429 waits; stopped by the sponsor cap: 503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals); total 26; ?limit=10 -> 10 newest, nextBefore 17; ?open=1&limit=5 -> 5 | MISMATCH | receipt: 0xc4e1a46859c2ec3ddd220764e9dac0c92f6cf6dbbcf6124304a6cee0547c9cd2
+
+== step 10: rate limit: a burst of 10 concurrent votes from one address (each request takes seconds, so a serial loop never fits 7 into one minute)
+   burst statuses: 422 422 422 422 422 422 429 429 503 503
+   CASE rate-limit-per-address | expected: a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice | observed: 429 rate limit; retry after 60 seconds (statuses 422 422 422 422 422 422 429 429 503 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does | OK
+
+== step 11: sponsor cap: 503 with a clear reason once the sponsor's balance or daily budget cannot cover a request's reserve; agents can always send the transaction themselves (README lists every address)
+   CASE sponsor-cap-exhausted | expected: current-run 503 with a readable sponsor budget/reserve reason | observed: 503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals) | OK
+
+== step 12: beacon: state.json fields, stale flag, README hash
+   GET http://127.0.0.1:18871/state.json
+   -> 200 (3 ms, 116426 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46651347",
+    "timestamp": 1789070982,
+    "name": "Base Sepolia"
+  },
+  "contracts": {
+    "treasuryLedger": "0xC9E6e517CCF2e51570e58a9154e0361851
+   CASE beacon-state-json | expected: proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here | observed: proposal fields: state=Processed votingEnds=1789069532 graceEnds=1789069652 yesVotes=2000000000000000000000; generatedAt 2026-09-10T20:09:45.904Z staleAfter 2026-09-10T21:09:45.904Z; README keccak256 0xdb359d474e8eed462b6567803f43156074d61b991793f65bff5c7c1d03e0a07b | OK
+
+[
+  {
+    "id": "weak-T0-pass",
+    "expected": "400 rejects predictable T0 identity before sponsorship",
+    "observed": "400 pass carries about 9 bits of entropy, below the 128-bit floor: a guessable pass is a guessable member because op=identity maps any pass to its address for free. Use 32 random bytes, e.g. openssl rand -base64 32 | tr '+/' '-_' (43 characters), openssl rand -hex 32, or at least 10 random words",
+    "ok": true
+  },
+  {
+    "id": "relay-down-direct-reads",
+    "expected": "the README's Baal address answers eth_call without the relay",
+    "observed": "Baal 0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f proposalCount = 1 via https://sepolia.base.org (README lists baal/safe/shares/settlement/deposit/work/adapter/factory)",
+    "ok": true
+  },
+  {
+    "id": "replay-signed-intent",
+    "expected": "the relay recognizes the digest: replayed=true with the original hash, no second transaction, nonce and shares unchanged",
+    "observed": "replayed=true hash=same; nonce 1 -> 1; shares 10000000000000000000 -> 10000000000000000000",
+    "ok": true
+  },
+  {
+    "id": "intent-other-chain-id",
+    "expected": "401 signature mismatch (EIP-712 domain is chain-bound)",
+    "observed": "401 signature mismatch: the intent was not signed by intent.member for this chain and adapter",
+    "ok": true
+  },
+  {
+    "id": "intent-undelegated-address",
+    "expected": "400 'not delegated: join first (op=join) or attach an EIP-7702 authorization'",
+    "observed": "400 address 0x2724B76bDB25C070EF3Ade544178ab63152c7A8D is not delegated: join first (op=join) or attach an EIP-7702 authoriz",
+    "ok": true
+  },
+  {
+    "id": "work-below-threshold",
+    "expected": "reverts '!sponsor' (Baal.sponsorProposal) and taskCount unchanged",
+    "observed": "422 reverted: sponsoring needs at least sponsorThreshold shares; taskCount 0 -> 0",
+    "ok": true
+  },
+  {
+    "id": "propose-below-threshold",
+    "expected": "quote answers canPropose=false; propose -> 409; the quoted address stays empty",
+    "observed": "quote canPropose=false; propose 409 propose needs at least 1 shares so the proposal is self-sponsored (you hold 0); deposit fi; code at 0x6F05f7A1013ABD3c0584586324D4fcC4D4845CD6: none",
+    "ok": true
+  },
+  {
+    "id": "duplicate-instance-proposal",
+    "expected": "second quote exists=true at the same address; second propose -> 409 naming the prior proposal",
+    "observed": "first #2 (relay sponsor); quote2 exists=true same=true; second 409 instance 0xB67BC346dE7ed8833CB1bA64d61839C06aF97628 is already the subject of proposal #2 (Voting); ",
+    "ok": true,
+    "receipt": "0x1b3d43d450eb7a2f48b6f7579443c02d7e445201e9c3c18b8d9151af98e9341d"
+  },
+  {
+    "id": "spam-100-proposals",
+    "expected": "every proposal accepted (cost = sponsor gas, offering 0); /proposals.json pages with ?limit / ?before / ?open",
+    "observed": "24 submitted in 532 s with 0 429 waits; stopped by the sponsor cap: 503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals); total 26; ?limit=10 -> 10 newest, nextBefore 17; ?open=1&limit=5 -> 5",
+    "ok": false,
+    "receipt": "0xc4e1a46859c2ec3ddd220764e9dac0c92f6cf6dbbcf6124304a6cee0547c9cd2"
+  },
+  {
+    "id": "rate-limit-per-address",
+    "expected": "a burst is bounded by whichever relay limit is hit first: 429 'rate limit; retry after 60 seconds' (6/min per address) or 503 (8-deep queue full); both readable, nothing broadcast twice",
+    "observed": "429 rate limit; retry after 60 seconds (statuses 422 422 422 422 422 422 429 429 503 503); each request takes ~10 s on the public RPC, so the 8-deep queue bounds a burst before the 6/min window does",
+    "ok": true
+  },
+  {
+    "id": "sponsor-cap-exhausted",
+    "expected": "current-run 503 with a readable sponsor budget/reserve reason",
+    "observed": "503 sponsor balance below reserve; send the transaction yourself (after 24 sponsored proposals)",
+    "ok": true
+  },
+  {
+    "id": "beacon-state-json",
+    "expected": "proposals carry state, votingEnds, graceEnds; generatedAt + staleAfter present; README hash recorded here",
+    "observed": "proposal fields: state=Processed votingEnds=1789069532 graceEnds=1789069652 yesVotes=2000000000000000000000; generatedAt 2026-09-10T20:09:45.904Z staleAfter 2026-09-10T21:09:45.904Z; README keccak256 0xdb359d474e8eed462b6567803f43156074d61b991793f65bff5c7c1d03e0a07b",
+    "ok": true
+  }
+]
+=== RELAY CORNER CASES: FAIL (11/12) -> /Users/michaelmacmini/srv/zero-one-dao/evidence/testnet/phase5/corner-cases-relay-2026-09-10.json ===
+

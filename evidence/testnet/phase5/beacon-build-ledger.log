@@ -1,0 +1,11 @@
+[index] scan 46649683..46649819 rows=3
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-phase5",
+  "origin": "https://relay-zero.mkyang.ai",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46649819",
+  "members": 1,
+  "proposals": 1,
+  "tasks": 0
+}
+

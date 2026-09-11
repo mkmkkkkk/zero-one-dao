@@ -1,5 +1,5 @@
 /**
- * Phase 4 + 5 (decision.md phase 4 rulings, phase 5 ruling 4): the TreasuryLedger on local Anvil only.
+ * Phase 4 + 5 (decision.md phase 4 rulings, phase 5 ruling 4): the TreasuryLedger on local Anvil or Base Sepolia through the live harness.
  * Real balances, voted lifecycle and atomic deposit/ragequit: (a) a voted 100k Strategy budget keeps
  * deposit NAV unchanged (instance USDC counted); (b) while an open instance holds its asset deposits
  * revert TreasuryNotSettled, and a voted stop() keeps the asset inside the stopped instance (still open);
@@ -12,10 +12,9 @@ import { decodeEventLog, encodeFunctionData, getAddress, type Abi, type Address 
 import { loadLocalAbi, type PackedCall } from "../src/baal.js";
 import { deployLocal, writeAndWait } from "../src/onchain.js";
 import { deployTemplate, migrateCalls, stopAndUnwindCalls, stopCalls, unwindCalls, type StrategyParams } from "../src/proposals.js";
-import { assert, boot, deposit, deployMockMarket, describeAt, expectRevert, LIVE, now, processProposal, propose, proposeTemplate, read, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulate, simulateAt, step, verdict, vote, warpPastGrace, type Proposal } from "./lib.js";
+import { assert, atHead, boot, deposit, deployMockMarket, describeAt, expectRevert, LIVE, now, observe, processProposal, propose, proposeTemplate, read, runIfMain, seedMembers, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulate, simulateAt, step, verdict, vote, warpPastGrace, type Proposal } from "./lib.js";
 
 export async function main(): Promise<void> {
-  if (LIVE) throw new Error("Scenario L is restricted to an owned local Anvil");
   const mirror = await boot("scenario-L");
   let passed = false;
   try {
@@ -23,8 +22,7 @@ export async function main(): Promise<void> {
     const { safe, settlement, treasuryLedger: ledger, shares, depositShaman, baal } = mirror.dao;
     const ledgerAbi = loadLocalAbi("TreasuryLedger");
     const pinned = async <T>(address: Address, abi: Abi, functionName: string, args: readonly unknown[] = []): Promise<T> => {
-      const blockNumber = await mirror.chain.publicClient.getBlockNumber();
-      return mirror.chain.publicClient.readContract({ address, abi, functionName, args, blockNumber } as never) as Promise<T>;
+      return atHead(mirror, blockNumber => mirror.chain.publicClient.readContract({ address, abi, functionName, args, ...(blockNumber === undefined ? {} : { blockNumber }) } as never) as Promise<T>);
     };
     const ledgerRead = <T>(functionName: string, args: readonly unknown[] = []) => pinned<T>(ledger, ledgerAbi, functionName, args);
     const balance = (token: Address, holder: Address) => pinned<bigint>(token, mirror.abi.settlement, "balanceOf", [holder]);
@@ -107,6 +105,7 @@ export async function main(): Promise<void> {
     await expectRevert(simulate(mirror, "D", "deposit", "deposit", [amount]), "TreasuryNotSettled", "same deposit refuses while the stopped instance holds the asset");
     const rejectedHash = await mirror.actors.D.walletClient.writeContract({ address: depositShaman, abi: mirror.abi.deposit, functionName: "deposit", args: [amount], account: mirror.actors.D.account, chain: mirror.actors.D.chain, gas: 500_000n } as never);
     const rejectedReceipt = await mirror.chain.publicClient.waitForTransactionReceipt({ hash: rejectedHash });
+    observe(mirror, rejectedReceipt.blockNumber);
     console.log(`   actual rejected deposit tx ${rejectedHash} block ${rejectedReceipt.blockNumber} status ${rejectedReceipt.status}`);
     assert(rejectedReceipt.status === "reverted" && await balance(settlement, safe) === safeBeforeRefusal && await read<bigint>(mirror, "shares", "totalSupply") === supplyBeforeRefusal, "mined refusal changes neither Safe settlement nor share supply");
     await expectRevert(simulateAt(mirror, "W", s1, "strategy", "unwind", []), "OnlySafe", "nobody but the Safe can unwind");
@@ -159,6 +158,7 @@ export async function main(): Promise<void> {
     const safeBeforeAtomic = await balance(settlement, safe);
     const supplyBeforeAtomic = await read<bigint>(mirror, "shares", "totalSupply");
     const atomic = await writeAndWait(mirror.actors.W, { address: probe.address, abi: probe.artifact.abi, functionName: "roundTrip", args: [depositShaman, baal, atomicAmount] });
+    observe(mirror, atomic.receipt.blockNumber);
     const roundTrip = atomic.receipt.logs.filter(log => getAddress(log.address) === getAddress(probe.address)).map(log => decodeEventLog({ abi: probe.artifact.abi, data: log.data, topics: log.topics }))[0];
     const probeAfter = await balance(settlement, probe.address);
     console.log(`   atomic tx ${atomic.hash} block ${atomic.receipt.blockNumber} status ${atomic.receipt.status} probe before=${probeBefore} after=${probeAfter} net=${probeAfter - probeBefore}; event=${roundTrip?.eventName}`);

@@ -17,8 +17,9 @@ import { fileURLToPath } from "node:url";
 import { BaseError, encodeFunctionData, getAddress, type Address, type Hex } from "viem";
 
 import { chooseFreePort } from "../src/devnet.js";
+import { deployLocal } from "../src/onchain.js";
 import { INITIAL_GOVERNANCE } from "../src/zeroOne.js";
-import { stopCalls, topUpCalls, type StrategyParams } from "../src/proposals.js";
+import { deployTemplate, stopCalls, topUpCalls, type StrategyParams } from "../src/proposals.js";
 import { assert, boot, DAY, deployMockMarket, deposit, describeAt, expectRevert, fmt, fmtS, fund, GENESIS_DEPOSIT, LIVE, now, observe, processProposal, propose, proposalInfo, proposeTemplate, ragequit, read, readAt, retryLag, seedMembers, send, sendAt, SETTLEMENT_UNIT, setPrice, shutdown, simulate, simulateAt, snapshot, stateOf, step, T, transferCall, UNIT, usdcOf, verdict, vote, warp, warpPastGrace, warpPastVoting, type Mirror, type Receipt } from "./lib.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -57,19 +58,28 @@ async function sendExpectingRevert(mirror: Mirror, actor: keyof Mirror["actors"]
   return { status: receipt.status, hash, block: receipt.blockNumber };
 }
 
+/** Decode the negative simulation and require an actual mined rejection, never a literal green row. */
+async function refusal(m: Mirror, actor: keyof Mirror["actors"], address: Address, abi: keyof Mirror["abi"], name: string, args: readonly unknown[], reason: string, id: string): Promise<void> {
+  await expectRevert(simulateAt(m, actor, address, abi, name, args), reason, id);
+  const r = await sendExpectingRevert(m, actor, address, abi, name, args, 1_000_000n);
+  observe(m, r.block);
+  row(id, `simulation decodes ${reason}; transaction reverts`, `${reason}; mined ${r.status} at ${r.block}`, r.status === "reverted", r.hash);
+}
+
 async function money(): Promise<void> {
   const mirror = await boot("corner-money");
   let passed = false;
   try {
     step("deposit 0 and deposit 1 unit (1e-6 USDC) before genesis");
-    row("deposit-zero", "DepositShaman reverts ZeroAmount", await revertOf(simulate(mirror, "A", "deposit", "deposit", [0n])), true);
+    await refusal(mirror, "A", mirror.dao.depositShaman, "deposit", "deposit", [0n], "ZeroAmount", "deposit-zero");
     const seeded = await seedMembers(mirror);
     const oneUnit = await deposit(mirror, "D", 1n);
     row("deposit-one-unit", "1 unit x totalShares / treasury = 1e12 wei-shares at NAV 1 (no revert; ZeroShares only when the quote rounds to 0)", `minted ${oneUnit.sharesMinted} wei-shares (quote ${oneUnit.quoted}); NAV 1 USDC/share`, oneUnit.sharesMinted === (1n * seeded.totalShares) / seeded.safeSettlement && oneUnit.sharesMinted > 0n, oneUnit.receipt.hash);
 
     step("ragequit with 0 shares (W holds none)");
-    const zeroExit = await revertOf(simulate(mirror, "W", "baal", "ragequit", [mirror.actors.W.account.address, 0n, 0n, [mirror.dao.settlement]]));
-    row("ragequit-zero-shares", "Baal accepts ragequit(0, 0) as a no-op (burns nothing, pays nothing) or reverts; either way nothing moves", `${zeroExit}; W shares ${fmt(await read<bigint>(mirror, "shares", "balanceOf", [mirror.actors.W.account.address]))}`, true);
+    const zeroBefore = await usdcOf(mirror, mirror.dao.safe);
+    const zeroExit = await send(mirror, "W", "baal", "ragequit", [mirror.actors.W.account.address, 0n, 0n, [mirror.dao.settlement]], "zero-share exit");
+    row("ragequit-zero-shares", "mined no-op, nothing moves", `Safe balance ${await usdcOf(mirror, mirror.dao.safe)}`, await usdcOf(mirror, mirror.dao.safe) === zeroBefore && await read<bigint>(mirror, "shares", "balanceOf", [mirror.actors.W.account.address]) === 0n, zeroExit.hash);
 
     step("a YES voter ragequits while its proposal is in voting: allowed; the vote stays counted; the proposal still passes on the remaining votes");
     const pay = await propose(mirror, "A", [transferCall(mirror, mirror.actors.O.account.address, 10n * SETTLEMENT_UNIT)], "corner: pay O 10 USDC");
@@ -97,7 +107,7 @@ async function money(): Promise<void> {
     const both = await sendAt(mirror, "B", mirror.dao.baal, "baal", "ragequit", [mirror.actors.B.account.address, bShares / 2n, 0n, tokens], "B ragequits half naming [MOCK, USDC]");
     const bMockAfter = await readAt<bigint>(mirror, market.asset, "settlement", "balanceOf", [mirror.actors.B.account.address]);
     row("ragequit-second-asset", "MOCK paid pro-rata only when named in the token list (Baal has no guildTokens registry; a strategy must return USDC or members name the asset)", `B received ${fmtS(bMockAfter - bMockBefore)} MOCK of ${fmtS(safeMock)} at ${fmt(bShares / 2n)}/${fmt(supply)} shares`, bMockAfter - bMockBefore === ((bShares / 2n) * safeMock) / supply, both.hash);
-    row("ragequit-token-order", "Baal requires ascending token addresses ('!order')", await revertOf(simulate(mirror, "B", "baal", "ragequit", [mirror.actors.B.account.address, 1n * UNIT, 0n, [...tokens].reverse()])), true);
+    await refusal(mirror, "B", mirror.dao.baal, "baal", "ragequit", [mirror.actors.B.account.address, UNIT, 0n, [...tokens].reverse()], "!order", "ragequit-token-order");
 
     step("the last member leaves: treasury fully paid, supply 0, DAO alive (a later deposit re-prices at 1 USDC -> 1e18)");
     for (const actor of ["B", "C", "D"] as const) {
@@ -122,51 +132,18 @@ async function money(): Promise<void> {
 }
 
 async function trap(): Promise<void> {
-  const mirror = await boot("corner-trap");
-  let relay: ChildProcess | undefined;
+  const mirror = await boot("corner-zero-supply-phase5");
   let passed = false;
   try {
-    step("zero-supply trap: 1 USDC sent straight to the Safe before genesis -> every deposit quotes 0 shares and reverts ZeroShares; genesis is impossible; a relay pointed at this DAO refuses the deposit with the decoded error");
-    const donate = await send(mirror, "F", "settlement", "transfer", [mirror.dao.safe, 1n * SETTLEMENT_UNIT], "F donates 1 USDC to the Safe (supply 0)");
+    const donated = await sendAt(mirror, "F", mirror.dao.settlement, "settlement", "transfer", [mirror.dao.safe, SETTLEMENT_UNIT], "pre-genesis donation");
     const quote = await read<bigint>(mirror, "deposit", "quote", [50n * SETTLEMENT_UNIT]);
-    row("trap-quote", "quote(50 USDC) = 0 while supply == 0 and treasury > 0", `quote ${quote}`, quote === 0n, donate.hash);
-    await fund(mirror, "A", 100n * SETTLEMENT_UNIT);
-    await send(mirror, "A", "settlement", "approve", [mirror.dao.depositShaman, 50n * SETTLEMENT_UNIT], "A approves");
-    row("trap-deposit", "DepositShaman reverts ZeroShares(amount)", await revertOf(simulate(mirror, "A", "deposit", "deposit", [50n * SETTLEMENT_UNIT])), true);
-    const { genesisDeposit } = await import("../src/zeroOne.js");
-    let genesisError = "";
-    try {
-      await genesisDeposit(mirror.actors.F, mirror.dao, GENESIS_DEPOSIT);
-    } catch (error) {
-      genesisError = error instanceof Error ? error.message : String(error);
-    }
-    row("trap-genesis-refused", "genesisDeposit() refuses: treasury must be empty (deploy + genesis run in one script; never pre-fund the Safe)", genesisError.slice(0, 120), genesisError.includes("empty treasury"));
-    if (LIVE && mirror.live !== undefined) {
-      const port = chooseFreePort(18_790);
-      const origin = `http://127.0.0.1:${port}`;
-      relay = spawn(process.execPath, [path.join(ROOT, "node_modules", "tsx", "dist", "cli.mjs"), path.join(ROOT, "relay", "server.ts")], { cwd: ROOT, env: { ...process.env, ZERO_ONE_DEPLOYMENT: mirror.live.recordFile, RELAY_ENV_FILE: process.env.RELAY_ENV_FILE ?? path.join(ROOT, "state", "relay.env"), RELAY_PORT: String(port), RELAY_STATE_DIR: path.join(ROOT, "state", "relay-corner-trap"), RELAY_RATE_ADDRESS: "1000" }, stdio: ["ignore", "inherit", "inherit"] });
-      for (let attempt = 0; attempt < 100; attempt += 1) {
-        try {
-          if ((await fetch(`${origin}/health.json`)).ok) break;
-        } catch {
-          // not yet listening
-        }
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-      const pass = Buffer.from(mirror.actors.W.account.address.slice(2).repeat(2), "hex").toString("base64url");
-      const joined = (await (await fetch(`${origin}/relay?op=join&pass=${encodeURIComponent(pass)}`)).json()) as Record<string, unknown>;
-      const response = await fetch(`${origin}/relay?op=deposit&amount=${50n * SETTLEMENT_UNIT}&pass=${encodeURIComponent(pass)}`);
-      const body = (await response.json()) as Record<string, unknown>;
-      console.log(`   relay(trap DAO) join ok=${String(joined.ok)}; deposit -> ${response.status} ${JSON.stringify(body).slice(0, 300)}`);
-      row("trap-relay-refuses", "relay answers a decoded ZeroShares reason (no transaction)", `${response.status} ${String(body.reason).slice(0, 100)} error=${String((body.error as { name?: string } | undefined)?.name)}`, body.ok === false && (body.error as { name?: string } | undefined)?.name === "ZeroShares");
-    }
-    row("trap-terminal", "documented terminal state: with 0 shares nobody can sponsor a proposal; the deployment order (deploy + genesis in one script) is the only guard", "no path out: sponsorThreshold 1 share, totalShares 0 (docs/PARAMETERS.md deposit-pricing trap)", true);
-    passed = true;
-  } finally {
-    if (relay !== undefined && relay.exitCode === null) relay.kill("SIGTERM");
-    verdict("corner-trap", passed);
-    await shutdown(mirror);
-  }
+    row("zero-supply-donation-quote", "50 USDC -> 50e18 shares despite donation", String(quote), quote === 50n * UNIT, donated.hash);
+    const minted = await deposit(mirror, "F", 50n * SETTLEMENT_UNIT);
+    row("zero-supply-donation-deposit", "genesis remains possible; founder receives 50e18", String(minted.sharesMinted), minted.sharesMinted === 50n * UNIT, minted.receipt.hash);
+    const exit = await ragequit(mirror, "F");
+    row("zero-supply-donation-exit", "founder receives genesis plus donated 1 USDC", String(exit.paid), exit.paid === 51n * SETTLEMENT_UNIT, exit.receipt.hash);
+    passed = rows.every(r => r.ok);
+  } finally { verdict("corner-zero-supply-phase5", passed); await shutdown(mirror); }
 }
 
 async function votes(): Promise<void> {
@@ -192,15 +169,15 @@ async function votes(): Promise<void> {
     const p = { id: sameBlockId, data: sameBlockData, submit: { hash: submitHash, blockNumber: submitReceipt.blockNumber, gasUsed: submitReceipt.gasUsed } as Receipt };
     await warp(mirror, 1, "next block");
     if (voteReceipt.status === "reverted") await vote(mirror, "A", p.id, true);
-    row("vote-twice", "Baal reverts 'voted'", await revertOf(simulate(mirror, "A", "baal", "submitVote", [p.id, false])), true);
+    await refusal(mirror, "A", mirror.dao.baal, "baal", "submitVote", [p.id, false], "voted", "vote-twice");
     await vote(mirror, "B", p.id, true);
-    row("process-before-grace", "Baal reverts '!ready' while Voting", await revertOf(simulate(mirror, "C", "baal", "processProposal", [p.id, p.data])), true);
+    await refusal(mirror, "C", mirror.dao.baal, "baal", "processProposal", [p.id, p.data], "!ready", "process-before-grace");
     await warpPastVoting(mirror, p.id);
-    row("vote-after-voting-ends", "Baal reverts 'ended'", await revertOf(simulate(mirror, "C", "baal", "submitVote", [p.id, false])), true);
-    row("process-during-grace", "Baal reverts '!ready' while in Grace", await revertOf(simulate(mirror, "C", "baal", "processProposal", [p.id, p.data])), true);
+    await refusal(mirror, "C", mirror.dao.baal, "baal", "submitVote", [p.id, false], "!voting", "vote-after-voting-ends");
+    await refusal(mirror, "C", mirror.dao.baal, "baal", "processProposal", [p.id, p.data], "!ready", "process-during-grace");
     await warpPastGrace(mirror, p.id);
     const done = await processProposal(mirror, "C", p);
-    row("process-twice", "second processProposal reverts (already processed)", await revertOf(simulate(mirror, "C", "baal", "processProposal", [p.id, p.data])), done.info.status.processed, done.receipt.hash);
+    await refusal(mirror, "C", mirror.dao.baal, "baal", "processProposal", [p.id, p.data], "!ready", "process-twice");
 
     step("a multicall that reverts: Payment of more than the treasury -> processed with actionFailed=true, treasury untouched");
     const treasury = await usdcOf(mirror, mirror.dao.safe);
@@ -222,13 +199,20 @@ async function votes(): Promise<void> {
     await deposit(mirror, "B", usdcFor(34n * UNIT));
     const supply1 = await read<bigint>(mirror, "shares", "totalSupply");
     const bShares = await read<bigint>(mirror, "shares", "balanceOf", [mirror.actors.B.account.address]);
+    const below = await propose(mirror, "F", [], "corner: retention 33.9% exits");
+    await vote(mirror, "F", below.id, true);
+    const exitBelow = await ragequit(mirror, "B", supply1 * 339n / 1000n);
+    await warpPastGrace(mirror, below.id);
+    const belowDone = await processProposal(mirror, "A", below);
+    row("minRetention-33.9pct", "33.9% deficit leaves 66.1%, proposal passes", `burned ${exitBelow.burned}; supply ${supply1}; passed=${belowDone.info.status.passed}`, exitBelow.burned * 1000n === supply1 * 339n && belowDone.info.status.passed, belowDone.receipt.hash);
+    await deposit(mirror, "B", exitBelow.paid);
     const boundary = await propose(mirror, "F", [], "corner: retention boundary 34% exits");
     await vote(mirror, "F", boundary.id, true);
     const exitB = await ragequit(mirror, "B");
     const remaining1 = await read<bigint>(mirror, "shares", "totalSupply");
     await warpPastGrace(mirror, boundary.id);
     const boundaryDone = await processProposal(mirror, "A", boundary);
-    row("minRetention-exactly-34pct", `remaining ${fmt(remaining1)} of ${fmt(supply1)} = ${Number((remaining1 * 10_000n) / supply1) / 100}% >= 66% -> passes`, `B exited ${fmt(bShares)} (${Number((bShares * 10_000n) / supply1) / 100}%); passed=${boundaryDone.info.status.passed}`, boundaryDone.info.status.passed === remaining1 * 100n >= supply1 * 66n, boundaryDone.receipt.hash);
+    row("minRetention-exactly-34pct", `remaining ${fmt(remaining1)} of ${fmt(supply1)} = ${Number((remaining1 * 10_000n) / supply1) / 100}% >= 66% -> passes`, `B exited ${fmt(bShares)} (${Number((bShares * 10_000n) / supply1) / 100}%); passed=${boundaryDone.info.status.passed}`, bShares * 100n === supply1 * 34n && remaining1 * 100n === supply1 * 66n && boundaryDone.info.status.passed, boundaryDone.receipt.hash);
     await deposit(mirror, "C", usdcFor(40n * UNIT));
     const supply2 = await read<bigint>(mirror, "shares", "totalSupply");
     const cShares = await read<bigint>(mirror, "shares", "balanceOf", [mirror.actors.C.account.address]);
@@ -285,6 +269,7 @@ async function absurd(): Promise<void> {
 }
 
 async function templates(): Promise<void> {
+  const rowStart = rows.length;
   const mirror = await boot("corner-templates");
   let passed = false;
   try {
@@ -305,7 +290,7 @@ async function templates(): Promise<void> {
     const firstRun = await sendAt(mirror, "W", s1.instance.address, "strategy", "run", [], "W run() after the deadline");
     const ended = await describeAt(mirror, s1.instance.address, "after run");
     row("strategy-deadline-before-first-run", "start() succeeds (Running, funded); the first run() sees the deadline and unwinds: Complete, budget back in the Safe, nothing bought", `start passed=${started.info.status.passed}; status ${running.status} -> ${ended.status}; Safe ${fmtS(safeBefore)} -> ${fmtS(await usdcOf(mirror, mirror.dao.safe))}; instance MOCK ${fmtS(await mockOf(s1.instance.address))}`, ended.status === "Complete" && (await usdcOf(mirror, mirror.dao.safe)) === seeded.safeSettlement, firstRun.hash);
-    row("strategy-run-spam-stranger", "run() on a Complete strategy reverts WrongStatus (harmless)", await revertOf(simulateAt(mirror, "W", s1.instance.address, "strategy", "run", [])), true);
+    await refusal(mirror, "W", s1.instance.address, "strategy", "run", [], "WrongStatus", "strategy-run-spam-stranger");
 
     step("stop-loss: strategy buys, the price falls 40%, run() unwinds at the stop and returns the proceeds; then topUp beyond the treasury -> actionFailed");
     const params: StrategyParams = { venue: market.dex, asset: market.asset, budget: 200n * SETTLEMENT_UNIT, rule: { maxPerRun: 200n * SETTLEMENT_UNIT, minInterval: BigInt(T.hour), deadline: (await now(mirror)) + BigInt(7 * DAY), takeProfitBps: 5000n, stopLossBps: 3000n } };
@@ -323,16 +308,34 @@ async function templates(): Promise<void> {
     const stopped = await describeAt(mirror, s2.instance.address, "after stop-loss");
     row("strategy-stop-loss", "value 120 <= 140 (budget - 30%): run() unwinds, Complete, 120 USDC back to the Safe", `value ${fmtS(value)}; status ${stopped.status}; Safe ${fmtS(treasuryBeforeStop)} -> ${fmtS(await usdcOf(mirror, mirror.dao.safe))}`, stopped.status === "Complete" && (await usdcOf(mirror, mirror.dao.safe)) === treasuryBeforeStop + value, stopRun.hash);
     const treasury = await usdcOf(mirror, mirror.dao.safe);
-    const topUp = await propose(mirror, "A", topUpCalls(mirror.dao, s2.instance.address, treasury + 1n), "corner: topUp beyond the treasury");
+    const project = await deployTemplate(mirror.actors.A, mirror.dao, { template: "Project", params: { tranches: [{ amount: SETTLEMENT_UNIT, releaseType: "verifiers", releaseAt: 0n, verifiers: [mirror.actors.B.account.address], threshold: 1 }], deadline: (await now(mirror)) + 86400n } });
+    console.log(`   receipt Project deploy ${project.deployHash}`);
+    const topUp = await propose(mirror, "A", topUpCalls(mirror.dao, project.address, treasury + 1n), "corner: topUp beyond the treasury");
     await vote(mirror, "A", topUp.id, true);
     await vote(mirror, "B", topUp.id, true);
     await warpPastGrace(mirror, topUp.id);
     const topUpDone = await processProposal(mirror, "C", topUp);
     row("project-topup-beyond-treasury", "multicall reverts (transfer exceeds balance) -> actionFailed=true, treasury untouched", `passed=${topUpDone.info.status.passed} actionFailed=${topUpDone.info.status.actionFailed}; Safe ${fmtS(treasury)} -> ${fmtS(await usdcOf(mirror, mirror.dao.safe))}`, topUpDone.info.status.actionFailed && (await usdcOf(mirror, mirror.dao.safe)) === treasury, topUpDone.receipt.hash);
-    row("payment-reverting-recipient", "N/A for ERC-20 settlement: USDC.transfer never calls the recipient, so a contract without receive() cannot revert it; the multicall only reverts when the Safe lacks balance (covered above)", "documented; scenario I covers stop() returning funds and amend mid-tranche; scenario H covers verifiers that never confirm (end() after the deadline)", true);
-    row("strategy-migrate-non-template", "migrate(target) moves raw holdings to any address the members vote for (decision.md phase 2a ruling 2); no code check on the target; scenario J covers a template target", `stop()/migrate() are onlySafe: ${await revertOf(simulateAt(mirror, "A", s2.instance.address, "proposal", "migrate", [mirror.actors.A.account.address]))}`, true);
+    const recipient = await deployLocal(mirror.actors.F, "LedgerProbe");
+    console.log(`   receipt recipient deploy ${recipient.hash}`);
+    const paid = await proposeTemplate(mirror, "A", { template: "Payment", params: { recipients: [recipient.address], amounts: [SETTLEMENT_UNIT] } }, "ERC20 recipient without receive function");
+    await vote(mirror, "A", paid.id, true); await vote(mirror, "B", paid.id, true); await warpPastGrace(mirror, paid.id);
+    const paidDone = await processProposal(mirror, "W", paid);
+    row("payment-reverting-recipient", "ERC20 payment to a contract with no receive function succeeds", `passed=${paidDone.info.status.passed} actionFailed=${paidDone.info.status.actionFailed}`, paidDone.info.status.passed && !paidDone.info.status.actionFailed && await usdcOf(mirror, recipient.address) === SETTLEMENT_UNIT, paidDone.receipt.hash);
+    const migrator = await proposeTemplate(mirror, "A", { template: "Strategy", params: { ...params, budget: 100n * SETTLEMENT_UNIT } }, "strategy for voted EOA migration");
+    await vote(mirror, "A", migrator.id, true); await vote(mirror, "B", migrator.id, true); await warpPastGrace(mirror, migrator.id); await processProposal(mirror, "W", migrator);
+    const destination = mirror.actors.O.account.address, oldBalance = await usdcOf(mirror, destination);
+    const migration = await propose(mirror, "A", [{ to: migrator.instance.address, data: encodeFunctionData({ abi: mirror.abi.strategy, functionName: "migrate", args: [destination] }) }], "members vote raw holdings to EOA");
+    await vote(mirror, "A", migration.id, true); await vote(mirror, "B", migration.id, true); await warpPastGrace(mirror, migration.id);
+    const migrationDone = await processProposal(mirror, "W", migration);
+    row("strategy-migrate-eoa-refused", "NotAContract rejects an EOA; actionFailed and balances unchanged", `EOA received ${(await usdcOf(mirror, destination)) - oldBalance}`, migrationDone.info.status.passed && migrationDone.info.status.actionFailed && await usdcOf(mirror, destination) === oldBalance && await usdcOf(mirror, migrator.instance.address) === 100n * SETTLEMENT_UNIT, migrationDone.receipt.hash);
+    const contractBalance = await usdcOf(mirror, recipient.address);
+    const contractMigration = await propose(mirror, "A", [{ to: migrator.instance.address, data: encodeFunctionData({ abi: mirror.abi.strategy, functionName: "migrate", args: [recipient.address] }) }], "members vote raw holdings to a non-template contract");
+    await vote(mirror, "A", contractMigration.id, true); await vote(mirror, "B", contractMigration.id, true); await warpPastGrace(mirror, contractMigration.id);
+    const contractDone = await processProposal(mirror, "W", contractMigration);
+    row("strategy-migrate-non-template", "a voted migration to a non-template contract transfers exact raw budget", `contract received ${(await usdcOf(mirror, recipient.address)) - contractBalance}`, contractDone.info.status.passed && !contractDone.info.status.actionFailed && await usdcOf(mirror, recipient.address) === contractBalance + 100n * SETTLEMENT_UNIT, contractDone.receipt.hash);
     void stopCalls;
-    passed = true;
+    passed = rows.slice(rowStart).every(entry => entry.ok);
   } finally {
     verdict("corner-templates", passed);
     await shutdown(mirror);
@@ -353,7 +356,7 @@ async function main(): Promise<void> {
       results.push([name, false, message]);
     }
   }
-  const outFile = path.resolve(ROOT, "evidence", "testnet", `corner-cases-daos-${new Date().toISOString().slice(0, 10)}.json`);
+  const outFile = path.resolve(ROOT, process.env.ZERO_ONE_CORNER_EVIDENCE ?? "evidence/testnet", `corner-cases-daos-${new Date().toISOString().slice(0, 10)}.json`);
   mkdirSync(path.dirname(outFile), { recursive: true });
   writeFileSync(outFile, `${JSON.stringify({ host: hostname(), at: new Date().toISOString(), parts: results, rows }, null, 2)}\n`);
   console.log("\n===== CORNER CASES (fresh DAOs) =====");

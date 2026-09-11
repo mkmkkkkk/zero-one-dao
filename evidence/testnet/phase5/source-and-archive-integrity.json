@@ -1,0 +1,277 @@
+{
+  "mergeCommit": "06a0bf010480dbbab2cca58892dc5a1ee1a95ff7",
+  "archives": [
+    {
+      "old": "deployments/base-sepolia.json",
+      "archive": "deployments/base-sepolia-phase3.json",
+      "byteIdentical": true,
+      "sha256": "5b816455db706be07bf91f03cf44f327d5e072b1a02c949a9393c0f590f0cd4e"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/BaalSingleton-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/BaalSingleton-input.json",
+      "byteIdentical": true,
+      "sha256": "6c7fd2269fc23919a0c1fe9faa4df12d5bdc3774e6ce0f4c40b158634fc842e5"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/ModuleProxyFactory-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/ModuleProxyFactory-input.json",
+      "byteIdentical": true,
+      "sha256": "df400b985337639be23ae1a547c10c389ca5ca013376f708b8571d8ada5a6d4d"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/MultiSend-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/MultiSend-input.json",
+      "byteIdentical": true,
+      "sha256": "130ebf2c2e4fd847109a3ebb404f65da0038ffadc8b73789e73a793e3b28cf70"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/Safe-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/Safe-input.json",
+      "byteIdentical": true,
+      "sha256": "c5f88aa268b12644b4e95b579f9c6a68202ff2ff9d54c6d1cd6bc5acd00b39c1"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/SafeProxyFactory-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/SafeProxyFactory-input.json",
+      "byteIdentical": true,
+      "sha256": "bfbb4fcf73fc374def4a0dbc67227f30ab19ae673f02509dff8a58187fc55af9"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/SafeSingleton-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/SafeSingleton-input.json",
+      "byteIdentical": true,
+      "sha256": "c060f3df12052b6c6a51fb0f71556609f67242a1b7b00ce8cf47f0fbd00d14b9"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/constructor-arguments.json",
+      "archive": "deployments/verification-base-sepolia-phase3/constructor-arguments.json",
+      "byteIdentical": true,
+      "sha256": "42dd233c214056729a9fa0baf6a2930ac3d9e19c5f648d50792c7c7e2704ca4f"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/BaalSingleton-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/BaalSingleton-source.json",
+      "byteIdentical": true,
+      "sha256": "0e579551df6ee6181c440eccf2e7021e5b447b85e6ce13479cff7f5e7aa74eb8"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/ConfigDeployer-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/ConfigDeployer-source.json",
+      "byteIdentical": true,
+      "sha256": "cefe296cf2bce9f5203c1f142c78b9957b549edb00baacb8f1a9cd22d6f418db"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/Constitution-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/Constitution-source.json",
+      "byteIdentical": true,
+      "sha256": "ee10190bcad0b77fe6cb061bcd48b80b610ab8b0b2b14c969afc04f422774643"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/DepositShaman-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/DepositShaman-source.json",
+      "byteIdentical": true,
+      "sha256": "f82c4085d5afc8e6544ea86fc270891a4fecfe839f56cfc8d7f1357a3fa548a0"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/LootToken-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/LootToken-source.json",
+      "byteIdentical": true,
+      "sha256": "39c87d21df36f83132ce3fd8da99745ed6adccc998e58a0a96e08df6ffa4143e"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/MockUSDC-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/MockUSDC-source.json",
+      "byteIdentical": true,
+      "sha256": "e4ae5deb1d1dd014da7fea1ead55b45ef4a14de5a765808b6ecb6bd63bc36a82"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/ModuleProxyFactory-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/ModuleProxyFactory-source.json",
+      "byteIdentical": true,
+      "sha256": "87b71b2f1676de811ac4be18aa25432e47db9cff500d301f3a7537dea8ab0a6a"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/MultiSend-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/MultiSend-source.json",
+      "byteIdentical": true,
+      "sha256": "6bdd4a0825cbd91f33ca414e1a3e37f55c09e14e4587024b2870d148e9ed090e"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/NavShareToken-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/NavShareToken-source.json",
+      "byteIdentical": true,
+      "sha256": "d51eda68cf7191bf3f0bc68e3a17025b20c4b499f83c1b458885e212449c6f25"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/PaymentDeployer-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/PaymentDeployer-source.json",
+      "byteIdentical": true,
+      "sha256": "4105b3fa9400f77fe7f6c13d4271a5f3b7630f65410bb2afb47733efd0db0c07"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/ProjectDeployer-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/ProjectDeployer-source.json",
+      "byteIdentical": true,
+      "sha256": "b6e89a8a65d3b94f22dd0105a7c612ab2b45e042ebaebdb9a2a9e4d33bbb5ef7"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/Safe-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/Safe-source.json",
+      "byteIdentical": true,
+      "sha256": "d4d1a1777feedf6fd25bfca055ae4b63f9aeeba33d183fbece6e3ce060be53b6"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/SafeProxyFactory-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/SafeProxyFactory-source.json",
+      "byteIdentical": true,
+      "sha256": "ff371fffea3b1f489ceae0fdde1a038b6a294519f4982432796fc58761320d5a"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/SafeSingleton-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/SafeSingleton-source.json",
+      "byteIdentical": true,
+      "sha256": "fea720b2132d49c0c79de3809e2e0e213586ef644df78150003660deaf6d17ad"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/StrategyDeployer-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/StrategyDeployer-source.json",
+      "byteIdentical": true,
+      "sha256": "7c32988c36ae1fb6929c4e33f7d9a93773a002c8f051635ee5a6f0af2b847b38"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/TemplateFactory-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/TemplateFactory-source.json",
+      "byteIdentical": true,
+      "sha256": "9c8697ce90892ac4d83b8ed9bd3cec60103a7f56148d685f18d27ec3248bef17"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/WorkManager-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/WorkManager-source.json",
+      "byteIdentical": true,
+      "sha256": "f124a77ea79d4616eac164792ea69e69122e9963e565833ecfdb7bb5821c5a60"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/evidence/ZeroOneIntentAccount-source.json",
+      "archive": "deployments/verification-base-sepolia-phase3/evidence/ZeroOneIntentAccount-source.json",
+      "byteIdentical": true,
+      "sha256": "82041b2a36edd86c76f495bc6c9a01c23887cdf51c99c0c83875c0ac03894895"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/standard-input.json",
+      "archive": "deployments/verification-base-sepolia-phase3/standard-input.json",
+      "byteIdentical": true,
+      "sha256": "f20d6f2c231c980a0a918ce14c113ec2bca8aab2855c180dd5b529c1c9e3f4b9"
+    },
+    {
+      "old": "deployments/verification-base-sepolia/upstream-contracts.json",
+      "archive": "deployments/verification-base-sepolia-phase3/upstream-contracts.json",
+      "byteIdentical": true,
+      "sha256": "8e7091d922fbb2d3b287c96bb51c6f0e402c34e913aeb954dace4223ae2926fd"
+    }
+  ],
+  "contractSources": [
+    {
+      "path": "contracts/ConfigProposal.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/Constitution.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/DepositShaman.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/IProposalContract.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/Interfaces.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/LootToken.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/MockDex.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/MockUSDC.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/NavShareToken.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/PaymentProposal.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/ProjectProposal.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/ProposalBase.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/StrategyProposal.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/TemplateFactory.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/TestToken.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/TickMath.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/TreasuryLedger.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/UniswapV3Venue.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/WorkManager.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/ZeroOneIntentAccount.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/test/LedgerProbe.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/test/TwapSandwichProbe.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/vendor/Baal.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/vendor/MultiSendCallOnly.sol",
+      "matchesMerge": true
+    },
+    {
+      "path": "contracts/vendor/interfaces/IBaalToken.sol",
+      "matchesMerge": true
+    }
+  ],
+  "archiveFilesIdentical": true,
+  "contractSourcesMatchMerge": true
+}

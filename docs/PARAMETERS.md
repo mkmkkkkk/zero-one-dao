@@ -94,7 +94,7 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - Pool fee = 500 (0.05%) for K. **DECIDE** — immutable per adapter instance, no setter; another fee requires another voted venue/Strategy. This is a demonstration input, not a protocol trading cap.
 - `StrategyProposal.Rule.slippageBps` = 50 in K. **DECIDE / BY PROPOSAL** — tolerance applied to both the pool 30-minute TWAP-implied output and the same-transaction QuoterV2 quote, valid range 0–10000 bps. `amend` by Safe changes it; 0 requires at least both un-discounted bounds. No prior off-chain quote is guaranteed.
 - Adapter `safe` = DAO treasury. **DECIDE** — immutable recovery sink; permissionless `sweep()` returns unsolicited pair-token dust only to this Safe. Each swap requires no preexisting pair balances, asserts exact transfer deltas, clears router approval, and finishes empty. A failed swap reverts atomically; `stop`/`migrate` remain venue-free.
-- Phase 3 Strategy ABI adds `slippageBps` and venue `assetUnit` / two-argument `buy` / `sell`. Existing deployed Sepolia factory and Strategy contracts retain their old ABI; this code's new factory must be deployed for the new template. The TypeScript builder encodes omitted mirror tolerance as zero; it is not an upgrade of the old deployment.
+- Phase 3 Strategy ABI adds `slippageBps` and venue `assetUnit` / two-argument `buy` / `sell`. The old Sepolia factory and Strategy contracts retain their old ABI in the archived phase 3 deployment; the fresh phase 5 stack is listed below. The TypeScript builder encodes omitted mirror tolerance as zero; it is not an upgrade of the old deployment.
 
 ## Phase 4 venue pricing
 - UniswapV3Venue TWAP window = 30 minutes (1,800 seconds), from pool.observe tick accumulation, settlement per assetUnit. Constructor refuses a pool whose observation history cannot serve the window. **IMMUTABLE**.
@@ -129,3 +129,32 @@ changed later by an ordinary proposal (DESIGN.md §3/§0). Lines marked **DECIDE
 - **A5-07** T0 custody: the relay's 32-byte secret plus a pass reproduces that account's key, so whoever holds the secret can sign any intent for every T0 account. That is what custodial-lite is; the README says so, and T1 (own key) is the primary path.
 - **T-12(a)** TWAP liveness: with `slippageBps` 50, any spot/TWAP divergence above 0.5% makes `run()` and the deadline unwind revert until the divergence closes or a vote stops the strategy. The bound protects the treasury from being sandwiched at the cost of refusing to trade in a fast market; `slippageBps` and `maxPerRun` are voted per strategy.
 - **GOV-02** A YES voter's current balance deficit at processing contributes to retention failure when the aggregate deficit exceeds 34% of supply at votingStarts. Same-account returns restore retention; historical YES votes remain counted, so below the retention threshold they can still beat members who never voted NO within the voting period.
+
+## Phase 5 Base Sepolia addresses (2026-09-11)
+
+Chain **84532** only. Record: `deployments/base-sepolia.json`; archived old addresses: `deployments/base-sepolia-phase3.json`. Constitution pins `06a0bf010480dbbab2cca58892dc5a1ee1a95ff7`. Genesis: 50 mock USDC, 50e18 shares. Initial periods remain 21600 s / 21600 s until Config #1 is actually processed; a pending vote does not change parameters.
+
+| Contract | New address |
+| --- | --- |
+| Mock USDC | `0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a` |
+| Safe | `0x6a0eFF5Aef13254aef69740392e064695b519A58` |
+| Baal proxy | `0x2a97A8DB1797dfD8691668D729eB8291ACE664cb` |
+| Shares | `0x838DE8c63049f0696Ca4d2b03496156d6CD6DaD8` |
+| Loot | `0xA440d0da92f3aE8F9ae2f13d6cFEe9CdE1cB002b` |
+| DepositShaman | `0xE3041d2FE25987a3941a066Eb980B11BF81E2267` |
+| WorkManager | `0x1EBDa9814bD56d38dB1b41a35A6991BDfAa6ccB8` |
+| TreasuryLedger | `0x1C6a5dc7f29914604d27861F93aA9BD3E05df8FC` |
+| TemplateFactory | `0x9FC4166933729E26a73e95645deD9DF15673EDfD` |
+| Intent account | `0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8` |
+| Constitution | `0xF4cDf63FCD19bBf7285D089b848212ba2C34596F` |
+| PaymentDeployer | `0x9821F97d84C5ba19F8844c1344635Cd4034415BB` |
+| StrategyDeployer | `0x87a706eC1EB3BE40849DfEDE242810Ed4931aF0b` |
+| ProjectDeployer | `0xC550678332d0c5f5212A4eF5d16fC9FDcd82Aec1` |
+| ConfigDeployer | `0xeEcCe4Bc0BFc22425b01B1359027B3b469b5ACe3` |
+| baalSingleton | `0x458Bb655AEF64A58Fb5473F52d2C469234746807` |
+| moduleProxyFactory | `0x383B80c358FADCA4654aCACe047BB706cca1FaD1` |
+| safeSingleton | `0x604256c90fBe0823cE8AEF6e0563cA689435f994` |
+| safeProxyFactory | `0xd0a855D44F2DD6e568Bc534E1E7731276443bF81` |
+| multiSend | `0xc48264D72D2228f94653D02bB845f9C00696BE66` |
+
+The native Sepolia K fixture uses its own mock asset and the official Sepolia Uniswap v3 dependencies, separately recorded in `evidence/testnet/phase5/K/pool.json`. This does not change the immutable pair of any mainnet venue.

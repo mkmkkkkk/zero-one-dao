@@ -1,0 +1,28 @@
+{
+  "chainId": 84532,
+  "hash": "0x82a21a730a750e46698fe9363c9ee47dc460eaf7666592f6d147e9e92e02dff4",
+  "blockNumber": "46652555",
+  "strategy": "0x83bdB1Fa4DbF0E80c27F92946A47da8Bd3b1A902",
+  "probe": "0xf68fa1a5cf93fc7b428947b122cf47a9c1e64a31",
+  "donation": "1000000",
+  "held": "11377385",
+  "cash": "1000000",
+  "threshold": "7500000",
+  "spotPrice": "444401",
+  "hypotheticalSpotValue": "6056121",
+  "report": {
+    "priceBefore": "1000200",
+    "priceDuring": "1000200",
+    "valueBefore": "12379660",
+    "valueDuring": "12379660",
+    "sqrtBefore": "79231968980444069978319894913",
+    "sqrtDuring": "118847953470666104967479842369",
+    "sqrtAfter": "79245097288003085971604806349",
+    "moved": "500274159262",
+    "received": "333317319314",
+    "refusedOutput": "0",
+    "refusedMinimum": "0"
+  },
+  "result": "PASS",
+  "readBlockNumber": "46652556"
+}

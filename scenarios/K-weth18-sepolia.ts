@@ -1,0 +1,64 @@
+/** Native 18-decimal asset-unit companion to K; own mock USDC and free Sepolia WETH. */
+import { readFileSync, writeFileSync } from 'node:fs';
+import { getAddress, parseAbi, type Abi, type Address } from 'viem';
+import { liveChain, liveContexts, keyFromEnvFile } from '../src/live.js';
+import { deployLocal, simulateSettled, writeAndWait, awaitRead } from '../src/onchain.js';
+import { loadLocalAbi } from '../src/baal.js';
+const D=JSON.parse(readFileSync('deployments/base-sepolia.json','utf8'));
+if(D.chainId!==84532)throw Error('Sepolia only');
+const keyFile=process.env.ZERO_ONE_DEPLOYER_KEY_FILE;
+if(!keyFile)throw Error('explicit isolated test key file required');
+const chain=liveChain(84532);const {publicClient:pc,contexts:[c]}=liveContexts(chain,[keyFromEnvFile(keyFile)]);
+if(await pc.getChainId()!==84532)throw Error('RPC chain mismatch');
+const factory=getAddress('0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24'),manager=getAddress('0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2'),router=getAddress('0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4'),quoter=getAddress('0xC5290058841028F1614F3A6F0F5816cAd0df5E27'),weth=getAddress('0x4200000000000000000000000000000000000006');
+const erc20=loadLocalAbi('MockUSDC'),factoryAbi=parseAbi(['function createPool(address,address,uint24) returns(address)','function getPool(address,address,uint24) view returns(address)']);
+const poolAbi=parseAbi(['function initialize(uint160)','function increaseObservationCardinalityNext(uint16)','function observe(uint32[]) view returns(int56[],uint160[])']);
+const managerAbi=parseAbi(['function mint((address token0,address token1,uint24 fee,int24 tickLower,int24 tickUpper,uint256 amount0Desired,uint256 amount1Desired,uint256 amount0Min,uint256 amount1Min,address recipient,uint256 deadline)) payable returns(uint256,uint128,uint256,uint256)']);
+const check=(value:unknown,label:string)=>{if(!value)throw Error(label);console.log('ASSERT '+label);};
+let head=0n;
+const read=async<T>(address:Address,abi:Abi,functionName:string,args:readonly unknown[]=[])=>{
+ const latest=await pc.getBlockNumber();if(latest>head)head=latest;
+ return awaitRead(()=>pc.readContract({address,abi,functionName,args,blockNumber:head} as never) as Promise<T>,()=>true);
+};
+const tx=async(address:Address,abi:Abi,functionName:string,args:readonly unknown[],gas=3_000_000n,value=0n)=>{
+ const sim=await simulateSettled<{request:Record<string,unknown>}>(c!,{address,abi,functionName,args,value});
+ const r=await writeAndWait(c!,{...sim.request,gas,value});head=r.receipt.blockNumber;
+ console.log(`RECEIPT ${functionName} tx=${r.hash} block=${head} gas=${r.receipt.gasUsed}`);return r;
+};
+function sqrt(n:bigint){let x=n,y=(x+1n)/2n;while(y<x){x=y;y=(x+n/x)/2n;}return x;}
+const settlement=getAddress(D.settlement),safe=getAddress(JSON.parse(readFileSync('evidence/testnet/phase5/K/pool.json','utf8')).safe);
+check(await read<number>(weth,erc20,'decimals')===18,'published Sepolia WETH has 18 decimals');
+const resumeBlock=process.env.ZERO_ONE_WETH_INITIALIZED_BLOCK;
+if(!resumeBlock)await tx(factory,factoryAbi,'createPool',[settlement,weth,500],8_000_000n);
+const pool=await read<Address>(factory,factoryAbi,'getPool',[settlement,weth,500]);
+const stable=1_000_000n*1_000_000n,wrapped=50_000_000_000_000n;
+const [token0,token1]=[settlement,weth].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
+const amount0=token0===settlement?stable:wrapped,amount1=token0===settlement?wrapped:stable;
+if(resumeBlock)head=BigInt(resumeBlock);
+else await tx(pool,poolAbi,'initialize',[sqrt((amount1<<192n)/amount0)]);
+const initialized=(await awaitRead(()=>pc.getBlock({blockNumber:head}),()=>true)).timestamp;
+await tx(pool,poolAbi,'increaseObservationCardinalityNext',[128]);
+await tx(weth,parseAbi(['function deposit() payable']),'deposit',[],200_000n,wrapped);
+for(const [token,amount] of [[settlement,stable],[weth,wrapped]] as const)await tx(token,erc20,'approve',[manager,amount]);
+await tx(manager,managerAbi,'mint',[{token0,token1,fee:500,tickLower:-887270,tickUpper:887270,amount0Desired:amount0,amount1Desired:amount1,amount0Min:0n,amount1Min:0n,recipient:c!.account.address,deadline:initialized+600n}],5_000_000n);
+const record:Record<string,unknown>={chainId:84532,safe,pool,settlement,weth,initialized:String(initialized),readyAt:String(initialized+1801n)};
+writeFileSync('evidence/testnet/phase5/K/weth18.json',JSON.stringify(record,null,2)+'\n');
+for(;;){const now=(await pc.getBlock()).timestamp;if(now>initialized+1800n)break;console.log(`WETH18 real TWAP wait seconds=${initialized+1801n-now}`);await new Promise(r=>setTimeout(r,30_000));}
+await read(pool,poolAbi,'observe',[[1800,0]]);
+const venue=await deployLocal(c!,'UniswapV3Venue',[safe,settlement,weth,router,quoter,factory,500]);
+console.log(`RECEIPT WETH18 venue ${venue.hash} address=${venue.address}`);
+const unit=await read<bigint>(venue.address,venue.artifact.abi,'assetUnit'),price=await read<bigint>(venue.address,venue.artifact.abi,'price');
+check(unit===10n**18n,'venue.assetUnit is 1e18');
+const before=await read<bigint>(weth,erc20,'balanceOf',[c!.account.address]);
+await tx(settlement,erc20,'approve',[venue.address,1_000_000n]);
+const buy=await tx(venue.address,venue.artifact.abi,'buy',[1_000_000n,50n]);
+const acquired=(await read<bigint>(weth,erc20,'balanceOf',[c!.account.address]))-before;
+const minimum=1_000_000n*unit/price*9950n/10000n;
+check(acquired>=minimum&&acquired>0n,'actual buy uses the 18-decimal asset unit and satisfies its TWAP bound');
+await tx(weth,erc20,'approve',[venue.address,acquired]);
+const usdcBefore=await read<bigint>(settlement,erc20,'balanceOf',[c!.account.address]);
+const sell=await tx(venue.address,venue.artifact.abi,'sell',[acquired,50n]);
+const returned=(await read<bigint>(settlement,erc20,'balanceOf',[c!.account.address]))-usdcBefore;
+check(returned>0n&&returned<1_000_000n,'18-decimal WETH round trip returns actual USDC less pool fees');
+for(const token of [settlement,weth])check(await read<bigint>(token,erc20,'balanceOf',[venue.address])===0n&&await read<bigint>(token,erc20,'allowance',[venue.address,router])===0n,'venue balance and router allowance reset');
+Object.assign(record,{venue:venue.address,unit:String(unit),price:String(price),acquired:String(acquired),minimum:String(minimum),returned:String(returned),buy:buy.hash,sell:sell.hash,result:'PASS'});writeFileSync('evidence/testnet/phase5/K/weth18.json',JSON.stringify(record,null,2)+'\n');console.log('K NATIVE WETH18 PASS');

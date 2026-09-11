@@ -1,0 +1,36 @@
+{
+  "secondMachineIdentity": "unknown",
+  "status": "blocked",
+  "attempts": [
+    {
+      "target": "michaelyang@192.168.0.20",
+      "result": "ssh: connect to host 192.168.0.20 port 22: Operation timed out",
+      "exitCode": 255
+    },
+    {
+      "target": "michaelyang@100.89.7.65",
+      "result": "ssh: connect to host 100.89.7.65 port 22: Operation timed out",
+      "exitCode": 255
+    },
+    {
+      "target": "michaelyang@192.168.0.34",
+      "result": "Permission denied (publickey,password,keyboard-interactive).",
+      "exitCode": 255
+    },
+    {
+      "target": "michaelyang@100.70.12.65",
+      "result": "Permission denied (publickey,password,keyboard-interactive).",
+      "exitCode": 255
+    },
+    {
+      "target": "configured SSH alias oldmac-tb",
+      "result": "ssh: connect to host 169.254.251.206 port 22: Operation timed out",
+      "exitCode": 255
+    },
+    {
+      "target": "Computer Use Terminal",
+      "result": "Computer Use is not allowed to use the app 'com.apple.Terminal' for safety reasons."
+    }
+  ],
+  "note": "SSH targets are local configured/known-host candidates, not verified identities of a second machine. User was asked for an authenticated SSH target. No cold-start result is inferred from these attempts."
+}

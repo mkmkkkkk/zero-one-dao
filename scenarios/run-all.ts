@@ -1,4 +1,4 @@
-/** Run DESIGN.md §11 scenarios A-J and L (plus K with FORK_RPC) sequentially (one anvil at a time) and summarize. */
+/** Run A-L on Sepolia; local mode includes K only with FORK_RPC. One scenario at a time. */
 import { main as A } from "./A-full-treasury-fails.js";
 import { main as B } from "./B-mandate-ragequit-then-execute.js";
 import { main as C } from "./C-deposit-spend-ragequit.js";
@@ -11,13 +11,19 @@ import { main as I } from "./I-project-topup-stop.js";
 import { main as J } from "./J-strategy-migrate.js";
 import { main as L } from "./L-treasury-ledger.js";
 import { main as K } from "./K-uniswap-v3-fork.js";
+import { main as KSepolia } from "./K-uniswap-v3-sepolia.js";
+import { LIVE } from "./lib.js";
 
 const SCENARIOS: Array<[string, () => Promise<void>]> = [["A", A], ["B", B], ["C", C], ["D", D], ["E", E], ["F", F], ["G", G], ["H", H], ["I", I], ["J", J], ["L", L]];
 
 async function main(): Promise<void> {
-  if (process.env.FORK_RPC) SCENARIOS.push(["K", K]);
+  if (LIVE) SCENARIOS.splice(10, 0, ["K", KSepolia]);
+  else if (process.env.FORK_RPC) SCENARIOS.splice(10, 0, ["K", K]);
+  const only = process.argv.find(arg => arg.startsWith("--only="))?.slice(7).split(",");
+  if (only?.some(name => !SCENARIOS.some(([id]) => id === name))) throw new Error("--only must name available scenarios");
   const results: Array<[string, boolean, string]> = [];
   for (const [name, run] of SCENARIOS) {
+    if (only && !only.includes(name)) continue;
     try {
       await run();
       results.push([name, true, ""]);

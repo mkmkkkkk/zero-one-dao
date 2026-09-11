@@ -1,0 +1,436 @@
+   fetched snippet.js (11022 bytes)
+   fetched snippet.py (10794 bytes)
+   fetched llms.txt (1476 bytes)
+   GET http://127.0.0.1:18871/health.json
+   -> 200 (490 ms, 1585 bytes) {
+  "service": "zero-one-relay",
+  "dao": "Zero One",
+  "chainId": 84532,
+  "chain": "Base Sepolia",
+  "adapter": "0x3cEa2aB253BCd0c287da058e7e70B9bAED4Df02c",
+  "baal": "0x519dcCa8EFC69Ba19f94fEE1A32b542be56cAD9f",
+  "safe": "0xF69F1205bc810e6cb77b884b51aEf2f65b3e104A",
+  "settlement": "0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a",
+  "constitution": {
+    "address": "0x602A41F8F5362bb5969bD92b5d00DDA694EA4837",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892d
+   ok: Sepolia only
+   ok: initial fixture contains 24 distinct proposal receipts
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 25"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xaB8420E2D71CE190ebF46F43addB63D280C2a8C7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 25 accepted: 200 
+RECEIPT spam 25 tx=0x930aea1412603c0bb8807de25924682394a7673b1b8e6dd9b65b40dc5780e76f deploy=0x08f407325e5563a517dda304882d96942908fe9890c0438a59427836bf73b9f8
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 26"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x2bEa9B913ED56f9713c826Eb252aA0692DDbCFa6","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 26 accepted: 200 
+RECEIPT spam 26 tx=0x7f7694ff0f40bd9b4ecac1aff4eb27dd87314db39f331a6e22e47582a4292ca0 deploy=0x0749e014f953afc00a8afe56e87adf9d98a0f14bbc213d67ab39e773ec45ce78
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 27"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x2bEFc958110ca3a1b923d1E2199870686649716c","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 27 accepted: 200 
+RECEIPT spam 27 tx=0x24a3488925dccdfc13ae094bc1332328fde111a44b33fac26c23ffb2851382dc deploy=0xa6a1fb762a76c23bb30a5fe9d69d710e1a668ac8e3c963ea0d2c4f6668e08ae5
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 28"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xb185974Aaf1bDa6B4F324e6954f9fbc091008e42","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 28 accepted: 200 
+RECEIPT spam 28 tx=0x85fe7a9a42c2239fc2ee4a13324a256fc65c342251c372122c688072a74dd2f1 deploy=0x76cd4f1adb4f724945aa376ecf7640aed6a2f763d051c105f7b5f498760694e6
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 29"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x8Da9474a41EB3a8D308AAaBEE1122426E058D434","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 29 accepted: 200 
+RECEIPT spam 29 tx=0x4b37f11249daf0b3a33b99a0331e9d98a56e4378fca0f8a4e81eb19cdafa7740 deploy=0xae0d3c38dade78998771680e347a565a0793960ea205cd5cbf628bd211f8a150
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 30"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xFdF2a70d2E404af6bA8679a3EAb68540B8Bed11C","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 30 accepted: 200 
+RECEIPT spam 30 tx=0xd5964ce0acf3fbc3c0e25fdcb2098285129356d583e3c081683fd1a1af4e5e0d deploy=0xccf0644e351e337bd025523cbb2c087157fde905b9f8294e96fe69ccb127de0f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 31"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xC85EE44360e0B08C52D4417848491652D3855584","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 31 accepted: 200 
+RECEIPT spam 31 tx=0xdbad37de926107a8060c187a6e69730dc95e0ae0424562a1d288311abd540302 deploy=0x27e5723e7b74fd8d3e82ae8e696646546900e8a7abf0396124f7bb6e527495f9
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 32"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x9562Aaa054FfFf872DA621d273cF64e79bC648B7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 32 accepted: 200 
+RECEIPT spam 32 tx=0x948374be431d3fa07f41ca39c5922f51d906286b58879b8e1a63d63b71a61a76 deploy=0x929b06d490f0165ee01a57400362f3f93304d488e1dc602c387166c9ff1a5962
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 33"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x7969F372BfCd841A43d7D5cABc9d219dC532fB13","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 33 accepted: 200 
+RECEIPT spam 33 tx=0x0b9f6f35e3d0c257292b96cd4abae89ba4b7822f2b3869cd48e084e6f17942cf deploy=0x422b614b5cf573a7dcdc867dfdf57f72518f1b1a70dadd30ebccc673568b638e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 34"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xAb85028f88319a58b4e47b2D9687fF03fBF9124a","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 34 accepted: 200 
+RECEIPT spam 34 tx=0x86f1953ccf550696e880e74df806532b35485e3ff98dcd77736c199b216cca77 deploy=0xf5da768ca6339d5a1df552aeca4c478cff7d7458499a34824ea053f7da7aba24
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 35"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xFfEAf83C1c2089917CCACD98840a6E731551938D","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 35 accepted: 200 
+RECEIPT spam 35 tx=0x6f91ac30a8f064b96386ea90e54f3c95f6c8bbd264923811fcdd4709e1ccff06 deploy=0x41619f7dca237d033cf5e5f9f0c085ad19d1efeee9c706397ce7ada377a2cb12
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 36"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x3f12ff0fdfcDF160f2488cf73993a3681acD78d1","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 36 accepted: 200 
+RECEIPT spam 36 tx=0x4098833aaaebbd6b453eaabfc553146c178a9f554a1c584bec8740513a87bad6 deploy=0xa08cf8df7468d449081ca3c09c952ff1703b7cbaa95211554d30c573c0e8664d
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 37"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x107b05cE95D5DE01fF9C3E728ACD55Eed9030147","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 37 accepted: 200 
+RECEIPT spam 37 tx=0x9be700a4576d1ad0469c2931e5632d4fefdc376467026dc936261be1246e1ad1 deploy=0x7cd3ad7614837fe4715a0fdf7a1e2f120e99582bfb2a4f6acc69abb5b4a952ef
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 38"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x431202051Ee1a50518993814Ecce6cd8832d80CD","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 38 accepted: 200 
+RECEIPT spam 38 tx=0x369fcaae22e5128f3375795b9b40a6476a0025ca8ff7c17970d913740a99dc89 deploy=0x1fe0a8a901e62894a407cce4e549fea7636cfb1db550a3206ea4771adeb9bee4
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 39"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xfdc3C03A7e35Ac6fE21Affb6060c1A99754Dda96","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 39 accepted: 200 
+RECEIPT spam 39 tx=0xfaa1cb0202c33d407d56725a8754723d62e74aab5d5ed175b665f7d9edc68e32 deploy=0x876affe4d02fd7015e57cf9496547450e88832d6e00d5a279214ae21993e9c5e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 40"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xD4E3c02f778c1Ce181E4CEC2Fa4684cA96c71Eb5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 40 accepted: 200 
+RECEIPT spam 40 tx=0xce024e4f47323acfe7215e6cc0938925a5ad167edb724f7effa3158cb43b76bf deploy=0x425a4db74fb74b3484ca214d28fee3aa7bf13dbbfae7b47c1bde85adafd4a2cd
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 41"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x0eE7879a86DbD94FBb69F87EB5395084bB6D33eC","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 41 accepted: 200 
+RECEIPT spam 41 tx=0xc93c75bfef006dcbd5b51f8fda6cf82dae4b704775457dcc83f6c228e2e0f223 deploy=0xf5d21dba66e69e6d9de65608ffeb6791879aaab490c3ec7586561287e1320aa2
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 42"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xA5DaC08c8fd3C7367beAbd1a4e96a370Db74273D","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 42 accepted: 200 
+RECEIPT spam 42 tx=0x92050bbb95beec0dac7db889001fd7e7d49a175ea3707c83ef1b80d1045d7b79 deploy=0x61c304ab25a9877d4c900989f6468aaf5700e99d0a7b895df029b928d825a00a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 43"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x31C555d45771D05b8e466DFF9592AF377C9F1FeD","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 43 accepted: 200 
+RECEIPT spam 43 tx=0xdd30253f200fce9d44aeeb545275ba91ed590ad9a2b33f7d1aea196cba5cfe67 deploy=0xe165039aae22546d92600755c46c9d56225b5f25a9f8176c154edf572a112e82
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 44"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xAb94D24531aFA1637E4F8ab237ab58536Ad0cdB8","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 44 accepted: 200 
+RECEIPT spam 44 tx=0xd89d2f597299a805ca620de21fb3fc35782b92d8eec3458e5cf2518846d72715 deploy=0x6dac5720fd95f43f07c3a013b8821c9180eaf84e6d9745ee11dc7fcf4adc1ffb
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 45"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x4f4D7cC17d8208bFdC95d3093F14D0c021E28815","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 45 accepted: 200 
+RECEIPT spam 45 tx=0x27082dbf350ef05956b91cb6f55c01edf539a1f63dc61f4024c5fdb668eadba5 deploy=0xbdca2bee1bffe796f8da4f40bc1c667b03cfd41b3d07650aeffd77f51c836887
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 46"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xB9824b6Cb22848Ada2f50705486218EeD6832CC9","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 46 accepted: 200 
+RECEIPT spam 46 tx=0x3e5632caa4a5ab7cac13af11bf1a36ace22fb2526423fa656cb91f4778e1f1fd deploy=0x8fce88a21ee2dd20820fd2102a4e05c1a3ce8ec98131f2c1f45c693c7e58c033
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 47"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xef239098aEa9f3c682F3547958Cc770A8C251789","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 47 accepted: 200 
+RECEIPT spam 47 tx=0x158b864ec94c6e8a6adadc2969ff996c631eb6062d4a0edde501299add204bbb deploy=0x335064d494b6e26d83bc41887f7c0e20fa4d5f26e5108db1d491d848399974b2
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 48"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xbf2909dd2C177f65ec915D42203c1378bCaa3B39","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 48 accepted: 200 
+RECEIPT spam 48 tx=0x59af3f1de827045ad736886df0ca23f741e66ba37ac0315056aa232f08b669ef deploy=0x39366a0c77afedcb674881700582fc234ea6be021699ea5835cc4042a611c997
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 49"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xC05E3FB5066175e3768364dFfc640FDb87730E2F","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 49 accepted: 200 
+RECEIPT spam 49 tx=0x081810a5f61a2aa7e5092f27454715a44a468a2c8526c602c53f228288109882 deploy=0x62bc0737bc8e7763cf7ab5b8674706d9ab25d04a4318e6e8cb0f79de18236e03
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 50"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xfd694Fdb72A699fD49A03A09DB793868E157fEd0","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 50 accepted: 200 
+RECEIPT spam 50 tx=0x403cf202303fc240638a651a71e0c788a55d70f11752e845cd063cd23fb733b7 deploy=0xea3a688f3be764c0d643fcdde51ae4e8a59a92ecd2fc14f549715ffec3788eb6
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 51"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x7Ea56820e5aAe0814Be7B52f179683Ad6DaFDbab","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 51 accepted: 200 
+RECEIPT spam 51 tx=0x85f890b2a902cf1e981d4071883bfe5ccb4806744b4faaa8fa03252e392c6aff deploy=0x43d53851baf7c702ca0fa64a1d74566a1fc305ca0923ab515bc10354500fb039
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 52"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xcC5140126dEA7e29abD069D30a602B0324a2D0f5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 52 accepted: 200 
+RECEIPT spam 52 tx=0xe603e3f64831aebb1baeca1204b543c293bda47160b2b2d2f5727c2c12066cf6 deploy=0x4e9af8557728030aa249099906222522b1b3dbc8a2aed04aeaa3a771a68865dc
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 53"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xe76992d544bE3EdAA1726F5daD21370F85d7abA5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 53 accepted: 200 
+RECEIPT spam 53 tx=0x65de38398fc12e84099cf00035daa1994cdb56c437387cb3c68dfdcb85c7585c deploy=0xb01cccea2888b779631f97d5fbea6a3310e8b414aabfe1e55ed47e1d1e53002b
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 54"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x13245971aE6ee4deAD2f955Cd8dE5d4A6DaD8b62","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 54 accepted: 200 
+RECEIPT spam 54 tx=0xcdb1b7f997dc78952159a3abbc896b3f922f5f86ebad2911bfc7b150d8b5d00d deploy=0xf6442d6734fb1413532180c51dc933cd536e3389435397a980ee30226d6fa9cd
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 55"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x076f48422b6cDb48184267085C120fE5D13eb09D","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 55 accepted: 200 
+RECEIPT spam 55 tx=0x3960b9143081462a66d0e34d4e06e1cad829374a3daba936d677cfc976496a21 deploy=0x3d6349e41c58032602c2f034cceb0171fbc2d1d2230759db335f19879c705b1f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 56"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xEe1cbb0802A1db9905ebB5fDDd55FEb0f52a94E3","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 56 accepted: 200 
+RECEIPT spam 56 tx=0x7077bb51d8165012379ab47fa1d2abbb844628a6b91634d048279154b8d56222 deploy=0xe69fcf46580d7e57e7f3b9c833380a6b8c6ddb710ef4d14954de91aed8e2d51e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 57"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xeEF4C5C297A2ac353dA6C548F7495E446b0aCA66","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 57 accepted: 200 
+RECEIPT spam 57 tx=0x387bdbf0cd96729ed59295bd760f34aa273c7771abdede2ebce0add7821ca08c deploy=0xaba1c4a44b615bfdd1f4af94f3fcbf429809213510453e8ea4352bcd5fb3aeec
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 58"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x91598c049dFD3f3de2e5CB25d047D7b0cEB3CcD8","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 58 accepted: 200 
+RECEIPT spam 58 tx=0xc361a0c2e9423531fa43e73f39f63144e8da80b88eedf35fd8f8902fc7552607 deploy=0x0a00f12e11ac199fbe22de3c508a2d76356d2ea0af13f6a74cb0af490af01e42
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 59"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xF91399b164D9d4EF2281107fEFf947D70Da720B5","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 59 accepted: 200 
+RECEIPT spam 59 tx=0xe19f7d0a21aff9bb1ef137da5f712363007e2cd5eae6d03a8e2c8f0847804dd8 deploy=0x8e71db4de330da40a6927b779dae42ba396d83af2367d0df54c81a71f7f3cd58
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 60"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x042A75A1d9031e84a9C38a0a3b16DCe97FEc4A22","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 60 accepted: 200 
+RECEIPT spam 60 tx=0x774a7a70d24ce1648f4b859be4a735d69c934ab75fcc4665c804f68f0e934962 deploy=0xce2d0afc86affba6340c72f8f5e38e02d36ddc38d5ef7ac14268f9a9c7c812ca
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 61"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x39A145e2bb3314f4Ab12CCe836Ce435ff980F4B7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 61 accepted: 200 
+RECEIPT spam 61 tx=0x31d37dbbe768fa7da959105140956a174a085325172bcf16096a3e018ccadd7b deploy=0x011a780fdf7ccf2e2bca6fe499a2f3188dc49e1d46199c102dd72cc3bd61f40c
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 62"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x8e114341fDFdf8eed9c370698Cb575642685d116","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 62 accepted: 200 
+RECEIPT spam 62 tx=0x488a0dbcbebc6497d64e7690e89d5df0090e6947cc54e6b14de7a3f3bc2047df deploy=0x8333521eb5082f19362bca080ee998a94ebf133c0d1b937961d7eddcbcbf4188
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 63"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x172273aDFB2AE7CEdfc6F0Cdc0433AFb526E95F8","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 63 accepted: 200 
+RECEIPT spam 63 tx=0xad4ebcd1665bd67ce753896e716345e0ffb49c15e40463e4e841d79308cff2ee deploy=0xc8c7080180cb8db6c5c60a28dd1c6a908d23c31fb6ee60fbaa0b4e75514bb8b0
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 64"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x3bd5222653c88cdC0802972bFb1E0a96a7Bf3303","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 64 accepted: 200 
+RECEIPT spam 64 tx=0x177df9222c81409e5e8df4b9866317a92930d4287ce1b67f778233113152e639 deploy=0x2ea065d1062f139cff255530b4ee884bd3b39145e4caf9bc1a9275852507b02a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 65"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xF0F588d19800D2CCb77e4D03790AFD1287740ba4","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 65 accepted: 200 
+RECEIPT spam 65 tx=0xfd069a69f756360ac244b426b6e43e3e6799c5f56513bbd59af8181681d1b97c deploy=0x8958da2a7708e173fb7dc603c4f4af94b77ef0655f687629bd35665857498963
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 66"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xCc22A97f8B83BF4aC25DB0de1538BF81306C6d1B","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 66 accepted: 200 
+RECEIPT spam 66 tx=0x15cf8fabb3d359bc1a97c7c37da3f07b48ce72205df9aaf72cf60bfb402bfb7d deploy=0xa5b26a6c4412497b5e365c7d982c77656bfeab6d2290a83d19cbd33f143b1fc5
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 67"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xa69fA5FDc07A5d1C5ab16945d5940DD4E61ed147","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 67 accepted: 200 
+RECEIPT spam 67 tx=0x3e0642b775e865f96159e4d53687249ed3be31f8c5906e9f3557048ba9853125 deploy=0xa5da550b4d459eae1a788183a4983240770caf13b633dcc4e1b4e3b57991cb51
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 68"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xC28a0Dc8a4D6e1D5Ac490377BC9ab40e505Ac8a9","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 68 accepted: 200 
+RECEIPT spam 68 tx=0x389b15a09c3aa9c2d8e934bc766b259c097b54e738cfdcb2b12a701bd26d3347 deploy=0x0683e3472c81eb561050dfdbe4e293654f6ec840aa63d6a357f31685b572d1ae
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 69"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x1b4F285820d9CE424Af1714eB6c24597cf5895c7","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 69 accepted: 200 
+RECEIPT spam 69 tx=0xe67c876d4ecb75827e68e24527b22d7208ac320662c0038cbe5b49f7bf265c6f deploy=0xa70c6e25073ab471687089aee23363b49b95505a14ecac0971061a36c7b6e08a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 70"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xeD5a7bfdE411e05Ebb31E3a554d7C0955f2F1D8c","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 70 accepted: 200 
+RECEIPT spam 70 tx=0x6a8cb547703f7fc1ab24d5d074e4b418f3b42906bcf014a39b44cac58657e9ad deploy=0x43c4cd29296df489b3bf0ec2dbf68bf10d82915bb07ea14b1a522c49170d8da4
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 71"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xb67e5D2d9b824bd65fE563AC50b73079109dA13F","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 71 accepted: 200 
+RECEIPT spam 71 tx=0x45b2437981fdf441746d9aef53940dcc842ce846be53b77f245a4724600b3cf5 deploy=0x57c81fd1d8ad60072a59393592283d26272e287ddfd287a98d093cbdad753027
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 72"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xe48149C889357EC994EFa72ea91131f8309830e1","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 72 accepted: 200 
+RECEIPT spam 72 tx=0x2a84351126537dca3606097463669e59a387a06ebb72194d807ed937cf2d11f4 deploy=0x8aa2c2e3c9991d9233f59eae998327bc7fe9eda4f6b5d017168e1e146ab39b7f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 73"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x54f1a4942084e8480Ce9A71772a9bb3483EBc994","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 73 accepted: 200 
+RECEIPT spam 73 tx=0x61f3f91727dbafd4eb95a8e73f18731d7a93a85b230222311fc6c0cf928a6b8b deploy=0xd3269eb732aebce6a117a9bee5a857a2fa8d95e962b4d4b241278adf932b3e76
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 74"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xb08DD53C763D925872D3c1a43e41B839b1afed4f","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 74 accepted: 200 
+RECEIPT spam 74 tx=0x990fac1614ffcf949954d3b15d935a1c8d92171b54e9eacebf1005770e24fda2 deploy=0xd421b2cffde5f92d60391d7830663d1badabbe1691f5c1b3fe28bd6adb13841a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 75"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xE27e9E4a5eb537a7e287D4D274051B63fACA896f","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 75 accepted: 200 
+RECEIPT spam 75 tx=0x5247bd1f7196605875e7c36a3c0e818a25c9c1f8b8c19292cc70e0807b11383d deploy=0xe83107af6eec933ff0d22f3f66f8782f4045f38a5e9d479b997f7d869aa7be18
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 76"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x4971C6b590cA64Ece1E82813E7d1282D19Ca33e4","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 76 accepted: 200 
+RECEIPT spam 76 tx=0x066386acf8ccce31c1f9188bedf1a20d6a6a066e502ca4efcdd53f4abc8c077d deploy=0x02a5ea92df0602276698ab548075592c9735d20a28d38d92bec8cb26cbdfd393
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 77"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xBc6179D0CFDDBA36cE5C20De46cc1A68A46482B8","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 77 accepted: 200 
+RECEIPT spam 77 tx=0x0fd2fbdaa1f1081771f07ff2021f90e275350c5243e0bead5de0017d5f059e33 deploy=0x2e983bda05e250c08b5846ab3ade6524a6e1fe4fe344154b7454ca28f66b9925
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 78"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x33f6072b0f1Cb358E73f5eb006c9bf91348Ac552","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 78 accepted: 200 
+RECEIPT spam 78 tx=0x44148d686073c2793cd64fd2f69844d9f2495950352dec6508404375e3278062 deploy=0xc3045a6d83ca9c560fe84d29b4260dbeda1516becf6b0e3ca607a12ce77b3cf9
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 79"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x165f9bCf0fB796c38DF4f7BA124B4645b153300C","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 79 accepted: 200 
+RECEIPT spam 79 tx=0x1b826a702486c5d6227dcc2c8c1ea3f8ed3804d09ad2707350036fa23d21d7c5 deploy=0x5d4b1ded3de5f410f023c5b5ff528818a67dfddf5d6a60d04b6541a73abd648a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 80"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x32a55088fb46ff26C53dc119d44CE010a2639F25","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 80 accepted: 200 
+RECEIPT spam 80 tx=0x12e254beb416c5ddd35e532a0f919dc230e96110be2f344241dc5014dffcff25 deploy=0x3cb2a4a6053eb9bb1ca18d36161979e69ac3167209d469bcaedd482db18064f8
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 81"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xAB127DAb228CE9d9F746D71cc731b46D7E380623","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 81 accepted: 200 
+RECEIPT spam 81 tx=0x77edc4463e3e903f5dbb2ed1cf0bda4480accafbc8ab3960b023e90017e65654 deploy=0xfdc9bdcc9caaa8eee06d953732de3b79bec94ca3523427f7e3c8ffae64f51ef3
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 82"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x7Ae16DB168922D9828E0Df930E311681251F5041","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 82 accepted: 200 
+RECEIPT spam 82 tx=0x10d6c2e42feb4f7b7551c05f0804162f479cb12f43c3cdbfc90b0da5acdd80cf deploy=0x3971a07ccba2a581c7755d9e8869764cffca864bfba5726bd01d2f1d0a11a61b
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 83"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xE5fa60c3eADEBa1BfB375E2E7f3444ac40982fB9","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 83 accepted: 200 
+RECEIPT spam 83 tx=0xef9bb5e04913ec6e43ce3db90b94125441e437a4f7d5bf9d990d4629fb90fc30 deploy=0xf91dac1a751a72441bfe7acbb2b4b863da252ff5ee6764c8f13e82c265962f79
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 84"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x719746Fa8CFe049FDaC5C5E2695a04d5C68EcdB1","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 84 accepted: 200 
+RECEIPT spam 84 tx=0x8bb19554e8d4f57a71b2bc78a63bfb8454a01c40759cd1a796ee9b57bd833aec deploy=0xd0a1210d2f5b43cac455b2d3d7bfccb9bcf35b47f756ab05fd0cf163bcb01197
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 85"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x4390366E579a8763e4757AC6Fc950d995455930C","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 85 accepted: 200 
+RECEIPT spam 85 tx=0xf3dc93086240b8efd09fd803ba4e9679f5fc69a4d007b91faed400173d509bc1 deploy=0x1317cf17f829c3153455ab056ddd008dd61c8f4b4dd1069ff369b8d5bff39edb
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 86"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xa6d4D2C4123F4AFC6884498a9736156E25396201","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 86 accepted: 200 
+RECEIPT spam 86 tx=0x3e9a936e6cfb304dbdcceb78ebfe6156368e0ca659198ff696928942c1b88f50 deploy=0xf71d52adfe8860df2eb0d47f83a04b65efc7acc9f6fb530fb44474f8fd289c93
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 87"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xa9a829d1b6845c29735576D6e54C6CD4bfA143E1","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 87 accepted: 200 
+RECEIPT spam 87 tx=0x86c77d0e3d0701be0e2ef5ad8a6bd25f79c203b57437319b235de957803ec20e deploy=0x30975b411ac5077ce941aceaa0df79f761942db048c7010045c43808647b495a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 88"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xe01321533ac8e8eDE2d10BAa901f5FCFEf8F3F1f","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 88 accepted: 200 
+RECEIPT spam 88 tx=0x6e156f87857ed37ee44a56d3737de64c37f37e5ec5c2b85a4e4a9a0089164e93 deploy=0x1ea3962648cf1c88b7695a96d9e8833a04f7378f93c96e1b4a7fb0b8425d5282
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 89"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x2E371fa1EAD8b1196a10EeB7AA0841E29b6656Dd","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 89 accepted: 200 
+RECEIPT spam 89 tx=0xd395525cd66ea5e56e8b137e62ce5e2553b83e4551fbf6711d0703dbc207c086 deploy=0x6f74e6e83001bc0aac6b9ce0960b37bac082952b70045f595a3757e664189b6e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 90"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x8E344876668269708F7cd8D3AE94480B0145D51B","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 90 accepted: 200 
+RECEIPT spam 90 tx=0xe641eb4b0a7593779a3449cdce3f2b2ea3e1a947f13869a415fbc346d24beb88 deploy=0xe6c18d65113115b5c764932590c2e69627017cb49c756a4721d2a15473d7d551
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 91"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xbA368F28f412a48632365255cEE83dCabB4c0BCF","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 91 accepted: 200 
+RECEIPT spam 91 tx=0x332323380118dfdad8eed6f9c73147c7e5a97e28b1765321d8d54cd35d73672b deploy=0xd35b5a3baa4fcf8d685af891bf0219f8d49ba00b4434f2c0df03d9bf7439c144
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 92"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x6A9B31A179743cedFad3EEFa261E7eDe49F8c7E0","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 92 accepted: 200 
+RECEIPT spam 92 tx=0x6792b2a40abb6ba02a02f1b64f4c61d0ad89948c088840eddeab2ca249d923e6 deploy=0x2601253065198fd51fc0f9b4b7a6b4ac62852d1b27ed50cb2531d5f0fb9ed18f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 93"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x583177e407Bc6bB7cC49000A01d0BD1af8eA8210","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 93 accepted: 200 
+RECEIPT spam 93 tx=0xc018ddbef459c7030f52d7ff6b6a43f0ad660933e03fb83501cfae53140d73b4 deploy=0xfaa15c3f2c127d895085393de4d998b5654c24323e7873210dca0f29ac97a19f
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 94"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x0A298D2650CCEA37b3207aC9B833E13E4337c269","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 94 accepted: 200 
+RECEIPT spam 94 tx=0x74b5a23510e02793c979d8593c9245f97f1755f799e8f796ef5af26724bb247c deploy=0x550a237faa386393248f2021b01cebf9e610d64fef7b3677f7960354634ffe24
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 95"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x5Baf6a52b930b6eD5f0570C50E1A5C1E7bE70043","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 95 accepted: 200 
+RECEIPT spam 95 tx=0x62329933aa3adb46437e5bd6d7aac63fd8fbe7c0d2d8be2aee6f40e96eb1bfe3 deploy=0xb4359b53ea0fb652a5c5f6664e28d5c6ac40cb8c850020247efe80a7b09be6ed
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 96"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xD092a83915809468F1b1ACD12804F4506df5946c","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 96 accepted: 200 
+RECEIPT spam 96 tx=0x3457c6bcd8c7ace50b5d1329839030cc39d3b23fdf82bb3c39d10bebf1e4bddf deploy=0x86a87be60585118731f01ccea6a30b87d8490d15a953eb023b562f91272560cc
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 97"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xFDbafb0cDcd863Cdbfa307D480B314587a5C7206","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 97 accepted: 200 
+RECEIPT spam 97 tx=0xa33adf03a8a463f32cd2619c8d97da4cd89e97863303550dee1860f8524872dc deploy=0x4e6e83f1d4b8474dea68ddeb7a03cd83b6e468a1a3ecbe13b2ccbccd2d1bec87
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 98"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0x07ec9C0411B8dB16a41127aDe9F80CEA5C2F9853","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 98 accepted: 200 
+RECEIPT spam 98 tx=0xf6f46758d672c8a32db9d79ea482607aab56155f1027a4e3852c5f4a0fef5f1d deploy=0x8d95b733c7a5860e8102738d5306ff1be1caed3cdb0d2c49d1eca7bfe722a79a
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 99"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xdB56FC7F597F4d5F76Aea7ae265a7fbfa417C946","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 99 accepted: 200 
+RECEIPT spam 99 tx=0x85ff17aff487a29662d48d82be56758774438dc9ca8f46965a27aaa3fcf8297f deploy=0x72e9e5a751f3822fbd2885c73ed1531c16fa8fe10b89a6fccfdff963cced817e
+   $ node snippet.js propose --key /Users/michaelmacmini/srv/zero-one-dao/state/agent-phase5-relay-corners/Michaels-Mac-mini.local-2026-09-10T19-58-09-678Z/agent.key --template Payment --params "{\"recipients\":[\"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5\"],\"amounts\":[\"1000000\"]}" --summary "corner: spam 100"
+   stderr: 0x3a552353bf9a7cec0394f7a327ecc7231053b1f5 | {"instance":"0xCf9aC855f3b1a395254F13905098694166Ea6564","exists":false,"codeHash":"0xbea8f230a0ff5fdd44952d264ad2a2326157029c0fb888cec779ca128dbdcba8","paramsHash":"0x718096e03c96d9b818f7e1aaa40ffd577d166cb20c321c437099175819201632","operator":"0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5","budgetUsdc":"1","canPropose":true}
+   ok: proposal 100 accepted: 200 
+RECEIPT spam 100 tx=0x23417b1baf72c3f9b8a62dd81905672ba870961c9c8a5b5f83bb43bed5242e6e deploy=0x82bc111f15ca834aedfb7c5b75c75f81aefaf13174e42050d4458f823711da02
+   GET http://127.0.0.1:18871/proposals.json
+   -> 200 (10588 ms, 449608 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652530",
+    "timestamp": 1789073348,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101
+  ],
+  "total": 101,
+  "proposals": [
+    {
+      "id": 1,
+      "state": "Processed",
+      "sponsor": "0xAd344191b98fE41c9A2D504FD14A020D223C7F1E",
+      "submittedBy": "0xAd
+   GET http://127.0.0.1:18871/proposals.json?limit=10
+   -> 200 (4 ms, 45202 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652530",
+    "timestamp": 1789073348,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101
+  ],
+  "total": 101,
+  "proposals": [
+    {
+      "id": 101,
+      "state": "Voting",
+      "sponsor": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+      "submittedBy": "0x2ad
+   GET http://127.0.0.1:18871/proposals.json?open=1&limit=5
+   -> 200 (4 ms, 22869 bytes) {
+  "chain": {
+    "id": 84532,
+    "blockNumber": "46652530",
+    "timestamp": 1789073348,
+    "name": "Base Sepolia"
+  },
+  "governance": {
+    "votingPeriod": 120,
+    "gracePeriod": 120,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101
+  ],
+  "total": 101,
+  "proposals": [
+    {
+      "id": 101,
+      "state": "Voting",
+      "sponsor": "0x3a552353bF9a7cEC0394F7a327ecc7231053B1f5",
+      "submittedBy": "0x2ad
+   ASSERT FAILED: 100 distinct accepted proposals and bounded pagination
+/Users/michaelmacmini/srv/zero-one-dao/relay/agentio.ts:21
+    throw new Error(`ASSERTION FAILED: ${message}`);
+          ^
+
+Error: ASSERTION FAILED: 100 distinct accepted proposals and bounded pagination
+    at assert (/Users/michaelmacmini/srv/zero-one-dao/relay/agentio.ts:21:11)
+    at <anonymous> (/Users/michaelmacmini/srv/zero-one-dao/relay/phase5-spam-resume.ts:29:1)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v26.5.0

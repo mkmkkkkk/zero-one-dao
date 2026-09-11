@@ -15,10 +15,10 @@
       "Library": "",
       "ContractFileName": "@gnosis.pm/safe-contracts/contracts/proxies/GnosisSafeProxyFactory.sol",
       "LicenseType": "",
-      "Proxy": "0",
-      "Implementation": "",
       "SwarmSource": "",
-      "SimilarMatch": ""
+      "SimilarMatch": "0x37b3703468aab5cC7d35Df8Da2194e03d5436336",
+      "Proxy": "0",
+      "Implementation": ""
     }
   ]
 }

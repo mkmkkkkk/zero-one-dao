@@ -1,0 +1,7 @@
+
+> zero-one-dao@0.1.0 typecheck
+> tsc --noEmit
+
+scenarios/L-treasury-ledger-resume.ts(34,87): error TS2352: Conversion of type '{ [k: string]: bigint; }' to type 'StrategyRule' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ [k: string]: bigint; }' is missing the following properties from type 'StrategyRule': maxPerRun, minInterval, deadline, takeProfitBps, stopLossBps
+scenarios/phase5-resume-fixture.ts(7,26): error TS2307: Cannot find module '../src/templateFactory.js' or its corresponding type declarations.

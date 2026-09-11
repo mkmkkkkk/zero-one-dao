@@ -1,0 +1,27 @@
+{
+  "chainId": 84532,
+  "baal": "0xCfC306120D7DF0E512B12678669AeBa5491cfB33",
+  "rows": [
+    {
+      "id": "minRetention-33.9pct",
+      "expected": "33.9% deficit leaves 66.1%, proposal passes",
+      "observed": "burned 33900000000000000000; supply 100000000000000000000; passed=true",
+      "ok": true,
+      "receipt": "0x6ac73dcd2596d4b5ba4cb43cbc50d7130eda8d940b94028f29fbb0608734a75e"
+    },
+    {
+      "id": "minRetention-exactly-34pct",
+      "expected": "remaining 66 of 100 = 66% >= 66% -> passes",
+      "observed": "B exited 34 (34%); passed=true",
+      "ok": true,
+      "receipt": "0x6845eaf580da520d4882650d503d88f4592376572394f6f1d1744cf6bd6f53c6"
+    },
+    {
+      "id": "minRetention-over-34pct",
+      "expected": "remaining 66 of 106 = 62.26% < 66% -> fails",
+      "observed": "C exited 40 (37.73%); passed=false",
+      "ok": true,
+      "receipt": "0x1236dc0a892b1bafb0367972f46ac50f69f2f0a61df54806bdb6d7ef986b1468"
+    }
+  ]
+}

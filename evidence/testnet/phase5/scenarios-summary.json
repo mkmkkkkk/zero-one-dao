@@ -1,0 +1,92 @@
+{
+  "chainId": 84532,
+  "passed": 12,
+  "expected": 12,
+  "scenarios": [
+    {
+      "scenario": "A",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "B",
+      "result": "PASS",
+      "logs": [
+        "scenarios-B-H-I-J-L-rerun.log"
+      ]
+    },
+    {
+      "scenario": "C",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "D",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "E",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "F",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "G",
+      "result": "PASS",
+      "logs": [
+        "scenarios-A-J-L.log"
+      ]
+    },
+    {
+      "scenario": "H",
+      "result": "PASS",
+      "logs": [
+        "scenarios-B-H-I-J-L-rerun.log"
+      ]
+    },
+    {
+      "scenario": "I",
+      "result": "PASS",
+      "logs": [
+        "scenarios-B-H-I-J-L-rerun.log"
+      ]
+    },
+    {
+      "scenario": "J",
+      "result": "PASS",
+      "logs": [
+        "scenarios-B-H-I-J-L-rerun.log"
+      ]
+    },
+    {
+      "scenario": "K",
+      "result": "PASS",
+      "logs": [
+        "scenario-K.log"
+      ]
+    },
+    {
+      "scenario": "L",
+      "result": "PASS",
+      "logs": [
+        "scenarios-L-native.log",
+        "scenarios-L-native-resume.log"
+      ]
+    }
+  ]
+}
