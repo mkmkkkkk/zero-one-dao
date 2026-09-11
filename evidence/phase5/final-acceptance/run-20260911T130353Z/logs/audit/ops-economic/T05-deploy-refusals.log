@@ -1,0 +1,23 @@
+
+== (1) the 'deployment already recorded' gate keys on --out
+   deploy-base --i-confirmed-parameters --rpc http://127.0.0.1:18690 --key-file /does-not-exist --out /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/final-accept-1789130797/state/audit-ops08-1789131743188/base.json -> exit 1: REFUSED: /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/final-accept-1789130797/state/audit-ops08-1789131743188/base.json exists: a depl
+   ok: with --out pointing at an existing file the script refuses
+   deploy-base --i-confirmed-parameters --rpc http://127.0.0.1:18690 --key-file /does-not-exist --out /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/final-accept-1789130797/state/audit-ops08-1789131743188/elsewhere.json -> exit 1: REFUSED: production deployment requires a clean working tree at pushed HEAD
+   ok: with --out elsewhere the same operator passes that gate and reaches the next one (a second mainnet deployment is one flag away)
+
+== (2) clean-tree gate vs what is actually deployed
+   git status --porcelain --untracked-files=no -> 31 dirty entries; untracked files ignored by that check: 1
+   ok: compiled artifacts are git-ignored (.gitignore:11:contracts/artifacts/	contracts/artifacts/DepositShaman.json): a modified or stale artifact never makes the tree dirty
+   ok: deploy-network.ts compares deployed bytecode against source/artifacts in 0 places: the pushed-HEAD gate binds the constitution URL, not the code that ships
+
+== (3) pushed-HEAD gate: any advertised ref counts
+   ok: the advertisement scan accepts `<sha> refs/` with any suffix (refs/heads/*, refs/tags/*, refs/pull/*/head): a commit pushed to any branch or opened as a PR passes
+   deploy-base --i-confirmed-parameters --rpc http://127.0.0.1:18690 --key-file /does-not-exist --out /private/tmp/claude-501/-Users-michaelyang-Documents-Workspace/fd3e6074-755f-4fd2-a178-e8f76a9aae91/scratchpad/final-accept-1789130797/state/audit-ops08-1789131743188/unpushed.json -> exit 1: REFUSED: production deployment requires a clean working tree at pushed HEAD
+   ok: this audit branch (HEAD not on origin) is refused before any key or RPC read
+
+== (4) confirmation flag and RPC writes
+   deploy-base --rpc http://127.0.0.1:18690 --key-file /does-not-exist -> exit 1: REFUSED: --i-confirmed-parameters is required before any RPC write
+   ok: without the flag: refused; the flag is a CLI token, not a signed confirmation (anyone with the key file can pass it)
+   ok: RPC requests made by every run above: 0 (0 writes)
+
+=== OPS-08 deploy-refusals: PASS (observations recorded) ===

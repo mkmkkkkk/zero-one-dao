@@ -1,0 +1,96 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xeb694FAD3f43D80164AFFc75f1D4610CEA49ab99 baal 0x3b791939bF16C7CA53306Cf733856fEC226CaADd shares 0x30DbD9D095aB583c18c9b941955A62AC6792cca2 settlement 0x26f35925D49a8633D4BE82f7CF407Ae3Ad8e90d1
+          depositShaman 0x024FbF801d2e7456E273651f7B9df1510821E1f0 workManager 0xd7354481873d339363ddAEEF300AaC85B6cDdFb2 constitution 0x6284513B4B2141A3E2Df8Cfa6964F5642AB84ffD
+          templateFactory 0x25D5BE1C7eE549604455147136b817ac1016c2f2 deployers 0xA2FebE9F1408dF245EC7F65c0670555Fa5Ba851F 0x7734e4AD115668c953001C3CdC7f88A11698fd80 0xC2eAc1990ceF962b86C6B7f51B20E21a1ded241c 0x31437F60b4878Dd0128D2BeE3B4D5Ed4E25D79EE intentAccount 0x43cD330467aD918475059c369E39af6B9Ec046b7
+   F = 0x390Ae134C92fd205DC1a4a8DED0F9692bf81cb9B  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xBFb3A96835C4731f3959B4AbE59f17d07bdCa7dd  member agent A
+   B = 0x48326f5280D935388F8F75da76a5745264C6dB4f  member agent B
+   C = 0x03E27d8549Cd3782718807a24c04e766A5b7B1F2  member agent C
+   D = 0xF8C2d57Ffd8EC5AA7517bFC2Fee0eb5972b1fCC1  depositor D (joins later)
+   O = 0xef32e5D631E5Ea3Af14cca1caF624767F6Ddc146  operator O (mandate recipient)
+   W = 0x76f5FF1730b5AE25746B6EA6432f02892b2998E7  worker W (task deliverer)
+   shaman 0x024FbF801d2e7456E273651f7B9df1510821E1f0 permission 2 (DepositShaman)
+   shaman 0xd7354481873d339363ddAEEF300AaC85B6cDdFb2 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xA2FebE9F1408dF245EC7F65c0670555Fa5Ba851F
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x7734e4AD115668c953001C3CdC7f88A11698fd80
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xC2eAc1990ceF962b86C6B7f51B20E21a1ded241c
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x31437F60b4878Dd0128D2BeE3B4D5Ed4E25D79EE
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0xbb8eb569d746f0bea6a7bcd22a2fdcdb4d896a7b6747fe16599798dbf28cd1f3 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x7af81f9d11f83c1624dd5790b3d6bf1addc6c5e050abc2bd97b1878b8a363c9b (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xa39a4ebad51cf14104d236c2515416b9efaac89f129fa43ecee7c4977e0fc716 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x2ad5a1d62ffe3001ba03568ed097940460328a681341458b0572b53f0f0f2cb3 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0xab708a8a395e3aee91c95e84427af56fb8d6bfe7d47f6a3d1ce3377409fa2592 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x6fa26facebf6c43964e4840e7454b1388add324b4b813a24ad4b0a6e40938799 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0xba408d9c0ccd5c94927d071dc67f181bd1c5b0a8e389c35e94d27fb71f15f279 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x2a881c00963a28fe86cb7b724d2c2dbce82ff9b8bbfb4eee99949ebcdb0646ea (block 29, gas 303575)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x0894f8d310d009a24fed2bf6436e9111545b649b838f1e5dfb110fc20e5bcdc0 (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x0ca6d0fe26239ecf8123b9de4a8f99f7cd58680abf56ce4ba1abcc0e4f53024c (block 31, gas 235253)
+   tx B approve deposit shaman: 0x10107c0bc1fa63f6a8d5d332f17bf6cdc71c742f782dbdb879b5f8241940b0b0 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0xdee15e531d3c08d1761fa1a2daabe6ce95cc17f966537e6d98989f274b0b7093 (block 33, gas 235253)
+   tx C approve deposit shaman: 0xa3fb5b6603316dabf6b4781722128742b991480245483792922f16d33c4702ff (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x5c975b7821ba487f758996519e1abc7b1326b60ec5210f29f2293d181219431d (block 35, gas 235253)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+   AuditMulticall helper @ 0x58908e5ca28781c3bd177d6fa3f0b84002a4a0f4 (tx 0x1e67ac7bcfb448ec3aae051ee5879310565f4fda860fa2cc96f7fb1cdfd04fb2, block 36)
+   tx fund D with 5000 USDC: 0x8ba4dab76e6b8ef2acc3ab56a7d89d49e63406a78b5224f632abfd62ad618b9b (block 37, gas 34150)
+
+== step 4: round trip 2000 USDC with the whole treasury in the Safe
+   tx full Safe: R deposit 2000 + ragequit 2000 shares [ONE tx, 3 inner calls]: 0x370d5177a9b24702fab41547f372625618c18cf8e98c5d7d328f749eeddeee15 (block 39, gas 334892)
+   full Safe: Safe 3050 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 5000 (net 0), R shares 0
+   ok: nets zero or -1 unit
+
+== step 5: Strategy budget 3000 USDC passes (Safe keeps 50)
+   MOCK 0x00C75D82396FD1A1789BAddb07Cc15f8f1Cd5dc2 (tx 0x4139d6e4479f340ec56419e744a25199e13bf97393258edfff3e5537c60cd977); MockDex 0x414F40803C4796bFDbD6703feCf6AFaE1CEaa93b (tx 0x1e8954a4a4c01b45005dd39d790a7b4c76d0927d4d52a85a97d02dd16cd58826) price 2 USDC per MOCK
+   tx F seeds MockDex with 100000 USDC: 0xf144364053c5dc8b65af0b908e2a4337136350281a1ea2b0003568558a7c7cd7 (block 42, gas 51250)
+   tx F seeds MockDex with 100000 MOCK: 0x7e8cb8d2a2ee5ff74820e742e917498a3b7ecc1634d394913853b854835e41ea (block 43, gas 51250)
+   A deployed StrategyProposal @ 0x5D408f4FFaabE090791190DF4e7fc7A1B7D9ED7E via TemplateFactory (tx 0xea7493af9905f80244b15ef24baeda5a89d9e59ad023569b61047def655fb004, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0xdd2a0a24bf7bd775971ba553c17169d9417fff36e581c1d95e749a24e5d0f7f8 codeHash 0x1da587614ceea733f92222fad5184fce1473072cc68da267b65f666d95584bb8
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "A: strategy 3000 {"template":"Strategy","contract":"StrategyProposal","compiler"...": 0x9df70fc7cc16c53e758406d98c690e8acc7bdb1b0ae82c7965c6f9c9ed945ac9 (block 45, gas 283127)
+   details: A: strategy 3000 {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0x5D408f4FFaabE090791190DF4e7fc7A1B7D9ED7E","operator":"0xBFb3A96835C4731f3959B4AbE59f17d07bdCa7dd","budget":"3000000000","deadline":"1789304226","params":{"venue":"0x414F40803C4796bFDbD6703feCf6AFaE1CEaa93b","asset":"0x00C75D82396FD1A1789BAddb07Cc15f8f1Cd5dc2","budget":"3000000000","rule":{"maxPerRun":"1","minInterval":"3600","deadline":"1789304226","takeProfitBps":"0","stopLossBps":"0"}},"paramsHash":"0xdd2a0a24bf7bd775971ba553c17169d9417fff36e581c1d95e749a24e5d0f7f8","codeHash":"0x1da587614ceea733f92222fad5184fce1473072cc68da267b65f666d95584bb8","salt":"0x0000000000000000000000000000000000000000000000000000000000000002"}
+   warp +1s (let votingStarts become past) -> block 46 timestamp 1789131427
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x83c1b4a95745e519ed54bdfc24a7220f0e00037fde5990741b2afbe0278a8725 (block 47, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x7240590bdb442e222b2c943bec577748da936149e64391d41cd5d2f887c6a637 (block 48, gas 100127)
+   tx C votes YES on #1 -> yes 3000 / no 0: 0xabdec8400cd35d8188a6840d4a427bafddb85aa5d15d0f08d3f7e15e854413d9 (block 49, gas 100127)
+   warp +43200s (past grace of #1) -> block 50 timestamp 1789174627
+   proposal #1 state = Ready
+   tx W processProposal #1 -> passed=true actionFailed=false state=Processed: 0x2d0f4f5d554f4f98c8406864a74984c681efb2e025590644543cb3555ab23591 (block 51, gas 369500)
+   ok: strategy funded
+
+== step 6: round trips while 3000 USDC sit in the open instance (deposit priced on 3050, exit on the Safe)
+   tx budget out, 50 USDC: R deposit 50 + ragequit 50 shares [ONE tx, 3 inner calls]: 0xefb4ebf4ee590291d80eb6e09d171429d7f39827ba56f6b034fad01f8f4a2fe6 (block 52, gas 323723)
+   budget out, 50 USDC: Safe 50 USDC, ledger treasury 3050, supply 3050; R USDC 5000 -> 4951.612903 (net -48.387097), R shares 0
+   tx budget out, 2000 USDC: R deposit 2000 + ragequit 1968.766267425493348547 shares [ONE tx, 3 inner calls]: 0x522a567a4940a3105a58ad8f41d25d0326845008d9f9de46d55b5e1b48aadc4d (block 53, gas 279626)
+   budget out, 2000 USDC: Safe 98.387097 USDC, ledger treasury 3098.387097, supply 3050; R USDC 4951.612903 -> 3774.770131 (net -1176.842772), R shares 0
+   ok: same-transaction round trips lose money while a budget is out, and never profit
+   holds: the mint leg reads the ledger (Safe + open instances), the burn leg USDC.balanceOf(Safe): with 3000 of 3050 deployed a 50 USDC round trip returns 1.612903 (net -48.387097) and a 2000 USDC one nets -1176.842772; the NAV-01 profit needed the instance to return USDC between the legs (multi-block)
+
+=== SCENARIO NAV-04 same-transaction deposit + exit never profits (holds): PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

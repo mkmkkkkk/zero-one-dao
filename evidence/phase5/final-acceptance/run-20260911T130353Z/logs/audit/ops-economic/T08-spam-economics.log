@@ -1,0 +1,151 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x7183ab73E9FCBc36f44D2560C68153760894d405 baal 0xc5a6228D465e3A0d59D31D173200499FC4a75b49 shares 0xFF2c1D3BB0D487c0Be7fbf2920670eB55d00DFcA settlement 0x4E37586C99633989Ef9554858DD9F0F1Bac63Da0
+   F = 0xc01310b38CF51E9972d893EE20945565f7b615eA
+   A = 0x8100b4E87dFD96fECE0F7E7f04c7c7e8449BDd28
+   B = 0x019671206c7925Fe97896314a5Ce7A212dE3671B
+   C = 0x5cc8a6e64575e455921AB8ad0921356e34dBa2DB
+   D = 0x960A0f6D55C69ED12a5984621ed49AC20C5fDDE0
+   O = 0x5B7fA0C44E2A5d18436542C80CAF883882C2A851
+   W = 0xafeC488dB4942Cc6A7c1676fd127E770C9365255
+   shaman 0xA8557BFC42214775f7530d32947ca7Cf86A5a487 permission 2 (DepositShaman)
+   shaman 0x4f20B5f71E43872C32910c8f9aE1fc8Ae9b8D322 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x6D544752f9D1F8a8a0775b265d9e66e2ef6fC06B
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x80A6DC52a8F6C6271277AE5628f3CB3A94622998
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x0b766E5a99EDB4beE1103802d3649952c30B55E0
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x3F82135E2b81Bebf28a7eE948c7E9c96F5b06A3e
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x7f72d8c16f1539955054f63f8de7a645aff8d15b968e355bcc6d6144bd7aee54 (block 22, gas 51238)
+   tx fund B with 10000 USDC: 0x0fd3372d05f16ac57cd829d017614e543f87d94fe57c09220986794ac0ea247f (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xb79d59d276bd91b17d81c3722f7a5f1207248964da50bfae8b1732898316500c (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x81e250e519c5f23eb98fa0dc6c5601529be0494770f4c7da05a60a27438e02ec (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0x97cbc44dc8728ae45a8a42a32e89b301c821df4ff8bb97d95b40a8a602dccdc6 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0xbd645ad99610e6502910e454abbce7877f3724713643ae4184ffacfad29fa8a5 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x0096dd9582664a1b26a9d629028ea106c09d3fc25fe598add1a331216c928c28 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x70e92c350f5107a89c0de9ce1982bd1035584d2fc7ff1f979a093af705de070a (block 29, gas 303575)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x77ca5db6619bdc7339317af7d1e77cd150deb73f00d1954c95a56f4438098a21 (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x4afa6efad10a6385d55e80ba0820451a2e0e413ad05c4dc2132ba425493f11f4 (block 31, gas 235253)
+   tx B approve deposit shaman: 0x4cf6a29f2533b6c1e1ec7f6500c46e04f2f5e51bfcee70983d679aaecdb30d40 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x0b8c40b6abb6f85004adcb67fc3124ae15f199250e70d51a46d789871d05681c (block 33, gas 235253)
+   tx C approve deposit shaman: 0x99d0c7e7c02aff869d3e3f27f75bd5c7a722a716f02e0387b21ac13d47c84ff4 (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xea4851ee40a8e862066c8ff2c339bec437df4013c38d80f081c873deb65291e3 (block 35, gas 235253)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: W deposits 1 USDC -> 1e18 shares = exactly the sponsor threshold
+   tx fund W with 10 USDC: 0x9039c5647cacb2d422d87da16211873fd8d29d3a17435cdd06a1f687095c8bd8 (block 36, gas 34138)
+   tx W approve deposit shaman: 0xa039b34f8aae60d2f9764bb757c283130b77fab5ac2bd05709d2587280b499a5 (block 37, gas 45889)
+   tx W deposit 1 USDC -> 1 shares (quoted 1): 0xc0dd51bbff5730f157c94d57d638c4f3ef27d6722bc00846f797139eb35d84bc (block 38, gas 235253)
+   ok: W holds 1 shares = sponsorThreshold
+
+== step 5: W submits 20 spam proposals (baalGas 8,000,000 = the phase 5 maximum; action = transfer above the treasury) and votes YES on each
+   ok: spam submit #1 status=success gas=263344 tx=0xbf04cb2359e661a676fd5325052d9268cf3be281de6e808e52b70c8ae69756ff
+   ok: spam submit #2 status=success gas=263344 tx=0xcdb2a77b6d50e9051e25df493990dc6639ff8f2683c6e968ef5f12c92ef835f7
+   ok: spam submit #3 status=success gas=263344 tx=0x10120f8657b458550c5e46cbba6a9726418e94517bdffe66888f48afc6f1363c
+   ok: spam submit #4 status=success gas=263344 tx=0xc0df60ce3d999868f99d9d4d01dd95c381cf8671ce3a1dc7f72a5801a15d6451
+   ok: spam submit #5 status=success gas=263344 tx=0x029c507c3af3fbbb7cc341776baf1e4e9472bf7e5916265b837d9617d446a27a
+   ok: spam submit #6 status=success gas=263344 tx=0xb5ee1a73bc35ae3630e974d58115f22078aba2f3a00fa52656e40ce73312dae8
+   ok: spam submit #7 status=success gas=263344 tx=0xcba68558a37bcb5bde0af7584b2d00e40398954fb6f51e7bdd667d4b020ad318
+   ok: spam submit #8 status=success gas=263344 tx=0xd32ba966a9b7dc695e280adff78fbadacea67496d6386082f5472eaad66292af
+   ok: spam submit #9 status=success gas=263344 tx=0x10447fe1e3a89a6e89e736def4c20a49b71fba22453d087111b077718ea5b406
+   ok: spam submit #10 status=success gas=263344 tx=0xfa0fd8662616475167fa6e5fe180b93f57f674955af0078ebcf202591b5dd45c
+   ok: spam submit #11 status=success gas=263356 tx=0x728ce2df2dac55952d8430bdd5b4a90c425177c2f429c3276f3239d99450fa74
+   ok: spam submit #12 status=success gas=263356 tx=0xdb367add5ce2f99c88138a2c29a6b0ca5e5696c96ce349435eb66d4505761671
+   ok: spam submit #13 status=success gas=263356 tx=0x00d34ad58686321afa2c2eb442b64b2baf75407e0fa15a2b54257f6e88646db5
+   ok: spam submit #14 status=success gas=263356 tx=0xd9f9421ffc13d35db1ac0f101a337367afb014c8eee411034ac3edf22ea0df23
+   ok: spam submit #15 status=success gas=263356 tx=0xf0d490171e68c503c17cb3053e0c8e723148cd5a73a38b0f8223290dbc66649d
+   ok: spam submit #16 status=success gas=263356 tx=0xc1f5521928ff2ea22b780308c7a5c81a5bf15b7d415cd7bb31e014ea36697075
+   ok: spam submit #17 status=success gas=263356 tx=0x22c328b005717a891be4298758d8056f760ee6dd2ae3ec8f8f4699cf593c8c26
+   ok: spam submit #18 status=success gas=263356 tx=0xdbf304604fa83b1887ccf4d129d28c0724f17147341c278ab9cb59d315c8e991
+   ok: spam submit #19 status=success gas=263356 tx=0xec91fca0a8b31327823481702dda4f484e12d62f4c892fff33fcb2a73259fbbb
+   ok: spam submit #20 status=success gas=263356 tx=0x6090411aa91c931860a89bacc243bbbc5e0bace66fd6ad5bb9db8be1d2e37cfc
+   warp +1s (let votingStarts become past) -> block 59 timestamp 1789131762
+   tx W votes YES on #1 -> yes 1 / no 0: 0x7df45e59caea6dabc82d2ee4faf376f818c20a2ed102729e998d93336e917c4a (block 60, gas 117227)
+   tx W votes YES on #2 -> yes 1 / no 0: 0xdd9a1660060884aab33e3941a6ebef585ef16c53c12c1deee5af19998ba90d8e (block 61, gas 117227)
+   tx W votes YES on #3 -> yes 1 / no 0: 0xdead12ee3247524931ba4e2629894dc32f3ec0199bfa65329c0e83dc53144f1c (block 62, gas 117227)
+   tx W votes YES on #4 -> yes 1 / no 0: 0xeff1bf68a8de74da6d5fe5538f5f893befff67d76cbc165c248ec38dccedac7e (block 63, gas 117227)
+   tx W votes YES on #5 -> yes 1 / no 0: 0x98dae2e7ecd18f0f78c402f50267a940daa15f562b7824f727127e0fe36b3725 (block 64, gas 117227)
+   tx W votes YES on #6 -> yes 1 / no 0: 0x3cac2735904d6d60854eadcf47d9b1049eb9aa5a6e04086512b7b2f17369be97 (block 65, gas 117227)
+   tx W votes YES on #7 -> yes 1 / no 0: 0x6ea619abd6aea4637444a06c5ae257193cbd4cd68543960f4f71e2a36e90f2f8 (block 66, gas 117227)
+   tx W votes YES on #8 -> yes 1 / no 0: 0xf614923b475fbf139bb8e17a8ae66b9a7208b1580491941d0defbba3dbfd6496 (block 67, gas 117227)
+   tx W votes YES on #9 -> yes 1 / no 0: 0xe55de113d79a49678da246e0ea1007f79bd71a7e5effa47b323d31bf4f146246 (block 68, gas 117227)
+   tx W votes YES on #10 -> yes 1 / no 0: 0x38bf76ab4efabb00b8366ad6c4e36f7b7440746260af7ab2f63b8c543d15c57f (block 69, gas 117227)
+   tx W votes YES on #11 -> yes 1 / no 0: 0x44700d175714b209d2520cf13c9c7167b80f499da27523b47f86c59ab4e59b9f (block 70, gas 117227)
+   tx W votes YES on #12 -> yes 1 / no 0: 0xdfba926e43ece0f03ff85c9514e8c456c67b335db6f4510886707cb4eff7c638 (block 71, gas 117227)
+   tx W votes YES on #13 -> yes 1 / no 0: 0x0af64da70972690243a55cd155c6c022513507f235e2bb1e301296eec9d08ec3 (block 72, gas 117227)
+   tx W votes YES on #14 -> yes 1 / no 0: 0x8df98e38d88f8053704274d1c7e1265f68c0a894524ed4e7f97a63acc53e940e (block 73, gas 117227)
+   tx W votes YES on #15 -> yes 1 / no 0: 0x466d1b40cc8a231b7fa8911326bf1f22cf2a94a1c1ed2222f516dbe3113861c6 (block 74, gas 117227)
+   tx W votes YES on #16 -> yes 1 / no 0: 0x5210df76c9b8cc69d0583789c76deb024f1f1baada640f0c192f1e153970fb76 (block 75, gas 117227)
+   tx W votes YES on #17 -> yes 1 / no 0: 0x6e7a3362fd24d3adb3f05b1edfaad521d7b3496752e8ebdd6c91c04eff5c15b4 (block 76, gas 117227)
+   tx W votes YES on #18 -> yes 1 / no 0: 0xf9febcf535980d1c06bfdbb36648b1db4487ef628f0c5e326c10f9c78dc4e8ab (block 77, gas 117227)
+   tx W votes YES on #19 -> yes 1 / no 0: 0x81a434424c090bf1fe8076ef7614ecc7d8b07eaedf6eee2e9e8a48725060418a (block 78, gas 117227)
+   tx W votes YES on #20 -> yes 1 / no 0: 0xed919d6e67709c2f31e814b7358c4596a632b7be6588555d3cce78004871ffe0 (block 79, gas 117227)
+   20 submits: 5267000 gas total (263350 each); 20 YES votes: 2344540 gas (117227 each); public gas price, L1 data fee and USD cost: unknown
+   tx B votes NO on #1 -> yes 1 / no 1000: 0x8b5ef558d418ae56f1064c823aea2c615a920ea78be58b5b2fd6794548ac8cef (block 80, gas 117227)
+   one NO vote by B costs 117227 gas: defending 20 spam proposals costs each awake member ~2344540 gas per batch
+
+== step 6: A's legitimate proposal sponsored after the spam cannot execute until every earlier YES-voted spam is processed
+   tx A submitProposal #21 "A: pay O 10" (baalGas 80023): 0xfb8cc2a4f673c8eea3193c0d25e3effb34f12844f359a0317b71f2a7a0f82490 (block 81, gas 283292)
+   warp +1s (let votingStarts become past) -> block 82 timestamp 1789131763
+   proposal #21 state = Voting
+   tx A votes YES on #21 -> yes 1000 / no 0: 0xf76b78a7c29e262afb07066abad6c901e25ddab15675a33f4716718724d2e0d0 (block 83, gas 117227)
+   warp +43200s (past grace of #21) -> block 84 timestamp 1789174963
+   proposal #21 state = Ready
+   ok: A's proposal is Ready
+   ok: spam #20 is Ready too (yes 1 > no 0; B's NO defeated only #1)
+   revert ok [processProposal(legit) reverts prev!processed]: The contract function "processProposal" reverted with the following reason: | prev!processed | Contract Call:
+   revert ok [processProposal(spam) with the mirror/relay 5,000,000 gas limit reverts 'not enough gas' (baalGas 8,000,000)]: The contract function "processProposal" reverted with the following reason: | not enough gas | Contract Call:
+   ok: spam clear #2 status=success tx=0x39905476b6af9285d4ad405e850a4edeb3d86063adbdfeb027f12c1ff7fe328d
+   ok: spam clear #3 status=success tx=0xa750467ea3b8983bc4d68decab36ab61f8b9c6cd9f6ae787b14e9a4fbdbf102c
+   ok: spam clear #4 status=success tx=0xdac7db56972bf794d3391d7ba11121ada742545f8757a914ebe7deb06e820b03
+   ok: spam clear #5 status=success tx=0xf22b2cf91cf2d41cb73ff3494577a1bc5c9ba17e9c4f38b551d2a2a15a4f6eee
+   ok: spam clear #6 status=success tx=0x151caa849566a22b1d89b9f9f351fbec1bcd0273b900f971358a5403ead00338
+   ok: spam clear #7 status=success tx=0x360af150e78520539e63dc299530fb38b5765c02a76bcbe574ea678c344441ca
+   ok: spam clear #8 status=success tx=0x53e643184e8f6bcbca78003327d881f76af4d4ed72acbfac532d3c4ccef022e4
+   ok: spam clear #9 status=success tx=0x1e7f6821ecad84c1d5e0174951e849dd023a23089d238c34d9a33de2e52ab19e
+   ok: spam clear #10 status=success tx=0xedc43a56ea94d9c5e5a7234a6cf5ed1a756d06eb1a54544296221ba5da2a58db
+   ok: spam clear #11 status=success tx=0x70ee1102513da6f3e2158113887d51a187474655c13606dd687bac2621450852
+   ok: spam clear #12 status=success tx=0xbe73a63bddc7a99b9bac898766dca7a4c9140b9015b5773567967cf87a42d7b4
+   ok: spam clear #13 status=success tx=0x887fadf2bf3a095887fae16fd6154a0896f906f20be5cbd900796f3b471dba54
+   ok: spam clear #14 status=success tx=0x336c1216618b983344de478fdba3900d1dbc05da2851900f8b364dafaee305e2
+   ok: spam clear #15 status=success tx=0x4df8275b691eaf7c8e61ced0b7cf80fdb1d3f886d363c9699480122b0280da76
+   ok: spam clear #16 status=success tx=0x8ad073b3a4b8d6ba938ba14a444f8f766770b2ef8efa3ed28d5cbb871c0319ae
+   ok: spam clear #17 status=success tx=0xd1a7dab682844c3d0a4edd75a9b4557ba063e2316053ee3a47be7059d0f1aac2
+   ok: spam clear #18 status=success tx=0x9de2414d5f0b23374218adef7ba4afeb1e8dacd8ba2dd97afe926257588c0676
+   ok: spam clear #19 status=success tx=0xe40ee049c2ab2ea3fbb5659dfd7ead558b41ced9947467aef31e6824480a8a6d
+   ok: spam clear #20 status=success tx=0x6e39d4c0001cc3e471fb458a34c6cde87c1e6f28099429bebe197f0d6bef3470
+   clearing 19 spam proposals: 2724462 gas used (143392 each) but each needs a gas LIMIT above baalGas 8,000,000 (Baal.processProposal requires gasleft() >= baalGas): above the relay execute cap (8,000,000; relay/server.ts) and the mirror PROCESS_GAS; a member must self-pay with a raised limit, and one Base block (16,777,216) now holds two such clears (phase 5 ruling 1)
+   tx A processProposal #21 -> passed=true actionFailed=false state=Processed: 0x6757c09004cec1a14bca1e53fb52ef3ee8ae93802fa3c96971d36e61b50bd8c9 (block 104, gas 153029)
+   ok: A's proposal executes only after the queue is cleared
+
+== step 7: unsponsored submissions are free: proposalOffering = 0
+   ok: unsponsored submit status=success tx=0xd6b96554d71bc7d878a697e810b0a04915ad9261e7e1f6995fe12ce22e886797
+   ok: D (0 shares) submitted #22 for 128915 gas; it sits in Submitted forever (no expiry, no cancel)
+
+=== SCENARIO ECO-05 spam-economics: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

@@ -1,0 +1,235 @@
+
+== step 1: T-4 / T-5 (phase 5 ruling 5): UniswapV3Venue on the real Base WETH/USDC 0.05% pool, owned fork
+FORK attempt https://mainnet.base.org
+ASSERT fork upstream=https://mainnet.base.org chainId=8453 block=51000000 loopback=http://127.0.0.1:11545
+ASSERT USDC proxy decimals=6 impersonated=0xd0b53D9277642d899DF5C87A3966A349A798F224 funded=50000000 recipient=0xFC89389DEFa076358B780fC3F7E93Fa6741E0E47 tx=0xcaf21a18becc97eea331740c411c97df6477abcb5f4796e380960b203b953613
+tx deploy singleton:Baal 0xdda3b172b5f62b0347e076a3ff6aa814169a51570dbdb67908c4b1783972c518
+tx deploy singleton:ModuleProxyFactory 0xa5dd3e605c0035932f2a1d32d9e6ba8aa2c7e1b5d35feae506f01c2888a0e84d
+tx deploy singleton:GnosisSafe 0x47a4452947ce5634f1efd78b127ef2943d856f58953b4a4ec8dcfd1429e98450
+tx deploy singleton:GnosisSafeProxyFactory 0x17be7998bf4597449df879d640bc1a1549e936bc2783e087102fe402c4023a6b
+tx deploy singleton:MultiSendCallOnly 0x2fe3a95980de9c52889db0d6ba4299012d7fd55494f8325bb0611d775f7e5331
+tx deploy SafeProxy 0x12c71f75bb9f48433edfb8309db7c874402e4f839c76a4a87d519c8adf9823d5
+tx deploy BaalProxy 0x515be64f7036a1b1a0a25e0a4001673714a81bc9cc35f4bc96ff223df29929b6
+tx deploy NavShareToken 0x0edff7411f34bde3dff0ea66d637789d3d97c6f382342606be9fc062dcc70c66
+tx deploy LootToken 0x74791859733e310abb9f68151d03b61a64026f26e374e8398bed3c859f416bc2
+tx deploy DepositShaman 0x62ca50f5aee878c2aa9d0fb6222b15f7aca51dcc4abee4fa6fa631f0fa71f344
+tx deploy WorkManager 0xac20f19edd2a2fa1aaf81aec12e9aa97a3bf4bfad7d31c8db69ae5b319111874
+tx deploy PaymentDeployer 0x05032b46f3fbba9b0ff9bc6e629d2825c9bd79ba77fef6a1a4ec61543915f8b9
+tx deploy StrategyDeployer 0x280df1330e056858dba5e6b9ca87be16f1c5c422079cddc887ecbf038253d3f5
+tx deploy ProjectDeployer 0xb400860eba00df58da6540670b682137ad05d638538f06169923f425f6fa2d29
+tx deploy ConfigDeployer 0x4da1ae4150d2a9f8355200b81d9aecc601b409ef07b3752a42989b1e9d824a2d
+tx deploy TemplateFactory 0xd42c559f2978bd7f1d376662e3dba48e3a74459f6cd0c1158f4b0d558626af25
+tx deploy ZeroOneIntentAccount 0x9c33f87b11b69e2a2c5cce9a6824e95bc19cee47536bbeedd44d0977e8d1675d
+tx deploy Constitution 0x4bab653a9bb1294c64e0cefb988a95e60ecb45a932559b97fe9218251d59b6b1
+tx deploy Safe.setup 0x4d0f4c40b158141d868727b86c353b4e455ffc849f28ea347a4923d4d85319cb
+tx deploy Baal.setUp 0xfc1297d4e514c7875ab583a21503b3cc9a2959c87e5d2b50be09111bcad4c2ed
+tx genesis 0x77ec4db9a2481e32bfeea6521a8dc9754ffcc51b4fabb8291d2f400f282dd7b9 shares=50000000000000000000
+SOURCE https://developers.uniswap.org/docs/protocols/v3/deployments/v3-base-deployments
+   ok: published Base router 0x2626664c2603336E57B271c5C0b26F421741e481 code bytes=24497
+   ok: published Base quoter 0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a code bytes=8273
+   ok: published Base factory 0x33128a8fC17869897dcE68Ed026d694621f6FDfD code bytes=24535
+   ok: router.factory selector responds with published factory
+   ok: router.WETH9 selector responds with Base WETH
+   ok: quoter.factory selector responds with published factory
+   ok: quoter.WETH9 selector responds with Base WETH
+   ok: factory feeAmountTickSpacing(500)=10
+   ok: USDC decimals read through proxy = 6
+tx fresh pool create 0xf6471d968cb44f48421859a487db109c0b6d123b9002bf1ec5a83b3dffa883d2 initialize 0x95f99f0871e16107b0e19280f8a65a3e9e09bb6a824c57bab083ebf3ab3f839a pool=0x9DC9294ddfD497eD56F79d5EcFb14b8f3Bc7FC87
+ASSERT fresh pool cardinality=1 oldest observation age=0s (< 1800)
+   ok: constructor refuses the fresh pool: WindowUnavailable(cardinality=1, oldestObservationAge=0)
+ASSERT real fork pool=0xd0b53D9277642d899DF5C87A3966A349A798F224 slot0=["3962392616713554227206705",-198075,4614,5000,5000,68,true] oldest observation age=167682s cardinality=5000
+ASSERT upstream pool already serves observe([1800,0])
+ASSERT real observe([1800,0]) after local 1801s warm-up=-18724193691709,-18724550226709
+tx UniswapV3Venue deploy 0xccacb6052d96984882e21b5e2685a64f21f712dce994839761bcce60b6af612d address=0x2D546e99EAF570EB8AF190aEe4dcb09DaB18D834
+   ok: venue ABI has no owner/admin or mutable fee setter
+   ok: WETH accounting uses 18 decimals
+   ok: TWAP_WINDOW = 1800 s
+tx TwapSandwichProbe deploy 0xfa65067dc3aec7057794b05324ed33b0c68511111916240af9766232c6b7566a address=0x46dC2E771473F1583598612dea3Ef81196E9046a
+tx probe wraps 100000 ETH into WETH (fork ether) 0xa9161b1721ec6ff93f8f21739ab77c2f86e36c00990fd3d5d069841fcf31df34 block=51000030 gas=54724
+   USDC holder candidate 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb balance=217313274508602
+   ok: a Base USDC holder with >= 60000000000000 base units exists on the fork
+ASSERT USDC proxy decimals=6 impersonated=0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb funded=60000000000000 recipient=0x46dC2E771473F1583598612dea3Ef81196E9046a tx=0xf973acc8d2447ba8d53999901b89a41bb42a4967eceb8ea971da9f1b3228b6b1
+FORK warm start pool=0xd0b53D9277642d899DF5C87A3966A349A798F224 tick=-198075 spacing=10 reads=1627
+FORK warm progress=24/1627
+FORK warm progress=240/1627
+FORK warm progress=480/1627
+FORK warm progress=720/1627
+FORK warm progress=960/1627
+FORK warm progress=1200/1627
+FORK warm progress=1440/1627
+ASSERT warmed pool=0xd0b53D9277642d899DF5C87A3966A349A798F224 tick=-198075 spacing=10 slots=1627 in 0.4s
+tx Strategy deploy 0xd30a6fa678ea0346003ddfbd5a37f9990846d2cbddf12312f9a667da2728934e address=0x3628946dD1B9C94C192b330ED7383BE213B5410e
+tx proposal #1 submit 0xd81377506638923fb18c7b55480780fff5472827c08600fb973907323a846846
+tx vote #1 0xd39ca854c72c4c53f676e594a15caeb4691b65d1efee0c58a5fdd1c893ecda93 block=51000035 gas=117227
+tx execute #1 0x9540fdf628b1fc90655a445b6e882be015cd724c0ab4b1102e2b3876c3bcb6ab block=51000037
+   ok: proposal #1 processed passed=true actionFailed=false
+tx T-4 entry sandwich (+25% WETH print, victim DCA buy) 0xfccaff82a3a0c601693e756bfd8c9e59e2cc7a0487a03e948f420d4f6a1b67f0 block=51000038 gas=7176494
+   ok: swap bounded amountIn=2000000 quoted=799164044944655 minimum=795629616909476 actual=799164044944655
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=2000000 quoted=799164044944655 minimum=795629616909476 actual=799164044944655
+   sandwich T-4 entry sandwich (+25% WETH print, victim DCA buy): spot 2500 bps during the print, 0 bps after the back-run; price() 2501163805 -> 2501163805; value() 20000000 -> 20000000; moved=2616849639151 received=961011835741704966437; refused output=639362047186950 < minimum=795629616909476; strategy Running weth=799164044944655 usdc=18000000
+   ok: same-block spot print moved the pool by more than 20% (2500 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (0 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-4: the run during the print was refused (would have received 639362047186950 wei WETH, bound 795629616909476); after restoration the run filled 799164044944655 wei WETH for 2 USDC
+tx Strategy deploy 0x69778712fb829faab11b1bf534aedd50bc6d44989d23852e3af2ff2dffc69556 address=0x3aD6B4aB888bA529A9032EF77Ad504f4AF74FE4C
+tx proposal #2 submit 0xe5f6cda269898dc76722d2291b5d42df22028eec1c0bd234900f2d3ebf53288e
+tx vote #2 0xa11dd12fb9e50ffbe843d31ca2506a7add23848aabd02e2087b58c1ee2d87fd7 block=51000042 gas=117227
+tx execute #2 0x87a6618963702b7ed7508eb2edbb3b652cbb799dc192cf8b211ca07196eca737 block=51000044
+   ok: proposal #2 processed passed=true actionFailed=false
+tx T-5 victim buys its first 5 USDC of WETH at the fair price 0x30608bf4dba6c4007f1ce2645a5b21b5f9552386735ee38b010ecbc83a44a4ee block=51000045 gas=361559
+   ok: swap bounded amountIn=5000000 quoted=1997909831226929 minimum=1989074042273692 actual=1997909831226929
+tx T-5 print sandwich (-25% WETH print, attacker calls run()) 0x6c15d7c2350f2215dc738fa6704617ca6003a6d553836eed902ad789b86547e9 block=51000046 gas=8721702
+   ok: swap bounded amountIn=5000000 quoted=2663880379720849 minimum=2650560977822244 actual=2663880379720849
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=5000000 quoted=2663880379720849 minimum=2650560977822244 actual=2663880379720849
+   sandwich T-5 print sandwich (-25% WETH print, attacker calls run()): spot -2501 bps during the print, -1 bps after the back-run; price() 2501163805 -> 2501163805; value() 9997099 -> 9997099; moved=1309213052916499370725 received=2971440371617; strategy Running weth=4661790210947778 usdc=0
+   ok: same-block spot print moved the pool by more than 20% (-2501 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (-1 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-5: the stop-loss did not fire on the print (value 9997099 unchanged); the run bought 2663880379720849 wei WETH at the attacker's cheap spot and the strategy stays Running
+tx Strategy deploy 0x7808d5105c7d8d207aace13d5aa6303a0ced731429b8acab3821fa9fed2c2b1b address=0x0c7988910EC8def1527BdE1Bb5411eDF36b925D0
+tx proposal #3 submit 0x323072821dd611cc29f8ccde776ab5b74fe5c330e1c66369273453de187b1841
+tx vote #3 0x8703e67fcced39ad1c3cc8b4b5aafd73252fde5039533bd0ff046b5b46b675ea block=51000050 gas=117227
+tx execute #3 0x22992a2b73238c81e31d8c977203360544ea6e4e0bb73bd1443a233a23712cbd block=51000052
+   ok: proposal #3 processed passed=true actionFailed=false
+tx T-5 exit victim buys 5 USDC of WETH 0xae9d449609f2cd4bf39b42a14279e82acf6a4cb1f0af929832bdce8ef48b3b01 block=51000053 gas=354448
+   ok: swap bounded amountIn=5000000 quoted=1998028432277793 minimum=1989074042273692 actual=1998028432277793
+tx T-5 exit sandwich (-25% WETH print, victim deadline unwind) 0x1a98551d9133ea64a8ba384a8b3076568748b6eabd9a780097d2eab7e05dc736 block=51000055 gas=8799979
+   ok: swap bounded amountIn=1998028432277793 quoted=4994702 minimum=4972409 actual=4994702
+   ok: probe emitted Sandwiched
+   ok: swap bounded amountIn=1998028432277793 quoted=4994702 minimum=4972409 actual=4994702
+   sandwich T-5 exit sandwich (-25% WETH print, victim deadline unwind): spot -2501 bps during the print, -1 bps after the back-run; price() 2501163805 -> 2501163805; value() 4997396 -> 4997396; moved=1308753531612858625848 received=2970209823926; refused output=3746246 < minimum=4972409; strategy Complete weth=0 usdc=0
+   ok: same-block spot print moved the pool by more than 20% (-2501 bps)
+   ok: price() (30-min TWAP) and value() are unchanged by the print (checked inside the transaction)
+   ok: back-run restored the spot to within 50 bps (-1 bps)
+   ok: adapter holds zero USDC and zero WETH between runs
+   ok: router allowance 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913=0
+   ok: router allowance 0x4200000000000000000000000000000000000006=0
+   ok: T-5: the deadline sell during the print was refused (would have received 3746246 USDC units, bound 4972409); after restoration it sold for 4994702 USDC units to the Safe
+   T-4: TWAP before the attack 2501.163805 USDC per WETH, unchanged during a 2500 bps spot print (2501.163805); 2 USDC implies 799627755687916 wei WETH, voted 50 bps allows >= 795629616909476 wei
+   holds [T-4]: a same-block spot print of 2500 bps moves neither price() nor value() (read inside the attacker's transaction: price 2501163805 -> 2501163805, value 20000000 -> 20000000)
+   holds [T-4]: run() during the print reverts TwapBoundExceeded instead of paying the printed price (would have received 639362047186950 wei WETH, below the 50 bps bound 795629616909476)
+   holds [T-4]: run() executes within the voted slippageBps of the price that prevailed before the attacker acted (filled 799164044944655 wei WETH for 2 USDC, minimum by the voted 50 bps 795629616909476 wei: shortfall 0.0579% vs 0.50% allowed)
+   holds [T-4]: the sandwich ends with the pool restored (0 bps off) and the strategy still Running, holding what it bought at the unmanipulated price
+   holds [T-5]: a one-block -2501 bps print cannot trigger the stop-loss unwind of a position whose TWAP never moved (value 9997099 -> 9997099, stop-loss 25%, strategy Running after the attacker called run() itself)
+   T-5: the deadline unwind sells 1998028432277793 wei WETH; at the pre-attack TWAP that is 4.997396 USDC, voted 50 bps allows >= 4.972409 USDC
+   holds [T-5]: the deadline unwind during a -2501 bps print reverts on the bound instead of dumping the whole position at the printed price (would have received 3.746246 USDC, bound 4.972409 USDC)
+   holds [T-5]: after the back-run the same unwind completes within the voted slippageBps of the unmanipulated price (sold for 4.994702 USDC, minimum 4.972409 USDC, shortfall 0.0539%)
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x6547482D2Dff5A4739cCbC86B1B19fEacdfc531b baal 0x19e1c469D45A6D0EFdBfCaF2ae49B4eD8b0785AD shares 0x5c8be5D7792B7478118E8F87ba74e634a19d8D19 settlement 0x148691Be6aFe326400cc01ca2C5F0911Bf0beab6
+          depositShaman 0xc6FDEf95b4977fDf206B9C356BA06226bAD8bc62 workManager 0x0Ce623250573865015c38cAB058b5Ad3D8769973 constitution 0x622364044e875075108b6783D42eeD10E6F44d61
+          templateFactory 0xA6672FEaC66A9db1A623Fcf07d62f3CE6A47DC4d deployers 0xe53849A9E17248C6fDcA9dC3fF32820CcCbC42b9 0x78DaA1a559696001ad645d68F5584a366EC47E97 0xEAe6B5129E2388935c284D43F0E911846f14A15B 0x7F2B3726f74281502428580Da653038FD706fad2 intentAccount 0xa54cab6320a6d0d52080eE1e558228498C271cfc
+   F = 0x7c9407ef44e577Eb208c8950800de9e0dA3d49E4  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x83fb66eAC28e2b59d8e158D9832abF7db9dA3986  member agent A
+   B = 0x5dc705f5a4cda922dDbd53cb24C34e5469f7BC6D  member agent B
+   C = 0x4D931e03082EF9BAF9668B39e73DE6D7cad36319  member agent C
+   D = 0xbDF3e561E28Cb6439D692a31D6b263Aabd14209F  depositor D (joins later)
+   O = 0x6c77ec3d1a06a0927F617ae4DD6ed4fB0815566E  operator O (mandate recipient)
+   W = 0xb4E5347018401Be374D4566B71882e019f98D7f6  worker W (task deliverer)
+   shaman 0xc6FDEf95b4977fDf206B9C356BA06226bAD8bc62 permission 2 (DepositShaman)
+   shaman 0x0Ce623250573865015c38cAB058b5Ad3D8769973 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xe53849A9E17248C6fDcA9dC3fF32820CcCbC42b9
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x78DaA1a559696001ad645d68F5584a366EC47E97
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0xEAe6B5129E2388935c284D43F0E911846f14A15B
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x7F2B3726f74281502428580Da653038FD706fad2
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x5aa61e8264f8c0c55aa05cf185a2fcf27c21eb3d1a3f3ca8a22bb23338b56913 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0xaaa808c0b60babc1ea9dc04772227b51f47ce17d7d3118e6ad2b7c7d9b04c5b4 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xfb1fcd9801bbe61437864f7dc908c6fcffd609402b7476e1e2b753629560ad24 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0x6b63e9703550911641357f71f179309b854fd42dbc7b8f6787c11528de0ff6b6 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0xff25a588e5e5ee85a96402892cdcf69ae3aa1d77b5a1617d476cdfecf29349b7 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x0c5b4147988b438445fdc681b00d0dc9252cadb01045dc41ab9d04566d62e6fe (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x1202c97e18eb57981bfe93a0aa16676dac5c08b6966f0cc8cea49a88a767b907 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xfff963572d42d4e3977b7e03facd88f5e1295d590b8f7d526959e8c584f442dc (block 29, gas 303575)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x0074fa3c24c772ba2d2d02bb582f4467da364fd60e712f5aed1ba9c301c9a5c8 (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x9a65e54ddaf4fb318fac32242f7fecc7ea4c6b9ad07fb4a4a4d9bed5a0c3d466 (block 31, gas 235253)
+   tx B approve deposit shaman: 0x3ad0768badcc3f9ad077013528adb679312d263cb1de33ca2300dfe571df0901 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0xfa77c3664e7189c8ea73722e86c4bac2273ee69fffbc952eb539d85e0802beda (block 33, gas 235253)
+   tx C approve deposit shaman: 0x14b7bc455c0bbcfbe3b2575687d7a631e4ae9c8b29110152e838fb9805021401 (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0xf3bc44e4dc78f953fc568efdc9141832af80313c58e82b4cfe326f8d3a399734 (block 35, gas 235253)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+   MOCK 0x958034Ed3F844B81268adabBAD6545Ef3F83128C (tx 0x123b45990ef4c29515a57ac6f05cbe421e4c68f9c79ee1e24aef882631a353d4); MockDex 0xd38Bf71d86463196917ADc523381FB5aC3180bD2 (tx 0x6b61c7263d44a7fea4de46b716cfee0ea91c2416bda8f2d2769f53269e460207) price 1 USDC per MOCK
+   tx F seeds MockDex with 1000000 USDC: 0xfa4c6a0cc0b79b0e21d83b2e88a7b1ac3bb51595a26e47f53343cd4845e95268 (block 38, gas 51250)
+   tx F seeds MockDex with 1000000 MOCK: 0x59ced789419b2ee465f80c20a887215a379e9bb232e416f7d8b12fd89bf35ad0 (block 39, gas 51250)
+
+== step 4: record (no invariant): MockDex is mirror-only and prices at spot, so a print is fully paid — the demonstration behind the T-4 / T-5 rows; the shipped venue is the TWAP venue proven on the fork above
+   A deployed StrategyProposal @ 0xD99EC0b59bE6fa67991be13367AF42Abee1448e2 via TemplateFactory (tx 0x5e376b3a6e824087946229ea35d0333ca9305c8ea44b84d1084dd9fae4daf0e0, salt 0x0000000000000000000000000000000000000000000000000000000000000002) paramsHash 0xd1cc8a703d9c0817c7e340e98d2e9f7eeab91124291af7ac6082f3895a511beb codeHash 0xbc6ac2fc35dc6ef188f43b5898c84e0b1f735c6e5ffe8b86ac93bdf468e1068a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #1 "A: S1 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposa...": 0x043137a42ef3f1408c43f12a7ef4fb55ea2e286c8016fdc1e1aaef18e88df250 (block 41, gas 284436)
+   details: A: S1 DCA 1000 USDC into MOCK {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xD99EC0b59bE6fa67991be13367AF42Abee1448e2","operator":"0x83fb66eAC28e2b59d8e158D9832abF7db9dA3986","budget":"1000000000","deadline":"1789736494","params":{"venue":"0xd38Bf71d86463196917ADc523381FB5aC3180bD2","asset":"0x958034Ed3F844B81268adabBAD6545Ef3F83128C","budget":"1000000000","rule":{"maxPerRun":"1000000000","minInterval":"3600","deadline":"1789736494","takeProfitBps":"0","stopLossBps":"3000","slippageBps":"50"}},"paramsHash":"0xd1cc8a703d9c0817c7e340e98d2e9f7eeab91124291af7ac6082f3895a511beb","codeHash":"0xbc6ac2fc35dc6ef188f43b5898c84e0b1f735c6e5ffe8b86ac93bdf468e1068a","salt":"0x0000000000000000000000000000000000000000000000000000000000000002"}
+   warp +1s (let votingStarts become past) -> block 42 timestamp 1789131695
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x38321e904894631195e87215b09507f2f721591c551301ba4127f5dd8263089e (block 43, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0xae7d0bf65acb403b5a8b2d6e8515f017e8288a77c6c0ef46b952c458c28d7d2a (block 44, gas 100127)
+   warp +43200s (past grace of #1) -> block 45 timestamp 1789174895
+   proposal #1 state = Ready
+   tx D processProposal #1 -> passed=true actionFailed=false state=Processed: 0xd2ca289fbe880132606703ed4a27dc2e1eeb39d50eb98ad3c48101d9a72c3abd (block 46, gas 369488)
+   ok: A: S1 DCA 1000 USDC into MOCK: funded and started by the Safe
+   ok: S1 holds 1000 USDC
+   tx W setPrice 2.00 (front-run): 0x54150eee16c5175b4e7d17e14e24daa205898cf37d444d407b7ee6d81f6eb4f2 (block 47, gas 27534)
+   tx O run() #1 (buys 1000 USDC of MOCK): 0x7dbd56d7cf44b04a07711b2d74a91ab50eb22aa898ff75d502561ff43f5d4206 (block 48, gas 149911)
+   tx W setPrice 1.00 (back-run): 0xe92815436505115478b4077702f326376db1856f2955a6d5dad4ee34fa0a4e73 (block 49, gas 27534)
+   MockDex record: S1 received 500 MOCK for 1000 USDC; at the pre-run price 1.00 it would have received 1000 MOCK (a 50 bps bound would allow >= 995); shortfall 50.0000%; value at the restored price = 500 USDC
+   warp +3600s (minInterval) -> block 50 timestamp 1789178495
+   tx W run() #2 -> stop-loss unwind: 0xec8696f866e70f36a53398208c51a28d0a939d02657122e269a0543a5cc19a12 (block 51, gas 144616)
+   [S1 after unwind] Strategy @ 0xD99EC0b59bE6fa67991be13367AF42Abee1448e2: status Complete budget 1000 deadline 1789736494 operator 0x83fb66eAC28e2b59d8e158D9832abF7db9dA3986 params 0xd1cc8a703d9c0817c7e340e98d2e9f7eeab91124291af7ac6082f3895a511beb held 0 USDC
+   MockDex record: S1 Complete; Safe received 500 USDC of the 1000 it funded (50.0000% loss) with the mock price 1.00 before and after — MockDex (contracts/MockDex.sol) is never deployed outside the mirror, and a Strategy on Base names a UniswapV3Venue whose price() is the pool's 30-minute TWAP
+
+== step 5: T-6 (Low, documented): S3 with take-profit +20% is started; before it trades, W sends 250 MOCK to it; the next run() fires take-profit and ends S3 — the donation lands in the Safe
+   A deployed StrategyProposal @ 0xBEb63802F2beC169e6d0EA5Fc22887F6F23aa99A via TemplateFactory (tx 0x75e0639904350a677fdb7aa49056c280c421c6b8c211de4849e471152e5f67e1, salt 0x0000000000000000000000000000000000000000000000000000000000000005) paramsHash 0xf4e3f4b0a23ddb3b932a911417b7eedd87623cbac3e178819078257bda9a2c33 codeHash 0xbc6ac2fc35dc6ef188f43b5898c84e0b1f735c6e5ffe8b86ac93bdf468e1068a
+   factory.proposalData == builder multicall (asserted byte-identical in submitTemplateProposal)
+   tx A submitProposal #2 "A: S3 DCA 1000 USDC, take-profit +20% {"template":"Strategy","contract":"Strateg...": 0x7ae09c972163040c4d410b97624d6f1cbc142c449246f99ef104304b1e8aa9f6 (block 53, gas 304432)
+   details: A: S3 DCA 1000 USDC, take-profit +20% {"template":"Strategy","contract":"StrategyProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xBEb63802F2beC169e6d0EA5Fc22887F6F23aa99A","operator":"0x83fb66eAC28e2b59d8e158D9832abF7db9dA3986","budget":"1000000000","deadline":"1789783295","params":{"venue":"0xd38Bf71d86463196917ADc523381FB5aC3180bD2","asset":"0x958034Ed3F844B81268adabBAD6545Ef3F83128C","budget":"1000000000","rule":{"maxPerRun":"1000000000","minInterval":"3600","deadline":"1789783295","takeProfitBps":"2000","stopLossBps":"0","slippageBps":"50"}},"paramsHash":"0xf4e3f4b0a23ddb3b932a911417b7eedd87623cbac3e178819078257bda9a2c33","codeHash":"0xbc6ac2fc35dc6ef188f43b5898c84e0b1f735c6e5ffe8b86ac93bdf468e1068a","salt":"0x0000000000000000000000000000000000000000000000000000000000000005"}
+   warp +1s (let votingStarts become past) -> block 54 timestamp 1789178496
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0x7a20e8ca7770891ce8f6898c4bd86c7abb06c94efde2f6774c28013700c1f233 (block 55, gas 117227)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0xa2cb9c2e24954f3ffca061b52cdb6303cdd689c19caaf3a57d501330313ee84e (block 56, gas 100127)
+   warp +43200s (past grace of #2) -> block 57 timestamp 1789221696
+   proposal #2 state = Ready
+   tx D processProposal #2 -> passed=true actionFailed=false state=Processed: 0xb71eaa92d32f531a0727d29a5410c80e9c2c6e780ca5d042aebdd69324fc74f3 (block 58, gas 304756)
+   ok: A: S3 DCA 1000 USDC, take-profit +20%: funded and started by the Safe
+   tx F gives W 250 MOCK: 0x444cff4fac154c2553c292ce42898cbf2bc1eea3020d2418fe6a979967554bc7 (block 59, gas 51250)
+   tx W donates 250 MOCK to S3: 0x892d0dc46f5a0fb6d0dad35f9e3fe356c0cee0ae0d738242a996158c4c3d6fa3 (block 60, gas 46450)
+   S3 value = 1250 USDC >= 1200 = budget x 1.20; mock price 1
+   tx W run() -> take-profit before any buy: 0x45e09a25d2d5ef842095c980a545387cb58bb5120ac4b830c7f5b840650d6f6d (block 61, gas 156560)
+   [S3] Strategy @ 0xBEb63802F2beC169e6d0EA5Fc22887F6F23aa99A: status Complete budget 1000 deadline 1789783295 operator 0x83fb66eAC28e2b59d8e158D9832abF7db9dA3986 params 0xf4e3f4b0a23ddb3b932a911417b7eedd87623cbac3e178819078257bda9a2c33 held 0 USDC
+   S3 Complete after 1 run(s); Safe +1250 USDC (the 1000 budget plus W's 250 donation); cost to W 250 USDC-equivalent, effect: the voted strategy never traded and a new 12 h proposal is needed to restart it
+   holds [T-6]: a third party's donation that fires take-profit costs the donor and not the treasury: the Safe received 1250 USDC, the full 1000 budget plus the 250 donation (documented behaviour, docs/SECURITY_AUDIT.md T-6: Low, "cost exceeds any gain: griefing, not theft"; the price of it is a new proposal, not money)
+
+   mirror treasury at start 3050 USDC, at end 2800 USDC
+anvil stopped (http://127.0.0.1:11545)
+
+=== AUDIT TEST strategy-price-reference: ALL INVARIANTS HOLD ===

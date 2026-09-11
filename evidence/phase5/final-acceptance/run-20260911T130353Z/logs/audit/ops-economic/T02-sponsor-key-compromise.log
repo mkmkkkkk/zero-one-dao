@@ -1,0 +1,58 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xFf8D8673d66D6CcC6F32ee11131d830E49EDE759 baal 0x9eb2af0582ACdA9664e30375B318bDBa4B5c7ED6 shares 0x721BD353531A3ff1f16d5d44DE963f19CEaAc7bB settlement 0x80FCC81B4c637064Ec7DA5E838452fa93D9F4069
+   F = 0x05FC8DDD8E15199499E213981E4Aa50495312256
+   A = 0x676749DbB39Fc98C54f38c489ee85876a4558084
+   B = 0x1C316A9CD4981f93F9F692C38a4297600cD27Ee7
+   C = 0xd9DEf458D6f917844439319a92d26957323ca24A
+   D = 0xe8fFAe095f861A394B69518B81D9bD969C67466b
+   O = 0x61EAd98650dC8Cfd3616F5ffE0123571cdeA892A
+   W = 0xE5991Da96F380ABAd675d6A3bEfE25D9C1ce6cc9
+   shaman 0x953c509150f4A6576Ff6549004Ff9077AdE09D10 permission 2 (DepositShaman)
+   shaman 0xE7B1cF9FE448FeBe2a159A4a46D13eF5b6F0FFd8 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x5f6089eF664bB537Bb1337B1EfaF911113097110
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xa44d7F2c6Eb97f66ec800bEb5274EBdAf09A2cC1
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x6c0c0619AFDc9addC1621Aa3b2317c5708649353
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xF71960e5fF1b933eaca02A8D9db75507167aEB50
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+   tx F approve deposit shaman: 0x16fab67a4cf25518b99ecd2c8ad941a8a41bf37f9863df1edc464d4a7f660613 (block 22, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xa1e15f75d9345f1ebc73a169f095af964a2be1994ee41e97729cadff14a728cb (block 23, gas 303575)
+   tx fund A with 1000 USDC: 0xec8bcd1d40b9296808852c487085bd629e513bd87d27dfbbf6b82dfbc7062bfb (block 24, gas 51238)
+
+== step 1: join: A signs an EIP-7702 authorization for the adapter; the sponsor broadcasts it (as relay/server.ts join())
+   ok: A is delegated to the adapter (code 0xef01002a1c4eba1cd0cfde4d126122ce4ce23a249a2aa8)
+
+== step 2: sponsor relays A's signed deposit intent (op 5, 100 USDC)
+   [after sponsored deposit] treasury(Safe) USDC = 150  totalShares = 150
+   [after sponsored deposit] A: USDC = 900  shares = 100
+   ok: A holds 100 shares (gas 280482 paid by the sponsor; digest 0xcac479628ea54d6d...)
+
+== step 3: compromised sponsor key: what it can do with A's account and the DAO
+   revert ok [replay of the same intent (nonce 0 already used)]: The contract function "executeIntent" reverted with the following reason: | nonce/expiry | Contract Call:
+   revert ok [altered amount with the old signature]: The contract function "executeIntent" reverted with the following reason: | signature | Contract Call:
+   revert ok [sponsor-signed ragequit intent for A]: The contract function "executeIntent" reverted with the following reason: | signature | Contract Call:
+   revert ok [Baal.ragequit by the sponsor (burns msg.sender's shares: it has 0)]: The contract function "ragequit" reverted with the following signature: | 0xdb42144d | Unable to decode signature "0xdb42144d" as it was not found on the provided ABI.
+   revert ok [Baal.mintShares by the sponsor]: The contract function "mintShares" reverted with the following reason: | !baal & !manager | Contract Call:
+   revert ok [Baal.submitVote by the sponsor (no shares)]: The contract function "submitVote" reverted with the following reason: | !voting | Contract Call:
+   revert ok [WorkManager.activateTask by the sponsor]: The contract function "activateTask" reverted. | Error: OnlySafe(address caller) |                (0x6f8f45D748C7c048E3e24c955680Ca6bD6f6f993)
+   revert ok [TemplateFactory.deploy with empty params (permissionless but harmless: constructor reverts)]: The contract function "deploy" reverted. | Contract Call: |   address:   0x3f0265A650545883b4fDF36d431b3500abac729f
+   value under the sponsor key: its ETH 999999 milli-ETH (mainnet plan: 0.01 ETH); treasury reachable: 0 of 150 USDC; member shares reachable: 0 of 150
+   relay-level powers that need no key forgery (argued, relay/server.ts): delay/drop a request, reorder requests in its queue, front-run a member's propose by deploying the same CREATE2 instance (idempotent, harmless), refuse service (503). None changes what a signed intent does on chain.
+   T0 (custodial-lite) accounts are different: their keys derive from state/relay/secret + pass (relay/server.ts passAccount); a host compromise owns them fully (component 5).
+
+=== SCENARIO OPS-02 sponsor-key-compromise: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

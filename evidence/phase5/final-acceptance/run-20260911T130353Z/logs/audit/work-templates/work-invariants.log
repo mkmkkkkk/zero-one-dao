@@ -1,0 +1,207 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xe5c1F264025cd8d705d8257f0360d61c52108210 baal 0x1cCce3Fed760275C40F34023C28D87A33C82bf3e shares 0x1292F4379361675CD3B61d66eF7Ad91938fb0f82 settlement 0x933e32a2cD99161344297639624c58362dE56Cc8
+          depositShaman 0xFDCF9D382a645C4303706f33e56B6c99BF816F14 workManager 0xbd188B189Fc6935c3D3504Aa8c79C192fe406Ba9 constitution 0x2E58dd09130086ff91Fa465D2B6361Ec80BAF04b
+          templateFactory 0xaDDEAbaf2159E9006eba8A2D784B2887BD8D474c deployers 0xC1767C0cf3C43dB026424A01032482B2A4D66B7d 0xf46c30e5983d5351828f3DDee5362ec3067F26A2 0x0f42698F7aCe56abF06E5b716199bB696B50F5fe 0x1B2eCa1b1D29AD60C24b67246aa2bAc831eFdAE8 intentAccount 0xB2E6Cf5aC0f7c4505F4c82b846163eb844ae5967
+   F = 0xba93Ee430C87d68961E75660b177C47697C1055e  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0xd99Fc929cC7B7fC3D2c85f11761f992eE51308C4  member agent A
+   B = 0x039Fb9D651aC0b6CDF4609FD252f1B594Fa724b3  member agent B
+   C = 0x563efcc7936e5180F0679a384E916fDA1D4B15a2  member agent C
+   D = 0x62f76682FC60406dC497c0F9FbF5f5d5bd9BD32b  depositor D (joins later)
+   O = 0xC1964E339483a79ef7D14E4908117a1741B4aB40  operator O (mandate recipient)
+   W = 0x5dd9ABBbD3C6e7323B3c3176b7Cd2875dD0B0e52  worker W (task deliverer)
+   shaman 0xFDCF9D382a645C4303706f33e56B6c99BF816F14 permission 2 (DepositShaman)
+   shaman 0xbd188B189Fc6935c3D3504Aa8c79C192fe406Ba9 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xC1767C0cf3C43dB026424A01032482B2A4D66B7d
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0xf46c30e5983d5351828f3DDee5362ec3067F26A2
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x0f42698F7aCe56abF06E5b716199bB696B50F5fe
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x1B2eCa1b1D29AD60C24b67246aa2bAc831eFdAE8
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x61a531db91a58a3984821173e53f395a6705239a5f87bfe464af294108e9b7a9 (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0x8faef579b4b7077250fb1915ceade73a5d559d966d7f4ae770d1d3727e82a8a2 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xce78c436f472f9a9e6505cb5dd62fa1b6bb2a146bbed6ed38478a05642e23189 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0xcf89ead4ed997d87f6b7ec9a084fa4ece52515f015d099258f78fe63ab5e943a (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0xbb7c8b6bb74e23cc302aed318964b247caaa7738c891722827ab4480459ea124 (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x157e04225efb7c2599202a0585dc180b0cb0befbef04eb3c5cbc61fcb69c7447 (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x596b4d3981697b35be96a36a721dcfc8f5bf41f48e3d1f6f7b30ca7f6847d9d6 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xb2493a11309e4c76229d371f52326f64e06e146b162594e271bfae1d22ed81b0 (block 29, gas 303575)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0x1bc40edea684ec90e4c1a752605897f9b342d2ae6a13df812bd620a953f083aa (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x8d89cce2c7cf7bd1e6298cbd174a0934c98c1a620779a10318cb2e6a08594064 (block 31, gas 235253)
+   tx B approve deposit shaman: 0x319a4e43dc65c5ade76bcfa353f0bc663c2cbf2724956ec66642d04ed5ede92f (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0x77262fc126473accd061e99e3871276d77b091bfac82a3b54b96ce947a2809ca (block 33, gas 235253)
+   tx C approve deposit shaman: 0xf960ce68819ab8c4230dc777c78bb5907c78ab95b1e6c04481c05882420384b2 (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x07168f6d8ee769be087698b9b313d62e7bce312a7edb3d1192f7eedf11bdfa9a (block 35, gas 235253)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: W-1: A proposes task #1 with reward 9150 shares (3x the 3050 supply), expiring in 60 days; A and B vote YES; activated after grace, nothing minted
+   tx A submitTask "task: 9150 shares to whoever delivers (verifiers B, C)": 0xc27a82c01f1f51d31e6fbaa89752bf836ecab540cef26d618c31a5abd3256f61 (block 36, gas 393298)
+   tx A sponsorProposal #1: 0xa727f5bb41eac857e7d654a02b161d3778da011a5a235eb5a05f187af93268e4 (block 37, gas 193634)
+   warp +1s (let votingStarts become past) -> block 38 timestamp 1789131649
+   proposal #1 state = Voting
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x2894179e0624125a674b69eb0f5ccbb647a84d2a32b5db2e13571c763bf84741 (block 39, gas 117227)
+   tx B votes YES on #1 -> yes 2000 / no 0: 0x8029491ec4f6125edf260bae3555f6995a6d0120d48e8441bc3e3d621c16a2b1 (block 40, gas 100127)
+   warp +43200s (past grace of #1) -> block 41 timestamp 1789174849
+   proposal #1 state = Ready
+   tx C processProposal #1 -> passed=true actionFailed=false state=Processed: 0xb0e14d2687a7c4357ca2fd17dd7af0eafb65e967195fac229cb205d6b5cc9d7c (block 42, gas 215808)
+   ok: activation executed by the Safe
+   [at activation] treasury(Safe) USDC = 3050  totalShares = 3050
+   [at activation] A: USDC = 9000  shares = 1000
+   [at activation] B: USDC = 9000  shares = 1000
+   [at activation] C: USDC = 9000  shares = 1000
+   [at activation] F: USDC = 99939950  shares = 50
+   reward value if minted now: 9150 / 12200 of 3050 USDC = 2287.5 USDC
+   task #1: status Active worker 0x0000000000000000000000000000000000000000 reward 9150 round 0 confirmations 0
+   ok: task #1 Active; reward not yet minted
+   WorkManager.activeRewardShares = 9150; DepositShaman.shareLiability = 9150
+   holds [W-1]: the approved-but-unminted reward is a visible liability (9150 shares)
+
+== step 5: W-1: 30 days pass; the task is still Active; D, who never saw the vote, deposits 10,000 USDC at NAV including the liability
+   warp +2592000s (30 days after activation) -> block 43 timestamp 1791766849
+   deposit quote for 10,000 USDC = 40000 shares; liability-adjusted fair quote = 40000 shares
+   holds [W-1]: the deposit quote prices in approved-but-unminted task rewards (quoted 40000 shares, liability-adjusted 40000 shares)
+   tx D approve deposit shaman: 0x91a131c08a5cd05cbbb7820789da0bfc4c5f8686680372be8c6f43b6741594f9 (block 44, gas 45901)
+   tx D deposit 10000 USDC -> 40000 shares (quoted 40000): 0x537e295735afc757beb59bd7116070c699b4f98e014e7836765b6e97d682011a (block 45, gas 254358)
+   ok: D was minted the liability-adjusted amount
+   [after D's deposit] treasury(Safe) USDC = 13050  totalShares = 43050
+   [after D's deposit] D: USDC = 0  shares = 40000
+   D exit value now = 12125.43554 USDC (92.9152% of 13050; the liability is not yet minted so D's pro-rata is temporarily above 10,000)
+
+== step 6: W-1: W claims, delivers; B and C confirm -> 9150 shares mint to W; W ragequits the same block
+   tx W claims task #1: 0xb98809cca101c03d52eec08efd585df9e2b7944c170a433c8b05b15b32315070 (block 46, gas 57561)
+   tx W delivers: 0x572260741916fa434aacfb136a8763e16ea85d47a4c43f32252f48f716f001cf (block 47, gas 56797)
+   tx B confirms (1/2): 0x4bbb9033e450e23f33c6bf9bfea916405090dc99df0309f63d6160bf9e06270f (block 48, gas 62543)
+   tx C confirms (2/2) -> mint: 0x133dae4ab8bd803d37e76a79eef529d2d80305301f818f87653c43c2894faa52 (block 49, gas 247198)
+   [after mint] treasury(Safe) USDC = 13050  totalShares = 52200
+   [after mint] W: USDC = 10000  shares = 9150
+   [after mint] D: USDC = 0  shares = 40000
+   ok: W holds exactly the voted 9150 shares
+   holds [W-1]: the liability is gone once the reward is minted
+   tx W ragequit 9150 shares -> paid 2287.5 USDC (pro-rata of 13050 at supply 52200): 0xc491b1605bffd348fcba79c1c445eaf087cbf4cd3b84bd9e0eb4dbbf0b36470d (block 50, gas 177869)
+   [after W's exit] treasury(Safe) USDC = 10762.5  totalShares = 43050
+   [after W's exit] W: USDC = 12287.5  shares = 0
+   [after W's exit] D: USDC = 0  shares = 40000
+   W was paid 2287.5 USDC for a reward worth 2287.5 USDC when it was voted
+   D deposited 10000 USDC and can now exit for 10000 USDC
+   holds [W-1]: a depositor who joins after a task's vote and grace is not diluted by that task's later mint (D: 10,000 USDC in, exit value 10000 USDC after the mint)
+   holds [W-1]: a task reward pays at most its value at the vote (voted worth 2287.5 USDC, paid 2287.5 USDC)
+
+== step 7: W-1: an Active task cannot mint after its expiration: task #1b (reward 100, expires 2 days after grace) is activated, delivered, then expires before the second confirmation
+   tx A submitTask "task: 100 shares, expires 2 d after grace (verifiers B, C)": 0xdc553f1ef4f5c3bfa17647ff4268ee8293f53329c78332e5e34e392eba727d4e (block 51, gas 376234)
+   tx A sponsorProposal #2: 0x3f99b08e8382e1d5b4ab49be9bcc5f3c0f488e3f53cacee47f17af4150576bb1 (block 52, gas 193634)
+   warp +1s (let votingStarts become past) -> block 53 timestamp 1791766850
+   proposal #2 state = Voting
+   tx A votes YES on #2 -> yes 1000 / no 0: 0xa4652d245a0aea77d1436c5f0b77453dcbaf187d7c9e1c2599e9cecc7233125c (block 54, gas 117227)
+   tx B votes YES on #2 -> yes 2000 / no 0: 0xe3b1946f1199211da37e8ed67d65e74b32057236afe2d0f64694fea2d05faff4 (block 55, gas 100127)
+   warp +43200s (past grace of #2) -> block 56 timestamp 1791810050
+   proposal #2 state = Ready
+   tx C processProposal #2 -> passed=true actionFailed=false state=Processed: 0xc19c1aae38de8e194675fedaa8354698dbb44c91f8973c29746a3b53805d9004 (block 57, gas 215828)
+   ok: task #1b activated
+   holds [W-1]: the new task's 100 shares are the liability
+   tx W claims task #1b: 0xebeaa0bbaaa59d1261a46d2fdbf2be300a52f0d5c6786bd25641713318d21c96 (block 58, gas 57561)
+   tx W delivers #1b: 0x971bcfb9ec7c644a6ad6a25c5c78085df41a8d358db036d38af79bfa620b23d4 (block 59, gas 56797)
+   tx B confirms #1b (1/2): 0x9c9cd9f2b49bf0bd1374019a38593cb4e5a0cc202442b8e367932a9607665960 (block 60, gas 62543)
+   warp +259200s (past the task's expiration) -> block 61 timestamp 1792069250
+   holds [W-1]: an expired task leaves the liability before anyone touches it
+   ok: the final confirmation reverts after the expiration: nothing can mint (reverted with TaskExpired)
+   tx anyone closes the expired task: 0x31a2110b6e764ca14e3750a4faf0df290890dafce3ac843962eb513b02f706d3 (block 62, gas 37886)
+   task #2: status Expired worker 0x5dd9ABBbD3C6e7323B3c3176b7Cd2875dD0B0e52 reward 100 round 1 confirmations 1
+   holds [W-1]: an Active task cannot mint after a bounded time (task #1b Expired after its expiration)
+   ok: an expired task cannot be claimed (reverted with WrongStatus)
+
+== step 8: W-2: task #2 (reward 10 shares, verifiers B, C) is activated; stranger D claims it in the first block and never delivers; after CLAIM_TIMEOUT the intended worker W takes it over
+   tx A submitTask "task: 10 shares (verifiers B, C)": 0xf3c4f7ba8eea01db3b2e6267012f63a44af36be8e6cc7dd307ec178edcbb2592 (block 63, gas 355275)
+   tx A sponsorProposal #3: 0xea2c95da945315c7731636f7177add0dff76e6ec0ec9690acbdf8337d1c14906 (block 64, gas 213354)
+   warp +1s (let votingStarts become past) -> block 65 timestamp 1792069251
+   proposal #3 state = Voting
+   tx A votes YES on #3 -> yes 1000 / no 0: 0xfb23e27bc096ee2b6e46cd25e46c98bca3046db5bdf1fad3695ec1d24f49ff45 (block 66, gas 117227)
+   tx B votes YES on #3 -> yes 2000 / no 0: 0xd261f749f676557da30eefece223c5c121bc81ba4411e4a1f1593f0f1bad6cae (block 67, gas 100127)
+   warp +43200s (past grace of #3) -> block 68 timestamp 1792112451
+   proposal #3 state = Ready
+   tx C processProposal #3 -> passed=true actionFailed=false state=Processed: 0xc55e24caf141e9b254777e12c6e1f3c8f4dc0698f2d237fa7b009defe716ec90 (block 69, gas 215794)
+   ok: task #2 activated
+   tx D (stranger, no shares needed) claims task #2: 0xb95d60aa9dd9338d24baa86bd7a239ca73b98e3e8db8ca0c34901d2a032995cd (block 70, gas 74652)
+   cost to D: 74652 gas; D never delivers
+   ok: W cannot claim task #2 while D's claim is fresh (reverted with TaskAlreadyClaimed)
+   ok: the proposer cannot cancel; only a passed proposal can (reverted with OnlySafe)
+   WorkManager functions: ACTIVATION_BAAL_GAS, CLAIM_TIMEOUT, activateTask, activationData, activeRewardShares, activeTasks, baal, cancelTask, claim, claimLapsed, confirm, confirmedBy, deliver, expireTask, getTask, isVerifier, safe, shares, submitTask, taskCount, verifiersOf
+   holds [W-2]: a claimed task that is never delivered can be reassigned without a passed proposal (functions matching timeout/lapse/expire: CLAIM_TIMEOUT, claimLapsed, expireTask)
+   warp +604801s (past CLAIM_TIMEOUT) -> block 71 timestamp 1792717252
+   holds [W-2]: a claim that never delivers lapses after CLAIM_TIMEOUT (604800 s)
+   tx W claims task #2 after D's claim lapsed: 0x89fe43dc1273d536d83f4b0b8619d158ac3d91d74dad47557ac6257a1770f541 (block 72, gas 44937)
+   task #3: status Active worker 0x5dd9ABBbD3C6e7323B3c3176b7Cd2875dD0B0e52 reward 10 round 0 confirmations 0
+   holds [W-2]: W is the worker of task #2 now (was 0x62f76682fc60406dc497c0f9fbf5f5d5bd9bd32b)
+   tx W delivers #2: 0xd840e5e882e3c0e744f88b35260046744e1b3042d630803db7b4801555a05edf (block 73, gas 56797)
+   warp +604801s (another CLAIM_TIMEOUT) -> block 74 timestamp 1793322053
+   ok: a claim that delivered does not lapse (reverted with TaskAlreadyClaimed)
+
+== step 9: W-3 (accepted by principle): A proposes task #3 naming O (a fresh key) as the single verifier; A alone votes YES; A claims and delivers its own task; O confirms
+   tx A submitTask "task: 100 shares, verifier O": 0x64ae7937e7b25fae70a55c9c2acf9a2c930e5cd68082a0ef0ed469481075b9b9 (block 75, gas 309302)
+   tx A sponsorProposal #4: 0x32ac4510455aeb5641c40ea468be979818a421e5c94a60646e8d7038e488ef21 (block 76, gas 213354)
+   warp +1s (let votingStarts become past) -> block 77 timestamp 1793322054
+   proposal #4 state = Voting
+   tx A votes YES on #4 -> yes 1000 / no 0: 0x356322fbbadf63be97c50a14f6c9486c6f72cffe57b5f8d41eaacba73eb78537 (block 78, gas 117227)
+   warp +43200s (past grace of #4) -> block 79 timestamp 1793365254
+   proposal #4 state = Ready
+   tx C processProposal #4 -> passed=true actionFailed=false state=Processed: 0x6316b73f6bd016ed8530661eae5a36b898f665f1eb3c1d6abe123b774f16774b (block 80, gas 198694)
+   ok: task #3 activated with A's 1000 YES against 0 NO (B, C, F silent)
+   tx A (proposer) claims its own task: 0xdfa9f41a7383b8731f80b7827df7d5226a038a53eb2cfae795659d56441556bb (block 81, gas 74652)
+   tx A delivers to itself: 0x2ecd95dd2c28e7af9cecaf1520b35e9b5ad6c06bae75e06c045db401eac9c1eb (block 82, gas 56797)
+   tx O confirms (1/1) -> mint to A: 0x8af9add77e8fb074e7580ec082d4e0816b54cdb68d0d812f0d6ef2999114bff7 (block 83, gas 257171)
+   A: 1000 -> 1100 shares; the only check was the vote (B, C, F did not vote): accepted by principle, the members' NO or exit is the remedy
+   holds [W-3]: the voted reward minted exactly (documented behaviour, docs/SECURITY_AUDIT.md W-3 accepted-by-principle)
+
+== step 10: W-4: expiration inside voting + grace is refused; a passed activation processed after its expiration does nothing and the task stays Proposed, never mintable
+   ok: Baal refuses expiration <= now + votingPeriod + gracePeriod (reverted with expired)
+   tx A submitTask with expiration: 0x49efc220bbaf9bd2e4143f5b34ea7b66abdc5a5f00aa29c599194a9d0c6c3d35 (block 84, gas 329562)
+   tx A sponsorProposal #5: 0x2458f5c23c92c0d3a3382d1668a25e7b3ffd620b815fbd50a2803156b4aa0e79 (block 85, gas 193634)
+   warp +1s (let votingStarts become past) -> block 86 timestamp 1793365255
+   proposal #5 state = Voting
+   tx A votes YES on #5 -> yes 1100 / no 0: 0xecc983ab7b48ff7508233ad6882591ccc3fb34ee41667cdb0797db7ca5f9a8f4 (block 87, gas 117227)
+   warp +43200s (past grace of #5) -> block 88 timestamp 1793408455
+   proposal #5 state = Ready
+   warp +300s (past the expiration) -> block 89 timestamp 1793408755
+   proposal #5: expiration 1793408574, now 1793408755, state Ready, yes 1100 no 0
+   tx C processProposal #5 -> passed=false actionFailed=false state=Processed: 0x08eabf3db6e408d4d161fe1a9e0d9638954d66a2f510fc3098083084e684730a (block 90, gas 111714)
+   ok: expired proposal processed as not passed, no action
+   task #5: status Proposed worker 0x0000000000000000000000000000000000000000 reward 1 round 0 confirmations 0
+   ok: task #4 stays Proposed (never Active, never Cancelled)
+   ok: a Proposed task cannot be claimed (reverted with WrongStatus)
+   holds [W-4]: a task whose activation proposal expired is a dead id: never Active (active ids: 3), no liability, nothing mintable (documented)
+
+== step 11: W-6: activateTask / cancelTask are onlySafe
+   ok: proposer cannot activate (reverted with OnlySafe)
+   ok: stranger cannot activate (reverted with OnlySafe)
+   ok: founder cannot cancel (reverted with OnlySafe)
+   holds [W-6]: activateTask and cancelTask revert OnlySafe for proposer, stranger and founder; the Safe acts only through Baal.processProposal
+   [end] treasury(Safe) USDC = 10762.5  totalShares = 43150
+
+   treasury at start 3050 USDC, at end 10762.5 USDC
+   ok: addresses present
+
+=== AUDIT TEST work-invariants: ALL INVARIANTS HOLD ===
+anvil stopped (http://127.0.0.1:11545)

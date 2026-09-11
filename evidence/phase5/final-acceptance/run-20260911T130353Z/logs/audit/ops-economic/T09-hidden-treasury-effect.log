@@ -1,0 +1,111 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x8D360ee1ceC4795952df634a91d6B41EDB995D41 baal 0x01575b0ce00A07738285f458B95EaD61F0a11bd8 shares 0xaf04884CFBdF16e043acd916ad18D87e4dec7512 settlement 0x839Fe2F01847df40f33670192369aa459F660aF3
+   F = 0x4BF504A5934d07E3eb0B6A7281A787F637c43b3E
+   A = 0x5cF7A94b242429f4aA11228c1b32B0C7C5E9735C
+   B = 0x8950b26807c9196d42387e410c404D5BEd728Fb1
+   C = 0x068443C78067542824f1303Fb83Dc4362Cd51aA0
+   D = 0x6C95B81682426d6643Aa82cF2c4F48BD0D8Fb8C9
+   O = 0xc4B562d31F5A6FAC7Cf744F2133813ADD01790bd
+   W = 0xFa6559f3dFd381C07916d00a6CFc8e695decD795
+   shaman 0x0dfF77eDebeEeBbcfe118c789236BC9C923a4657 permission 2 (DepositShaman)
+   shaman 0xEFcB55AadE233850f42130878cBDf17E7f7739f5 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x27F5ad82376Bd5e3D352781CE604cd0f0c0F76b5
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x4035EFe9434828f0AD76c333BFe405829eFfF744
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x38E17775617b35AF26525dc6Ee1be7901a2926B9
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x13cEFc6629Db4f14091c78d1A7929a335F284f31
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: seed: fund actors with USDC-mock
+   tx fund A with 10000 USDC: 0x2444b108803525609b99299c1f129cc62236b202cc5ec5ab0cfb452392b2488c (block 22, gas 51250)
+   tx fund B with 10000 USDC: 0xbf1b0e41adf15bc13061fb89a63666f5debfe681f75e857efc79b74c629b49e3 (block 23, gas 51250)
+   tx fund C with 10000 USDC: 0xa3934a28926d826c5af1c2730986c748d1f128ce1f326855e23e01bef5097877 (block 24, gas 51250)
+   tx fund D with 10000 USDC: 0xa0e97d01c2524ae96fc36af016f311062f9d764eaf1768e1430076afc4bec951 (block 25, gas 51250)
+   tx fund O with 10000 USDC: 0xb74bc4688b52a1efbf3ab983643a4fc4f0a920f366a55bfe8b6e50455a8ece1a (block 26, gas 51250)
+   tx fund W with 10000 USDC: 0x2d9ee876918aaac9d5777f25a45b91c46b9edea5ddb3f3d1ada3d88c0b1d4f2f (block 27, gas 51250)
+
+== step 2: seed: genesis deposit 50 USDC by the founder -> 50e18 shares = 100% of supply
+   tx F approve deposit shaman: 0x73a12e48d90ee3d0dbfe5b0fc7f3fec3c56d1ae23d0b77443404d96097e70f26 (block 28, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x8daf8f254f93b00c4fa830c9375d7db9afcd285273adf5a00a9cc0ec61b1cd88 (block 29, gas 303575)
+   ok: genesis: 50 USDC (50e6) -> exactly 50e18 shares (1 USDC -> 1e18 shares while the treasury is empty)
+   ok: the founder holds 100% of supply after genesis; nothing else was minted
+
+== step 3: seed: A, B, C deposit 1000 USDC each at NAV (1 USDC per share)
+   tx A approve deposit shaman: 0xb5c36a3fd384d9cddd34f858e7f8f7a9e35cc7a42e927644792429ac409bb359 (block 30, gas 45889)
+   tx A deposit 1000 USDC -> 1000 shares (quoted 1000): 0x9ccd31a84572c83256746b325b15145c071d25655ec4c8f0368da2d3a6179fdb (block 31, gas 235253)
+   tx B approve deposit shaman: 0x7fab0292f13d0deb362b72c9ce8c1854338507ac33f80a3d7eed9861327ff3b5 (block 32, gas 45889)
+   tx B deposit 1000 USDC -> 1000 shares (quoted 1000): 0xaf6e0dd454b1559cbfed0fb9b5531cc83aaf25d4d934beb6d746816d4bdd734d (block 33, gas 235253)
+   tx C approve deposit shaman: 0x695b9bb2692be63ca85a13fb0d54c8577696b928a49335241b6d6a0ad09a35ab (block 34, gas 45889)
+   tx C deposit 1000 USDC -> 1000 shares (quoted 1000): 0x36bb46e38a0e90acbdfbc8b9e4325821a1fac1e16bcffab5d9168a70747ec37e (block 35, gas 235253)
+   [seeded] treasury(Safe) USDC = 3050  totalShares = 3050
+   [seeded] F: USDC = 99939950  shares = 50
+   [seeded] A: USDC = 9000  shares = 1000
+   [seeded] B: USDC = 9000  shares = 1000
+   [seeded] C: USDC = 9000  shares = 1000
+
+== step 4: (1) approve-based drain: Safe approves W for the whole balance; the index shows 0 USDC leaving
+   tx A submitProposal #1 "A: housekeeping" (baalGas 97534): 0xaa8e2ecb103e7686b1987dc2c2adf0997ec34a5b6079cafa0a070df7805def65 (block 36, gas 263416)
+   warp +1s (let votingStarts become past) -> block 37 timestamp 1789131769
+   proposal #1 state = Voting
+[index] scan 0..37 rows=5
+   /proposals.json #1: usdcOut=0 usdcApproved=340282366920938463463374607431768.211456 usdcAtRisk=340282366920938463463374607431768.211456 summary="340282366920938463463374607431768.211456 USDC of allowance is granted on the Safe (the spender pulls it whenever it likes); WARNING: 1 flag on this proposal (read flags[])" calls=[USDC.approve(0xFa6559f3dFd381C07916d00a6CFc8e695decD795, 340282366920938463463374607431768.211456 USDC) by the Safe]
+   flag: allowance: 0xFa6559f3dFd381C07916d00a6CFc8e695decD795 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)
+   ok: index reports usdcOut 0 for an approve that hands the treasury to W (an allowance is not a transfer)
+   ok: phase 5 ruling 6: the same proposal reports usdcApproved=340282366920938463463374607431768.211456 and usdcAtRisk=340282366920938463463374607431768.211456, so the effect is no longer invisible
+   ok: and carries an allowance flag: allowance: 0xFa6559f3dFd381C07916d00a6CFc8e695decD795 may pull 340282366920938463463374607431768.211456 USDC out of the Safe at any later time, outside this vote and outside any grace window (ECO-06)
+   tx A votes YES on #1 -> yes 1000 / no 0: 0x3714e32f94eca6a685f878faca4589dd561c7f6460ee8c1581d7ec5be98da360 (block 38, gas 117227)
+   warp +43200s (past grace of #1) -> block 39 timestamp 1789174969
+   proposal #1 state = Ready
+   tx A processProposal #1 -> passed=true actionFailed=false state=Processed: 0x5c9de3c438c35fb85acfbd091d4b22b41f8b1294a41c57a5e3149c9f1e96cf1f (block 40, gas 164736)
+   [after W transferFrom] treasury(Safe) USDC = 0  totalShares = 3050
+   [after W transferFrom] W: USDC = 13050  shares = 0
+   ok: W pulled 3050 USDC any time after execution (tx 0x0de3ccbd84fa35901040da6298c279977aac2f35b3665abe4121101f677352cd); no proposal, vote or grace involved in the pull
+
+== step 5: (2) delegatecall drain: refill, then a proposal whose only call is operation=1 into a Drainer (phase 5: flagged before the vote and refused on chain)
+   baalGas: the action fails at every gas limit (meant to fail?); using the fallback 2000000
+   tx A submitProposal #2 "A: maintenance" (baalGas 2000000): 0xb7d7762ba9ef0f614483b42901ce112ca5189454179e5447661726afde649f21 (block 44, gas 283544)
+   warp +1s (let votingStarts become past) -> block 45 timestamp 1789174970
+   proposal #2 state = Voting
+[index] scan 38..45 rows=8
+   /proposals.json #2: usdcOut=0 usdcApproved=0 usdcAtRisk=0 summary="contains a delegatecall as the Safe; WARNING: 1 flag on this proposal (read flags[])" calls=[DELEGATECALL 0x6e0C3aA973bB3da1524716d3F8b87e596e5E8e3a.0x837971e4]
+   flag: delegatecall: call 1 would run 0x6e0C3aA973bB3da1524716d3F8b87e596e5E8e3a's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)
+   ok: index still reports usdcOut 0 and an opaque selector: no static decoding can price a delegatecall
+   ok: but the proposal carries a delegatecall flag: delegatecall: call 1 would run 0x6e0C3aA973bB3da1524716d3F8b87e596e5E8e3a's code as the Safe itself, which can move every asset the Safe holds; the deployment's multisend library is MultiSendCallOnly, so execution reverts instead (ECO-06)
+   ok: and the call itself is labelled DELEGATECALL 0x6e0C3aA973bB3da1524716d3F8b87e596e5E8e3a.0x837971e4
+   tx A votes YES on #2 -> yes 1000 / no 0: 0x2f8e01ed7e2b0bec3e6a35d7cca315f8a60beb428f5995c451ac5dc13e948eb7 (block 46, gas 117227)
+   warp +43200s (past grace of #2) -> block 47 timestamp 1789218170
+   proposal #2 state = Ready
+   tx A processProposal #2 -> passed=true actionFailed=true state=Processed: 0xddfe196e9f8efcbad31e5d4701ef32d88e111037292c0fb57dd6e91f5be3969f (block 48, gas 138246)
+   ok: phase 5 ruling 6 (A3): the vote passed but the action failed and the Safe still holds 3050 USDC — the Safe's multisendLibrary is MultiSendCallOnly, which refuses every operation != 0
+
+== step 6: (3) impersonating a template: details claim a benign Payment instance, calls do something else (phase 5: the panel follows the calls)
+   tx A submitProposal #3 "A: pay O 10 USDC (Payment template) {"template":"Payment","contract":"PaymentProposal","compiler":"0.8.36+commit.8a079791.Emscripten.clang","instance":"0xD08233ea82eE9843CFe8eA22aE70aDdD756Ff29a","operator":"0x5cF7A94b242429f4aA11228c1b32B0C7C5E9735C","budget":"10000000","deadline":"0","params":{"recipients":["0xc4B562d31F5A6FAC7Cf744F2133813ADD01790bd"],"amounts":["10000000"]},"paramsHash":"0x91b31d6a31f25f7948148b13f3960f1b1d9c278b441a89116c669de7fd6093ba","codeHash":"0xfde5f6f977bae2d4e0555f4fc0f855fac2653a08b9754244323c73d3f9483b8e","salt":"0x0000000000000000000000000000000000000000000000000000000000000009"}" (baalGas 80023): 0x0d1567053fd6c74981b5e5801955a9afea76c28030feebb1a171d7cffd12ef34 (block 50, gas 298143)
+   warp +1s (let votingStarts become past) -> block 51 timestamp 1789218171
+   proposal #3 state = Voting
+[index] scan 46..51 rows=11
+   /proposals.json #3: usdcOut=3050 usdcApproved=0 usdcAtRisk=3050 summary="3050 USDC leaves the Safe; WARNING: 1 flag on this proposal (read flags[])" calls=[USDC.transfer(0xFa6559f3dFd381C07916d00a6CFc8e695decD795, 3050 USDC) from the Safe]
+   flag: details: the proposal's details JSON names instance 0xD08233ea82eE9843CFe8eA22aE70aDdD756Ff29a, which none of this proposal's calls touches; the panel below is built from the decoded calls, so read calls[] and ignore the name (A5-11)
+   ok: phase 5 ruling 6 (A5-11): the claimed instance gets no panel (instance=none) because no call of this proposal touches it; the calls pay W 3050 USDC and that is what the summary says
+   ok: and the unbacked name is flagged: details: the proposal's details JSON names instance 0xD08233ea82eE9843CFe8eA22aE70aDdD756Ff29a, which none of this proposal's calls touches; the panel below is built from the decoded calls, so read calls[] and ignore the name (A5-11)
+   details carry codeHash 0xfde5f6f977bae2d4... of the benign instance (live 0xfde5f6f977bae2d4...) while proposalData funds 0xFa6559f3dFd381C07916d00a6CFc8e695decD795
+
+== step 7: (4) reorg: anvil_reorg against the persisted index checkpoint
+[index] scan 0..51 rows=10
+   anvil_reorg depth 2: block 51 hash 0x41833632d3 -> 0x1af3f76165; index rescanned, proposals now 2 (last id 2, state Processed)
+
+=== SCENARIO ECO-06/OPS-07 hidden-treasury-effect: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

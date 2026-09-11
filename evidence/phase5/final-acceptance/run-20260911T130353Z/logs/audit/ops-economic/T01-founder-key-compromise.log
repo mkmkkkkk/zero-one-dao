@@ -1,0 +1,107 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0xABA7C7cae3C411ce407cf3c529fD44aa373C51Ef baal 0x5dBD221314FAfefCbD0f74c517F05550974485Bd shares 0xf1E27877a94CF6e08F1262f020b2aF3740196f87 settlement 0x7cDad2aea637949Ef476bb701776cE6C3cB758A8
+   F = 0xdD24e1d1E517d667CEca88f7e5bBc1A6B65e7591
+   A = 0x09E78ca635be3bEAF743F68DceE8Eb3Bf1b5d0e8
+   B = 0x76158A6ACd9c6eE934081603B133bb2acde5ee82
+   C = 0xDEfbB84B0c3217e7d50C663Aa6949BB8C6b47ad5
+   D = 0xFE938234dECDdB561e3887948D04555ab3dbABBd
+   O = 0x50817797945d4fab340fdBe8e2F90Db8F50252aD
+   W = 0x66FE559e7ffB369c2882C57B3E471399b6ec989e
+   shaman 0x81C269dBFdeDd143932dF9874c65D65f8abEEC4D permission 2 (DepositShaman)
+   shaman 0x27f472ba512C14E6ab1222E47bB6963f05E400Ee permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0x2C5da7862AE3d43A34182769728cD2Bf853CB3c2
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x55C11d21A490Ec3Fd73A1A7885A1af77C13a0da7
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x2Dec43decb17E716B95dfa35Eb5fB402617DE3b0
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0xdE2937cad1E3379727f28Ddf569Ffc6d4a34F5F5
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+
+== step 1: genesis: founder deposits 50 USDC -> 50e18 shares (100%)
+   tx F approve deposit shaman: 0x323d0d6f6839a6deec7d596501ee861a17da100501c486cb153155881078a9e5 (block 22, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0x806de714b7e2cef302a8231e39a549eadb2c36085b4b6aed7a1fca5330458f77 (block 23, gas 303575)
+
+== step 2: privileges of the founder/deployer key after deployment: every privileged path reverts
+   revert ok [Baal.mintShares by founder]: The contract function "mintShares" reverted with the following reason: | !baal & !manager | Contract Call:
+   revert ok [Baal.setShamans by founder]: The contract function "setShamans" reverted with the following reason: | !baal | Contract Call:
+   revert ok [Baal.setGovernanceConfig by founder]: The contract function "setGovernanceConfig" reverted with the following reason: | !baal & !governor | Contract Call:
+   revert ok [Baal.executeAsBaal by founder]: The contract function "executeAsBaal" reverted with the following reason: | !baal | Contract Call:
+   revert ok [Baal.burnShares by founder]: The contract function "burnShares" reverted with the following reason: | !baal & !manager | Contract Call:
+   revert ok [NavShareToken.mint by founder]: The contract function "mint" reverted. | Error: OnlyBaal(address caller) |                (0xdD24e1d1E517d667CEca88f7e5bBc1A6B65e7591)
+   revert ok [WorkManager.activateTask by founder]: The contract function "activateTask" reverted. | Error: OnlySafe(address caller) |                (0xdD24e1d1E517d667CEca88f7e5bBc1A6B65e7591)
+   revert ok [Safe.execTransaction by founder (not an owner)]: The contract function "execTransaction" reverted with the following reason: | GS020 | Contract Call:
+   ok: Safe owners = [Baal] only (0x5dBD221314FAfefCbD0f74c517F05550974485Bd); the deployer is not an owner
+   founder-key privileges on chain: 0 (only its shares)
+
+== step 3: attacker with the founder key at genesis (founder = 100%): 'pay attacker the whole treasury' passes alone
+   [genesis] treasury(Safe) USDC = 50  totalShares = 50
+   [genesis] F: USDC = 99999950  shares = 50
+   tx F submitProposal #1 "attacker(F key): pay F everything" (baalGas 80023): 0x09067a7e2a2adaaf039f638f5f1e61c17e9e7652bbd466ac2c28ef2f88369d19 (block 24, gas 264064)
+   warp +1s (let votingStarts become past) -> block 25 timestamp 1789131716
+   proposal #1 state = Voting
+   tx F votes YES on #1 -> yes 50 / no 0: 0x184c5592669fd16e2fb63f2aded1e6a394aa8d5e60a23b0f8f75c8baaaf1b1b2 (block 26, gas 117227)
+   warp +43200s (past grace of #1) -> block 27 timestamp 1789174916
+   proposal #1 state = Ready
+   tx F processProposal #1 -> passed=true actionFailed=false state=Processed: 0xbb4267d66f99bc7de16c72cd8736678456ca7598699670ab75801f5757145682 (block 28, gas 148221)
+   [after P1] treasury(Safe) USDC = 0  totalShares = 50
+   [after P1] F: USDC = 100000000  shares = 50
+   ok: P1 passed: yes 50 / no 0
+   ok: Safe holds 0 USDC (was 50); founder-key holder took 100% = its own genesis deposit
+   loss to others: 0 USDC (no other member exists); loss to the founder = 50 USDC = whatever the key holds
+
+== step 4: re-seed: founder deposits 50 again, D deposits 50 (founder = 50%)
+   tx F approve deposit shaman: 0x46681d668c599510b9f06ffeabe2cdc24d8486f9e0222a309d75638746d30277 (block 29, gas 45901)
+   tx F deposit 50 USDC -> 50 shares (quoted 50): 0xb1bda210e0f9ed130d06dd881fce59d0d2099a57eaa6897bf5a26070b0ab99f6 (block 30, gas 257477)
+   tx fund D with 1000 USDC: 0x39cf35e5c86d24a6f14401703808cb46424f56f195bb228c9a63d2d7654d3eec (block 31, gas 51238)
+   tx D approve deposit shaman: 0xf88ac219f6fd828c468df417bf55cc91f6b321835320af0037fdea3be2c3779d (block 32, gas 45901)
+   tx D deposit 50 USDC -> 100 shares (quoted 100): 0x57bf3816b0d6255f1a29255787be0bb29889e74d46113c58151e2d204818e8da (block 33, gas 235265)
+   [seeded] treasury(Safe) USDC = 100  totalShares = 200
+   [seeded] F: USDC = 99998950  shares = 100
+   [seeded] D: USDC = 950  shares = 100
+   ok: F and D hold equal weight: 100 each
+
+== step 5: P2: attacker proposes 'pay F everything'; D is awake and votes NO -> yes 50 = no 50 -> Defeated
+   tx F submitProposal #2 "attacker(F key): pay F everything (D awake)" (baalGas 80023): 0x9b683207487055a94a2d1346e6a41caa9b3be489e36cc1fbd65175c05222fc04 (block 34, gas 264172)
+   warp +1s (let votingStarts become past) -> block 35 timestamp 1789174917
+   proposal #2 state = Voting
+   tx F votes YES on #2 -> yes 100 / no 0: 0x37c953f061151c9a94c957475352f8e824832c1b33a7c0e00689c1f2f4d8ef21 (block 36, gas 117227)
+   tx D votes NO on #2 -> yes 100 / no 100: 0xad4e194051694ae604a295995269c48ee9db8a69cf5c333cc8940c619a50233a (block 37, gas 117227)
+   warp +43200s (past grace of #2) -> block 38 timestamp 1789218117
+   proposal #2 state = Defeated
+   revert ok [processProposal of a Defeated proposal (!ready)]: The contract function "processProposal" reverted with the following reason: | !ready | Contract Call:
+   [after P2] treasury(Safe) USDC = 100  totalShares = 200
+   [after P2] F: USDC = 99998950  shares = 100
+   [after P2] D: USDC = 950  shares = 100
+   ok: treasury untouched: a NO of equal weight defeats the founder key
+
+== step 6: P3: same proposal, D asleep (no vote, no exit) -> passes; D loses its 50 USDC to the key holder
+   tx F submitProposal #3 "attacker(F key): pay F everything (D asleep)" (baalGas 80023): 0xf7552a4ee0d60dc39b23a506e1c0d1942e03b0e7781dcd1d86207de782593d90 (block 39, gas 284084)
+   warp +1s (let votingStarts become past) -> block 40 timestamp 1789218118
+   proposal #3 state = Voting
+   tx F votes YES on #3 -> yes 100 / no 0: 0xaf86bdffc4602d8482fc7fd86af5eaa51bdce11493b94e540e46a79cf50c106b (block 41, gas 117227)
+   warp +43200s (past grace of #3) -> block 42 timestamp 1789261318
+   proposal #3 state = Ready
+   tx F processProposal #3 -> passed=true actionFailed=false state=Processed: 0x81541e0a847fb12cf58e28ea12010792abaebc9634298fa4cd1f10a1b130c83e (block 43, gas 148281)
+   [after P3] treasury(Safe) USDC = 0  totalShares = 200
+   [after P3] F: USDC = 99999050  shares = 100
+   [after P3] D: USDC = 950  shares = 100
+   ok: P3 passed with yes 100 / no 0; Safe 0
+   D's loss = 50 USDC (its whole deposit); attacker's gain beyond its own stake = 50 USDC; cost = 3 tx gas
+   tx D ragequit 100 shares -> paid 0 USDC (pro-rata of 0 at supply 200): 0x9595b1126aa95633c27df1291a90fbb1c2a8a1a43945278101fb3d8d1f02ee7b (block 44, gas 197091)
+   ok: D's exit now pays 0 USDC: nothing left
+
+=== SCENARIO OPS-01 founder-key-compromise: PASS ===
+
+anvil stopped (http://127.0.0.1:11545)

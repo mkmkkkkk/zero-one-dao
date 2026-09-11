@@ -1,0 +1,215 @@
+anvil http://127.0.0.1:11545 chainId 31401
+deployed: safe 0x437D2D2730b166083EAd56Cf63B8af8110d49865 baal 0x891Dd88F26afd6F8D1531aA6c0CAAeeF8aCccEA2 shares 0x2e7C34b500f9F386D1a191EC21799c810d211F97 settlement 0x6A75924AE9c0a73AC2589FC948201e4a5f7469Ad
+          depositShaman 0xfd2e173996eC422980671cD14Cab53516D68D7F4 workManager 0x33c7EF3F101582Eb63A9aCc1376Bf12859B58B30 constitution 0xb121975b69554C272cCB025a19C52C46026C6c34
+          templateFactory 0xc4E0BDF1F81122678d5AE116712C81C5406158c4 deployers 0xB735b5dACF7E9361a83b0cbC430A20818bA3E54f 0x3b34f70ff4ce0a4bd03436DAaa527f4aA16cab28 0x155ddBA3E06f2A1618fb6631BDc197E72F1d0a5A 0x92170e5A33FB8bF3d675AeACc2B581FE9e7F2a48 intentAccount 0xED8037815eAf78e4558f9765743E39d03DA33deF
+   F = 0xee1feE2986aFe93a1D8c2de8FEbd3B37b532572c  founder (deployer; ordinary member via the 50 USDC genesis deposit)
+   A = 0x738Bfb90198f8A43c38a09F542D29A9c46847498  member agent A
+   B = 0x69040CD77b95d7943a10c950e4d12EfafA012f6f  member agent B
+   C = 0x451415634250D646af402760A6F641e35f604dd4  member agent C
+   D = 0xeB3f8c6046185228a355e935A7F3F27D4De69C4D  depositor D (joins later)
+   O = 0xdd6FEC317751a982c6378B8f78577bD3c5a9526a  operator O (mandate recipient)
+   W = 0xdB773A15EF04Fec4f2f5E4355308cBd2736E357c  worker W (task deliverer)
+   shaman 0xfd2e173996eC422980671cD14Cab53516D68D7F4 permission 2 (DepositShaman)
+   shaman 0x33c7EF3F101582Eb63A9aCc1376Bf12859B58B30 permission 2 (WorkManager)
+   ok: every shaman ever set is either revoked (0) or a plain manager (2): no admin, no governor
+   ok: the only manager (mint) shamans are DepositShaman and WorkManager
+   ok: Baal.avatar is the Safe: the only non-shaman minter is a passed proposal executed by the Safe
+   ok: the founder holds no shaman permission
+   ok: adminLock is on
+   ok: the founder cannot call Baal.mintShares directly (reverted with !baal & !manager)
+   constitution textHash 0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a url docs/CONSTITUTION.md
+   ok: Constitution.textHash == keccak256(docs/CONSTITUTION.md exact bytes)
+   ok: Constitution has no state-changing function (immutable, no amendment path)
+   ok: TemplateFactory is bound to this Safe, settlement and Baal
+   ok: factory template 0 -> Payment deployer 0xB735b5dACF7E9361a83b0cbC430A20818bA3E54f
+   ok: Payment deployer is bound to the same Safe and settlement
+   ok: factory template 1 -> Strategy deployer 0x3b34f70ff4ce0a4bd03436DAaa527f4aA16cab28
+   ok: Strategy deployer is bound to the same Safe and settlement
+   ok: factory template 2 -> Project deployer 0x155ddBA3E06f2A1618fb6631BDc197E72F1d0a5A
+   ok: Project deployer is bound to the same Safe and settlement
+   ok: factory template 3 -> Config deployer 0x92170e5A33FB8bF3d675AeACc2B581FE9e7F2a48
+   ok: Config deployer is bound to the same Safe and settlement
+   ok: ZeroOneIntentAccount.factory is this TemplateFactory (op 0 deploys and submits through it)
+   tx fund A with 1000 USDC: 0x1711eade6ee21db3f35754638d9633b1cfd06049bc6cd66d11c2accb1491f535 (block 22, gas 51238)
+   tx fund B with 1000 USDC: 0x1988794ac6b37da5abaaff8b9ae2de9524fcc594447a53375d21bfda4d2d7b60 (block 23, gas 51238)
+   tx A approve deposit shaman: 0xe4e764cfc14cd96b9f1efef6011fb6097c0a4f21d8a8c40017da75d7386e4317 (block 24, gas 45889)
+   tx A deposit 100 USDC -> 100 shares (quoted 100): 0x649e7d6ee0fc5aa5823fa1890d521ce1ad71b54611a3c6b33d62cb6d3c1c4f23 (block 25, gas 303563)
+   warp +2s -> block 26 timestamp 1789131533
+   warp +2s -> block 28 timestamp 1789131535
+   tx A approve deposit shaman: 0xea172352a10744846a3cfb2610a22feed96956e3b4b0919f7b1ab5b0e3064177 (block 29, gas 45889)
+   tx A deposit 1 USDC -> 1 shares (quoted 1): 0xebfc5a5e2a7af1d8d908fe1c2d2032abde31f7d60f1a1e7f7cf02e4be06a2c85 (block 30, gas 240435)
+   warp +2s -> block 31 timestamp 1789131537
+   warp +2s -> block 33 timestamp 1789131539
+   tx A votes YES on #1 -> yes 100 / no 0: 0x865063547cb9fc9329f371c4fe848dcc30fb2357dd8e356421eee58035222a7f (block 34, gas 117227)
+   warp +43199s (past grace of #1) -> block 35 timestamp 1789174738
+   proposal #1 state = Ready
+ASSERT UNSETTLED process reverts; all four flags unchanged
+ASSERT OOG chunk reverts; saved cursor and growth unchanged
+RETENTION proposal=1 chunk=1 gas=50599 tx=0x87ac168eee09df4659983d0e392af2fa658cf8b9b025746f51b4d25e7f8e06da
+RETENTION proposal=1 chunk=2 gas=50599 tx=0xe17bbb8bc48d3e1243e7bac10532f461b7fd2d1bac6a258784ea5ebb3050ae88
+RETENTION proposal=1 chunk=3 gas=55235 tx=0xeb460d2601fa959401ea936f03bc15e078c846f6e1e52bf68e76f2d3f94a4e39
+RETENTION proposal=1 chunk=4 gas=55250 tx=0xf9220d40c908890153879453ac2786c19afc5c925a8dc3a35cdc94dc3b3b1b8f
+ASSERT INTERLEAVED pending_records=4 cursor_before=4 cursor_after=8 tail=8 growth=1000000000000000000 expected_growth=1000000000000000000 deficit=0 no_lost_or_duplicate_changes=true
+ASSERT PARTIAL flags unchanged; interleaved mint/burn/exit40-return40 deficit=0
+ASSERT FINISHED settle no-op gas=29112 logs=0
+RETENTION proposal=1 chunk=1 gas=50614 tx=0xe8f42e470e30d1b884aad56f624091ed7988415ed28031cf2a16debb45bd9496
+ASSERT NEW MINT after finish reopens pending suffix; stale process reverts
+   warp +2s -> block 55 timestamp 1789174740
+   warp +2s -> block 57 timestamp 1789174742
+   AuditMulticall helper @ 0x39f0b6fecbddb705a56853edaa37e2d9b97f88ef (tx 0x18978d49dd70203225f0d9755cbd605cff4047425435f8e10dbc842107f2d651, block 55)
+   tx storm approval [ONE tx, 1 inner calls]: 0x558c0766b6fb2591711490d229be7106b4ce2a751c640a40b7f10bef68eb6e1e (block 57, gas 51300)
+   tx STORM batch=1 records=50 [ONE tx, 50 inner calls]: 0x3e96396e651537ed23bc4a6be6390ee74d95e448d42f84a228a503f09fff9ba4 (block 58, gas 4892187)
+   tx STORM batch=2 records=50 [ONE tx, 50 inner calls]: 0xaeccc41de4ec3ebebff8cef53f26c582e6519345ef8c80050bc1323a98211a15 (block 59, gas 4837978)
+   tx STORM batch=3 records=50 [ONE tx, 50 inner calls]: 0x23ac9bc0c77e513e955b42d91a356b2a41ced9aa8d67eef10245b8b464d119a8 (block 60, gas 4837978)
+   tx STORM batch=4 records=50 [ONE tx, 50 inner calls]: 0x73a361a0416c42efab20751053633920cbcde8c51e1c95843afd2b597a02cd21 (block 61, gas 4837978)
+   tx STORM batch=5 records=50 [ONE tx, 50 inner calls]: 0x38f535c09ae7adef7e36eefdd0ffa4f281330515a8fd3e56f7647ed1bca0cb09 (block 62, gas 4837978)
+   tx STORM batch=6 records=50 [ONE tx, 50 inner calls]: 0x515eddf69d18260e62b3462b93e26b72c8bf18bbb10f4196b7b655040f283ed5 (block 63, gas 4837978)
+   tx STORM batch=7 records=50 [ONE tx, 50 inner calls]: 0x9aa132c2a6d488c0e3120e8f0cd6b817a0d5f8b53a83384d823b86ec0ccb4f91 (block 64, gas 4897369)
+   tx STORM batch=8 records=50 [ONE tx, 50 inner calls]: 0xb7382cf5bb5331d5f2aaac32a3a67ec69f1537c10c04a89feda23250c2cc0b12 (block 65, gas 4837978)
+   tx STORM batch=9 records=50 [ONE tx, 50 inner calls]: 0xf9895112c18b9ef1b98b8bd643f2344427baebbbbd692b9c6111aa6eac2e6be7 (block 66, gas 4837978)
+   tx STORM batch=10 records=50 [ONE tx, 50 inner calls]: 0x0cc0ea7707742a7463091927c6238f1c482c6091b55d85192151685c24696123 (block 67, gas 4837978)
+   tx STORM batch=11 records=50 [ONE tx, 50 inner calls]: 0xb9d0e815785690e95b7d71546c161de86d389f396856f4668675a166d965a8a8 (block 68, gas 4837978)
+   tx STORM batch=12 records=50 [ONE tx, 50 inner calls]: 0xc3241d6eb21a80c5f3997304d0c29472b23f2aa755d76ffc9c27426f6c648a3c (block 69, gas 4837978)
+   tx STORM batch=13 records=50 [ONE tx, 50 inner calls]: 0x39e94540de4e8a673cece52f8bfad212f5a26d639be90f0d457c2535f55be347 (block 70, gas 4837978)
+   tx STORM batch=14 records=50 [ONE tx, 50 inner calls]: 0x45c051716e75a4b9e2a5b4832aea071716843ad3cd21f645db1e6154873bc62a (block 71, gas 4837978)
+   tx STORM batch=15 records=50 [ONE tx, 50 inner calls]: 0xd2e1cdf25f81aa4f7e243278282bf3187ba3658d37717c0b290bbc0841759747 (block 72, gas 4837978)
+   tx STORM batch=16 records=50 [ONE tx, 50 inner calls]: 0x515f7faf2facd97cd084f6300c6140717ea34427c153234ffe12641829e6e331 (block 73, gas 4897369)
+   tx STORM batch=17 records=50 [ONE tx, 50 inner calls]: 0x13dd11ca73c8fb61f4daa9d17de9716de4131967491adee50ca0e7baa3e393fa (block 74, gas 4837978)
+   tx STORM batch=18 records=50 [ONE tx, 50 inner calls]: 0xf44b3a16d43c65383e2eedab062f93c7cb8584b0760cc20fec148ad9bf165bd2 (block 75, gas 4837978)
+   tx STORM batch=19 records=50 [ONE tx, 50 inner calls]: 0x150a84e8ca7b17e26dc67a170a0e723f76d684f3606b7c7097436bab3b9db8f6 (block 76, gas 4837978)
+   tx STORM batch=20 records=50 [ONE tx, 50 inner calls]: 0xa3afb580aaa38325a30ff0d515700b86c80eba9b34ec4ff9f7bd7827f4664ae2 (block 77, gas 4837978)
+   tx STORM batch=21 records=50 [ONE tx, 50 inner calls]: 0xa459ecd16429c77b4e34898fc17583322705d97a2a9f018e340057facb55395a (block 78, gas 4837978)
+   tx STORM batch=22 records=50 [ONE tx, 50 inner calls]: 0xe53d9750fd1a27631e05509ed7355bed659d19a225b91c5beb84ebf61ae80e16 (block 79, gas 4837978)
+   tx STORM batch=23 records=50 [ONE tx, 50 inner calls]: 0x205f9ed0041c5c889ee9855fe290e646de64e30df540a5ec5ef00014e5ab8f61 (block 80, gas 4837978)
+   tx STORM batch=24 records=50 [ONE tx, 50 inner calls]: 0x3470492138ae0ab16b9a8f335a0032dc70c0122904895d22e4e13f2ec543d5db (block 81, gas 4837978)
+   tx STORM batch=25 records=50 [ONE tx, 50 inner calls]: 0xb4d81c099caaa21172ae60238ecb28c2be54783384afd6a23869fd81cccbba63 (block 82, gas 4897369)
+   tx STORM batch=26 records=50 [ONE tx, 50 inner calls]: 0x07326734ae4b920e6175b12255e4c173b96ec6776885648e8fba1e6adb5b71bb (block 83, gas 4837978)
+   tx STORM batch=27 records=50 [ONE tx, 50 inner calls]: 0xd7e6b9abd611c1db9bbcc2a5cce4166b60707263c5cf683023d27bdadd8bb8dc (block 84, gas 4837978)
+   tx STORM batch=28 records=50 [ONE tx, 50 inner calls]: 0x69e14c9afaf6f521834df9b9410b915d58d830a9c52341274f534030b0b298c7 (block 85, gas 4837978)
+   tx STORM batch=29 records=50 [ONE tx, 50 inner calls]: 0xa6b235e6e6df8e346cad15653c136ac3b19f9c23b1888216eb5f32d4d89d93ba (block 86, gas 4837978)
+   tx STORM batch=30 records=50 [ONE tx, 50 inner calls]: 0x26c796b966e15899c007242c9a0d636f7db50d66243cad3443209d490c7cb0f2 (block 87, gas 4837978)
+   tx STORM batch=31 records=50 [ONE tx, 50 inner calls]: 0xfd5c36978e14082ba6399263a27497956f3e4009be5f6097bc942d4bbd9417c0 (block 88, gas 4837978)
+   tx STORM batch=32 records=50 [ONE tx, 50 inner calls]: 0x3af78b954b86184927cde62e726abcb4cef16967a06b6871c98befac48947e35 (block 89, gas 4837978)
+   tx STORM batch=33 records=50 [ONE tx, 50 inner calls]: 0x5acb696ee444bcdeff884dcc2fbfdb0ea576eb1fea4900bf51f39b593dc6a426 (block 90, gas 4837978)
+   tx STORM batch=34 records=50 [ONE tx, 50 inner calls]: 0xcf64a070321e6c3b3b2824240577663d0d3eb766399a5d463456e651a05adf12 (block 91, gas 4897369)
+   tx STORM batch=35 records=50 [ONE tx, 50 inner calls]: 0xfd7b108ce3fc70c7a57ef3544cbfe1d735cf0e08a6cc7dd4c9d8a18f994d94e4 (block 92, gas 4837978)
+   tx STORM batch=36 records=50 [ONE tx, 50 inner calls]: 0x928a54296c23f8e547c3949a3ecbf82a5c4712412e56bcebb71b93f893b8354d (block 93, gas 4837978)
+   tx STORM batch=37 records=50 [ONE tx, 50 inner calls]: 0x210def3846481cfa22226b87ed471a867b579f3fd965c11dd549b7be3969efe1 (block 94, gas 4837978)
+   tx STORM batch=38 records=50 [ONE tx, 50 inner calls]: 0x0e1a01440dd4f254c62729613d1059d06128b991d68904ad662bab5c3ad913a7 (block 95, gas 4837978)
+   tx STORM batch=39 records=50 [ONE tx, 50 inner calls]: 0x92af7aee64254f61d1cd1a358edbda4ac817c4a76f50aebf9615619be76ab8f5 (block 96, gas 4837978)
+   tx STORM batch=40 records=50 [ONE tx, 50 inner calls]: 0x47b72013d5a338134986815b0d9a7436e526e6cdb849c1cfa86848b6067ad9e3 (block 97, gas 4837978)
+   tx STORM batch=41 records=50 [ONE tx, 50 inner calls]: 0x87e8a76808bb6e5267f210e737a2bd07d107017970992ec161f4aa7baf92d54f (block 98, gas 4837978)
+   tx STORM batch=42 records=50 [ONE tx, 50 inner calls]: 0x76483043d87c8c7f979e5c7167e03a0974dada562292f7ddaaed6938ac0c9ecb (block 99, gas 4837978)
+   tx STORM batch=43 records=50 [ONE tx, 50 inner calls]: 0xd348a2f8fcf86b62ef6155b582ac9d8aed25944bedf2b92bb0689794e46531b0 (block 100, gas 4897369)
+   tx STORM batch=44 records=50 [ONE tx, 50 inner calls]: 0xe7e488f43d318cc11cb1751cb83ce05c991082a6c5399ad0f3f3c7ef9a4460ef (block 101, gas 4837978)
+   tx STORM batch=45 records=50 [ONE tx, 50 inner calls]: 0xfaf0b217af28130e057848cc38e27ff59d43265cee926502ce41a64405767490 (block 102, gas 4837978)
+   tx STORM batch=46 records=50 [ONE tx, 50 inner calls]: 0xe7201c297cfa4396c84492b5b9d0faa17736aabd2d5fc48842342170901f460e (block 103, gas 4837978)
+   tx STORM batch=47 records=50 [ONE tx, 50 inner calls]: 0x1da9f01c2f04389de037ed6bf58d93f3dc0298ef9cc919c66a88085aee6d59a6 (block 104, gas 4837978)
+   tx STORM batch=48 records=50 [ONE tx, 50 inner calls]: 0xc380830895bedd672bd69fb9ba2e9b45d8cf35215fea8c91abe8e6bf156b39a1 (block 105, gas 4837978)
+   tx STORM batch=49 records=50 [ONE tx, 50 inner calls]: 0x94755d410ab60f6b89caf786292bd8e93700df08515920904cf9248da35f5066 (block 106, gas 4837978)
+   tx STORM batch=50 records=50 [ONE tx, 50 inner calls]: 0x4e7f278cb8e5c1a300dce195d6589922a1b7386b428deb306380838331241368 (block 107, gas 4837978)
+   warp +2s -> block 108 timestamp 1789174746
+   warp +2s -> block 110 timestamp 1789174748
+GAS MID_STORM records=2500 deposit=245235 exit=249636
+   tx STORM batch=51 records=50 [ONE tx, 50 inner calls]: 0x73057dee021bd0eeee314223190afbc4ec08cb2fc7c9a783206198f3736ae8a1 (block 108, gas 4837978)
+   tx STORM batch=52 records=50 [ONE tx, 50 inner calls]: 0x292f39ba3d7577be538f6e1dc65be1e5cc28d1a1cb435559e4d0c2f14832ff2d (block 109, gas 4837978)
+   tx STORM batch=53 records=50 [ONE tx, 50 inner calls]: 0xd2bf40bc1db5bc8b3bf269dfd13665adcb11b4c631a6476be27b743ac000411d (block 110, gas 4837978)
+   tx STORM batch=54 records=50 [ONE tx, 50 inner calls]: 0x37f454131dd2933af45af7a34c26c06139355a92cfee049129a727e55efd3776 (block 111, gas 4837978)
+   tx STORM batch=55 records=50 [ONE tx, 50 inner calls]: 0x076bdba252f4319af5c68cc44f4fcdfca36cfa15063b6494d86adcf461e87ad4 (block 112, gas 4837978)
+   tx STORM batch=56 records=50 [ONE tx, 50 inner calls]: 0xf0796378ec8d878c83bcbf36bcb241a2501d660d08aeede70efa62541c6955f7 (block 113, gas 4837978)
+   tx STORM batch=57 records=50 [ONE tx, 50 inner calls]: 0x280aecbbdadb88ec9a61f748a0c75e2a9a2ac20e044fa2d43ed0528a86f6af7a (block 114, gas 4837978)
+   tx STORM batch=58 records=50 [ONE tx, 50 inner calls]: 0xf412b9ab153d0a3043758df8636a5d10c0ddfbe539691aaaf57b64a2e95c827f (block 115, gas 4897369)
+   tx STORM batch=59 records=50 [ONE tx, 50 inner calls]: 0x0906501b9b8d195f17c0590f17f6d4c913d3b2260793b1bb60b7460d0c703bf8 (block 116, gas 4837978)
+   tx STORM batch=60 records=50 [ONE tx, 50 inner calls]: 0xdcbf8cd3858b79a7092301057dc6bea7c3acbdc4ac605d69d6bad0c3d2939f26 (block 117, gas 4837978)
+   tx STORM batch=61 records=50 [ONE tx, 50 inner calls]: 0x12698b704aedebb97f1c399e1db8d5ff191bd4249d4e2604420f9e87a91acc35 (block 118, gas 4837978)
+   tx STORM batch=62 records=50 [ONE tx, 50 inner calls]: 0x666142b4269954b7d1978969c7e3d6ed5a95fbbe2454112995cfab4dd74342bf (block 119, gas 4837978)
+   tx STORM batch=63 records=50 [ONE tx, 50 inner calls]: 0xf40302b2d66130e75c02bc8c401432ecbfc639c049a5944f94ef76de1ef7a584 (block 120, gas 4837978)
+   tx STORM batch=64 records=50 [ONE tx, 50 inner calls]: 0x53af4f7b44585fcc457a3f156854bd61a9e61a3f386213ea571fb315f8af2e00 (block 121, gas 4837978)
+   tx STORM batch=65 records=50 [ONE tx, 50 inner calls]: 0x2de3c5de6a4c38b486767337aaadaedcb6888376f3ed7c9c15c9b5750b992416 (block 122, gas 4837978)
+   tx STORM batch=66 records=50 [ONE tx, 50 inner calls]: 0xa693a0e12c9f0c277421e07e44771f7fedeef882f8a6f0a3c5a4bebcfadddd44 (block 123, gas 4837978)
+   tx STORM batch=67 records=50 [ONE tx, 50 inner calls]: 0xc5f41a0d32c6a2959e9de450b910d290a9620663d10918b8d3d9460ce922758c (block 124, gas 4897369)
+   tx STORM batch=68 records=50 [ONE tx, 50 inner calls]: 0xc7b760e76153663f855b319b548a6eeb0b530169a89e16249cededfd1188f18d (block 125, gas 4837978)
+   tx STORM batch=69 records=50 [ONE tx, 50 inner calls]: 0x755080448e8c4ec6f9e1fe79b37cea160cf0506d9d5efe72f66ce50fc3b7b57e (block 126, gas 4837978)
+   tx STORM batch=70 records=50 [ONE tx, 50 inner calls]: 0xba8f8554570b319360f6a1a72f5c5afc5f594051d8da51cd99d0f867b2e9ee95 (block 127, gas 4837978)
+   tx STORM batch=71 records=50 [ONE tx, 50 inner calls]: 0x494dc0efc216e1bd7fac4a0244ab5676a42b44383bda373bb6fd7f2f01943997 (block 128, gas 4837978)
+   tx STORM batch=72 records=50 [ONE tx, 50 inner calls]: 0x68a4d3c12bff6bbb0e4e8455fb68862ba6740371e1cbd2115f76f327e02f299a (block 129, gas 4837978)
+   tx STORM batch=73 records=50 [ONE tx, 50 inner calls]: 0x3724969db8a796e3435be064c33dd763904f7be04fb2b108af66bd1c56625380 (block 130, gas 4837978)
+   tx STORM batch=74 records=50 [ONE tx, 50 inner calls]: 0xb084a7bff7b0141b4229db6dea4a04b01526a946aab2c75e7d2ec9b6b7bf40f8 (block 131, gas 4837978)
+   tx STORM batch=75 records=50 [ONE tx, 50 inner calls]: 0xa670c1f9adc78a1cb0f03abbe1521b11f5b9394c61c6f9320bb7153a4cd5bb9c (block 132, gas 4837978)
+   tx STORM batch=76 records=50 [ONE tx, 50 inner calls]: 0x7cb25add80e27389fcd25f4ec62da548a5a829f814eaae4f95b1222698acc043 (block 133, gas 4897369)
+   tx STORM batch=77 records=50 [ONE tx, 50 inner calls]: 0x8e6fb69fac7161fc2d550d696edac01c2a2106582f25497f1cc66607ad7e04f9 (block 134, gas 4837978)
+   tx STORM batch=78 records=50 [ONE tx, 50 inner calls]: 0x767e3eb1a048c4d0a0d8453ec88b189538e377897ce7569b41e8a711358934f4 (block 135, gas 4837978)
+   tx STORM batch=79 records=50 [ONE tx, 50 inner calls]: 0x6985e8992008fbd92becd2953f31e7eb933e0040a7136118bdd0b28fd688c34c (block 136, gas 4837978)
+   tx STORM batch=80 records=50 [ONE tx, 50 inner calls]: 0xb56d3454b99c552bcfc43f768a953595ace9f34571616a51d0d259057776125d (block 137, gas 4837978)
+   tx STORM batch=81 records=50 [ONE tx, 50 inner calls]: 0xa83c02829bdd2687d78915f208cf9dcb9da169a347f0824b7715b025ea49f4a5 (block 138, gas 4837978)
+   tx STORM batch=82 records=50 [ONE tx, 50 inner calls]: 0x2b40188bba7bdb0f515a4ce03d022b43a3fa7acd8ebdf029e9f8e3a51321f2db (block 139, gas 4837978)
+   tx STORM batch=83 records=50 [ONE tx, 50 inner calls]: 0xfe4ebb1884914e033687e4e3d1f18dd34709c8817d066f4efc206e70db8b1e96 (block 140, gas 4837978)
+   tx STORM batch=84 records=50 [ONE tx, 50 inner calls]: 0xab99ef7178a1fe8201bfe1efba092b2b918a0387403f923af3de3caf874366b4 (block 141, gas 4837978)
+   tx STORM batch=85 records=50 [ONE tx, 50 inner calls]: 0x73fb7ccf947eeb36ce5a08173be8d082be10a259bb572221f47a3786dd3ad85f (block 142, gas 4897369)
+   tx STORM batch=86 records=50 [ONE tx, 50 inner calls]: 0x6c55d268b1d394550d9600513c225a7abc4e41e5995799f6765a02c9e158fe01 (block 143, gas 4837978)
+   tx STORM batch=87 records=50 [ONE tx, 50 inner calls]: 0x14f69576d888ef01d42256d082e2903f39ed9f9f8eb4df79f587ce715432e908 (block 144, gas 4837978)
+   tx STORM batch=88 records=50 [ONE tx, 50 inner calls]: 0x4506a33b8a8bd01177392106f0b84e3737a861b470adcf015c3bfa95de33df0d (block 145, gas 4837978)
+   tx STORM batch=89 records=50 [ONE tx, 50 inner calls]: 0x4f6dc14167b928ec9db658567e131b4ce23158d72ad6d272b32134f22b36770f (block 146, gas 4837978)
+   tx STORM batch=90 records=50 [ONE tx, 50 inner calls]: 0x76bdc6933f9e441a8e7974e204a8b95f09435a08d11eaa4eaa9fce7e143b7aa7 (block 147, gas 4837978)
+   tx STORM batch=91 records=50 [ONE tx, 50 inner calls]: 0xf2d60623e79fe52df78f11d6a42dc7e89c66bf785f74d853a91f79d93d370f4e (block 148, gas 4837978)
+   tx STORM batch=92 records=50 [ONE tx, 50 inner calls]: 0xfe8fdd2f7dec4d6d4a58c14932daf5adf6598e742bd33c85e0fc5b86c8f4904e (block 149, gas 4837978)
+   tx STORM batch=93 records=50 [ONE tx, 50 inner calls]: 0xca258cc1e3264727a2565c8d97ad76efa253a756e1181c9c1181dfb4e8623f3f (block 150, gas 4837978)
+   tx STORM batch=94 records=50 [ONE tx, 50 inner calls]: 0xb30e847e575246863e833ad0cd1fe27187d3bbf560b3c2b3e2b0a56b6e477df2 (block 151, gas 4897369)
+   tx STORM batch=95 records=50 [ONE tx, 50 inner calls]: 0x760136174fdc8f8eb77d8aa7f9bce69cfa6a07a9310141322a39d3e505f9e564 (block 152, gas 4837978)
+   tx STORM batch=96 records=50 [ONE tx, 50 inner calls]: 0x156b4099869a0cc70109643e8cbbb2a5869752a8f6a4a888f00cedcf23c1518e (block 153, gas 4837978)
+   tx STORM batch=97 records=50 [ONE tx, 50 inner calls]: 0xe4d0771a15a65d73c346a4ada7e69dc4e68c705e2e5e124983cd84e19b44565d (block 154, gas 4837978)
+   tx STORM batch=98 records=50 [ONE tx, 50 inner calls]: 0x793c588f715ae6344ff1fa591605e6e901741c22ab2cceccd2da7d76aa569a03 (block 155, gas 4837978)
+   tx STORM batch=99 records=50 [ONE tx, 50 inner calls]: 0xe1973c7d6f7c4de0a0c3011ba6326b20fb079764156e43cd5a48aba0c19c6af9 (block 156, gas 4837978)
+   tx STORM batch=100 records=50 [ONE tx, 50 inner calls]: 0x714cc6c5e8e5448dd6b160f9d240e9b6696663695ed4a6c16ee798960cf24e98 (block 157, gas 4828378)
+   warp +2s -> block 158 timestamp 1789174750
+   warp +2s -> block 160 timestamp 1789174752
+GAS CONSTANT quiet_deposit=245235 storm_deposit=245235 quiet_exit=249636 storm_exit=249636
+RETENTION proposal=1 chunk=1 gas=1055218 tx=0x15da6b840ad9367ece49d34babd943e70393e7bda8c88881f717df578f94ff47
+RETENTION proposal=1 chunk=2 gas=1055264 tx=0x454687f0faf36561da3e273aaafb818e6475c4b5d642e84022513a0575518c62
+RETENTION proposal=1 chunk=3 gas=1055264 tx=0x6a4bb7b3466cee7f4758bc03848ba70e0a11323f8f56339942289590d35f0d36
+RETENTION proposal=1 chunk=4 gas=1055264 tx=0x6795e9574cb824bbb60aacaf19bde7e4a56def8ad21a1958f538bf28f343ec40
+RETENTION proposal=1 chunk=5 gas=1055264 tx=0x7d80cb4569b6bf39f7c4fbb257c82e7f467d4fc185332c6664bc49a5ffc46a9f
+RETENTION proposal=1 chunk=6 gas=1055264 tx=0x68011a0a1e947b4a68a1a25127a4d49c3edc18af24c62736bb20a91aff6df0b1
+RETENTION proposal=1 chunk=7 gas=1055264 tx=0xbed2c8ea2fa557fd077049be2396b9da6f85d55dd585f18ed79024291a1380e6
+RETENTION proposal=1 chunk=8 gas=1055264 tx=0x88f5b521de01c798782ef1d5aabe95db826a31e985cdfe1925595bfbe5b2dfd6
+RETENTION proposal=1 chunk=9 gas=1055264 tx=0x1f0610a33f58bd08aac12b68345ee62ae238be41ac1213b4d25d8f2e60198d41
+RETENTION proposal=1 chunk=10 gas=1055264 tx=0x5957dc9e4ab611ddcc734ace2830a3064fb96ec22b0568fcda3e03f32f45ec03
+RETENTION proposal=1 chunk=11 gas=1055264 tx=0x98b9c81839f872ae93a657810c91705efb0c9d0d5d46392b5403365673f99104
+RETENTION proposal=1 chunk=12 gas=1055264 tx=0xf9ebbd591a4c06d004ce56897a76b32560abc387cfa328e5d9f86307305f1e64
+RETENTION proposal=1 chunk=13 gas=1055264 tx=0x6e8d8ac47cdbf5869b8ffe07628f6fd470ad663ca45fb9bbc313bea3b7bfb33e
+RETENTION proposal=1 chunk=14 gas=1055264 tx=0xb894f4f83ece9ce070d0174b5850a1dcf327796dfd4058beead5d8b37647d4ba
+RETENTION proposal=1 chunk=15 gas=1055264 tx=0x5a2c554e690de5e5f4381d62ead26814775c60590c22233e0529805410d9351a
+RETENTION proposal=1 chunk=16 gas=1055264 tx=0x4eb7dada2c9c6e49ab358012de1e5f3391057837f476fef1d7dd4a6749c131d2
+RETENTION proposal=1 chunk=17 gas=1055264 tx=0x790f1d1d8d94e51e36b6dbecd1d8d90db61f58045a66618dc04489a79c671c20
+RETENTION proposal=1 chunk=18 gas=1055264 tx=0xc6a3f30b49c4ff48dc5a85d24f378064ae108231b861ff5de186798d1d00263d
+RETENTION proposal=1 chunk=19 gas=1055264 tx=0xd0a70ae2eaeddddaec3b2780d1fab658d00e44e1c0c8592e4c8655bbe7f26f93
+RETENTION proposal=1 chunk=20 gas=1055264 tx=0x2e2017b1d7f406b219ae2b84cc60347a43bca5c8486812f1943003ab7039ae34
+RETENTION proposal=1 chunk=21 gas=1055264 tx=0xfcaf69dba7ef46a103fb47297cde24c8dec802a8f7edcefb08242b9b3cbcd970
+RETENTION proposal=1 chunk=22 gas=1055264 tx=0x852a7331b617fb10a2ba6356aec121a9d174a80cf96099769586f6f6ad786235
+RETENTION proposal=1 chunk=23 gas=1055264 tx=0x80a916ba9ed2229658cbd36bf0404a0cb4f9aa390318c016c8680bf32887c1e8
+RETENTION proposal=1 chunk=24 gas=1055264 tx=0x777686b2f722173d98e5630f220ae61f2d1d1cc95c55773587213f1a8efe0f3d
+RETENTION proposal=1 chunk=25 gas=1055264 tx=0x699eb160a24c70f1897a11ab00b428cfdc8bad3c6a8117acf6101b60c2e4ba56
+RETENTION proposal=1 chunk=26 gas=1055264 tx=0x50624cff9a525fc7971a5122bb89e7781da2f565b308e7ecbd46d4687dfa9e9a
+RETENTION proposal=1 chunk=27 gas=1055264 tx=0xc4e8f677769ea8f812b287b2166e5951e0a977c5fb689eb133b9961e345a0037
+RETENTION proposal=1 chunk=28 gas=1055264 tx=0x8e9608609a5d16d78549fa68ec48fdf0461bdfae8c5cfa6ae35e923bdf4ca23c
+RETENTION proposal=1 chunk=29 gas=1055264 tx=0x36d1ecb615df0ea9190bd020d58bdc1cb89da6ca3eabb88ab0bfbb03d1180ee4
+RETENTION proposal=1 chunk=30 gas=1055264 tx=0x1f9c6ef81d04ef0e09f1a25836eadfc0bdf6e368b5a3421ad1b791708d21003f
+RETENTION proposal=1 chunk=31 gas=1055264 tx=0x7ffbb53c4be8aaed87d962780a06c87f6ffc5bcf6466f2b6b885374ff65dd0c0
+RETENTION proposal=1 chunk=32 gas=1055264 tx=0xd995fc1fe5b20f1dfde3c6b6aec4a779c18af5ff11e096e7db068aebd92c8443
+RETENTION proposal=1 chunk=33 gas=1055264 tx=0xda245d3c028c2626eb669e8a36dee9407afb692cc67ea6e945a668abefcf9bb5
+RETENTION proposal=1 chunk=34 gas=1055264 tx=0xf89a179738b5f9729225a37b1a73b8d21163eb72cd2a49e158db1a63160f9b59
+RETENTION proposal=1 chunk=35 gas=1055264 tx=0x9bc50e94b5746befdc2ca01c17dbfe3a7f8bb00e005c148ff36c94bad91fad8d
+RETENTION proposal=1 chunk=36 gas=1055264 tx=0xbdc3481ff757ebbf05eda35c60b419f22b0c36013a8ce1189893831894f39112
+RETENTION proposal=1 chunk=37 gas=1055264 tx=0xddd937658451cd876c6ad7137d32c0f2bb029a3f5af9a4f921e1df6051c754b4
+RETENTION proposal=1 chunk=38 gas=1055264 tx=0x2439e46a31d28374e6065735b3c1f7ac1c550b8e9e934ee86f73664dfc9e586f
+RETENTION proposal=1 chunk=39 gas=1055264 tx=0xa0de3a198b0da342b85bf91cf8091c2870b2c353fd75121e3c6586f79d9cf320
+RETENTION proposal=1 chunk=40 gas=107879 tx=0x874265c5797c12e441637767594e5ab296f65942723562878f7498699a71a870
+STORM records=5000 settle_calls=40 settle_total_gas=41263129 settle_gas_per_record=8252.6258 process_gas=147373 processed=true passed=true actionFailed=false
+ECONOMICS attacker_deposit_gas=484436319 attacker_gas_per_record=96887.2638 attacker_USDC=0.005 attacker_USDC_per_record=0.000001 settler_gas_per_record=8252.6258 gas_ratio=11.740174115249475 approval_and_helper_deployment_excluded=true USDC_recoverable_by_exit=true
+   warp +2s -> block 201 timestamp 1789174754
+   tx A votes YES on #2 -> yes 100 / no 0: 0xfc47bc87e8f7286c57ee0e5be911a62a1ac26294ba4ae7f8fe577cfa588ea0c3 (block 202, gas 117227)
+   warp +43199s (past grace of #2) -> block 203 timestamp 1789217953
+   proposal #2 state = Ready
+ASSERT QUEUE successor processed=true; baalGas=50000; no settlement deadline
+GREEN incremental settlement all assertions
+anvil stopped (http://127.0.0.1:11545)
