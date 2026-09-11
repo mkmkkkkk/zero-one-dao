@@ -667,3 +667,17 @@ HEAD is itself pushed, so the gate it claimed to prove was never reached; it now
 (b) `scripts/e2e-base-fork.ts` still calls `NavShareToken.lotCount`, which the incremental-settlement redesign removed, so
 the rehearsal dies after the deployment section. The lot concept is gone from the contract, so what that ragequit
 measurement should now measure is a design question for the retention review, not a rename.
+
+## 2026-09-11 computed deployer gate accepted; the rehearsal's exit measurement needs a new definition
+Accepted. The gate now computes what a deployment needs from the measured gas and the live base fee, with the floor holding
+below about 0.16 gwei and the computed figure taking over above it, and it refuses before any write with the three numbers
+in the message. It also caught a test of its own that had gone vacuous: the constitution-URL refusal pinned the same commit
+it was meant to differ from, so that refusal had never actually fired. A test that cannot fail is worse than no test.
+Ruling on the blocker it declined to guess at: the fork rehearsal still asks the share token for a lot count, which the
+incremental-settlement redesign removed, so the rehearsal deploys and then dies in the lifecycle section. The right
+replacement is not a rename. What the rehearsal must now measure is what the shipped accounting actually costs: an exit
+with no settlement work outstanding, an exit taken while a window has unsettled records, and the cost of settling one
+record. Those three numbers are what a member and a settler pay, and they are the numbers the audit table already reports,
+so the rehearsal becomes their independent confirmation on a fork of the real chain.
+Consequence of one rule on every chain: the Base Sepolia deployer must also hold the floor, and it currently holds about a
+quarter of it. Test ETH is free, so this is a top-up, not a parameter change. The rule stays the same on every chain.
