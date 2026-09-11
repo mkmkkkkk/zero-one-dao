@@ -722,3 +722,15 @@ there and, as instructed, had not pushed. The reset discarded that commit from t
 reflog and is now cherry-picked into main, but the rule for me is the one I give workers: before resetting any checkout,
 look at what is in it. A hard reset is not a read-only operation, and "the worker was told not to push" is exactly why its
 work lives only in that one place.
+
+## 2026-09-11 final clean-clone acceptance: 40 green, one retired fixture, MAINNET-READY on the code axis
+A fresh clone of main (HEAD afedfc8) re-ran the whole gate: compile, typecheck, scenarios A-L with K on a real Base fork,
+both E2Es, the deploy refusals, the base-fork rehearsal, and the audit suites. Every documented job is green. The single
+red was t15-retention-round2.ts, and it is not a defect: it is a round-2 review harness from the WIP settlement commit whose
+own docstring marks it red-by-design against the old commit dcb3e83, and it now crashes because it reads exitedSince before
+settling, which the shipped token correctly refuses. The project's own acceptance runner (scripts/acceptance-retention.py)
+already excluded it by name as a superseded fixture; only the reviewer's broader glob caught it. Retired it into
+evidence/audit/governance-nav/retired/ with a provenance header pointing to its shipped successors t16 and t18, both green.
+Verdict: the code and testnet acceptance are mainnet-ready. What still gates the launch is not code: the testnet execute
+proof finishes on its own clock at ~19:19 UTC today, the user confirms the grown parameter table line by line, and the
+deploy needs the user's 50 USDC and a funded deployer key. Nothing else is open.

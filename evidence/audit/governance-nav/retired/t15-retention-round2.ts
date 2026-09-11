@@ -1,3 +1,8 @@
+/* RETIRED 2026-09-11. Round-2 retention review harness from the WIP incremental-settlement commit (75c9ac6).
+ * It predates the shipped settlement: it reads exitedSince() without settling, which the shipped
+ * NavShareToken now correctly reverts (RetentionUnsettled). Its verdict is recorded in decision.md and
+ * docs/REVIEW_RETENTION.md; its shipped successors are t16-retention-mechanism.ts and
+ * t18-incremental-settlement.ts, both green. Kept for provenance, out of the acceptance sweep path. */
 /** Round-2 local-only review. Default asserts the deficit specification (RED on dcb3e83).
  * --observe records known mismatches without treating them as implementation correctness.
  * --candidate deploys an in-memory holder-scan prototype, then installs its runtime at the EMPTY
