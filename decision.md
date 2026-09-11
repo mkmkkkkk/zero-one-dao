@@ -712,3 +712,13 @@ funds this project controls, which the agent established by enumerating all 39 o
 existed and sweeping 29 finished scenario keys, deliberately leaving the live relay sponsor funded. Every public faucet now
 requires a browser and a human. Nothing is blocked by this: a Sepolia deployment costs a ten-thousandth of what the
 deployer holds, and the floor exists to protect a mainnet run, not to be topped up for its own sake.
+
+## 2026-09-11 mirror rebuilt; and a mistake of mine worth recording
+Both origins now serve the same corrected files: the mirror's README carries the raw-unit rule and the settlement-source
+line, its member document reports custodial-lite for the fetch-only address, and the validator that exited non-zero against
+the mirror before the rebuild exits zero after it.
+My mistake: I synced the mini's runtime checkout with a hard reset to origin while a dispatched task had committed its work
+there and, as instructed, had not pushed. The reset discarded that commit from the branch. It was recoverable from the
+reflog and is now cherry-picked into main, but the rule for me is the one I give workers: before resetting any checkout,
+look at what is in it. A hard reset is not a read-only operation, and "the worker was told not to push" is exactly why its
+work lives only in that one place.
