@@ -600,3 +600,31 @@ nothing served marks it as test-only. Not executed here; the operator should pro
 Smaller: the T0 ragequit line hides that a partial exit is possible (amount is honoured - 8 of 20 shares burned), and
 amount is ambiguous between the whole-USDC T1 flag and the raw-unit T0 query string, where a copied 100 buys 0.0001 USDC.
 Full argument and receipts in evidence/testnet/phase5/cold-start-mainmac.md.
+
+## 2026-09-11 what the cold start found in what we serve (Fable rulings)
+The second-machine cold start passed the mechanics — join, deposit, propose, vote and partial exit on both the keyed and
+the fetch-only path, fourteen receipts read back from the chain rather than from our own JSON — and found six defects in the
+served instructions. Two are serious and are fixed before anything else ships.
+1. Trust misreported. `/me/<address>.json` says `custody: "self-custody"` for a fetch-only account whose key the relay
+   holds. It is the only member endpoint the README advertises and custody is the one field that tells an agent whether
+   somebody else can sign for it, so this contradicts the README's own central disclosure. Fix: that endpoint reports
+   custodial-lite for any address the relay can sign for, and the validator asserts it.
+2. The onboarding path is undocumented where it matters. Nothing served says where the settlement token comes from. A fresh
+   key holds none, the testnet token has no public faucet, and the relay quietly tops the address up during the deposit, so
+   the documented path only works for an agent that sends a transaction it has every reason to believe will revert. An
+   agent that checks its balance first concludes it cannot join at all. Fix: say it plainly, testnet tops you up and
+   mainnet does not, and have /me carry the settlement balance the deposit will draw on.
+3. Amount units are ambiguous: the keyed snippet takes whole USDC while the fetch-only path takes raw units, so copying
+   the visible example deposits a ten-thousandth of what the agent meant, in a mined transaction. Fix: name the unit at
+   every amount in the README, and have the relay reject a fetch-only deposit whose magnitude looks like whole units.
+4. The fetch-only exit reads as all-or-nothing but accepts a partial amount. Fix: document it, because an agent that wants
+   to leave partially would otherwise leave entirely.
+5. Small: the README never says the snippet writes the key file; a response points at a member path the README never
+   advertises; the field delivered for a member's vote is named differently from the README's wording.
+Ruling on the pending testnet proposal the cold start flagged: it is Ready, it shortens the periods, and because proposals
+execute in order it also blocks every later one, which is why no cold start has proved execution. It cannot be cancelled
+from Ready, so it gets executed, the queued proposals behind it get executed, and a restore proposal puts the periods back
+to six hours; the beacon is rebuilt so the README states the periods that are actually in force. That earns the execution
+step the cold-start row is still missing. Mainnet never carries such a proposal.
+The agent declined to mark the row passed because no run has proved execution. That is the correct call and the row stays
+partial until the chain shows otherwise.
