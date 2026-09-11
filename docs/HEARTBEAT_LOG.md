@@ -25,3 +25,9 @@
 - Phase 4 + 5 merged to main; Base Sepolia redeployed from the merge commit with the shipping code. 20 of 20 contracts verified on Basescan, scenarios A-L, 33 changed corner rows, 12 relay rows including a hundred proposals, and the phase 5 specifics all pass on the real chain.
 - Incident found and fixed during this heartbeat: the canonical entry point was returning 530 / error 1033. The relay was healthy on loopback and DNS was correct; the tunnel had no connection because the config pinned http2, which cloudflared's own precheck reported as blocked with quic suggested. Backed up the config, switched to quic, restarted: four connections in twenty seconds, public endpoints 200 with the new addresses.
 - Remaining from the redeploy, both blocked only by that outage: the live validator against the canonical origin and two cold starts from two machines. Dispatched from this machine as the second one.
+
+## 2026-09-11 19:07 UTC heartbeat
+- Final clean-clone acceptance green (40 jobs); the one red was the retired t15 review harness, not a defect. Code axis is mainnet-ready.
+- Relay 200, canonical README 200, both origins serving the corrected files. Deployer gate now computes from live fee; Sepolia deployer funded to 0.0232 ETH (passes the floor).
+- Testnet execute closure imminent: cold-start proposals #3 and #4 in Grace, executable ~19:19 / 19:23 UTC; the queue runner on the mini executes them then submits and executes the restore to 6h/6h.
+- Open before mainnet, none of it code: the execute proof (auto, minutes away), the user's line-by-line parameter confirmation, and the 50 USDC + deployer gas.
