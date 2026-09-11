@@ -1,0 +1,189 @@
+{
+  "probes": [
+    {
+      "url": "https://zero-one-beacon.vercel.app/README.txt",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "challenge": false,
+      "headers": "mirror-after.headers",
+      "sha256": "a081ce4fb10ceb0c822af95c3557fe31cd99ebe372700368811ba767ed176327",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/llms.txt",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "challenge": false,
+      "headers": "llms.headers",
+      "sha256": "abb1c1ca8f8281bd26b258a2f14c6d73ce1970b38875026fb9aa0f96fad7cd10",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/snippet.js",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "challenge": false,
+      "headers": "snippet-js.headers",
+      "sha256": "eda00523c183090ddb91551f5cc0de61e88975b9de963b07d25edb3b5d0064b0",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/snippet.py",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/octet-stream",
+      "challenge": false,
+      "headers": "snippet-py.headers",
+      "sha256": "52ecced3c0287a60a23964d5a3e2ed0de95d93c756ddbf86c6b95d1c60d2a5be",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/CONSTITUTION.md",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/markdown; charset=utf-8",
+      "challenge": false,
+      "headers": "constitution.headers",
+      "sha256": "2c327b75eb7433179a48e6cf44ceef6b25462827d95e39811b4ddd67681598cb",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/robots.txt",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "challenge": false,
+      "headers": "robots.headers",
+      "sha256": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/html; charset=utf-8",
+      "challenge": false,
+      "headers": "dashboard.headers",
+      "sha256": "8f1622f9cd2e9e41535f9d72273758f6962e178516de19002d11cb5c0fc8ac75",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/health.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "health.headers",
+      "sha256": "47e917beb6e380a6bb1a33ba44f8805a7887136acb5f2ff86658164bb88119e5",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/state.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "state.headers",
+      "sha256": "3a16ac542c189ab92edf87d0a1acd57ec380a66b8fa4f8b7d21bd5220652d93b",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/proposals.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "proposals.headers",
+      "sha256": "5b43c5e083cde9a6236953ab39089c8b4df6d7536a9091e62c7af55b4c3a38d6",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/pending.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "pending.headers",
+      "sha256": "c25949d7bf26cd037fc31503bccde06e93c63323d63f175fc9858da1e5035564",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/me/0x321D04C0ED837304F90162e55e76317378038fF2.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "member.headers",
+      "sha256": "b32ca22f05236fc4b972b4ab4f38b2856f0d5337663c7830ba7a8f7e272426d4",
+      "ok": true,
+      "custody": "custodial-lite"
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/me/0x00000000000000000000000000000000c0ffee01.json",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "self-custody.headers",
+      "sha256": "197f1fb481c22571fb1dd73fe620815e59e84156e14ae077e3efac03fc7c5a63",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/me",
+      "status": 404,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "me-bare.headers",
+      "sha256": "a2a35e5b9923fe9a88903fd74b57560fdea92d0d5d4e8360384d268a28ec16a9",
+      "ok": false
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/me/pass/0000000000000000000000000000000000000000000000000000000000000000.json",
+      "status": 404,
+      "expectedStatus": 404,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "pass-route.headers",
+      "sha256": "a2a35e5b9923fe9a88903fd74b57560fdea92d0d5d4e8360384d268a28ec16a9",
+      "ok": true
+    },
+    {
+      "url": "https://zero-one-beacon.vercel.app/relay?op=quote&member=0x321D04C0ED837304F90162e55e76317378038fF2&template=Payment&params=%7B%22recipients%22%3A+%5B%220x321D04C0ED837304F90162e55e76317378038fF2%22%5D%2C+%22amounts%22%3A+%5B%221000000%22%5D%7D&summary=mirror+rebuild+read+only+probe",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "application/json; charset=utf-8",
+      "challenge": false,
+      "headers": "quote.headers",
+      "sha256": "f3380566148768ec4fb7995d539c1c983670cf4d8a2aa7fe743edacc6622257e",
+      "ok": true
+    },
+    {
+      "url": "https://relay-zero.mkyang.ai/README.txt",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "challenge": false,
+      "headers": "canonical-after.headers",
+      "sha256": "f5f7862dba054af6fbb94e9af371ca4317e11b7d48f992c99d318eaf92ae2bff",
+      "ok": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/06a0bf010480dbbab2cca58892dc5a1ee1a95ff7/docs/CONSTITUTION.md",
+      "status": 200,
+      "expectedStatus": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "challenge": false,
+      "headers": "published-constitution.headers",
+      "sha256": "2c327b75eb7433179a48e6cf44ceef6b25462827d95e39811b4ddd67681598cb",
+      "ok": true
+    }
+  ],
+  "readmeOriginOnlyDiff": true,
+  "servedMatchesBuild": true,
+  "passed": 17,
+  "total": 18
+}

@@ -1,0 +1,19 @@
+HTTP/2 200 
+accept-ranges: bytes
+access-control-allow-origin: *
+age: 0
+cache-control: public, max-age=0, must-revalidate
+content-disposition: inline; filename="CONSTITUTION.md"
+content-security-policy: default-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+content-type: text/markdown; charset=utf-8
+date: Fri, 11 Sep 2026 08:10:32 GMT
+etag: "97c015da18ca07d0834ce6cc6566488f"
+last-modified: Fri, 11 Sep 2026 08:10:32 GMT
+referrer-policy: no-referrer
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-vercel-cache: MISS
+x-vercel-id: sfo1::vjnfq-1789114232415-5d84e085945d
+content-length: 4475
+

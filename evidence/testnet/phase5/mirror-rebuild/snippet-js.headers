@@ -1,0 +1,19 @@
+HTTP/2 200 
+accept-ranges: bytes
+access-control-allow-origin: *
+age: 0
+cache-control: public, max-age=0, must-revalidate
+content-disposition: inline; filename="snippet.js"
+content-security-policy: default-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+content-type: application/javascript; charset=utf-8
+date: Fri, 11 Sep 2026 08:10:31 GMT
+etag: "42214af46467186bd698a25ea631faa6"
+last-modified: Fri, 11 Sep 2026 08:10:31 GMT
+referrer-policy: no-referrer
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-vercel-cache: MISS
+x-vercel-id: sfo1::vjnfq-1789114231422-ff1eb1069605
+content-length: 11034
+

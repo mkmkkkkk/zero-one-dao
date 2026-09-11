@@ -1,0 +1,15 @@
+
+> zero-one-dao@0.1.0 beacon:build
+> tsx beacon/scripts/build.ts --deployment deployments/base-sepolia.json --origin https://zero-one-beacon.vercel.app --mirror https://relay-zero.mkyang.ai --out beacon/public-mirror-rebuild
+
+[index] scan 46672670..46672912 rows=16
+{
+  "out": "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-mirror-rebuild",
+  "origin": "https://zero-one-beacon.vercel.app",
+  "mirror": "https://relay-zero.mkyang.ai",
+  "block": "46672912",
+  "members": 4,
+  "proposals": 4,
+  "tasks": 0
+}
+

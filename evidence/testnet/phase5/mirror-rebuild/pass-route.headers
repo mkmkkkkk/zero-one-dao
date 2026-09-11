@@ -1,0 +1,17 @@
+HTTP/2 404 
+access-control-allow-origin: *
+cache-control: no-store, private
+cf-cache-status: DYNAMIC
+cf-ray: a39532cd6cb3b231-SJC
+content-security-policy: default-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+content-type: application/json; charset=utf-8
+date: Fri, 11 Sep 2026 08:10:52 GMT
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+referrer-policy: no-referrer
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=TRx8n5%2BOOOEwLIGV5k5SPlic2JE2j6d36Yr%2FSUDJoLh5hyYOSlYEHs0qAeglaan1XnkTTZDqxR2FmupbfRcBgGekF71Ju2U%2FHqrWiS4LVY7YG39AlfWPoDJiqu6uHsbZbHfMcDorbg%3D%3D"}]}
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-vercel-cache: MISS
+x-vercel-id: sfo1::vwhmm-1789114252370-aeac67d3dd9b
+

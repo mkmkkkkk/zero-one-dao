@@ -1,0 +1,19 @@
+HTTP/2 200 
+accept-ranges: bytes
+access-control-allow-origin: *
+age: 0
+cache-control: public, max-age=0, must-revalidate
+content-disposition: inline; filename="robots.txt"
+content-security-policy: default-src 'none'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+content-type: text/plain; charset=utf-8
+date: Fri, 11 Sep 2026 08:10:33 GMT
+etag: "5e0bd1c281a62a380d7a948085bfe2d1"
+last-modified: Fri, 11 Sep 2026 08:10:33 GMT
+referrer-policy: no-referrer
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-vercel-cache: MISS
+x-vercel-id: sfo1::xmln2-1789114232996-3ca1002be61d
+content-length: 23
+
