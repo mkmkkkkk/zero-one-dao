@@ -697,3 +697,18 @@ transactions on the shipped token (was 24,778,573), which moves the 0.5 gwei req
 `npm run test:deploy-refusals` passes against the new figure, and docs/MAINNET_PLAN.md and docs/PARAMETERS.md now quote it.
 The lifecycle section is complete again: the member's exit appends its own record, `settleRetention` consumes it (57,815
 gas), and only then does `exitedSince` answer and Baal record the retention verdict on proposal #7 (`passed=false`).
+
+## 2026-09-11 the fork confirms the guarantee, and the testnet funding is settled
+The repaired rehearsal measures the shipped accounting on a fork of Base rather than on the mirror, and it confirms the one
+property the whole design rests on: an exit with a clean window and an exit taken while 128 records sit unsettled are the
+same transaction and cost the same gas, 278,399. An exit does not pay for the journal behind it, now shown against real
+chain state. Settling costs 8,378 per record, within one and a half percent of the mirror's figure.
+The deposit and exit numbers come out about ten percent above the mirror's, and the agent stated the discrepancy instead of
+quietly restating the old claim. The explanation fits: the fork moves real USDC through its proxy while the mirror moves a
+mock token, and the only number that touches no token is the one that agrees. The fork numbers are the mainnet-relevant
+ones and the documents now quote them. Deployment is 24,754,842 gas, and the funding gate follows that file down.
+Testnet funding: the deployer holds 0.0232 ETH and the gate passes on its floor. The 0.03 I asked for was unreachable from
+funds this project controls, which the agent established by enumerating all 39 owned keys on both chains, bridging what
+existed and sweeping 29 finished scenario keys, deliberately leaving the live relay sponsor funded. Every public faucet now
+requires a browser and a human. Nothing is blocked by this: a Sepolia deployment costs a ten-thousandth of what the
+deployer holds, and the floor exists to protect a mainnet run, not to be topped up for its own sake.
