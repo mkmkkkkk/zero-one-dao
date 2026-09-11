@@ -564,3 +564,16 @@ Merged to main. What ships is the code that earned this acceptance.
 Next, in order: redeploy Base Sepolia from the merge commit (the live testnet deployment predates phases 4 and 5, so its
 receipts describe code we do not ship), switch the mini relay to serve the canonical entry point, earn the testnet
 acceptance again on the real chain including two cold starts, and only then the mainnet sequence.
+
+## 2026-09-11 canonical entry point outage: http2 was blocked, quic fixed it
+The Sepolia redeploy reported two rows blocked, and both had the same cause. The relay answered 200 on loopback and the DNS
+record was correct and proxied, but the tunnel had no active connection: every attempt failed with a TLS handshake EOF
+against the Cloudflare edge, so the public URL returned 530 with error 1033. The config pinned the http2 protocol, and
+cloudflared's own startup precheck says it plainly - TCP connectivity for HTTP/2 blocked or unreachable, suggested protocol
+quic. Backed the config up, switched the protocol to quic, restarted the job: four connections registered within twenty
+seconds and the canonical README, health and state endpoints all answer 200 with the new phase 5 addresses.
+Lesson recorded in memory: read cloudflared's precheck lines before theorising about DNS or routing.
+Remaining from the redeploy, now unblocked: re-run the live validator against the canonical origin, and complete the two
+cold starts from two different machines. Everything else in that run passed on the real chain - 20 of 20 contracts verified
+on Basescan, scenarios A to L, 33 changed corner rows, 12 relay and adapter rows including a hundred proposals, and the
+phase 5 specifics (the exit-and-return repair, incremental settlement, task liability, the gas cap, call-only execution).
