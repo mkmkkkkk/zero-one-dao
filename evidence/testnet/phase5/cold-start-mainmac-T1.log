@@ -1,0 +1,252 @@
+host: Michaels-MacBook-Air-652.local (MacBook Air; the second machine, distinct from Michaels-Mac-mini.local)
+mode: T1 (own key), snippet.js fetched from the canonical origin, Node v22.16.0
+work dir: <scratchpad>/coldstart-T1; the key file never left it and is not committed
+the only input to this run was the URL https://relay-zero.mkyang.ai/README.txt
+
+$ curl -sS -D - -o README.txt https://relay-zero.mkyang.ai/README.txt
+HTTP/2 200 
+date: Fri, 11 Sep 2026 07:16:33 GMT
+content-type: text/plain; charset=utf-8
+sha256(README.txt) = bc967641393382b873bd689b776a15c1043f6f446ec3f008da82d666a6aaafb5   lines = 44
+
+$ curl -sS -o snippet.js https://relay-zero.mkyang.ai/snippet.js
+sha256(snippet.js) = abf0b7ccc385c446e5c35b04eaec2803b732e1c27cda9240ff67263457fb910e
+$ node snippet.js selftest
+JavaScript keccak and curve vectors PASS
+$ node snippet.js address --key agent.key      # the snippet created the key file itself, mode 600
+0x4779761cd799fc08ef7db1f4d1e731e5bcb212fc
+
+--- /me BEFORE anything (fresh address) ---
+{
+ "address": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": false,
+ "nonce": "0",
+ "authorizationNonce": 0,
+ "chainTime": 1789111036,
+ "custody": "self-custody",
+ "shares": "0",
+ "sharesFormatted": "0",
+ "percent": "0.0000",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "150000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "0",
+ "usdc": "0",
+ "usdcFormatted": "0",
+ "spendable": "0",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:17:21.176Z",
+ "blockNumber": "46671374"
+}
+myProposals: []  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 0  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+$ node snippet.js join --key agent.key      then GET the printed URL
+{
+  "ok": true,
+  "verb": "join",
+  "address": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+  "delegated": true,
+  "hash": "0x8cf6ab4e841c16c18a16ae44b5b41d5cb5b442ed9945b97e46de6c23021f0bea",
+  "blockNumber": "46671399",
+  "nonce": "0",
+  "shares": "0",
+  "note": "mints nothing; deposit at NAV or earn shares by verified work"
+}
+
+
+$ node snippet.js deposit --key agent.key --usdc 25      then GET the printed URL
+# note: this address held 0 USDC; the relay faucet topped it up, which the README does not mention
+{
+  "ok": true,
+  "verb": "deposit",
+  "op": 5,
+  "member": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+  "hash": "0xcd42dfc88bd1b5ff8a1a2eea1f25f5f097ec7619c9a498b801ec4cee8335494d",
+  "blockNumber": "46671415",
+  "gasUsed": "291125",
+  "nonceUsed": "0",
+  "nextNonce": "1",
+  "deposit": {
+    "usdc": "25",
+    "sharesMinted": "25"
+  },
+  "faucet": {
+    "toppedUpUsdc": "25",
+    "hash": "0xdc2ee2df9391a1975e3142d270f0a926457ee4838d03defb8bbcffd530c94531"
+  }
+}
+
+
+--- /me AFTER deposit ---
+{
+ "address": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": true,
+ "nonce": "1",
+ "authorizationNonce": 1,
+ "chainTime": 1789111134,
+ "custody": "self-custody",
+ "shares": "25000000000000000000",
+ "sharesFormatted": "25",
+ "percent": "14.2857",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "175000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "25",
+ "usdc": "0",
+ "usdcFormatted": "0",
+ "spendable": "25000000000000000000",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:18:58.953Z",
+ "blockNumber": "46671423"
+}
+myProposals: []  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 25000000000000000000  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+$ node snippet.js propose --key agent.key --template Payment \
+      --params {"recipients":["0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC"],"amounts":["1000000"]} \
+      --summary "cold start T1 from a second machine: pay 1 USDC to the joining agent"
+  quote echoed by the snippet on stderr before signing:
+{"instance":"0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2","exists":false,"codeHash":"0x7f8f7eef9e1e195438419911d1ca4acdc8bf1cee7852cadfcff687dbefe66372","paramsHash":"0x63b79993d76bc78cfd6ad80d6eba208c50f5f9e609797b6a06e5242d287805f5","operator":"0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC","budgetUsdc":"1","canPropose":true}
+{
+  "ok": true,
+  "verb": "propose",
+  "op": 0,
+  "member": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+  "hash": "0xfa3df3f417db405efa65dabf579e6d0cba279ee3baa0192b88a01afd61bc4d6e",
+  "blockNumber": "46671447",
+  "gasUsed": "356847",
+  "nonceUsed": "1",
+  "nextNonce": "2",
+  "proposalId": 3,
+  "sponsored": true,
+  "instance": "0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2",
+  "template": "Payment",
+  "codeHash": "0x7f8f7eef9e1e195438419911d1ca4acdc8bf1cee7852cadfcff687dbefe66372",
+  "deployHash": "0x8b228e7c032c7ddc20f7281c4bc6b92c4990b4616871a4dea062f5cb78f67a52",
+  "deployedBy": "relay sponsor"
+}
+
+
+$ node snippet.js vote --key agent.key --proposal 3 --approve yes
+{
+  "ok": true,
+  "verb": "vote",
+  "op": 2,
+  "member": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+  "hash": "0x54d64478ffd6ded92a342d341ee3251e27c72eafdc0a1532f45a0ad1b16c5077",
+  "blockNumber": "46671459",
+  "gasUsed": "140263",
+  "nonceUsed": "2",
+  "nextNonce": "3",
+  "waitedBlocks": 0,
+  "vote": {
+    "proposalId": 3,
+    "approved": true,
+    "shares": "25"
+  }
+}
+
+
+--- /me BEFORE ragequit ---
+{
+ "address": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": true,
+ "nonce": "3",
+ "authorizationNonce": 1,
+ "chainTime": 1789111222,
+ "custody": "self-custody",
+ "shares": "25000000000000000000",
+ "sharesFormatted": "25",
+ "percent": "14.2857",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "175000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "25",
+ "usdc": "0",
+ "usdcFormatted": "0",
+ "spendable": "25000000000000000000",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:20:25.988Z",
+ "blockNumber": "46671467"
+}
+myProposals: [3]  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  proposal 3: state=Voting myVote=yes yesShares=25 noShares=0 votingEnds=1789132782 graceEnds=1789154382 canVote=False canExecute=False
+    treasuryEffect: 1 USDC leaves the Safe; Payment contract 0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2 (budget 1 USDC, operator 0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 25000000000000000000  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+$ node snippet.js ragequit --key agent.key --amount 10000000000000000000      # 10 of 25 shares
+{
+  "ok": true,
+  "verb": "ragequit",
+  "op": 4,
+  "member": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+  "hash": "0xe8976bb15e195ce40a098127c1cd2d0421a55de2c1fbeb053f34b3d34f55a5d6",
+  "blockNumber": "46671498",
+  "gasUsed": "307633",
+  "nonceUsed": "3",
+  "nextNonce": "4",
+  "ragequit": {
+    "sharesBurned": "10"
+  }
+}
+
+
+--- /me AFTER ragequit ---
+{
+ "address": "0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": true,
+ "nonce": "4",
+ "authorizationNonce": 1,
+ "chainTime": 1789111300,
+ "custody": "self-custody",
+ "shares": "15000000000000000000",
+ "sharesFormatted": "15",
+ "percent": "9.0909",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "165000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "15",
+ "usdc": "10000000",
+ "usdcFormatted": "10",
+ "spendable": "15000000000000000000",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:21:46.172Z",
+ "blockNumber": "46671506"
+}
+myProposals: [3]  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  proposal 3: state=Voting myVote=yes yesShares=25 noShares=0 votingEnds=1789132782 graceEnds=1789154382 canVote=False canExecute=False
+    treasuryEffect: 1 USDC leaves the Safe; Payment contract 0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2 (budget 1 USDC, operator 0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 15000000000000000000  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']

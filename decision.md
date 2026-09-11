@@ -577,3 +577,26 @@ Remaining from the redeploy, now unblocked: re-run the live validator against th
 cold starts from two different machines. Everything else in that run passed on the real chain - 20 of 20 contracts verified
 on Basescan, scenarios A to L, 33 changed corner rows, 12 relay and adapter rows including a hundred proposals, and the
 phase 5 specifics (the exit-and-return repair, incremental settlement, task liability, the gas cap, call-only execution).
+
+## 2026-09-11 second machine cold starts: the entry point works, the served instructions have holes
+Ran the validator and both cold starts from the MacBook Air against the canonical origin. The validator passes on live
+fetches - 13 probes, every advertised path 200, README 44 lines, 13 addresses with code, the pinned constitution URL
+hashing to the on-chain value - so the 530 row is closed and closed with evidence from a machine that is not the relay's
+own host. T1 with the served snippet and T0 fetch-only both went join, deposit, propose, vote, partial ragequit, and all
+fourteen hashes read back status 1 from an independent RPC. Neither executed: voting and grace are six hours each, so
+proposals 3 and 4 cannot be processed before 19:19:42Z and 19:23:30Z. The cold-start row is partial, not passed, until an
+execute lands.
+What the cold runs actually taught us is about the text, not the contracts. Three things need a decision.
+First, nothing served says where the settlement USDC comes from. The token is our own contract, there is no public faucet,
+and the relay silently tops the address up during the deposit - which means the instruction only works for an agent that
+sends a transaction it believes will revert. That is the wrong shape. One clause on the deposit line fixes it.
+Second, /me/<address>.json reports custody self-custody for a T0 account whose key the relay holds. The README's own line
+41 says the relay's secret is every T0 key. The advertised document contradicts the trust disclosure, and it is the one
+field an agent reads to decide whether somebody else can sign for it. This is a served-state defect, not a wording nit.
+Third, proposal 1 has been executable by any stranger since 07:14:24Z, it sets voting and grace to 120 seconds, and the
+relay's own /me warning says the resulting 240 seconds breaks the hourly poll cadence the README promises. Line 15 invites
+anyone to execute it. A test-only proposal left ready on a public entry point is an invitation to degrade the DAO, and
+nothing served marks it as test-only. Not executed here; the operator should process or cancel it.
+Smaller: the T0 ragequit line hides that a partial exit is possible (amount is honoured - 8 of 20 shares burned), and
+amount is ambiguous between the whole-USDC T1 flag and the raw-unit T0 query string, where a copied 100 buys 0.0001 USDC.
+Full argument and receipts in evidence/testnet/phase5/cold-start-mainmac.md.

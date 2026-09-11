@@ -1,6 +1,8 @@
 # Phase 5 Base Sepolia rehearsal
 
-Status: **BLOCKED; full acceptance is not earned**. Historical phase 3 receipts are not used as phase 5 proof.
+Status: **PARTIAL; full acceptance is not earned**. Historical phase 3 receipts are not used as phase 5 proof.
+The delivery-time canonical outage is resolved and re-verified from a second machine on 2026-09-11; the cold starts are
+no longer blocked but are still incomplete, because no proposal has been executed. See "Second machine, 2026-09-11" below.
 
 Measured delivery status:
 
@@ -9,12 +11,12 @@ Measured delivery status:
 | Fresh phase 5 stack + genesis; archive old stack | PASS | `deploy.log`, new deployment record, `source-and-archive-integrity.json` |
 | Canonical deployed addresses verified on Basescan | 20/20 | `verification-result.json` |
 | New relay state + canonical build + Vercel rebuild | Configured; mirror READY | `service-readback.json`, `vercel-deploy-ledger.log` |
-| Canonical public README and live validator | BLOCKED at delivery: 530 / 1033 | Earlier 200 and 13-fetch PASS retained; `canonical-final-*`, `validate-canonical-recheck.log` show current failure |
+| Canonical public README and live validator | PASS (2026-09-11, re-verified from a second machine) | `validate-canonical-mainmac.log`: `result PASS`, 13 live fetches all 200, README 44 lines, 13 addresses with code, pinned constitution hash matched. The delivery-time 530 / 1033 in `canonical-final-*` and `validate-canonical-recheck.log` is retained as the record of a tunnel protocol pin since fixed |
 | Native A–L | 12/12 PASS | `scenarios-summary.json`, logs on each row |
 | Changed contract corner rows | 33/33 PASS | `contract-corners-combined.json` |
 | Phase 5 deficit/return, settlement, task liability, gas cap, call-only execution | PASS | `phase5-contract-corners-rerun.log`; L adds budget NAV and settled gates |
 | Relay/adapter corners and 100 proposals | 12/12 PASS | `relay-corners-combined.json`, 100 distinct proposal receipts |
-| Two full cold starts from two machines | BLOCKED | Mini T1 partial; real governance wait; second-machine identity/result unknown |
+| Two full cold starts from two machines | PARTIAL: two machines, three runs, none executed | Second machine is `Michaels-MacBook-Air-652.local`: T1 and T0 both ran join, deposit, propose, vote and a partial ragequit from the served README alone, 14 transactions all `status=0x1` on independent RPC readback (`cold-start-mainmac.md`, `cold-start-mainmac-T1.log`, `cold-start-mainmac-T0.log`, `cold-start-mainmac-receipts.txt`). No run reached `execute`: voting 21600 s + grace 21600 s puts proposals 3 and 4 at 2026-09-11T19:19:42Z / 19:23:30Z, and the mini's proposal 2 at 07:28:22Z. Six findings recorded, two of which would stop or mislead a real agent |
 
 Actual summary output (`native-summary.log`):
 
@@ -83,9 +85,54 @@ node relay/cold-start-readme.mjs --mode T1 --beacon https://relay-zero.mkyang.ai
 
 The resumed task proposal has its own real voting/grace wait; rerun with the same private work directory until it reports a full pass. Restore 21600 s / 21600 s by a final voted Config only after both full cold starts finish.
 
-The second machine remains **blocked**: known SSH endpoints either timed out or refused authentication. `second-machine-access.json` records the actual attempts; second-machine identity and cold-start result are **unknown**. Computer Use also refused Terminal access on safety grounds; that restriction was not bypassed, and the UI lock was released. A working authorized second-machine SSH target is still required. The second machine must start a new T0 path from the served README/snippet, not copy the mini's pass or private state.
+The second machine is no longer blocked. On 2026-09-11 the cold starts ran on `Michaels-MacBook-Air-652.local` directly, from that machine's own session rather than over SSH, so the SSH search recorded in `second-machine-access.json` is superseded rather than resolved: those endpoints were never the second machine. That run did not copy the mini's pass or private state; it fetched the served README and snippet fresh and generated its own key and its own T0 pass. Details in the next section.
 
 No mainnet transaction, paid account, card binding, marketing or push is part of this rehearsal. Keys, environment files and relay/agent state are excluded from the delivery commit.
+
+## Second machine, 2026-09-11
+
+Host `Michaels-MacBook-Air-652.local`, against the canonical origin after the tunnel protocol pin was fixed.
+Full write-up and findings in `cold-start-mainmac.md`.
+
+- Canonical origin: `https://relay-zero.mkyang.ai/README.txt` answers HTTP/2 200, 6708 bytes, 44 lines,
+  `sha256 bc967641393382b873bd689b776a15c1043f6f446ec3f008da82d666a6aaafb5` — the same bytes the mini recorded.
+- `validate-canonical-mainmac.log`: `result PASS`, `fetched: 13`, exit_code 0. Every path the README advertises
+  answered 200 with an acceptable content type; the pinned GitHub constitution URL hashes to the on-chain
+  `0xebc7c3…2d9a`. No advertised path misbehaved, so the row above is a pass on live fetches, not on a local build.
+- T1 cold start, address `0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC`, key generated by the served snippet:
+  join `0x8cf6ab4e…`, deposit 25 USDC `0xcd42dfc8…` (25 shares), propose Payment as proposal 3 `0xfa3df3f4…`,
+  vote yes `0x54d64478…`, ragequit 10 of 25 shares `0xe8976bb1…`. Shares 0 -> 25 -> 15; exit value 25 -> 15 USDC.
+- T0 cold start, fetch only, address `0x321D04C0ED837304F90162e55e76317378038fF2` derived by the relay from a
+  fresh `openssl rand -hex 32` pass that is not recorded in this repository: join `0xb11aef5d…`, deposit
+  `amount=20000000` `0x06406146…` (20 shares), propose Payment as proposal 4 `0x58cca3fb…`, vote yes
+  `0xccaf88aa…`, ragequit 8 of 20 shares `0xe3627e08…`. Shares 0 -> 20 -> 12.
+- All 14 transaction hashes from both runs, the two relay faucet top-ups and the two sponsor-deployed Payment
+  instances included, were read back with `eth_getTransactionReceipt` from `https://sepolia.base.org` and are
+  `status=0x1`: `cold-start-mainmac-receipts.txt`. The relay's own JSON is not the evidence for any of them.
+- Neither run executed a proposal, and no clock was advanced. Governance was 21600 s / 21600 s throughout.
+  Proposal 3 is executable no earlier than 2026-09-11T19:19:42Z and proposal 4 no earlier than 19:23:30Z;
+  the mini's proposal 2 entered grace and is executable after 07:28:22Z. Until one of them is processed, the
+  acceptance row stays partial: three cold starts have proved join, deposit, propose, vote and exit, and none
+  has yet proved execute.
+
+What the served instructions got wrong, found by running them cold (full argument in `cold-start-mainmac.md`):
+
+1. Nothing served says how to obtain the settlement USDC that `deposit` requires. The token is the DAO's own
+   contract, there is no public faucet for it, and the relay in fact tops the address up unasked — but only
+   after a deposit the agent has every reason to believe will revert. A careful agent stops here.
+2. `/me/<address>.json`, the only `/me` path the README advertises, reports `custody: "self-custody"` for a T0
+   account whose key the relay derives and holds. `/relay` responses and the unadvertised `/me/pass/<hash>.json`
+   both say `custodial-lite`. The advertised document contradicts the README's own trust disclosure on line 41.
+3. Proposal 1 (Config, 120 s / 120 s) has been `Ready` since 2026-09-11T07:14:24Z, and line 15 tells any
+   stranger that execute is open to anyone after grace. The relay's own `/me` warning says the resulting 240 s
+   total breaks the hourly poll cadence line 39 promises (ECO-04). The served text currently invites a new
+   agent to degrade the DAO. It was not executed here.
+4. The T0 line spells `op=ragequit` with no parameters, so a T0 agent reads exits as all-or-nothing. `amount`
+   is accepted and honoured; 8 of 20 shares were burned that way.
+5. `amount` is ambiguous between the whole-USDC T1 flag on line 30 and the raw-unit T0 query string on line 35.
+   Copying the visible `100` into the T0 form deposits 0.0001 USDC in a mined transaction.
+6. Smaller gaps: the README never says the snippet creates the key file; `/me/pass/<hash>.json` is unadvertised;
+   line 37's "my votes" is delivered as `myVote` inside each open proposal.
 
 ## Delivery checks and cleanup
 

@@ -1,0 +1,255 @@
+host: Michaels-MacBook-Air-652.local (MacBook Air; the second machine)
+mode: T0 (fetch only, custodial-lite). No key file, no snippet, no repository source: curl against the relay only.
+pass: 64 hex chars from 'openssl rand -hex 32' as the README instructs; the value is NOT recorded here
+     and never left <scratchpad>/coldstart-T0/pass.txt (mode 600). It is shown below as <PASS>.
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=identity&pass=<PASS>"
+{
+  "ok": true,
+  "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "chainId": 84532,
+  "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+  "delegated": false,
+  "nonce": "0",
+  "authorizationNonce": 0,
+  "chainTime": 1789111322,
+  "domain": {
+    "name": "ZeroOneIntent",
+    "version": "1",
+    "chainId": 84532,
+    "verifyingContract": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8"
+  },
+  "custody": "custodial-lite",
+  "me": "/me/pass/fec45a6c1762e89554af6ac88d50c610e9925ec36bff5117dcd0c91b0800c848.json"
+}
+
+
+--- /me BEFORE anything (the address the relay derived) ---
+{
+ "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": false,
+ "nonce": "0",
+ "authorizationNonce": 0,
+ "chainTime": 1789111336,
+ "custody": "self-custody",
+ "shares": "0",
+ "sharesFormatted": "0",
+ "percent": "0.0000",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "165000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "0",
+ "usdc": "0",
+ "usdcFormatted": "0",
+ "spendable": "0",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:22:20.897Z",
+ "blockNumber": "46671524"
+}
+myProposals: []  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  proposal 3: state=Voting myVote=None yesShares=25 noShares=0 votingEnds=1789132782 graceEnds=1789154382 canVote=True canExecute=False
+    treasuryEffect: 1 USDC leaves the Safe; Payment contract 0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2 (budget 1 USDC, operator 0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 0  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=join&pass=<PASS>"
+{
+  "ok": true,
+  "verb": "join",
+  "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "delegated": true,
+  "hash": "0xb11aef5d9b56a784ac72be26a276c1afaa83d2996bebc1b37ad51045453925ea",
+  "blockNumber": "46671531",
+  "nonce": "0",
+  "shares": "0",
+  "note": "mints nothing; deposit at NAV or earn shares by verified work"
+}
+
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=deposit&amount=20000000&pass=<PASS>"
+# amount is USDC raw units (README line 10). This address held 0 USDC; the relay faucet topped it up.
+{
+  "ok": true,
+  "verb": "deposit",
+  "op": 5,
+  "member": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "hash": "0x064061465a9ae5fbd1e8b0274531caf951e836604e7e9058f57c528fc51c668d",
+  "blockNumber": "46671547",
+  "gasUsed": "291113",
+  "nonceUsed": "0",
+  "nextNonce": "1",
+  "deposit": {
+    "usdc": "20",
+    "sharesMinted": "20"
+  },
+  "faucet": {
+    "toppedUpUsdc": "20",
+    "hash": "0xfcd8f9bf780249ce62ebaeded734b4abf06bba29a16694e0cc4457a4066e526d"
+  },
+  "custody": "custodial-lite",
+  "me": "/me/pass/fec45a6c1762e89554af6ac88d50c610e9925ec36bff5117dcd0c91b0800c848.json"
+}
+
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=propose&template=Payment&params=<urlencoded {recipients:[self],amounts:[2000000]}>&summary=...&pass=<PASS>"
+{
+  "ok": true,
+  "verb": "propose",
+  "op": 0,
+  "member": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "hash": "0x58cca3fbc28c631075c56d13b8bab5d595c5d71d7eb48c0b95e55f735d88c3a6",
+  "blockNumber": "46671561",
+  "gasUsed": "356168",
+  "nonceUsed": "1",
+  "nextNonce": "2",
+  "proposalId": 4,
+  "sponsored": true,
+  "instance": "0xDEa296F8cC4FBDBcC7150017C30d432BdB9Ddb27",
+  "template": "Payment",
+  "codeHash": "0x15f15e2c1e62077d7ad0953c2243f019db95f4c9f91d359cbe81a03314f65cef",
+  "deployHash": "0x23e5ab29d4a681ef10a212356fc513b42684b7b04b46fc7ed6352453ca76c86b",
+  "deployedBy": "relay sponsor",
+  "paramsHash": "0x2cc577fa65aab6b1fda3f4ca8f27e70419bcfb9916435741b53d42dc0159c0e7",
+  "operator": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "budgetUsdc": "2",
+  "salt": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "custody": "custodial-lite",
+  "me": "/me/pass/fec45a6c1762e89554af6ac88d50c610e9925ec36bff5117dcd0c91b0800c848.json"
+}
+
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=vote&proposalId=4&approve=yes&pass=<PASS>"
+{
+  "ok": true,
+  "verb": "vote",
+  "op": 2,
+  "member": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "hash": "0xccaf88aa46025ab4a2241f3db5aee82f632726a83b34a36fef5d9a7a661cd621",
+  "blockNumber": "46671572",
+  "gasUsed": "140263",
+  "nonceUsed": "2",
+  "nextNonce": "3",
+  "waitedBlocks": 0,
+  "vote": {
+    "proposalId": 4,
+    "approved": true,
+    "shares": "20"
+  },
+  "custody": "custodial-lite",
+  "me": "/me/pass/fec45a6c1762e89554af6ac88d50c610e9925ec36bff5117dcd0c91b0800c848.json"
+}
+
+
+--- /me BEFORE ragequit ---
+{
+ "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": true,
+ "nonce": "3",
+ "authorizationNonce": 1,
+ "chainTime": 1789111446,
+ "custody": "self-custody",
+ "shares": "20000000000000000000",
+ "sharesFormatted": "20",
+ "percent": "10.8108",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "185000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "20",
+ "usdc": "0",
+ "usdcFormatted": "0",
+ "spendable": "20000000000000000000",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:24:11.103Z",
+ "blockNumber": "46671579"
+}
+myProposals: [4]  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  proposal 3: state=Voting myVote=None yesShares=25 noShares=0 votingEnds=1789132782 graceEnds=1789154382 canVote=True canExecute=False
+    treasuryEffect: 1 USDC leaves the Safe; Payment contract 0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2 (budget 1 USDC, operator 0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC)
+  proposal 4: state=Voting myVote=yes yesShares=20 noShares=0 votingEnds=1789133010 graceEnds=1789154610 canVote=False canExecute=False
+    treasuryEffect: 2 USDC leaves the Safe; Payment contract 0xDEa296F8cC4FBDBcC7150017C30d432BdB9Ddb27 (budget 2 USDC, operator 0x321D04C0ED837304F90162e55e76317378038fF2)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 20000000000000000000  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+$ curl -sS "https://relay-zero.mkyang.ai/relay?op=ragequit&amount=8000000000000000000&pass=<PASS>"
+# the README T0 line spells this op with no amount; the amount parameter is accepted and honoured
+{
+  "ok": true,
+  "verb": "ragequit",
+  "op": 4,
+  "member": "0x321D04C0ED837304F90162e55e76317378038fF2",
+  "hash": "0xe3627e0827082c80bf2b4d3e2761b0ec469cbed7a6f6c4ba14933079c9a9e3aa",
+  "blockNumber": "46671589",
+  "gasUsed": "290533",
+  "nonceUsed": "3",
+  "nextNonce": "4",
+  "ragequit": {
+    "sharesBurned": "8"
+  },
+  "custody": "custodial-lite",
+  "me": "/me/pass/fec45a6c1762e89554af6ac88d50c610e9925ec36bff5117dcd0c91b0800c848.json"
+}
+
+
+--- /me AFTER ragequit ---
+{
+ "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+ "chainId": 84532,
+ "adapter": "0xe1ff1C08fD1fecEF15a38D99B7536183080cf5F8",
+ "delegated": true,
+ "nonce": "4",
+ "authorizationNonce": 1,
+ "chainTime": 1789111484,
+ "custody": "self-custody",
+ "shares": "12000000000000000000",
+ "sharesFormatted": "12",
+ "percent": "6.7796",
+ "navUsdcPerShare": "1",
+ "settled": true,
+ "depositTreasury": "177000000",
+ "shareLiability": "0",
+ "exitValueUsdc": "12",
+ "usdc": "8000000",
+ "usdcFormatted": "8",
+ "spendable": "12000000000000000000",
+ "pollSeconds": 3600,
+ "polledAt": "2026-09-11T07:24:49.081Z",
+ "blockNumber": "46671598"
+}
+myProposals: [4]  myTasks: []
+  proposal 1: state=Ready myVote=None yesShares=50 noShares=0 votingEnds=1789089264 graceEnds=1789110864 canVote=False canExecute=True
+    treasuryEffect: Config contract 0xDa92dF4060e87861E3953Bd7764faEeE3A194Fc7 (budget 0 USDC, operator 0x71208DBf8DD681c5FC2998c8192B633677BFcc10); changes governance parameters; WARNING: 1 flag on this proposal (read flags[])
+  proposal 2: state=Grace myVote=None yesShares=100 noShares=0 votingEnds=1789090102 graceEnds=1789111702 canVote=False canExecute=False
+    treasuryEffect: 10 USDC leaves the Safe; Payment contract 0xEFbf20252740Bd1cEE711c073E6162d998be3Eb7 (budget 10 USDC, operator 0x79dA820E5c6aAeA179bC1FAb4de4302DD752cF96)
+  proposal 3: state=Voting myVote=None yesShares=25 noShares=0 votingEnds=1789132782 graceEnds=1789154382 canVote=True canExecute=False
+    treasuryEffect: 1 USDC leaves the Safe; Payment contract 0xC0162133094D72ea15b12D7F0CfE8665bd04bCB2 (budget 1 USDC, operator 0x4779761Cd799fc08Ef7Db1F4d1e731e5BcB212fC)
+  proposal 4: state=Voting myVote=yes yesShares=20 noShares=0 votingEnds=1789133010 graceEnds=1789154610 canVote=False canExecute=False
+    treasuryEffect: 2 USDC leaves the Safe; Payment contract 0xDEa296F8cC4FBDBcC7150017C30d432BdB9Ddb27 (budget 2 USDC, operator 0x321D04C0ED837304F90162e55e76317378038fF2)
+  warning: proposal 1 (Ready, grace ends 1789110864): config: voting + grace = 240 s is below the 3600 s poll cadence the README promises: a member polling hourly can miss the next proposal entirely, vote and exit included (ECO-04)
+ragequit.amountAll: 12000000000000000000  tokens: ['0x0dA8d8E3B63De048855D311431E8e1f7F3f7DD3a']
+
+--- /me/pass/<hash>.json, the view the relay names in its own responses (not advertised in the README) ---
+{
+ "address": "0x321D04C0ED837304F90162e55e76317378038fF2",
+ "custody": "custodial-lite",
+ "delegated": true,
+ "shares": "12000000000000000000",
+ "sharesFormatted": "12",
+ "exitValueUsdc": "12",
+ "usdc": "8000000",
+ "nonce": "4",
+ "blockNumber": "46671602"
+}
