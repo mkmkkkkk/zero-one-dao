@@ -15,8 +15,9 @@
  *   - the TreasuryLedger the TemplateFactory creates in its constructor, as the deposit NAV numerator:
  *     a voted Project keeps part of the treasury outside the Safe and inside the ledger;
  *   - DepositShaman pricing the WorkManager's Active task rewards as an unminted share liability;
- *   - Baal.ragequit under the per-epoch lot accounting, measured for a member holding lots from
- *     several proposals (the number decision.md phase 5 ruling 2 costs).
+ *   - what the shipped incremental-settlement accounting costs (decision.md 2026-09-11,
+ *     docs/RETENTION_MECHANISM.md): an exit with no settlement work outstanding, the same exit taken
+ *     while an open window still carries unsettled records, and the gas of settling one record.
  *
  * Receipts: evidence/phase5/base-fork/{e2e-base-fork.log, deploy-base-fork.json, measurements.json,
  * verification-base/}. Scenario K (real Uniswap v3) stays the separate `npm run scenario:K` rehearsal;
@@ -35,7 +36,8 @@ import { startBaseFork, fundForkUsdc, assertBaseFork } from "../src/baseFork.js"
 import { stopDevnet } from "../src/devnet.js";
 import { assertInvariant, connectDevnet, increaseTime, simulateSettled, writeAndWait } from "../src/onchain.js";
 import { BAAL_GAS_CAP, submitTemplateProposal, type SubmittedProposal, type Tranche } from "../src/proposals.js";
-import { BASE_USDC, DEFAULT_PARAMS, deployZeroOne, GENESIS_DEPOSIT, genesisDeposit, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
+import { settleRetention } from "../src/retention.js";
+import { BASE_USDC, GENESIS_DEPOSIT, SETTLEMENT_UNIT, UNIT, type ZeroOneDao } from "../src/zeroOne.js";
 import { runUniswapFork } from "../scenarios/K-uniswap-v3-fork.js";
 import { deployNetwork } from "./deploy-network.js";
 
@@ -54,6 +56,16 @@ const MEMBER_USDC = 50n * SETTLEMENT_UNIT;
 const PROJECT_BUDGET = 10n * SETTLEMENT_UNIT;
 /** Share reward of the task the DAO votes Active: the liability DepositShaman prices in. */
 const TASK_REWARD = 10n * UNIT;
+/**
+ * Journal records the settlement measurement leaves behind the open window's cursor, and the chunk it
+ * then settles them in: the 128-record default of `src/retention.ts`, which is also the chunk size the
+ * 5,000-record storm in evidence/phase5/incremental/economics.md measured its per-record cost with.
+ */
+const PENDING_RECORDS = 128;
+/** Shares each measured exit burns; the audit table's probe exit burns the same one share. */
+const PROBE_EXIT_SHARES = UNIT;
+/** What docs/RETENTION_MECHANISM.md's table claims, carried into the receipt next to what the fork measures. */
+const AUDIT_TABLE_CLAIM = { source: "evidence/phase5/incremental/economics.md", depositGas: 245_235, exitGas: 249_624, settleGasPerRecord: 8252.6258 };
 
 /** Bigints as decimal strings, for the measurement receipts. */
 const stringify = (value: unknown): string => JSON.stringify(value, (_k, v: unknown) => (typeof v === "bigint" ? v.toString() : v), 2);
@@ -310,8 +322,8 @@ async function main(): Promise<void> {
       const sent = await writeAndWait(context, (await simulateSettled<{ request: Record<string, unknown> }>(context, { address: dao.depositShaman, abi: depositAbi, functionName: "deposit", args: [amount] })).request);
       const minted = (await shares<bigint>("balanceOf", [context.account.address])) - before;
       assertInvariant(minted === expected, `${label}: minted ${minted} shares, expected ${expected}`);
-      console.log(`ASSERT ${label}: ${amount} USDC -> ${minted} shares at ledger NAV ${treasury} (Safe ${await usdc(dao.safe)}) with liability ${owed}; tx ${sent.hash}`);
-      return { minted, treasury, supply, owed, lots: await shares<bigint>("lotCount", [context.account.address]) };
+      console.log(`ASSERT ${label}: ${amount} USDC -> ${minted} shares at ledger NAV ${treasury} (Safe ${await usdc(dao.safe)}) with liability ${owed}; gas ${sent.receipt.gasUsed}; tx ${sent.hash}`);
+      return { minted, treasury, supply, owed, gasUsed: sent.receipt.gasUsed, journalLength: await shares<bigint>("journalLength") };
     };
 
     console.log("\n== Deposit priced by the TreasuryLedger and by the task liability");
@@ -334,23 +346,138 @@ async function main(): Promise<void> {
     assertInvariant((await work<bigint>("activeRewardShares")) === 0n && (await shaman<bigint>("shareLiability")) === 0n, "the liability is gone once the reward is minted");
     console.log(`ASSERT task #${taskId} Complete: ${TASK_REWARD} shares minted to the worker, liability back to 0`);
 
-    console.log("\n== Three more voted Payment rounds, each stamping a new retention epoch, each followed by a deposit");
+    console.log("\n== Three more voted Payment rounds, each followed by a deposit");
     const deposits = [first];
     for (const [index, amount] of [10n, 10n, 5n].entries()) {
       await payment(payee.account.address, SETTLEMENT_UNIT, `Payment 1 USDC (round ${index + 2})`);
       deposits.push(await deposit(member, amount * SETTLEMENT_UNIT, `deposit #${index + 2} (${amount} USDC)`));
     }
-    const lots = await shares<bigint>("lotCount", [member.account.address]);
     const memberShares = await shares<bigint>("balanceOf", [member.account.address]);
-    assertInvariant(lots === 4n, `the member holds ${lots} mint lots, one per proposal epoch it deposited in`);
-    console.log(`ASSERT the member holds ${memberShares} shares in ${lots} lots from ${lots} different proposal epochs (epoch now ${await shares<bigint>("epoch")})`);
+    const journalSoFar = await shares<bigint>("journalLength");
+    // One immutable record per nonzero mint or burn: the genesis mint, the four deposits, the task reward.
+    const expectedRecords = BigInt(deposits.length) + 2n;
+    assertInvariant(journalSoFar === expectedRecords, `the balance journal carries one record per mint so far (expected ${expectedRecords}, found ${journalSoFar})`);
+    console.log(`ASSERT the member holds ${memberShares} shares from ${deposits.length} deposits; the balance journal carries ${journalSoFar} immutable records`);
 
-    // ---------------------------------------------------------------- measurement 3: ragequit
-    console.log("\n== Retention: a proposal is sponsored, then the multi-lot member exits during its vote");
+    // ------------------------------------------- measurement 3: what the settlement accounting costs
+    console.log("\n== Retention: a proposal is sponsored, then the member exits during its vote");
     const open = await submitTemplateProposal(founder, dao, { template: "Payment", params: { recipients: [payee.account.address], amounts: [SETTLEMENT_UNIT] } }, "Payment 1 USDC (retention probe)");
-    const supplyAtStart = await shares<bigint>("supplyAtRegistration", [await shares<bigint>("registrationOf", [BigInt(open.id)])]);
     await increaseTime(founder, 2);
     await writeAndWait(founder, { address: dao.baal, abi: baalAbi, functionName: "submitVote", args: [open.id, true] });
+    // Sponsorship registered the window: its cursor is the journal end, so it is settled and empty and
+    // exitedSince answers with the end-of-timestamp supply the retention rule is measured against.
+    const atRegistration = await shares<readonly [bigint, bigint]>("exitedSince", [BigInt(open.id)]);
+    const supplyAtStart = atRegistration[1];
+    assertInvariant(atRegistration[0] === 0n && supplyAtStart === (await shares<bigint>("totalSupply")), `the registered window starts settled and empty: ${atRegistration[0]} exited of ${supplyAtStart} at votingStarts`);
+    console.log(`ASSERT proposal #${open.id} registered at supply ${supplyAtStart} with nothing exited and nothing pending`);
+
+    const rpc = async <T>(method: string, params: unknown[] = []): Promise<T> =>
+      (await publicClient.request({ method: method as never, params: params as never })) as T;
+    /**
+     * Gas limit for an exit: the estimate plus the 120,000 headroom `scenarios/lib.ts write()` uses.
+     * A block mined a second after the estimate turns the account and supply checkpoint overwrites
+     * into appends, and the estimate is then short of what the Safe's module call needs. The limit
+     * never changes the measurement: `receipt.gasUsed` is what the transaction actually consumed.
+     *
+     * Args:
+     *   context: The exiting member's signer context.
+     *   call: The ragequit call being sent.
+     *
+     * Returns:
+     *   The gas limit to send with.
+     */
+    const exitGasLimit = async (context: WriteContext, call: Record<string, unknown>): Promise<bigint> =>
+      (await publicClient.estimateContractGas({ ...call, account: context.account } as never)) + 120_000n;
+    /**
+     * Run `body` on the fork, then roll the chain back to exactly the state it started from.
+     *
+     * Args:
+     *   label: Line label for the rollback assertion.
+     *   body: The measurement; its writes are discarded.
+     *
+     * Returns:
+     *   Whatever `body` returned.
+     */
+    const isolate = async <T>(label: string, body: () => Promise<T>): Promise<T> => {
+      const snapshot = await rpc<Hex>("evm_snapshot");
+      const out = await body();
+      assertInvariant((await rpc<boolean>("evm_revert", [snapshot])) === true, `${label}: the fork rolled back to its pre-measurement state`);
+      return out;
+    };
+    /**
+     * One partial exit of PROBE_EXIT_SHARES by the member, asserted pro-rata.
+     *
+     * Args:
+     *   label: Line label for the assertion.
+     *
+     * Returns:
+     *   The gas the ragequit transaction used, and the block it ran in.
+     */
+    const probeExit = async (label: string): Promise<{ gasUsed: bigint; hash: Hex; blockNumber: bigint }> => {
+      // Same checkpoint timestamp shape for every measured operation (the isolation t18 uses): a fresh
+      // second makes the account and supply checkpoint writes appends, never overwrites of this second.
+      await increaseTime(member, 2);
+      const supply = await shares<bigint>("totalSupply");
+      const safeUsdc = await usdc(dao.safe);
+      const walletBefore = await usdc(member.account.address);
+      const call = { address: dao.baal, abi: baalAbi, functionName: "ragequit", args: [member.account.address, PROBE_EXIT_SHARES, 0n, [BASE_USDC]] };
+      const sent = await writeAndWait(member, { ...(await simulateSettled<{ request: Record<string, unknown> }>(member, call)).request, gas: await exitGasLimit(member, call) });
+      const paid = (await usdc(member.account.address)) - walletBefore;
+      assertInvariant(paid === (PROBE_EXIT_SHARES * safeUsdc) / supply, `${label}: paid ${paid} = ${PROBE_EXIT_SHARES} shares x Safe ${safeUsdc} / supply ${supply}`);
+      console.log(`ASSERT ${label}: gas ${sent.receipt.gasUsed} in block ${sent.receipt.blockNumber} (burned ${PROBE_EXIT_SHARES} shares, paid ${paid} USDC, tx ${sent.hash})`);
+      return { gasUsed: sent.receipt.gasUsed, hash: sent.hash, blockNumber: sent.receipt.blockNumber };
+    };
+
+    // The three numbers the 2026-09-11 ruling asks this rehearsal for, measured on a fork of the real
+    // chain and isolated by anvil snapshots so the lifecycle below still runs on the unchanged state.
+    // Both exits are the same call from the same state; only settlements[#open] differs between them,
+    // which is the whole question: an exit does constant work and never scans the journal.
+    console.log("\n== Measurement 3: what the shipped settlement accounting costs (anvil-snapshot isolated)");
+    const settlementCost = await isolate("settlement cost measurement", async () => {
+      // The member spent all its USDC on the deposits above, and the audit table's probe exit pays into
+      // an account that already holds settlement; fund it so the payout is the same non-zero store.
+      await fundForkUsdc(devnet, member.account.address, SETTLEMENT_UNIT);
+      const writer = chain.contexts[6]!;
+      // Ten spare units so the measured deposit is never the one that empties the writer's USDC slot.
+      const funding = BigInt(PENDING_RECORDS) + 10n;
+      await fundForkUsdc(devnet, writer.account.address, funding);
+      await writeAndWait(writer, (await simulateSettled<{ request: Record<string, unknown> }>(writer, { address: BASE_USDC, abi: erc20Abi, functionName: "approve", args: [dao.depositShaman, funding] })).request);
+      // One smallest-unit deposit per record, the workload the storm measured: each nonzero mint appends
+      // exactly one immutable journal record, all of them behind the open window's cursor.
+      const journalBefore = await shares<bigint>("journalLength");
+      const depositCall = { address: dao.depositShaman, abi: depositAbi, functionName: "deposit", args: [1n], gas: 1_000_000n } as const;
+      // Record 1 opens the writer's balance and checkpoint array; the audit table's deposit row is an
+      // account that already holds shares, so the measured deposit is record 2, one clear second later.
+      await writeAndWait(writer, { ...depositCall });
+      await increaseTime(writer, 2);
+      const measured = await writeAndWait(writer, { ...depositCall });
+      const depositGas = measured.receipt.gasUsed;
+      const hashes: Hex[] = [];
+      for (let index = 2; index < PENDING_RECORDS; index += 1) {
+        hashes.push(await writer.walletClient.writeContract({ ...depositCall, account: writer.account, chain: writer.chain }));
+      }
+      await publicClient.waitForTransactionReceipt({ hash: hashes.at(-1)! });
+      const receipts = await Promise.all(hashes.map((hash) => publicClient.getTransactionReceipt({ hash })));
+      assertInvariant(receipts.every((receipt) => receipt.status === "success"), `all ${PENDING_RECORDS} record-appending deposits succeeded`);
+      const journalEnd = await shares<bigint>("journalLength");
+      assertInvariant(journalEnd - journalBefore === BigInt(PENDING_RECORDS), `those deposits appended exactly ${PENDING_RECORDS} journal records (got ${journalEnd - journalBefore})`);
+      const pending = await shares<readonly [bigint, bigint]>("settlements", [BigInt(open.id)]);
+      assertInvariant(journalEnd - pending[0] === BigInt(PENDING_RECORDS), `the open window is behind by exactly ${PENDING_RECORDS} records (cursor ${pending[0]}, journal end ${journalEnd})`);
+      console.log(`ASSERT one standalone 1-unit deposit costs ${depositGas} gas (tx ${measured.hash}); ${PENDING_RECORDS} of them leave proposal #${open.id} at cursor ${pending[0]} of ${journalEnd}`);
+
+      const unsettledExit = await isolate("exit under an unsettled window", () => probeExit(`exit taken while the window still carries ${PENDING_RECORDS} unsettled records`));
+      const settled = await settleRetention(writer, dao.shares, open.id, BigInt(PENDING_RECORDS));
+      const progress = await shares<readonly [bigint, bigint]>("settlements", [BigInt(open.id)]);
+      assertInvariant(progress[0] === journalEnd, `settlement caught the window up: cursor ${progress[0]} == journal end ${journalEnd}`);
+      const settledExit = await probeExit("exit with no settlement work outstanding");
+      // Rolling the fork back restores the member's nonce, so the two exits are the same signed bytes
+      // against the same balances; only settlements[#open] differs. Two blocks, two executions.
+      assertInvariant(settledExit.blockNumber !== unsettledExit.blockNumber, `the two measured exits ran in different blocks (${unsettledExit.blockNumber} and ${settledExit.blockNumber})`);
+      const perRecord = Number(settled.gasUsed) / PENDING_RECORDS;
+      console.log(`ASSERT settling ${PENDING_RECORDS} records took ${settled.calls} call(s) and ${settled.gasUsed} gas: ${perRecord} gas per record`);
+      console.log(`ASSERT exit with nothing outstanding ${settledExit.gasUsed} gas vs exit with ${PENDING_RECORDS} unsettled records ${unsettledExit.gasUsed} gas: difference ${settledExit.gasUsed - unsettledExit.gasUsed}`);
+      return { records: PENDING_RECORDS, depositGas, depositHash: measured.hash, settledExit, unsettledExit, settleCalls: settled.calls, settleTotalGas: settled.gasUsed, settleGasPerRecord: perRecord };
+    });
 
     /**
      * One full ragequit, asserting the pro-rata payout and returning the gas it cost.
@@ -366,44 +493,38 @@ async function main(): Promise<void> {
     const ragequit = async (target: ZeroOneDao, context: WriteContext, label: string) => {
       const held = <T>(functionName: string, args: readonly unknown[] = []) => at<T>(target.shares, sharesAbi, functionName, args);
       const holding = await held<bigint>("balanceOf", [context.account.address]);
-      const heldLots = await held<bigint>("lotCount", [context.account.address]);
+      const journalBefore = await held<bigint>("journalLength");
       const totalSupply = await at<bigint>(target.baal, baalAbi, "totalSupply");
       const safeUsdc = await usdc(target.safe);
       const walletBefore = await usdc(context.account.address);
       const expected = (holding * safeUsdc) / totalSupply;
-      const sent = await writeAndWait(context, (await simulateSettled<{ request: Record<string, unknown> }>(context, {
-        address: target.baal, abi: baalAbi, functionName: "ragequit", args: [context.account.address, holding, 0n, [BASE_USDC]],
-      })).request);
+      const call = { address: target.baal, abi: baalAbi, functionName: "ragequit", args: [context.account.address, holding, 0n, [BASE_USDC]] };
+      const sent = await writeAndWait(context, { ...(await simulateSettled<{ request: Record<string, unknown> }>(context, call)).request, gas: await exitGasLimit(context, call) });
       const paid = (await usdc(context.account.address)) - walletBefore;
       assertInvariant(paid === expected, `${label}: paid ${paid} = ${holding} shares x Safe ${safeUsdc} / supply ${totalSupply}`);
-      assertInvariant((await held<bigint>("balanceOf", [context.account.address])) === 0n && (await held<bigint>("lotCount", [context.account.address])) === 0n, `${label}: every share and every lot is gone`);
-      console.log(`ASSERT ${label}: burned ${holding} shares from ${heldLots} lots, paid ${paid} USDC, gas ${sent.receipt.gasUsed} (tx ${sent.hash})`);
-      return { label, shares: holding, lots: heldLots, paid, gasUsed: sent.receipt.gasUsed, hash: sent.hash };
+      assertInvariant((await held<bigint>("balanceOf", [context.account.address])) === 0n, `${label}: every share is gone`);
+      const appended = (await held<bigint>("journalLength")) - journalBefore;
+      assertInvariant(appended === 1n, `${label}: the burn appended exactly one immutable journal record (got ${appended})`);
+      console.log(`ASSERT ${label}: burned ${holding} shares, paid ${paid} USDC, gas ${sent.receipt.gasUsed} (tx ${sent.hash})`);
+      return { label, shares: holding, paid, gasUsed: sent.receipt.gasUsed, hash: sent.hash };
     };
 
-    const memberExit = await ragequit(dao as ZeroOneDao, member, `ragequit: member with ${lots} lots (first exit of this DAO, cold retention tree)`);
+    const memberExit = await ragequit(dao as ZeroOneDao, member, "ragequit: the member's whole holding, during the open proposal's vote");
+    // That burn appended its own record, so the window is pending again. The permissionless settlement
+    // step is the only thing that can close it, and Baal refuses to process a proposal without it.
+    const lifecycleSettlement = await settleRetention(founder, dao.shares, open.id);
+    const caughtUp = await shares<readonly [bigint, bigint]>("settlements", [BigInt(open.id)]);
+    assertInvariant(caughtUp[0] === (await shares<bigint>("journalLength")), `the exit's record is settled before any verdict is read (cursor ${caughtUp[0]})`);
+    console.log(`ASSERT settled proposal #${open.id} after the exit: ${lifecycleSettlement.calls} chunk(s), ${lifecycleSettlement.gasUsed} gas, growth ${caughtUp[1]}`);
     const exited = await shares<readonly [bigint, bigint]>("exitedSince", [BigInt(open.id)]);
     assertInvariant(exited[0] === memberShares && exited[1] === supplyAtStart, `exitedSince(#${open.id}) = ${exited[0]} of ${exited[1]} at votingStarts: every burned lot predates the registration`);
     const retained = exited[0] * 100n <= (100n - governance.minRetentionPercent) * exited[1];
     console.log(`ASSERT retention rule on the fork: ${exited[0]} exited of ${exited[1]} at votingStarts, bound (100-${governance.minRetentionPercent})% -> proposal must ${retained ? "pass" : "fail"}`);
     await process_(open.id, open.data, `retention verdict on proposal #${open.id}`, retained, true);
 
-    const workerExit = await ragequit(dao as ZeroOneDao, worker, "ragequit: worker with 1 lot (warm retention tree)");
-    const founderExit = await ragequit(dao as ZeroOneDao, founder, "ragequit: founder with 1 genesis lot (warm retention tree)");
+    const workerExit = await ragequit(dao as ZeroOneDao, worker, "ragequit: the worker's delivered reward");
+    const founderExit = await ragequit(dao as ZeroOneDao, founder, "ragequit: the founder's genesis holding");
     assertInvariant((await shares<bigint>("totalSupply")) === 0n, "every share has exited; supply is back to zero and the next deposit prices at the genesis rate");
-
-    // The Fenwick tree of a fresh NavShareToken is all zeroes, so the first burn pays the cold SSTORE
-    // price on every node it touches; a later burn in the same DAO writes non-zero slots and costs a
-    // fraction. Separating the two is the only way to read the ragequit number honestly, so the control
-    // is a second DAO on the same fork (reusing the singletons) with one genesis lot and nothing else.
-    console.log("\n== Control: the same exit with a single genesis lot, on a fresh DAO whose retention tree is also cold");
-    await fundForkUsdc(devnet, founder.account.address, GENESIS_DEPOSIT);
-    const control = await deployZeroOne(founder, {
-      ...DEFAULT_PARAMS, salt: 2n, founder: founder.account.address, settlement: BASE_USDC,
-      constitutionTextUrl: record.constitution.textUrl, infrastructure: dao.infrastructure,
-    });
-    await genesisDeposit(founder, control, GENESIS_DEPOSIT);
-    const controlExit = await ragequit(control, founder, "ragequit: 1 genesis lot, fresh DAO (cold retention tree)");
 
     // ---------------------------------------------------------------- receipts
     const measurements = {
@@ -415,12 +536,25 @@ async function main(): Promise<void> {
       genesisCommit: record.genesisCommit,
       deployment: { totalGas: scanned.total, transactions: scanned.rows.length, breakdown },
       baalFork: { address: dao.infrastructure.baalSingleton, runtimeBytes: baalRuntime, eip170Limit: 24_576, baalGasCap: BAAL_GAS_CAP, multiSendCallOnly: { address: dao.infrastructure.multiSend, runtimeBytes: multiSendRuntime } },
-      ragequit: [memberExit, workerExit, founderExit, controlExit].map(({ label, shares: burned, lots: count, paid, gasUsed, hash }) => ({ label, sharesBurned: burned, lots: count, usdcPaid: paid, gasUsed, hash })),
-      deposits: deposits.map(({ minted, treasury, supply, owed, lots: count }) => ({ sharesMinted: minted, ledgerNav: treasury, supplyBefore: supply, shareLiability: owed, lotsAfter: count })),
+      ragequit: [memberExit, workerExit, founderExit].map(({ label, shares: burned, paid, gasUsed, hash }) => ({ label, sharesBurned: burned, usdcPaid: paid, gasUsed, hash })),
+      deposits: deposits.map(({ minted, treasury, supply, owed, gasUsed, journalLength }) => ({ sharesMinted: minted, ledgerNav: treasury, supplyBefore: supply, shareLiability: owed, gasUsed, journalLengthAfter: journalLength })),
+      settlementAccounting: {
+        pendingRecords: settlementCost.records,
+        chunkSize: settlementCost.records,
+        standaloneDeposit: { gasUsed: settlementCost.depositGas, hash: settlementCost.depositHash },
+        exitWithNothingOutstanding: settlementCost.settledExit,
+        exitWithUnsettledRecords: settlementCost.unsettledExit,
+        exitGasDifference: settlementCost.settledExit.gasUsed - settlementCost.unsettledExit.gasUsed,
+        settleCalls: settlementCost.settleCalls,
+        settleTotalGas: settlementCost.settleTotalGas,
+        settleGasPerRecord: settlementCost.settleGasPerRecord,
+        lifecycleExitSettlement: { calls: lifecycleSettlement.calls, gasUsed: lifecycleSettlement.gasUsed },
+        auditTableClaim: AUDIT_TABLE_CLAIM,
+      },
       retention: { proposalId: open.id, exited: exited[0], supplyAtVotingStarts: exited[1], minRetentionPercent: governance.minRetentionPercent, passed: retained },
     };
     writeFileSync(path.join(DIR, "measurements.json"), `${stringify(measurements)}\n`);
-    console.log(`\nASSERT phase 5 Base fork rehearsal PASS: deployment ${scanned.total} gas, Baal fork ${baalRuntime} bytes, ragequit ${memberExit.gasUsed} gas with ${lots} lots`);
+    console.log(`\nASSERT phase 5 Base fork rehearsal PASS: deployment ${scanned.total} gas, Baal fork ${baalRuntime} bytes, exit ${settlementCost.settledExit.gasUsed} gas settled / ${settlementCost.unsettledExit.gasUsed} gas with ${PENDING_RECORDS} records outstanding, ${settlementCost.settleGasPerRecord} gas per settled record`);
     console.log("ASSERT no Etherscan verification invoked and no public-network transaction sent");
 
     if (process.env.FORK_SCENARIO_K === "1") {

@@ -14,36 +14,37 @@ it has no `treasuryLedger`. Read it as history, not as the shape of the mainnet 
 
 22 transactions from one deployer key, all inside `deployNetwork` (`scripts/deploy-network.ts` ->
 `deployZeroOne` / `genesisDeposit` in `src/zeroOne.ts`). Gas is the fork measurement of
-2026-09-10 (`evidence/phase5/base-fork/measurements.json`); it moves by a few tens of gas between
-runs because constructor arguments carry run-specific addresses.
+2026-09-11 (`evidence/phase5/base-fork/measurements.json`), the first one taken on the shipped
+incremental-settlement token; it moves by a few tens of gas between runs because constructor
+arguments carry run-specific addresses.
 
 | # | Transaction | Gas | Note |
 | --- | --- | --- | --- |
-| 1 | Baal singleton | 4,295,260 | **the Zero One fork**, `contracts/vendor/Baal.sol`, compiled here with solc 0.8.36 (not the packaged 0.8.10 build) |
+| 1 | Baal singleton | 4,267,378 | **the Zero One fork**, `contracts/vendor/Baal.sol`, compiled here with solc 0.8.36 (not the packaged 0.8.10 build) |
 | 2 | ModuleProxyFactory | 268,875 | `@daohaus/baal-contracts` 1.2.18 artifact, verbatim |
 | 3 | GnosisSafe singleton | 2,738,930 | same package |
 | 4 | GnosisSafeProxyFactory | 610,833 | same package |
 | 5 | MultiSendCallOnly | 131,115 | **local**, `contracts/vendor/MultiSendCallOnly.sol`; replaces `MultiSend` (phase 5 ruling 6) |
-| 6 | Safe proxy (CREATE2) | 105,352 | `saltNonce = keccak256(abi.encode(deployer, salt, 0))`; the predicted address is checked for 0 USDC immediately before this transaction |
+| 6 | Safe proxy (CREATE2) | 105,340 | `saltNonce = keccak256(abi.encode(deployer, salt, 0))`; the predicted address is checked for 0 USDC immediately before this transaction |
 | 7 | Baal proxy (ModuleProxyFactory) | 72,265 | `saltNonce = keccak256(abi.encode(deployer, salt, 1))` |
-| 8 | NavShareToken | 1,311,898 | `(name, symbol, baal, safe, settlement)`; carries the per-epoch lot accounting |
+| 8 | NavShareToken | 1,271,442 | `(name, symbol, baal, safe, settlement)`; carries the balance journal and the per-proposal settlement cursors |
 | 9 | LootToken | 575,817 | never minted; exists because Baal requires it |
-| 10 | WorkManager | 1,526,142 | `(baal, shares)` |
+| 10 | WorkManager | 1,526,164 | `(baal, shares)` |
 | 11 | PaymentDeployer | 1,751,439 | `(safe, settlement)` |
 | 12 | StrategyDeployer | 2,189,002 | `(safe, settlement)` |
 | 13 | ProjectDeployer | 2,667,360 | `(safe, settlement)` |
 | 14 | ConfigDeployer | 1,620,021 | `(safe, settlement, baal)` |
 | 15 | TemplateFactory | 1,545,219 | `(safe, settlement, baal, [the four deployers])`; **its constructor creates the TreasuryLedger** with plain CREATE, so the ledger has no transaction of its own |
-| 16 | DepositShaman | 697,889 | `(baal, shares, treasuryLedger, workManager)` — four arguments since phase 5; must come after the factory |
-| 17 | ZeroOneIntentAccount | 1,343,692 | `(baal, depositShaman, workManager, templateFactory)` |
+| 16 | DepositShaman | 697,911 | `(baal, shares, treasuryLedger, workManager)` — four arguments since phase 5; must come after the factory |
+| 17 | ZeroOneIntentAccount | 1,343,680 | `(baal, depositShaman, workManager, templateFactory)` |
 | 18 | Constitution | 327,872 | `(keccak256(docs/CONSTITUTION.md), pinned raw URL)`, immutable, no setter |
-| 19 | `Safe.setup` | 174,426 | no EOA owner, Baal the only module, executed through MultiSendCallOnly |
-| 20 | `Baal.setUp` | 502,412 | tokens, `setShamans([DepositShaman, WorkManager], [2, 2])`, `setGovernanceConfig`, `lockAdmin`; `multisendLibrary` = MultiSendCallOnly |
+| 19 | `Safe.setup` | 174,438 | no EOA owner, Baal the only module, executed through MultiSendCallOnly |
+| 20 | `Baal.setUp` | 502,424 | tokens, `setShamans([DepositShaman, WorkManager], [2, 2])`, `setGovernanceConfig`, `lockAdmin`; `multisendLibrary` = MultiSendCallOnly |
 | 21 | `USDC.approve(DepositShaman, 50e6)` | 55,449 | genesis |
-| 22 | `DepositShaman.deposit(50e6)` | 267,305 | genesis: 50 USDC -> 50e18 shares, the founder's whole holding |
-| | **total** | **24,778,573** | |
+| 22 | `DepositShaman.deposit(50e6)` | 311,868 | genesis: 50 USDC -> 50e18 shares, the founder's whole holding, and the journal's first record |
+| | **total** | **24,754,842** | |
 
-Budget: 24.78 M gas is 0.000149 ETH at a 0.006 gwei base fee, 0.00124 ETH at 0.05 gwei and 0.0124 ETH
+Budget: 24.75 M gas is 0.000149 ETH at a 0.006 gwei base fee, 0.00124 ETH at 0.05 gwei and 0.0124 ETH
 at 0.5 gwei. The script no longer takes a written-down floor on trust. `deployNetwork` refuses to
 start, before any write, unless the deployer holds
 
@@ -55,8 +56,8 @@ to, at the moment of the check (`src/deployerGate.ts`; ruling decision.md 2026-0
 states the requirement, the live base fee it used and what the deployer actually holds.
 
 What that requires at the three fee points above: **0.02 ETH at 0.006 gwei** (computed part
-0.00074335719 ETH, the floor governs), **0.02 ETH at 0.05 gwei** (computed part 0.00619464325 ETH, the
-floor governs) and **0.0619464325 ETH at 0.5 gwei** (the computed part governs). The crossover is at
+0.00074264526 ETH, the floor governs), **0.02 ETH at 0.05 gwei** (computed part 0.0061887105 ETH, the
+floor governs) and **0.061887105 ETH at 0.5 gwei** (the computed part governs). The crossover is at
 about 0.161 gwei. The fixed 0.005 ETH constant this replaces was the hazard itself: at 0.5 gwei the
 deployment costs 0.0124 ETH, so a deployer funded to the old floor would have started, run out and
 stranded a half-built stack with the 50 genesis USDC already deposited in it.
@@ -166,35 +167,49 @@ a mint or a storage write. Nothing invokes Etherscan.
 After the deployment it runs, all on the same fork: a voted Payment of 1 USDC; a voted Project whose
 single not-yet-due tranche parks 10 USDC in the instance, so `depositTreasury()` is 49 USDC while the
 Safe holds 39; a task whose 10e18 reward becomes the liability `DepositShaman` prices in; four
-deposits, each asserted equal to `amount x (supply + liability) / depositTreasury()` and each stamped
-into a different retention epoch; the delivery that mints exactly the voted reward and clears the
-liability; and the exits. The measurements land in
+deposits, each asserted equal to `amount x (supply + liability) / depositTreasury()`; the delivery that
+mints exactly the voted reward and clears the liability; what the settlement accounting costs (below);
+and the exits, each of which appends one immutable journal record that the permissionless
+`settleRetention` step must consume before Baal will process anything. The measurements land in
 `evidence/phase5/base-fork/measurements.json`. Scenario K (real Uniswap v3) is the separate
 `npm run scenario:K` rehearsal; `FORK_SCENARIO_K=1` appends it to this run on the same fork.
 
 Retention fires on the fork for real: with 61.94e18 of 121.94e18 shares exiting during the vote —
 past the 34% bound — proposal #7 is processed `passed=false actionFailed=false`.
 
-### The cost of the new retention accounting
-`NavShareToken.burn` credits every consumed lot's epoch in a Fenwick tree whose capacity is
-`MAX_EPOCHS = 2^24`, so one lot walks up to 25 nodes. On a token whose tree is still all zeroes each
-of those is a cold 22,100-gas store, which is where a ragequit's gas now goes:
+### The cost of the shipped settlement accounting
+An exit does constant work: `NavShareToken.burn` appends one immutable journal record, and
+`exitedSince` reads a stored cursor and sum (docs/RETENTION_MECHANISM.md). Consuming the records a
+window has accumulated is a separate, permissionless transaction that anyone may send in chunks. The
+2026-09-11 ruling asked the rehearsal to measure what that actually costs on a fork of the real chain,
+so `npm run e2e:base-fork` now measures these, each isolated by an anvil snapshot and each taken a
+clear second after the state it is measured against, so every measured operation appends its
+checkpoints instead of overwriting this second's (the isolation `t18` uses):
 
-| Exit | Lots | Gas |
-| --- | --- | --- |
-| First exit of the DAO, member holding lots from 4 proposals | 4 | **796,184** |
-| First exit of a fresh DAO, one genesis lot | 1 | 683,699 |
-| Later exit, one lot, tree already written | 1 | 282,408 |
-| Later exit, one genesis lot (epoch 0), tree already written | 1 | 317,590 |
+| Measured on the Base fork | Fork, 2026-09-11 | Mirror, `evidence/phase5/incremental/economics.md` |
+| --- | ---: | ---: |
+| One 1-unit deposit by an account already holding shares | 269,046 | 245,235 |
+| Exit with no settlement work outstanding | **278,399** | 249,624 |
+| Exit taken while the window carries 128 unsettled records | **278,399** | 249,624 |
+| Settling 128 records, one chunk | 1,072,333 = **8,377.60** per record | 8,252.6258 per record |
 
-Pre-phase-5 ragequit was ~120k. The first exit in a DAO pays a one-time premium of ~366k gas for
-writing the tree (683,699 against 317,590 for the same single genesis lot once the nodes are
-non-zero); after that a node costs the warm ~5k instead of the cold 22.1k, which is why the warm
-numbers land near 300k. Extra lots add their own unshared nodes on top: 796,184 for four.
+The two exits are the same signed transaction against the same balances — rolling the fork back
+restores the member's nonce — executed in two different blocks (51,000,211 and 51,000,212) against
+journals that differ only in `settlements[#7]`. Their gas is equal to the unit: an exit does not pay
+for the journal behind it. That is the property the incremental design exists for, and the fork is now
+its independent confirmation against real chain state rather than only against the mirror.
 
-At 0.05 gwei a 796k exit costs 0.00004 ETH, so this is a design cost, not an affordability problem —
-but the public copy should say that exiting is a 280k-800k gas transaction, not a ~120k one, and that
-the member who exits first carries the tree for everyone after it.
+Per settled record the fork and the 5,000-record storm agree within 1.5% (8,377.60 against
+8,252.6258; the fork's 128 records all belong to one account whose checkpoint history each record's
+baseline is binary-searched through). The two whole-operation numbers are about 10% higher than the
+mirror's: a deposit and an exit on the fork move real USDC through its proxy, where the mirror's move
+a mock ERC-20, and the one number that touches no token is the one that agrees. The fork numbers are
+the ones that apply to mainnet.
+
+At 0.05 gwei an exit costs 0.0000139 ETH and settling 128 records costs 0.0000536 ETH, so this is a
+design cost, not an affordability problem. What the public copy has to say is that exiting is a ~280k
+gas transaction whose cost does not grow with the journal, and that a proposal cannot be processed
+until someone has settled the records its window accumulated.
 
 ## Testnet-only artifacts that never reach mainnet
 MockUSDC and its `mint`; the relay faucet; the 120 s / 120 s Config proposals (#1 and the final
@@ -202,16 +217,16 @@ restore on Sepolia); the per-scenario DAOs under `evidence/testnet/scenario-daos
 `state/testnet/actors.json`; `--fork-genesis-commit` and everything else behind `--fork`.
 
 ## Not yet true
-- **The genesis commit is not published.** The constitution can only pin a pushed commit, so the
-  mainnet run cannot start from an unpublished HEAD. The fork rehearsal pins the newest pushed
-  ancestor (`dcb3e83`, whose `docs/CONSTITUTION.md` bytes are identical to the working tree's) and
-  says so in the record: `sourceCommit` is the local HEAD, `genesisCommit` the pushed ancestor. Step 3
-  of the sequence needs a real push first.
+- **The genesis commit is only published when HEAD is.** The constitution can only pin a pushed
+  commit, so the mainnet run cannot start from an unpublished HEAD. The 2026-09-11 rehearsal ran with
+  a published HEAD and pinned it (`sourceCommit` == `genesisCommit` == `6e2b8c4`); when the working
+  tree carries unpushed commits the rehearsal falls back to the newest pushed ancestor and says so in
+  the record. Step 3 of the sequence needs the commit it deploys to be pushed first.
 - **`deployments/verification-base/upstream-contracts.json` does not exist yet** and cannot: it needs
   the four upstream addresses from the real deployment.
 - **The mainnet relay, tunnel, sponsor key and beacon project do not exist.** Nothing in this plan
   has touched a live relay, launchd service, tunnel or sponsor account.
-- ~~**`MIN_DEPLOYER_WEI` is 0.005 ETH**, which the measured 24.78 M gas outgrows above ~0.2 gwei.~~
+- ~~**`MIN_DEPLOYER_WEI` is 0.005 ETH**, which the measured 24.75 M gas outgrows above ~0.2 gwei.~~
   Closed by the 2026-09-10 ruling: the constant is gone and the requirement is computed from the live
   base fee of the target chain (see Budget above, `src/deployerGate.ts`, receipts in
   `evidence/phase5/deployer-gate/`).

@@ -3,15 +3,15 @@
   "fork": true,
   "loopbackRpc": "http://127.0.0.1:11545",
   "forkBlock": 51000002,
-  "sourceCommit": "4ad81a6e4a9bfd092f1a4ccd32652ad0108e8e52",
-  "genesisCommit": "dcb3e83d209fc4c1cd4eab5f20434eeb632b5678",
+  "sourceCommit": "6e2b8c41291fca655f9eb82eb6c4264384536d11",
+  "genesisCommit": "6e2b8c41291fca655f9eb82eb6c4264384536d11",
   "deployment": {
-    "totalGas": "24778573",
+    "totalGas": "24754842",
     "transactions": 22,
     "breakdown": [
       {
         "step": "singleton:Baal",
-        "gasUsed": "4295260"
+        "gasUsed": "4267378"
       },
       {
         "step": "singleton:ModuleProxyFactory",
@@ -39,7 +39,7 @@
       },
       {
         "step": "NavShareToken",
-        "gasUsed": "1311898"
+        "gasUsed": "1271442"
       },
       {
         "step": "LootToken",
@@ -47,7 +47,7 @@
       },
       {
         "step": "WorkManager",
-        "gasUsed": "1526142"
+        "gasUsed": "1526164"
       },
       {
         "step": "PaymentDeployer",
@@ -67,15 +67,15 @@
       },
       {
         "step": "TemplateFactory",
-        "gasUsed": "1545207"
+        "gasUsed": "1545219"
       },
       {
         "step": "DepositShaman",
-        "gasUsed": "697889"
+        "gasUsed": "697911"
       },
       {
         "step": "ZeroOneIntentAccount",
-        "gasUsed": "1343692"
+        "gasUsed": "1343680"
       },
       {
         "step": "Constitution",
@@ -95,52 +95,41 @@
       },
       {
         "step": "genesis:deposit",
-        "gasUsed": "267305"
+        "gasUsed": "311868"
       }
     ]
   },
   "baalFork": {
-    "address": "0x3d5573B66A55D5746a282828Eb38e494111c28A1",
-    "runtimeBytes": 19497,
+    "address": "0xDC903823BC175Ef8A046f7d3EE2a598D1275aDC2",
+    "runtimeBytes": 19368,
     "eip170Limit": 24576,
     "baalGasCap": "8000000",
     "multiSendCallOnly": {
-      "address": "0xD34DFcC9f7abDd04cA1c5D1dC2Ca32C69d93f271",
+      "address": "0x31827901545d047215Fd7e8C099c2e741Ff37fa0",
       "runtimeBytes": 360
     }
   },
   "ragequit": [
     {
-      "label": "ragequit: member with 4 lots (first exit of this DAO, cold retention tree)",
+      "label": "ragequit: the member's whole holding, during the open proposal's vote",
       "sharesBurned": "61939929057761824010",
-      "lots": "4",
       "usdcPaid": "43684082",
-      "gasUsed": "796184",
-      "hash": "0x347c21d178bf4078e225eb5bf1756cc67d6505bf0a5c60d964382045fcafa94f"
+      "gasUsed": "250935",
+      "hash": "0xe296b78e5502a7f83fa61d389b6eb9a0b3f1162156b112945ba355213c7fd54a"
     },
     {
-      "label": "ragequit: worker with 1 lot (warm retention tree)",
+      "label": "ragequit: the worker's delivered reward",
       "sharesBurned": "10000000000000000000",
-      "lots": "1",
       "usdcPaid": "7052653",
-      "gasUsed": "282408",
-      "hash": "0x4067bd33c93c3c6debe82ec45691bdb89b014a67a9f716944997cbe26762867b"
+      "gasUsed": "233799",
+      "hash": "0x22f46a46adc4dd97a0844ed25f1dc772784cdd0aedf99c9f7cdda001bea342ab"
     },
     {
-      "label": "ragequit: founder with 1 genesis lot (warm retention tree)",
+      "label": "ragequit: the founder's genesis holding",
       "sharesBurned": "50000000000000000000",
-      "lots": "1",
       "usdcPaid": "35263265",
-      "gasUsed": "317590",
-      "hash": "0x1aa5bc5734b83dc8719e1067ea1525bf40e77e374cafcbc4061852851946d900"
-    },
-    {
-      "label": "ragequit: 1 genesis lot, fresh DAO (cold retention tree)",
-      "sharesBurned": "50000000000000000000",
-      "lots": "1",
-      "usdcPaid": "50000000",
-      "gasUsed": "683699",
-      "hash": "0x6eb5fb434d86b79a459220ca719395ab3a21aa9523e030171389699095364df3"
+      "gasUsed": "202311",
+      "hash": "0x659666e98d08e0f6762f32d58229291ae63d0f31589d8d7cbce36c3a8a8465d7"
     }
   ],
   "deposits": [
@@ -149,30 +138,66 @@
       "ledgerNav": "49000000",
       "supplyBefore": "50000000000000000000",
       "shareLiability": "10000000000000000000",
-      "lotsAfter": "1"
+      "gasUsed": "282984",
+      "journalLengthAfter": "2"
     },
     {
       "sharesMinted": "12412636287391668996",
       "ledgerNav": "73000000",
       "supplyBefore": "90612244897959183673",
       "shareLiability": "0",
-      "lotsAfter": "2"
+      "gasUsed": "264270",
+      "journalLengthAfter": "4"
     },
     {
       "sharesMinted": "12564009900652543008",
       "ledgerNav": "82000000",
       "supplyBefore": "103024881185350852669",
       "shareLiability": "0",
-      "lotsAfter": "3"
+      "gasUsed": "264270",
+      "journalLengthAfter": "5"
     },
     {
       "sharesMinted": "6351037971758428333",
       "ledgerNav": "91000000",
       "supplyBefore": "115588891086003395677",
       "shareLiability": "0",
-      "lotsAfter": "4"
+      "gasUsed": "259470",
+      "journalLengthAfter": "6"
     }
   ],
+  "settlementAccounting": {
+    "pendingRecords": 128,
+    "chunkSize": 128,
+    "standaloneDeposit": {
+      "gasUsed": "269046",
+      "hash": "0xbec31f6f67e4cd6eadd31336b03c2a3e674fe677510f2c0a11d2b56cb53bb130"
+    },
+    "exitWithNothingOutstanding": {
+      "gasUsed": "278399",
+      "hash": "0xf6a0dcdab69772392263184d41facfb61f50ac066fc4f3fdaa674689f69402d0",
+      "blockNumber": "51000212"
+    },
+    "exitWithUnsettledRecords": {
+      "gasUsed": "278399",
+      "hash": "0xf6a0dcdab69772392263184d41facfb61f50ac066fc4f3fdaa674689f69402d0",
+      "blockNumber": "51000211"
+    },
+    "exitGasDifference": "0",
+    "settleCalls": 1,
+    "settleTotalGas": "1072333",
+    "settleGasPerRecord": 8377.6015625,
+    "lifecycleExitSettlement": {
+      "calls": 1,
+      "gasUsed": "57815"
+    },
+    "auditTableClaim": {
+      "source": "evidence/phase5/incremental/economics.md",
+      "depositGas": 245235,
+      "exitGas": 249624,
+      "settleGasPerRecord": 8252.6258
+    }
+  },
   "retention": {
     "proposalId": 7,
     "exited": "61939929057761824010",

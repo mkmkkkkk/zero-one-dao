@@ -681,3 +681,19 @@ record. Those three numbers are what a member and a settler pay, and they are th
 so the rehearsal becomes their independent confirmation on a fork of the real chain.
 Consequence of one rule on every chain: the Base Sepolia deployer must also hold the floor, and it currently holds about a
 quarter of it. Test ETH is free, so this is a top-up, not a parameter change. The rule stays the same on every chain.
+
+## 2026-09-11 the fork measured the three numbers; the exit is flat, the mirror's per-record cost holds
+Implemented and run end to end (`evidence/phase5/base-fork/`, Base fork block 51,000,002). The rehearsal no longer asks for
+a lot count; it measures, under anvil snapshots and with the same checkpoint timestamp shape for every measured operation:
+an exit with nothing outstanding **278,399 gas**, the identical exit while the open window carries 128 unsettled records
+**278,399 gas** (the same signed transaction, two different blocks, journals differing only in `settlements[#7]`), and
+**8,377.60 gas per record** to settle 128 records in one chunk. Alongside them, one 1-unit deposit costs 269,046 gas.
+The exit is therefore flat in the journal behind it, measured against real chain state and not only against the mirror.
+Against the audit table (245,235 deposit / 249,624 exit / 8,252.6258 per record): the settlement number agrees within 1.5%;
+the deposit and the exit run about 10% higher, and the structural difference is the token — the fork moves real USDC
+through its proxy where the mirror moves a mock ERC-20 — so the fork numbers are the ones that apply to mainnet. No claim
+was adjusted to fit. The run also rewrote the deployment measurement the deployer gate reads: 24,754,842 gas over 22
+transactions on the shipped token (was 24,778,573), which moves the 0.5 gwei requirement to 0.061887105 ETH;
+`npm run test:deploy-refusals` passes against the new figure, and docs/MAINNET_PLAN.md and docs/PARAMETERS.md now quote it.
+The lifecycle section is complete again: the member's exit appends its own record, `settleRetention` consumes it (57,815
+gas), and only then does `exitedSince` answer and Baal record the retention verdict on proposal #7 (`passed=false`).
