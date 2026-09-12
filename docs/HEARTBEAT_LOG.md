@@ -31,3 +31,8 @@
 - Relay 200, canonical README 200, both origins serving the corrected files. Deployer gate now computes from live fee; Sepolia deployer funded to 0.0232 ETH (passes the floor).
 - Testnet execute closure imminent: cold-start proposals #3 and #4 in Grace, executable ~19:19 / 19:23 UTC; the queue runner on the mini executes them then submits and executes the restore to 6h/6h.
 - Open before mainnet, none of it code: the execute proof (auto, minutes away), the user's line-by-line parameter confirmation, and the 50 USDC + deployer gas.
+
+## 2026-09-12 07:07 UTC heartbeat
+- Testnet acceptance EARNED yesterday: the two README-only cold-start proposals executed, periods restored to 6h/6h, all five Processed, none open. Final clean-clone gate green.
+- Health: relay and canonical README 200. Runtime checkout on the mini was 7 commits behind (docs/tests/non-relay scripts only, live surface unaffected); fast-forwarded to d58abc3, ff-only, untracked files backed up under state/ never deleted. Relay left running (no relay-server code changed).
+- Nothing dispatchable: mainnet is the only remaining step and it is user-gated (parameter confirmation + 50 USDC + deployer gas). No marketing until after mainnet per standing rule. Holding for the user.
