@@ -6,10 +6,12 @@ NOT send any public-chain transaction, and MUST NOT touch, restart, or reconfigu
 DAO and the canonical entry point. Never construct any rm command; never commit .env/keys/state; never print a key; git
 email yangzk01@gmail.com; do not push. Do not touch docs/CONSTITUTION.md or the CLAUDE.md principle.
 
-Run on the Mac mini, repo ~/srv/zero-one-dao (branch main). Read first: docs/MAINNET_PLAN.md (steps 3-5), the existing
+Run on the Mac mini, in this repo checkout (branch main; the orchestrator sets --cwd to it). Read first: docs/MAINNET_PLAN.md (steps 3-5), the existing
 relay server and static serving (relay/server.ts, relay/static.ts), beacon/scripts/build.ts and validate.ts, and how the
-current Sepolia launchd services and cloudflared tunnel are wired (inspect ~/Library/LaunchAgents/ai.mkyang.zero-one-*.plist
-and the tunnel config under ~/srv/zero-one-dao/state/tunnel/ READ-ONLY). Base the installer on the MAINNET_PLAN and the existing Sepolia launchd plists you can inspect on this mini; no other repo is needed.
+current Sepolia launchd services and cloudflared tunnel are wired: inspect the agents named ai.mkyang.zero-one-relay and
+ai.mkyang.zero-one-tunnel with `launchctl print gui/$(id -u)/<label>` (read-only, by label, not by file path), and read the
+tunnel config in the repo-relative state/tunnel directory. Base the installer on the MAINNET_PLAN and those existing plists;
+no other repo is needed.
 
 ## GOAL
 `scripts/install-mainnet-services.py` (or .ts, your call) that, given a mainnet deployment record `deployments/base.json`
