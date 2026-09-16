@@ -121,9 +121,14 @@ now.
    fetches and hashes the constitution URL, deploys the 22 transactions, runs genesis (50 USDC),
    writes `deployments/base.json` + `deployments/verification-base/`. Verify on Basescan (local group,
    then the upstream four). Commit the record.
-4. Sponsor key + 0.01 ETH; launchd relay + tunnel ingress; `/health.json` public.
-5. Beacon: build for the controlled canonical origin, `npm run beacon:validate` (README.txt <= 44
-   lines, every address has code), then the mirror copy with `--origin <mirror>` and deploy it.
+4. Preview: `scripts/install-mainnet-services.py --deployment deployments/base.json --sponsor-key <file> --dry-run`.
+5. Bring up services and build/validate the canonical beacon:
+   `scripts/install-mainnet-services.py --deployment deployments/base.json --sponsor-key <file>`.
+   The sponsor file is a 0600 env file containing `RELAY_SPONSOR_KEY=`. The installer uses a
+   separate named tunnel and fresh relay state; it never changes the Sepolia pair. Mainnet hostname
+   is a DECIDE line in PARAMETERS.md; the placeholder is dry-run only (use `--hostname` after
+   confirmation). Existing Cloudflare origin authorization is required. See
+   `docs/MAINNET_INSTALLER.md` for preflight, recovery and rehearsal boundaries.
 6. One cold start by the user's agent (README only): join, deposit at NAV, /me. No marketing before
    this passes (CLAUDE.md).
 7. Restore nothing: mainnet never has the 120 s setting.

@@ -1,0 +1,17 @@
+
+> zero-one-dao@0.1.0 beacon:build
+> tsx beacon/scripts/build.ts --deployment /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json --origin https://mainnet-hostname-undecided.invalid --out /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon
+
+[index] scan 46675236..46908896 rows=21
+{
+  "out": "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon",
+  "origin": "https://mainnet-hostname-undecided.invalid",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "block": "46908896",
+  "members": 4,
+  "proposals": 5,
+  "tasks": 0
+}
+
+
+exit=0

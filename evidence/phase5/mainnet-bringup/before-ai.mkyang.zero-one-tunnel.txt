@@ -1,0 +1,80 @@
+gui/501/ai.mkyang.zero-one-tunnel = {
+	active count = 1
+	path = /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel.plist
+	type = LaunchAgent
+	state = running
+
+	program = /opt/homebrew/bin/cloudflared
+	arguments = {
+		/opt/homebrew/bin/cloudflared
+		tunnel
+		--config
+		/Users/michaelmacmini/srv/zero-one-dao/state/tunnel/cloudflared.yml
+		run
+	}
+
+	working directory = /Users/michaelmacmini/srv/zero-one-dao
+
+	stdout path = /Users/michaelmacmini/srv/zero-one-dao/state/logs/tunnel.out.log
+	stderr path = /Users/michaelmacmini/srv/zero-one-dao/state/logs/tunnel.err.log
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.nHDRxAAWny/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		NO_PROXY => localhost,127.0.0.1
+		PATH => /opt/homebrew/bin:/usr/bin:/bin
+		HTTPS_PROXY => http://127.0.0.1:7897
+		HOME => /Users/michaelmacmini
+		XPC_SERVICE_NAME => ai.mkyang.zero-one-tunnel
+	}
+
+	domain = gui/501 [100023]
+	asid = 100023
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 2
+	pid = 35559
+	immediate reason = inefficient
+	forks = 0
+	execs = 1
+	initialized = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	checked allocations = 0 (queried = 1)
+	checked allocations reason = no host
+	checked allocations flags = 0x0
+	last terminating signal = Killed: 9
+
+	resource coalition = {
+		ID = 851098
+		type = resource
+		state = active
+		active count = 1
+		name = ai.mkyang.zero-one-tunnel
+	}
+
+	jetsam coalition = {
+		ID = 851099
+		type = jetsam
+		state = active
+		active count = 1
+		name = ai.mkyang.zero-one-tunnel
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+
+	properties = keepalive | runatload | inferred program
+}

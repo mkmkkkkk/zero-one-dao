@@ -1,0 +1,54 @@
+{
+  "before": {
+    "fixture": {
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json": "8d001e311906be3c4bc593a4deb2d9b5ba10fc855979c06865216741a1810395",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/sponsor.env": "1855114819dacec5ca45864ed2517a4cd533b5b1dbd83363b92d7b766912ecc6",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon-cache/index.lock": "415c5f22b183225a22ac7c6ec0bd4bfdbfe31a1bdcd379ff0b56c280ae3a6d1f",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon-cache/index-84532-0x2a97a8db1797dfd8691668d729eb8291ace664cb.json": "f60fe39b9f817684e06096e470842133684b7c60c3815672c65d3c8f0fcc094a",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/llms.txt": "dee6ee15085eddfd8904534633425d9bb5287407b1976fbb6c0b321ce50d0f1d",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/CONSTITUTION.md": "2c327b75eb7433179a48e6cf44ceef6b25462827d95e39811b4ddd67681598cb",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/index.html": "8f1622f9cd2e9e41535f9d72273758f6962e178516de19002d11cb5c0fc8ac75",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/state.json": "6e20d3d784eccc57c353669f031dadaa2d7033a89583a971ff107b0d8ee77ab9",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/snippet.js": "9eee39e6faec31b92e17e155f72012deee6d860315ed9378ad1864ff3fe13675",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/snippet.py": "604e79ff4f2aac3a99aced0702c5c16ad19a7cc1161d174e858d7ab84f5391bc",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/proposals.json": "fa99ee7eea4501214de4cc7450c9e2e4c6053268fe6446127fb8fed1331826fd",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/README.txt": "997b3d637cda97098aeb548abbd1cb567dde1a6f01b9033ef0398b0e723c8546",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/robots.txt": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95"
+    },
+    "targets": {
+      "state/relay-base": "ABSENT",
+      "state/tunnel-base": "ABSENT",
+      "state/logs-base": "ABSENT",
+      "beacon/public-base": "ABSENT",
+      "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay-base.plist": "ABSENT",
+      "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel-base.plist": "ABSENT"
+    }
+  },
+  "after": {
+    "fixture": {
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json": "8d001e311906be3c4bc593a4deb2d9b5ba10fc855979c06865216741a1810395",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/sponsor.env": "1855114819dacec5ca45864ed2517a4cd533b5b1dbd83363b92d7b766912ecc6",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon-cache/index.lock": "415c5f22b183225a22ac7c6ec0bd4bfdbfe31a1bdcd379ff0b56c280ae3a6d1f",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon-cache/index-84532-0x2a97a8db1797dfd8691668d729eb8291ace664cb.json": "f60fe39b9f817684e06096e470842133684b7c60c3815672c65d3c8f0fcc094a",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/llms.txt": "dee6ee15085eddfd8904534633425d9bb5287407b1976fbb6c0b321ce50d0f1d",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/CONSTITUTION.md": "2c327b75eb7433179a48e6cf44ceef6b25462827d95e39811b4ddd67681598cb",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/index.html": "8f1622f9cd2e9e41535f9d72273758f6962e178516de19002d11cb5c0fc8ac75",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/state.json": "6e20d3d784eccc57c353669f031dadaa2d7033a89583a971ff107b0d8ee77ab9",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/snippet.js": "9eee39e6faec31b92e17e155f72012deee6d860315ed9378ad1864ff3fe13675",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/snippet.py": "604e79ff4f2aac3a99aced0702c5c16ad19a7cc1161d174e858d7ab84f5391bc",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/proposals.json": "fa99ee7eea4501214de4cc7450c9e2e4c6053268fe6446127fb8fed1331826fd",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/README.txt": "997b3d637cda97098aeb548abbd1cb567dde1a6f01b9033ef0398b0e723c8546",
+      "/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon/robots.txt": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95"
+    },
+    "targets": {
+      "state/relay-base": "ABSENT",
+      "state/tunnel-base": "ABSENT",
+      "state/logs-base": "ABSENT",
+      "beacon/public-base": "ABSENT",
+      "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay-base.plist": "ABSENT",
+      "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel-base.plist": "ABSENT"
+    }
+  },
+  "identical": true,
+  "secondDryRunIdentical": true
+}

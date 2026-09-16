@@ -1,0 +1,19 @@
+{
+  "servicePlistsIdentical": true,
+  "ingressIdentical": true,
+  "listenerIdentical": true,
+  "pidsAndRunsIdentical": true,
+  "services": {
+    "ai.mkyang.zero-one-relay": {
+      "pid": "75957",
+      "runs": "4",
+      "state": "running"
+    },
+    "ai.mkyang.zero-one-tunnel": {
+      "pid": "35559",
+      "runs": "2",
+      "state": "running"
+    }
+  },
+  "diffBytes": 0
+}

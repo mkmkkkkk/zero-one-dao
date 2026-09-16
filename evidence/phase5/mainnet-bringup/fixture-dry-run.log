@@ -1,0 +1,124 @@
+exit=0
+mode: "DRY-RUN"
+chainId: 84532
+rehearsalOnly: true
+designQuestions: ["mainnet hostname undecided; .invalid is a placeholder"]
+tunnelChoice: "new named tunnel; existing Sepolia config untouched"
+port: 18762
+changes: ["/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/cloudflared.yml", "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay-base.plist", "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel-base.plist"]
+
+WRITE /Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/cloudflared.yml
+tunnel: zero-one-relay-base
+credentials-file: "/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/credentials.json"
+protocol: quic
+metrics: 127.0.0.1:0
+ingress:
+  - hostname: mainnet-hostname-undecided.invalid
+    service: http://127.0.0.1:18762
+  - service: http_status:404
+
+
+WRITE /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay-base.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/Users/michaelmacmini</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/bin:/bin</string>
+		<key>RELAY_BEACON_DIR</key>
+		<string>/Users/michaelmacmini/srv/zero-one-dao/beacon/public-base</string>
+		<key>RELAY_ENV_FILE</key>
+		<string>/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/sponsor.env</string>
+		<key>RELAY_HOST</key>
+		<string>127.0.0.1</string>
+		<key>RELAY_LOG</key>
+		<string>1</string>
+		<key>RELAY_PORT</key>
+		<string>18762</string>
+		<key>RELAY_STATE_DIR</key>
+		<string>/Users/michaelmacmini/srv/zero-one-dao/state/relay-base</string>
+		<key>ZERO_ONE_DEPLOYMENT</key>
+		<string>/private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json</string>
+		<key>ZERO_ONE_ORIGIN</key>
+		<string>https://mainnet-hostname-undecided.invalid</string>
+	</dict>
+	<key>KeepAlive</key>
+	<true/>
+	<key>Label</key>
+	<string>ai.mkyang.zero-one-relay-base</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/node</string>
+		<string>--import</string>
+		<string>tsx</string>
+		<string>/Users/michaelmacmini/srv/zero-one-dao/relay/server.ts</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs-base/relay.err.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs-base/relay.out.log</string>
+	<key>WorkingDirectory</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao</string>
+</dict>
+</plist>
+
+
+WRITE /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel-base.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>HOME</key>
+		<string>/Users/michaelmacmini</string>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/bin:/bin</string>
+	</dict>
+	<key>KeepAlive</key>
+	<true/>
+	<key>Label</key>
+	<string>ai.mkyang.zero-one-tunnel-base</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/cloudflared</string>
+		<string>tunnel</string>
+		<string>--config</string>
+		<string>/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/cloudflared.yml</string>
+		<string>run</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardErrorPath</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs-base/tunnel.err.log</string>
+	<key>StandardOutPath</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs-base/tunnel.out.log</string>
+	<key>WorkingDirectory</key>
+	<string>/Users/michaelmacmini/srv/zero-one-dao</string>
+</dict>
+</plist>
+
+
+DIRECTORIES: ["/Users/michaelmacmini/srv/zero-one-dao/state/relay-base", "/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base", "/Users/michaelmacmini/srv/zero-one-dao/beacon/public-base", "/Users/michaelmacmini/srv/zero-one-dao/state/logs-base", "/Users/michaelmacmini/Library/LaunchAgents"]
+WRITE ownership manifest /Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/installer.json (configuration only; no keys)
+
+COMMANDS:
+/usr/bin/env RELAY_STATE_DIR=/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/beacon-cache /opt/homebrew/bin/node /Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs /Users/michaelmacmini/srv/zero-one-dao/beacon/scripts/build.ts --deployment /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json --origin https://mainnet-hostname-undecided.invalid --out /Users/michaelmacmini/srv/zero-one-dao/beacon/public-base
+/usr/bin/env RELAY_STATE_DIR=/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/beacon-cache /opt/homebrew/bin/node /Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs /Users/michaelmacmini/srv/zero-one-dao/beacon/scripts/validate.ts --deployment /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json --out /Users/michaelmacmini/srv/zero-one-dao/beacon/public-base --no-fetch 1
+/opt/homebrew/bin/cloudflared tunnel create --credentials-file /Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/credentials.json zero-one-relay-base
+/opt/homebrew/bin/cloudflared tunnel --config /Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/cloudflared.yml ingress validate
+/opt/homebrew/bin/cloudflared tunnel route dns zero-one-relay-base mainnet-hostname-undecided.invalid
+launchctl bootstrap gui/501 /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay-base.plist
+launchctl bootstrap gui/501 /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel-base.plist
+/usr/bin/curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors --connect-timeout 10 --max-time 20 https://mainnet-hostname-undecided.invalid/health.json
+/usr/bin/env RELAY_STATE_DIR=/Users/michaelmacmini/srv/zero-one-dao/state/tunnel-base/beacon-cache /opt/homebrew/bin/node /Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs /Users/michaelmacmini/srv/zero-one-dao/beacon/scripts/validate.ts --deployment /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json --out /Users/michaelmacmini/srv/zero-one-dao/beacon/public-base
+
+README the relay would serve at /README.txt:
+NOT BUILT: build command above will create README.txt
+DRY-RUN COMPLETE: zero file writes; zero service/DNS/chain actions

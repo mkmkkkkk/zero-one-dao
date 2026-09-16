@@ -1,0 +1,20 @@
+{
+  "files": {
+    "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay.plist": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>HOME</key>\n\t\t<string>/Users/michaelmacmini</string>\n\t\t<key>HTTPS_PROXY</key>\n\t\t<string>http://127.0.0.1:7897</string>\n\t\t<key>NO_PROXY</key>\n\t\t<string>localhost,127.0.0.1,sepolia.base.org,mainnet.base.org</string>\n\t\t<key>PATH</key>\n\t\t<string>/opt/homebrew/bin:/usr/bin:/bin</string>\n\t\t<key>RELAY_BEACON_DIR</key>\n\t\t<string>beacon/public-phase5</string>\n\t\t<key>RELAY_ENV_FILE</key>\n\t\t<string>state/relay.env</string>\n\t\t<key>RELAY_LOG</key>\n\t\t<string>1</string>\n\t\t<key>RELAY_PORT</key>\n\t\t<string>18761</string>\n\t\t<key>RELAY_STATE_DIR</key>\n\t\t<string>state/relay-base-sepolia-phase5</string>\n\t\t<key>ZERO_ONE_DEPLOYMENT</key>\n\t\t<string>deployments/base-sepolia.json</string>\n\t</dict>\n\t<key>KeepAlive</key>\n\t<true/>\n\t<key>Label</key>\n\t<string>ai.mkyang.zero-one-relay</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/opt/homebrew/bin/node</string>\n\t\t<string>/Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs</string>\n\t\t<string>/Users/michaelmacmini/srv/zero-one-dao/relay/server.ts</string>\n\t</array>\n\t<key>RunAtLoad</key>\n\t<true/>\n\t<key>StandardErrorPath</key>\n\t<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs/relay.err.log</string>\n\t<key>StandardOutPath</key>\n\t<string>/Users/michaelmacmini/srv/zero-one-dao/state/logs/relay.out.log</string>\n\t<key>ThrottleInterval</key>\n\t<integer>10</integer>\n\t<key>WorkingDirectory</key>\n\t<string>/Users/michaelmacmini/srv/zero-one-dao</string>\n</dict>\n</plist>\n",
+    "/Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-tunnel.plist": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>Label</key><string>ai.mkyang.zero-one-tunnel</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/opt/homebrew/bin/cloudflared</string>\n\t\t<string>tunnel</string>\n\t\t<string>--config</string>\n\t\t<string>/Users/michaelmacmini/srv/zero-one-dao/state/tunnel/cloudflared.yml</string>\n\t\t<string>run</string>\n\t</array>\n\t<key>WorkingDirectory</key><string>/Users/michaelmacmini/srv/zero-one-dao</string>\n\t<key>EnvironmentVariables</key>\n\t<dict>\n\t\t<key>HOME</key><string>/Users/michaelmacmini</string>\n\t\t<key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin</string>\n\t\t<key>HTTPS_PROXY</key><string>http://127.0.0.1:7897</string>\n\t\t<key>NO_PROXY</key><string>localhost,127.0.0.1</string>\n\t</dict>\n\t<key>KeepAlive</key><true/>\n\t<key>RunAtLoad</key><true/>\n\t<key>ThrottleInterval</key><integer>10</integer>\n\t<key>StandardOutPath</key><string>/Users/michaelmacmini/srv/zero-one-dao/state/logs/tunnel.out.log</string>\n\t<key>StandardErrorPath</key><string>/Users/michaelmacmini/srv/zero-one-dao/state/logs/tunnel.err.log</string>\n</dict>\n</plist>\n",
+    "/Users/michaelmacmini/srv/zero-one-dao/state/tunnel/cloudflared.yml": "tunnel: 7c3f8269-6133-4b89-8a93-6a6c851f0d7a\ncredentials-file: /Users/michaelmacmini/srv/zero-one-dao/state/tunnel/7c3f8269-6133-4b89-8a93-6a6c851f0d7a.json\nprotocol: quic\nmetrics: 127.0.0.1:0\ningress:\n  - hostname: relay-zero.mkyang.ai\n    service: http://127.0.0.1:18761\n  - service: http_status:404\n"
+  },
+  "services": {
+    "ai.mkyang.zero-one-relay": {
+      "pid": "75957",
+      "runs": "4",
+      "state": "running"
+    },
+    "ai.mkyang.zero-one-tunnel": {
+      "pid": "35559",
+      "runs": "2",
+      "state": "running"
+    }
+  },
+  "listeners": "COMMAND   PID           USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME\nnode    75959 michaelmacmini   14u  IPv4 0x3e3b62b605db4398      0t0  TCP 127.0.0.1:18761 (LISTEN)\n"
+}

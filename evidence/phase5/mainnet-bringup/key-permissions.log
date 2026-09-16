@@ -1,0 +1,2 @@
+exit=1
+PREFLIGHT/INSTALL FAILED: sponsor key permissions must be 0600

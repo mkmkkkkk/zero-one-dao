@@ -1,0 +1,31 @@
+
+> zero-one-dao@0.1.0 beacon:validate
+> tsx beacon/scripts/validate.ts --deployment /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/deployment.json --out /private/var/folders/82/qv1s2cxn0bn1ylh48w7db60r0000gn/T/zero-one-mainnet-7wm49q_x/beacon --no-fetch 1
+
+   SKIPPED the live fetches against https://mainnet-hostname-undecided.invalid (--no-fetch); a beacon whose origin answers a bot challenge would pass this run
+{
+  "result": "PASS",
+  "fetched": "SKIPPED",
+  "origin": "https://mainnet-hostname-undecided.invalid",
+  "mirror": "https://zero-one-beacon.vercel.app",
+  "advertised": [
+    "/",
+    "/me/<address>.json",
+    "/pending.json",
+    "/proposals.json",
+    "/relay",
+    "/snippet.js",
+    "/snippet.py",
+    "/state.json"
+  ],
+  "readmeLines": 44,
+  "readmeLineLimit": 44,
+  "addressesWithCode": 16,
+  "proposals": 5,
+  "tasks": 0,
+  "members": 4,
+  "block": "46908961"
+}
+
+
+exit=0

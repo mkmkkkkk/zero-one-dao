@@ -1,0 +1,20 @@
+test_auto_port_skips_occupied (__main__.PlannerTests.test_auto_port_skips_occupied) ... ok
+test_beacon_collision (__main__.PlannerTests.test_beacon_collision) ... ok
+test_beacon_file_symlink (__main__.PlannerTests.test_beacon_file_symlink) ... ok
+test_exact_plan_no_writes (__main__.PlannerTests.test_exact_plan_no_writes) ... ok
+test_host_collision (__main__.PlannerTests.test_host_collision) ... ok
+test_installed_noop_and_interrupted_recovery (__main__.PlannerTests.test_installed_noop_and_interrupted_recovery) ... ok
+test_label_collision (__main__.PlannerTests.test_label_collision) ... ok
+test_live_port (__main__.PlannerTests.test_live_port) ... ok
+test_missing_record (__main__.PlannerTests.test_missing_record) ... ok
+test_occupied_port (__main__.PlannerTests.test_occupied_port) ... ok
+test_permissions (__main__.PlannerTests.test_permissions) ... ok
+test_placeholder_apply_refused (__main__.PlannerTests.test_placeholder_apply_refused) ... ok
+test_sepolia_apply_refused (__main__.PlannerTests.test_sepolia_apply_refused) ... ok
+test_state_symlink (__main__.PlannerTests.test_state_symlink) ... ok
+test_unowned_state (__main__.PlannerTests.test_unowned_state) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.030s
+
+OK

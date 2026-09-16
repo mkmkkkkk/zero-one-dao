@@ -742,3 +742,37 @@ governance is 21600/21600, nothing open. The lifecycle a stranger agent walks - 
 execute, ragequit - is now proven end to end on the code that ships, from the served README alone, across two machines.
 With the final clean-clone gate green and this closed, the testnet axis is done. Mainnet now waits only on the user: the
 line-by-line parameter confirmation and the 50 USDC plus deployer gas.
+
+## 2026-09-17 mainnet bring-up installer
+
+Steps 4–5 of MAINNET_PLAN now invoke `scripts/install-mainnet-services.py`. It discovers the two
+Sepolia jobs by launchd label and reads their actual plists and `state/tunnel/cloudflared.yml`, but
+never writes those files or targets those labels. The new relay uses `state/relay-base`, loopback
+on its own checked/persisted port, an explicit deployment and sponsor env-file path, and its own
+beacon directory. Both new jobs set HOME and KeepAlive. Build/validation caches are explicitly
+separate from relay request/T0 state. Dry-run is local reads only and prints the exact plan.
+
+**designQuestion — hostname:** PARAMETERS.md previously recorded only the Sepolia canonical host,
+not a separate mainnet DECIDE value. Added `mainnet-hostname-undecided.invalid` as an explicit DECIDE
+placeholder; `relay.zeroone.mkyang.ai` remains a candidate. Apply refuses the placeholder. No DNS
+record or hostname ownership is claimed by this rehearsal.
+
+**designQuestion — tunnel choice:** use a new named tunnel `zero-one-relay-base`, with the new label
+`ai.mkyang.zero-one-tunnel-base`, instead of modifying ingress on the running tunnel. This is the
+installer's proposed isolation choice; only dry-run is exercised here. QUIC follows the September 11
+outage ruling; DNS routing has no overwrite flag, and no registration/login flow is included.
+Existing Cloudflare origin authorization is required for a future approved apply.
+
+Unchanged, fully provisioned configurations are no-ops; missing own jobs can be recovered. A marker
+is ready only after all provisioning and public validation succeed, so a failed DNS operation is
+not silently skipped on rerun. Changed configuration while own jobs run is reported and refused,
+not an implicit restart. Existing nonempty unowned state or another chain/DAO identity is refused.
+No contract, constitution, CLAUDE principle, deployment record, secret or runtime state is committed.
+
+Receipts: `evidence/phase5/mainnet-bringup/`. Missing current mainnet record fails explicitly; a
+copied Sepolia record passes the dry-run, and its actually built and locally validated beacon is
+wired to RELAY_BEACON_DIR. The README still truthfully says Base Sepolia (84532). The static-serving
+module returns those exact bytes without starting a relay. Fifteen isolated tests include a red
+permission-guard mutation followed by the restored green suite. The existing pair's plist bytes,
+ingress bytes, listener, PIDs and launch counts are identical before/after. No mainnet service,
+public DNS or chain transaction was started. Public mainnet reachability remains untested.

@@ -1,0 +1,84 @@
+gui/501/ai.mkyang.zero-one-relay = {
+	active count = 1
+	path = /Users/michaelmacmini/Library/LaunchAgents/ai.mkyang.zero-one-relay.plist
+	type = LaunchAgent
+	state = running
+
+	program = /opt/homebrew/bin/node
+	arguments = {
+		/opt/homebrew/bin/node
+		/Users/michaelmacmini/srv/zero-one-dao/node_modules/tsx/dist/cli.mjs
+		/Users/michaelmacmini/srv/zero-one-dao/relay/server.ts
+	}
+
+	working directory = /Users/michaelmacmini/srv/zero-one-dao
+
+	stdout path = /Users/michaelmacmini/srv/zero-one-dao/state/logs/relay.out.log
+	stderr path = /Users/michaelmacmini/srv/zero-one-dao/state/logs/relay.err.log
+	inherited environment = {
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.nHDRxAAWny/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		RELAY_BEACON_DIR => beacon/public-phase5
+		RELAY_STATE_DIR => state/relay-base-sepolia-phase5
+		PATH => /opt/homebrew/bin:/usr/bin:/bin
+		NO_PROXY => localhost,127.0.0.1,sepolia.base.org,mainnet.base.org
+		RELAY_PORT => 18761
+		HTTPS_PROXY => http://127.0.0.1:7897
+		ZERO_ONE_DEPLOYMENT => deployments/base-sepolia.json
+		HOME => /Users/michaelmacmini
+		RELAY_LOG => 1
+		RELAY_ENV_FILE => state/relay.env
+		XPC_SERVICE_NAME => ai.mkyang.zero-one-relay
+	}
+
+	domain = gui/501 [100023]
+	asid = 100023
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 4
+	pid = 75957
+	immediate reason = inefficient
+	forks = 1
+	execs = 1
+	initialized = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	checked allocations = 0 (queried = 1)
+	checked allocations reason = no host
+	checked allocations flags = 0x0
+	last exit code = 143
+
+	resource coalition = {
+		ID = 897690
+		type = resource
+		state = active
+		active count = 1
+		name = ai.mkyang.zero-one-relay
+	}
+
+	jetsam coalition = {
+		ID = 897691
+		type = jetsam
+		state = active
+		active count = 1
+		name = ai.mkyang.zero-one-relay
+	}
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+
+	properties = keepalive | runatload | inferred program
+}

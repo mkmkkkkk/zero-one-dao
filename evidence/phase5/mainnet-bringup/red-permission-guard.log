@@ -1,0 +1,20 @@
+NEGATIVE CONTROL: disable only the 0600 guard in memory; no source file edited
+test_permissions (tests.PlannerTests.test_permissions) ... FAIL
+
+======================================================================
+FAIL: test_permissions (tests.PlannerTests.test_permissions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/michaelmacmini/srv/zero-one-dao/scripts/test-mainnet-installer.py", line 65, in test_permissions
+    self.fail('0600')
+    ~~~~~~~~~^^^^^^^^
+  File "/Users/michaelmacmini/srv/zero-one-dao/scripts/test-mainnet-installer.py", line 56, in fail
+    with self.assertRaisesRegex(ValueError, text):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.003s
+
+FAILED (failures=1)
+Expected RED observed: permissions test detects the missing guard

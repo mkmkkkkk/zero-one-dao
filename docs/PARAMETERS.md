@@ -159,3 +159,5 @@ Chain **84532** only. Record: `deployments/base-sepolia.json`; archived old addr
 | multiSend | `0xc48264D72D2228f94653D02bB845f9C00696BE66` |
 
 The native Sepolia K fixture uses its own mock asset and the official Sepolia Uniswap v3 dependencies, separately recorded in `evidence/testnet/phase5/K/pool.json`. This does not change the immutable pair of any mainnet venue.
+
+- Mainnet relay hostname = `mainnet-hostname-undecided.invalid`. **DECIDE** — dry-run placeholder only; confirm a separate hostname before installation. `relay.zeroone.mkyang.ai` is a candidate, not an approved value. The Sepolia canonical hostname remains unchanged.
