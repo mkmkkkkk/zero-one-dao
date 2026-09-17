@@ -776,3 +776,20 @@ module returns those exact bytes without starting a relay. Fifteen isolated test
 permission-guard mutation followed by the restored green suite. The existing pair's plist bytes,
 ingress bytes, listener, PIDs and launch counts are identical before/after. No mainnet service,
 public DNS or chain transaction was started. Public mainnet reachability remains untested.
+
+## 2026-09-17 mainnet bring-up installer accepted; launch hostname ruled
+Accepted and independently verified: scripts/install-mainnet-services.py stands up a second, isolated service pair
+(ai.mkyang.zero-one-relay-base + its tunnel ingress on quic) from deployments/base.json and a 0600 sponsor key, with a
+preflight that refuses a missing record, a taken port, an ingress collision, a non-0600 key, and the placeholder hostname.
+I checked the two safety-critical captures myself: the live Sepolia relay and tunnel plists are byte-identical before and
+after the dry-run (sepolia-before-after.diff empty, both after-*.txt IDENTICAL to before-*.txt), and the public Sepolia
+relay stayed 200 with pid unchanged. Launch-day bring-up is now one command instead of hand-assembly, which is where the
+2026-09-11 http2 tunnel outage and past port mistakes came from.
+Ruling on the hostname designQuestion: the mainnet relay launches on `relay.zeroone.mkyang.ai`, a subdomain of a domain
+already controlled via Cloudflare at no cost, ready now. It is not hard-to-reverse: the value lives only in the tunnel
+ingress and the beacon README, both regenerated on every build, nothing on-chain. A dedicated Zero One domain is a
+post-launch migration (the pattern Leviathan followed: launch on the mkyang subdomain, move the canonical host later), and
+buying one is a separate paid decision for the user whenever they want it. At launch the installer is run with
+`--hostname relay.zeroone.mkyang.ai`; its placeholder-refusal stays as defense in depth.
+This closes the last launch-day friction I can remove without funds. Everything that remains is the user's: confirm the
+parameter block, fund a deployer key with the computed gas floor, and bring 50 USDC for genesis.
