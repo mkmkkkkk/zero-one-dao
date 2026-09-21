@@ -1,0 +1,21 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v3.0.13)
+
+2026-09-21T13:08:38.094+08:00  INFO 58673 --- [           main] c.c.trailing.TrailingSlashApplication    : Starting TrailingSlashApplication using Java 17.0.20.1 with PID 58673 (/Users/michaelmacmini/Documents/Workspace/zero-one-dao/state/g3/build-3.0.13/target/spring-trailing-slash-compat-1.0.0.jar started by michaelmacmini in /Users/michaelmacmini/Documents/Workspace/zero-one-dao)
+2026-09-21T13:08:38.095+08:00  INFO 58673 --- [           main] c.c.trailing.TrailingSlashApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-09-21T13:08:38.356+08:00  INFO 58673 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 57605 (http)
+2026-09-21T13:08:38.359+08:00  INFO 58673 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-21T13:08:38.359+08:00  INFO 58673 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-09-21T13:08:38.381+08:00  INFO 58673 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-21T13:08:38.382+08:00  INFO 58673 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 269 ms
+2026-09-21T13:08:38.481+08:00  INFO 58673 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 57605 (http) with context path ''
+2026-09-21T13:08:38.487+08:00  INFO 58673 --- [           main] c.c.trailing.TrailingSlashApplication    : Started TrailingSlashApplication in 0.507 seconds (process running for 0.634)
+2026-09-21T13:08:38.497+08:00  INFO 58673 --- [.1-57605-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-21T13:08:38.497+08:00  INFO 58673 --- [.1-57605-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-21T13:08:38.498+08:00  INFO 58673 --- [.1-57605-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1",
+  "contract_id": "g3-schema-replay-example",
+  "chain_id": 84532,
+  "promisor": "0x40f89c277366424ED6Fb728A0D76376aa7aCE885",
+  "beneficiary": "0x808be63edCCa635c5B0F9b5C3cb2c44664CF8C95",
+  "patch": {
+    "artifact": "state/g3/build-3.0.13/target/spring-trailing-slash-compat-1.0.0.jar",
+    "sha256": "0x6c37cc597f2873488ed4897f8914e3f64ef38b340a55a0d727569e270c8ac068",
+    "source": "compat-foundry/java-spring-trailing-slash",
+    "spring_boot": "3.0.13"
+  },
+  "replays": [
+    {
+      "drift_id": "mvc-trailing-slash",
+      "command": [
+        "java",
+        "-jar",
+        "${artifact}",
+        "--compat.trailing-slash=true"
+      ],
+      "request": "GET /api/greeting/",
+      "normalization": "status-body-json-v1",
+      "expected_output_sha256": "0x716868d234176e31401bbeae3ed3f80e192143a33a0272b3b6550370cd685868"
+    }
+  ],
+  "bond": {
+    "amount_wei": "1000000000",
+    "currency": "Base Sepolia ETH",
+    "decimals": 18
+  },
+  "oracle": {
+    "kind": "named-runner",
+    "address": "0xd8304185a7b21a836bF9cC7F867E1c4108e9a301",
+    "runner_sha256": "0x010927181d6205941f10546606b87e514183faf8a1bae061fe6d9c54220352ce",
+    "evidence_commitment": "sha256-canonical-json-onchain-event",
+    "relay_validation": "unsupported-direct-testnet-client"
+  },
+  "starts_at": 1789967270,
+  "expires_at": 1789970870,
+  "release_condition": "pass-replay-after-expiry-and-dispute-window",
+  "slash_condition": "replay-output-or-artifact-hash-mismatch",
+  "dispute": {
+    "seconds": 6,
+    "policy": "oracle-rerun-fail-overrides-pass",
+    "unavailable_oracle": "locked-until-report"
+  }
+}

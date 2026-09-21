@@ -1,0 +1,305 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hash_",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address payable",
+          "name": "beneficiary_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "oracle_",
+          "type": "address"
+        },
+        {
+          "internalType": "uint64",
+          "name": "starts_",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "expires_",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint64",
+          "name": "dispute_",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "contractHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "bond",
+          "type": "uint256"
+        }
+      ],
+      "name": "Committed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "evidenceHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "failed",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "reportedAt",
+          "type": "uint64"
+        }
+      ],
+      "name": "Reported",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "contractHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "evidenceHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "slashed",
+          "type": "bool"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Settled",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "beneficiary",
+      "outputs": [
+        {
+          "internalType": "address payable",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "bond",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "contractHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "disputeSeconds",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "evidenceHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "expiresAt",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "failed",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oracle",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "promisor",
+      "outputs": [
+        {
+          "internalType": "address payable",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "fail_",
+          "type": "bool"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "evidence_",
+          "type": "bytes32"
+        }
+      ],
+      "name": "report",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "reportedAt",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "settle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "settled",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "startsAt",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x610180604052604051610b24380380610b248339810160408190526100239161023d565b4662014a341480610035575046617a69145b6100755760405162461bcd60e51b815260206004820152600c60248201526b746573746e6574206f6e6c7960a01b60448201526064015b60405180910390fd5b851580159061008357505f34115b6100c25760405162461bcd60e51b815260206004820152601060248201526f195b5c1d1e4818dbdb5b5a5d1b595b9d60821b604482015260640161006c565b6001600160a01b038516158015906100e357506001600160a01b0385163314155b80156100f757506001600160a01b03841615155b61012e5760405162461bcd60e51b81526020600482015260086024820152676964656e7469747960c01b604482015260640161006c565b826001600160401b0316826001600160401b0316118015610157575042826001600160401b0316115b61018c5760405162461bcd60e51b815260206004820152600660248201526565787069727960d01b604482015260640161006c565b60808690523360a0526001600160a01b0385811660c052841660e052346101008190526001600160401b03848116610120528381166101405282166101605260405190815286907fcc4c1525c958b2fb4f1467dc8ccd3c4d1837a460574a7980d2b9daa8dcc1507c9060200160405180910390a25050505050506102ab565b6001600160a01b038116811461021f575f5ffd5b50565b80516001600160401b0381168114610238575f5ffd5b919050565b5f5f5f5f5f5f60c08789031215610252575f5ffd5b8651955060208701516102648161020b565b60408801519095506102758161020b565b935061028360608801610222565b925061029160808801610222565b915061029f60a08801610222565b90509295509295509295565b60805160a05160c05160e051610100516101205161014051610160516107df6103455f395f8181610168015261034501525f81816101fe015261065e01525f818161027701526105e101525f81816101a20152818161041e01526104df01525f81816101d7015261056001525f818161012901526103ef01525f81816102ab01526103c901525f8181610247015261050401526107df5ff3fe608060405234801561000f575f5ffd5b50600436106100e5575f3560e01c80638622a68911610088578063a30fdc8e11610063578063a30fdc8e14610269578063af46868214610272578063ba414fa614610299578063c2d8de54146102a6575f5ffd5b80638622a689146101f95780638f77583914610220578063904c609414610242575f5ffd5b806343c19d6b116100c357806343c19d6b1461016357806347b6ec101461018a57806364c9ec6f1461019d5780637dc0d1d0146101d2575f5ffd5b80630a64cc54146100e957806311da60b41461011a57806338af3eed14610124575b5f5ffd5b5f546100fc9067ffffffffffffffff1681565b60405167ffffffffffffffff90911681526020015b60405180910390f35b6101226102cd565b005b61014b7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b039091168152602001610111565b6100fc7f000000000000000000000000000000000000000000000000000000000000000081565b610122610198366004610756565b610555565b6101c47f000000000000000000000000000000000000000000000000000000000000000081565b604051908152602001610111565b61014b7f000000000000000000000000000000000000000000000000000000000000000081565b6100fc7f000000000000000000000000000000000000000000000000000000000000000081565b60025461023290610100900460ff1681565b6040519015158152602001610111565b6101c47f000000000000000000000000000000000000000000000000000000000000000081565b6101c460015481565b6100fc7f000000000000000000000000000000000000000000000000000000000000000081565b6002546102329060ff1681565b61014b7f000000000000000000000000000000000000000000000000000000000000000081565b600254610100900460ff161580156102ef57505f5467ffffffffffffffff1615155b6103345760405162461bcd60e51b81526020600482015260116024820152701b9bc81c995cdd5b1d0bdcd95d1d1b1959607a1b60448201526064015b60405180910390fd5b5f5461036d9067ffffffffffffffff7f000000000000000000000000000000000000000000000000000000000000000081169116610784565b4210156103ad5760405162461bcd60e51b815260206004820152600e60248201526d646973707574652077696e646f7760901b604482015260640161032b565b6002805461ff00198116610100179091555f9060ff166103ed577f000000000000000000000000000000000000000000000000000000000000000061040f565b7f00000000000000000000000000000000000000000000000000000000000000005b90505f816001600160a01b03167f00000000000000000000000000000000000000000000000000000000000000006040515f6040518083038185875af1925050503d805f811461047a576040519150601f19603f3d011682016040523d82523d5f602084013e61047f565b606091505b50509050806104bb5760405162461bcd60e51b81526020600482015260086024820152673a3930b739b332b960c11b604482015260640161032b565b6001546002546040805160ff909216151582526001600160a01b03851660208301527f0000000000000000000000000000000000000000000000000000000000000000908201527f0000000000000000000000000000000000000000000000000000000000000000907fbee7d571d2e06de7339a81ad0399d7cc4d1722035cec1da60789efc31fc33dc39060600160405180910390a35050565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161480156105955750600254610100900460ff16155b80156105a4575060025460ff16155b6105df5760405162461bcd60e51b815260206004820152600c60248201526b6f7261636c652f737461746560a01b604482015260640161032b565b7f000000000000000000000000000000000000000000000000000000000000000067ffffffffffffffff16421015801561061857508015155b6106555760405162461bcd60e51b815260206004820152600e60248201526d195d9a59195b98d94bdcdd185c9d60921b604482015260640161032b565b818061069f57507f000000000000000000000000000000000000000000000000000000000000000067ffffffffffffffff16421015801561069f57505f5467ffffffffffffffff16155b6106e15760405162461bcd60e51b81526020600482015260136024820152727061737320617420657870697279206f6e6c7960681b604482015260640161032b565b60018190556002805460ff19168315159081179091555f805467ffffffffffffffff19164267ffffffffffffffff1690811790915560408051928352602083019190915282917fa0f2871d793d3aa0ec19e26b61b842967547eecec8acad294414999f9346eea1910160405180910390a25050565b5f5f60408385031215610767575f5ffd5b82358015158114610776575f5ffd5b946020939093013593505050565b808201808211156107a357634e487b7160e01b5f52601160045260245ffd5b9291505056fea2646970667358221220bd649ebe41f45b7b87f912220c02189c2cc749b1194c91c124a0bd6cf533fda564736f6c63430008240033",
+  "compiler": "0.8.36+commit.8a079791.Emscripten.clang",
+  "sourceSha256": "0xa59a7fb33f98f70dd1a4dbd8c690dbe1febdc6cc395611dd45b21ef8df27a946"
+}

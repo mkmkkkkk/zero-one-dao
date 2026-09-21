@@ -1,0 +1,11 @@
+[
+  {
+    "file": "example.contract.json",
+    "valid": true
+  },
+  {
+    "file": "invalid.contract.json",
+    "valid": false,
+    "reason": "84532 was expected"
+  }
+]

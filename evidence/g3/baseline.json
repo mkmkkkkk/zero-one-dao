@@ -1,0 +1,12 @@
+{
+  "observed": {
+    "status": 200,
+    "body": "Hello from legacy route"
+  },
+  "sha256": "0x716868d234176e31401bbeae3ed3f80e192143a33a0272b3b6550370cd685868",
+  "artifact": {
+    "version": "2.7.18",
+    "path": "state/g3/build-2.7.18/target/spring-trailing-slash-compat-1.0.0.jar",
+    "sha256": "0x26271b4ec39b61c9c9f8f160bd234acb7ec413c652050a1ce077706c22838ef9"
+  }
+}

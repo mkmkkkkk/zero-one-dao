@@ -1,0 +1,21 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v3.0.13)
+
+2026-09-21T13:11:34.209+08:00  INFO 59508 --- [           main] c.c.trailing.TrailingSlashApplication    : Starting TrailingSlashApplication using Java 17.0.20.1 with PID 59508 (/Users/michaelmacmini/Documents/Workspace/zero-one-dao/state/g3/build-3.0.13/target/spring-trailing-slash-compat-1.0.0.jar started by michaelmacmini in /Users/michaelmacmini/Documents/Workspace/zero-one-dao)
+2026-09-21T13:11:34.210+08:00  INFO 59508 --- [           main] c.c.trailing.TrailingSlashApplication    : No active profile set, falling back to 1 default profile: "default"
+2026-09-21T13:11:34.471+08:00  INFO 59508 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 58623 (http)
+2026-09-21T13:11:34.475+08:00  INFO 59508 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-21T13:11:34.475+08:00  INFO 59508 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-09-21T13:11:34.498+08:00  INFO 59508 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-21T13:11:34.498+08:00  INFO 59508 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 272 ms
+2026-09-21T13:11:34.604+08:00  INFO 59508 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 58623 (http) with context path ''
+2026-09-21T13:11:34.609+08:00  INFO 59508 --- [           main] c.c.trailing.TrailingSlashApplication    : Started TrailingSlashApplication in 0.511 seconds (process running for 0.638)
+2026-09-21T13:11:34.843+08:00  INFO 59508 --- [.1-58623-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-21T13:11:34.843+08:00  INFO 59508 --- [.1-58623-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-21T13:11:34.844+08:00  INFO 59508 --- [.1-58623-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms

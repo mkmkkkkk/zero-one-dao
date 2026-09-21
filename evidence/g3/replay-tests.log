@@ -1,0 +1,13 @@
+test_disabled_repair_fails (__main__.BehaviorTests.test_disabled_repair_fails) ... {"verdict": "fail", "evidence_hash": "0x88754d50294617fb6f14d45f747c70138aa5dc2cb2f80138bb5f94d72af81ed3"}
+ok
+test_invalid_contracts (__main__.BehaviorTests.test_invalid_contracts) ... ok
+test_missing_artifact_blocks (__main__.BehaviorTests.test_missing_artifact_blocks) ... ok
+test_repaired_artifact_passes (__main__.BehaviorTests.test_repaired_artifact_passes) ... {"verdict": "pass", "evidence_hash": "0x0d88e5273be14a9f4041995a3bf1e0caa096084a75249b66b144eae495558dc8"}
+ok
+test_replaced_artifact_fails_without_execution (__main__.BehaviorTests.test_replaced_artifact_fails_without_execution) ... ok
+test_valid_contract (__main__.BehaviorTests.test_valid_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.541s
+
+OK

@@ -1,0 +1,32 @@
+[
+  {
+    "mode": "release",
+    "address": "0xc78ddb609c88455befd48fd15e00e082c9412d69",
+    "contract_hash": "0x15ee138cb05efcfc2d7af740652419988c2f2ea5c86a13404a9382b2b0b1bcc6",
+    "evidence_hash": "0x918eb3cf6377236b6d492e4eafb27d63fa9eb343c2c94c15b05d5527033457c6",
+    "commit_tx": "0x6b0dfecac54f9a6f762940f5e7f380435d0985625c4180c3c93d66f5ebb32644",
+    "report_tx": "0xbfc110045ee40acd558937578568103f9c1ecc4bb8405d94d5a3d30fe8b7f75c",
+    "settlement_tx": "0x63c383d6bb4a8a2a6df4ba7fd447ff14c3110b8ec403316de65eb71b96ea1719",
+    "recipient": "0x40f89c277366424ED6Fb728A0D76376aa7aCE885",
+    "before_wei": "6908768990784",
+    "after_wei": "6909768990784",
+    "payout_wei": "1000000000",
+    "escrow_after_wei": "0",
+    "verified": true
+  },
+  {
+    "mode": "slash",
+    "address": "0xa719de324da315cb7de52b9fba0b1199741bb53f",
+    "contract_hash": "0x6d802c068ea4b944afad5a71d2995ca3d0fd01660b69e9aea042906d6695ac04",
+    "evidence_hash": "0x5baba808554e082dbbc177b850aa199773617189700a094aec4017e263378747",
+    "commit_tx": "0x195989c5b104e24590e87d38f728ca3dfdd01925a730a7131cb0859b1a5528b1",
+    "report_tx": "0xa3043b6c6c416818fdc1e57dc927ad07aaa206469ab64be6330813363b48e6b1",
+    "settlement_tx": "0x8e73149f53b8a4437ea0449946fd34e9ec2b08a18329ec0fb920f3e6a125fb69",
+    "recipient": "0x808be63edCCa635c5B0F9b5C3cb2c44664CF8C95",
+    "before_wei": "0",
+    "after_wei": "1000000000",
+    "payout_wei": "1000000000",
+    "escrow_after_wei": "0",
+    "verified": true
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "passed": 9,
+  "checks": [
+    "unauthorized oracle rejected",
+    "pass before expiry rejected",
+    "no-result settlement rejected",
+    "early dispute settlement rejected",
+    "pass release exact bond, escrow empty",
+    "duplicate settlement rejected",
+    "failure overrides pass and cannot be erased",
+    "wrong contract hash rejected by client",
+    "slash transfers exact bond to beneficiary, escrow empty"
+  ],
+  "compiler": "0.8.36+commit.8a079791.Emscripten.clang",
+  "source_sha256": "0xa59a7fb33f98f70dd1a4dbd8c690dbe1febdc6cc395611dd45b21ef8df27a946"
+}

@@ -1,0 +1,10 @@
+PASS unauthorized oracle rejected
+PASS pass before expiry rejected
+PASS no-result settlement rejected
+PASS early dispute settlement rejected
+PASS pass release exact bond, escrow empty
+PASS duplicate settlement rejected
+PASS failure overrides pass and cannot be erased
+PASS wrong contract hash rejected by client
+PASS slash transfers exact bond to beneficiary, escrow empty
+owned anvil stopped

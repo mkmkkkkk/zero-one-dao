@@ -1,0 +1,21 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '0xfe15a31a2ad6f1772724a40689032940166971c455a530791b81a30d6b5ea51b'
+- '0x0000000000000000000000000000000000000000000000000000000000000000'
+
+    at file:///Users/michaelmacmini/Documents/Workspace/zero-one-dao/scripts/behavior/verify-sepolia.mjs:34:12
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '0xfe15a31a2ad6f1772724a40689032940166971c455a530791b81a30d6b5ea51b',
+  expected: '0x0000000000000000000000000000000000000000000000000000000000000000',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v26.5.0

@@ -1,0 +1,14 @@
+[
+  {
+    "original": "../compat-foundry/java-spring-trailing-slash/pom.xml",
+    "snapshot": "evidence/g3/fixture/pom.xml",
+    "sha256": "0xe5a14d20115fe2948cd419db71daa5d32e15bf52ce933db222da541e5f8b690a",
+    "identical": true
+  },
+  {
+    "original": "../compat-foundry/java-spring-trailing-slash/src/main/java/com/compatfoundry/trailing/TrailingSlashApplication.java",
+    "snapshot": "evidence/g3/fixture/src/main/java/com/compatfoundry/trailing/TrailingSlashApplication.java",
+    "sha256": "0x6760dcc469df45eff54a9cc8eec477844446268d3ad5578820ec25ea12e0ad3f",
+    "identical": true
+  }
+]
