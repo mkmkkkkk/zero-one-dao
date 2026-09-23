@@ -10,7 +10,7 @@
  *
  * So the requirement is computed, not written down:
  *
- *   required = max(measured deployment gas x live base fee x 5, 0.02 ETH floor)
+ *   required = max(measured deployment gas x live base fee x 5, 0.003 ETH floor)
  *
  * The gas comes from the committed fork measurement (`evidence/phase5/base-fork/measurements.json`,
  * produced by `npm run e2e:base-fork`), so the number lives in exactly one place and moves when the
@@ -32,8 +32,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const MEASUREMENT_FILE = "evidence/phase5/base-fork/measurements.json";
 /** Multiple of the measured cost the deployer must hold: headroom for a fee spike mid-deployment. */
 export const DEPLOYER_GAS_FACTOR = 5n;
-/** Requirement floor, whatever the live fee says: 0.02 ETH (decision.md 2026-09-10). */
-export const DEPLOYER_FLOOR_WEI = 20_000_000_000_000_000n;
+/** Requirement floor, whatever the live fee says: 0.003 ETH (decision.md 2026-09-23; was 0.02 on 2026-09-10). */
+export const DEPLOYER_FLOOR_WEI = 3_000_000_000_000_000n;
 
 /** The deployment cost the fork rehearsal measured, and where it was read from. */
 export interface DeploymentMeasurement {

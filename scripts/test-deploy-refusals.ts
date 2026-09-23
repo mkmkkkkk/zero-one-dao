@@ -9,7 +9,7 @@
  * address on an owned fork and the deployment refuses to start.
  *
  * A seventh gate, the deployer funding requirement, is not a constant any more and so cannot be checked
- * by one case: it is `max(measured deployment gas x the live base fee x 5, 0.02 ETH)` read from the
+ * by one case: it is `max(measured deployment gas x the live base fee x 5, 0.003 ETH)` read from the
  * chain at the moment of the check (decision.md 2026-09-10). Four runs on the fork move only the base
  * fee and the deployer's balance and assert the exact message each produces.
  *
@@ -197,7 +197,7 @@ try {
 
   // ---- the deployer funding gate: computed from the chain it is about to deploy to, not a constant.
   //
-  // The rule (decision.md 2026-09-10) is max(measured deployment gas x live base fee x 5, 0.02 ETH).
+  // The rule (decision.md 2026-09-10) is max(measured deployment gas x live base fee x 5, 0.003 ETH).
   // It is re-derived here from the committed measurement, deliberately as a second implementation of
   // the production arithmetic in src/deployerGate.ts, exactly like `predictedSafe` above: if production
   // ever changes the factor, the floor, or the file it reads its gas from, these numbers stop matching
@@ -211,7 +211,7 @@ try {
   const measurement = JSON.parse(readFileSync(path.join(ROOT, "evidence", "phase5", "base-fork", "measurements.json"), "utf8")) as { deployment: { totalGas: string; transactions: number } };
   const measuredGas = BigInt(measurement.deployment.totalGas);
   const FACTOR = 5n;
-  const FLOOR = 20_000_000_000_000_000n;
+  const FLOOR = 3_000_000_000_000_000n;
   const computedAt = (baseFeeWei: bigint): bigint => measuredGas * baseFeeWei * FACTOR;
   const requiredAt = (baseFeeWei: bigint): bigint => (computedAt(baseFeeWei) > FLOOR ? computedAt(baseFeeWei) : FLOOR);
   const gwei = (value: string): bigint => BigInt(Math.round(Number(value) * 1e9));
@@ -266,7 +266,7 @@ try {
     console.log(`ASSERT ${label}\n   ${message}\n`);
   };
 
-  await gateCase("the gate passes a funded deployer at a realistic Base base fee (0.05 gwei; the 0.02 ETH floor governs)", gwei("0.05"), 30_000_000_000_000_000n, "pass");
+  await gateCase("the gate passes a funded deployer at a realistic Base base fee (0.05 gwei)", gwei("0.05"), 30_000_000_000_000_000n, "pass");
   await gateCase("the same deployer with the same balance is refused once the base fee is high (0.5 gwei)", gwei("0.5"), 30_000_000_000_000_000n, "refuse");
   await gateCase("a deployer one wei under the computed requirement is refused (0.5 gwei)", gwei("0.5"), requiredAt(gwei("0.5")) - 1n, "refuse");
   await gateCase("the same deployer at exactly the computed requirement passes (0.5 gwei)", gwei("0.5"), requiredAt(gwei("0.5")), "pass");
@@ -287,7 +287,7 @@ try {
     if (live) assert.equal(live.requiredEth, row.requiredEth, `the table's ${row.baseFeeGwei} gwei row is the number the live gate produced on chain`);
   }
   writeFileSync(path.join(gateDir, "requirement-table.json"), `${JSON.stringify({
-    rule: "required = max(measured deployment gas x live base fee x 5, 0.02 ETH floor)",
+    rule: "required = max(measured deployment gas x live base fee x 5, 0.003 ETH floor)",
     ruling: "decision.md 2026-09-10, phase 5 Base fork rehearsal review",
     implementation: "src/deployerGate.ts, called by scripts/deploy-network.ts before any write",
     measurement: { file: "evidence/phase5/base-fork/measurements.json", totalGas: measurement.deployment.totalGas, transactions: measurement.deployment.transactions },

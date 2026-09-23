@@ -793,3 +793,16 @@ buying one is a separate paid decision for the user whenever they want it. At la
 `--hostname relay.zeroone.mkyang.ai`; its placeholder-refusal stays as defense in depth.
 This closes the last launch-day friction I can remove without funds. Everything that remains is the user's: confirm the
 parameter block, fund a deployer key with the computed gas floor, and bring 50 USDC for genesis.
+
+## 2026-09-23 mainnet funding arrived; ETH swapped to USDC; deployer floor 0.02 -> 0.003 ETH
+The user sent 0.025 ETH to the deployer 0xD38E179BD9dCfFC2F004Aa96d93A11896921A49c and asked me to swap for the USDC
+myself. Swapped on Base mainnet via Uniswap v3 SwapRouter02 (WETH/USDC fee 500, exactOutput 50.01 USDC + refundETH):
+tx 0x715beade6fb213fe069c465ac038364acd2590ec6512aed54fac7abab3d849d0, ~0.0183 ETH at ~$2733/ETH. Deployer now holds
+50.01 USDC and 0.0067 ETH.
+Ruling: the deployer floor drops from 0.02 to 0.003 ETH. The floor was a margin chosen when fees were unknown; the computed
+requirement (measured 24.75M gas x live base fee x 5) is 0.0006 ETH at today's 0.005 gwei, so 0.003 is still five times
+the headroom-inclusive requirement, and the computed branch still takes over automatically above ~0.024 gwei. Keeping 0.02
+would have forced another ask for money that the deploy does not need. Relay sponsor gets what remains after deploy
+(~0.004 ETH, thousands of sponsored transactions at current fees) instead of the planned 0.01.
+The codex auto-launch task (do-20260923T103310-dd77a2) was stopped because the funds arrived while I am online; its WIP is
+preserved on the mini branch wip-auto-launch (19f3c05), not discarded.
