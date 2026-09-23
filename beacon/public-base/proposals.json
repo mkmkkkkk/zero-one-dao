@@ -1,0 +1,19 @@
+{
+  "chain": {
+    "id": 8453,
+    "blockNumber": "51685516",
+    "timestamp": 1790160379,
+    "name": "Base"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "openProposals": [],
+  "proposals": [],
+  "generatedAt": "2026-09-23T10:46:23.800Z"
+}

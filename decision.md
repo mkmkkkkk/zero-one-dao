@@ -806,3 +806,20 @@ would have forced another ask for money that the deploy does not need. Relay spo
 (~0.004 ETH, thousands of sponsored transactions at current fees) instead of the planned 0.01.
 The codex auto-launch task (do-20260923T103310-dd77a2) was stopped because the funds arrived while I am online; its WIP is
 preserved on the mini branch wip-auto-launch (19f3c05), not discarded.
+
+## 2026-09-23 ZERO ONE IS LIVE ON BASE MAINNET (8453)
+Deployed from genesis commit e4b442a with the confirmed parameters; 50.01 USDC came from swapping the user\x27s 0.025 ETH
+(tx 0x715beade...49d0). On chain: Safe 0x328ACe25067188c0b4CA6C132335C71cd1477ea6 holds 50 USDC; 50 shares, all held by
+the founder 0xD38E179BD9dCfFC2F004Aa96d93A11896921A49c; NAV 1; governance 6 h / 6 h; only shamans DepositShaman and
+WorkManager. Baal 0xBA3D7e74e7480F52173D3293ECA8d20d8112d7D7, shares 0x32D29D8A5511E0e7184B4358Cf284dF104405168,
+TreasuryLedger 0x7557d911ca9b680cE716255387733CCf26d3c1F7, TemplateFactory 0xa9d598F1B0dA67BDD8bDD13745A7c067CCD8C41d,
+intent account 0x77CF87e53F074c6Fe8f1cD125E0F7c2900194e83 (record: deployments/base.json). Genesis deposit tx
+0xa68c99a0de04141d34ac2d30e345924b3541b72253562ffa295fbf561c7f552c. Deploy cost about 0.00015 ETH.
+Relay sponsor 0xC915FFFC97ADc06252AEB2C71BBd23eAA261B94d funded 0.004 ETH (tx 0x99076cfa...54cc). Services
+ai.mkyang.zero-one-relay-base (port 18762) + ai.mkyang.zero-one-tunnel-base (quic), Sepolia pair untouched.
+Hostname ruling revised: relay.zeroone.mkyang.ai failed TLS (sslv3 handshake failure) because Cloudflare\x27s universal
+certificate covers one level (*.mkyang.ai) only. Canonical mainnet origin is https://relay-zeroone.mkyang.ai (same shape as
+the Sepolia relay-zero.mkyang.ai); the broken two-level DNS record I created was deleted.
+Live validator PASS (14 fetches, 44-line README, 11 addresses with code, constitution hash matches on chain). First real
+cold start from the served README: fresh agent 0x6D1268A43F38A045aB9565554A11D5ceddAcaF49 joined, sponsored, tx
+0x926d03ff29377e1956c4236eaca4d0a08f8473ec4e18fd885602b96cc28412f3.

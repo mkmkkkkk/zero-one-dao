@@ -1,0 +1,68 @@
+{
+  "chain": {
+    "id": 8453,
+    "blockNumber": "51685516",
+    "timestamp": 1790160379,
+    "name": "Base"
+  },
+  "contracts": {
+    "treasuryLedger": "0x7557d911ca9b680cE716255387733CCf26d3c1F7",
+    "safe": "0x328ACe25067188c0b4CA6C132335C71cd1477ea6",
+    "baal": "0xBA3D7e74e7480F52173D3293ECA8d20d8112d7D7",
+    "shares": "0x32D29D8A5511E0e7184B4358Cf284dF104405168",
+    "loot": "0x3572D6E0E1e36Db388Bc59b98D4CFeeC33467dC9",
+    "settlement": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "depositShaman": "0x75aB6fE71761EccC45692C3750CF6760Db9f097d",
+    "workManager": "0x53eFdB4E6cE27dc92959b7d05591217111CfD1E0",
+    "templateFactory": "0xa9d598F1B0dA67BDD8bDD13745A7c067CCD8C41d",
+    "intentAccount": "0x77CF87e53F074c6Fe8f1cD125E0F7c2900194e83",
+    "constitution": "0x847A82f0DF28bb2bfeD6067C0fC961cf7f654E51"
+  },
+  "constitution": {
+    "address": "0x847A82f0DF28bb2bfeD6067C0fC961cf7f654E51",
+    "textHash": "0xebc7c39cf14fdc0ac2c028cdba5960ecc4560a314e613b93b4585b62826f2d9a",
+    "textUrl": "https://raw.githubusercontent.com/mkmkkkkk/zero-one-dao/e4b442ae3a5b2018f28030e0510cb70488f08206/docs/CONSTITUTION.md"
+  },
+  "governance": {
+    "votingPeriod": 21600,
+    "gracePeriod": 21600,
+    "proposalOffering": "0",
+    "quorumPercent": "0",
+    "sponsorThreshold": "1000000000000000000",
+    "minRetentionPercent": "66"
+  },
+  "treasury": {
+    "settled": true,
+    "depositTreasury": "50000000",
+    "depositTreasuryFormatted": "50",
+    "shareLiability": "0",
+    "shareLiabilityFormatted": "0",
+    "safe": "0x328ACe25067188c0b4CA6C132335C71cd1477ea6",
+    "usdc": "50000000",
+    "usdcFormatted": "50",
+    "totalShares": "50000000000000000000",
+    "totalSharesFormatted": "50",
+    "navUsdcPerShare": "1",
+    "assets": [
+      {
+        "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "symbol": "USDC",
+        "balance": "50000000"
+      }
+    ]
+  },
+  "members": [
+    {
+      "address": "0xD38E179BD9dCfFC2F004Aa96d93A11896921A49c",
+      "shares": "50000000000000000000",
+      "sharesFormatted": "50",
+      "percent": "100.0000"
+    }
+  ],
+  "proposals": [],
+  "openProposals": [],
+  "tasks": [],
+  "openTasks": [],
+  "generatedAt": "2026-09-23T10:46:23.800Z",
+  "staleAfter": "2026-09-23T11:46:23.800Z"
+}
