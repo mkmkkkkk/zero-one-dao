@@ -1,0 +1,81 @@
+Baal submission {"status": "1", "message": "OK", "result": "kjjrh6ccy9vdwwm76ks2adqw2sqtcydlbbj9diigjvdxe8fhmi"}
+Baal verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Baal verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Baal verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Baal verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+Baal source-present True
+MultiSendCallOnly submission {"status": "1", "message": "OK", "result": "fwlhzyvnqqgjrzvkskddumtbhfzshud86ttjzucmequub1vdbt"}
+MultiSendCallOnly verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+MultiSendCallOnly verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+MultiSendCallOnly verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+MultiSendCallOnly verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+MultiSendCallOnly source-present True
+NavShareToken submission {"status": "1", "message": "OK", "result": "h83nzavygrgi3hifbsquvfsgk6vwdt7gjxguuxdc8g6zqnpjhd"}
+NavShareToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+NavShareToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+NavShareToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+NavShareToken verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+NavShareToken source-present True
+LootToken submission {"status": "1", "message": "OK", "result": "qiwjwffg8pgrb2as8fpengk3f5y3ljfm1pft623s7shw7sqaza"}
+LootToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+LootToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+LootToken verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+LootToken verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+LootToken source-present True
+TreasuryLedger submission {"status": "1", "message": "OK", "result": "tpc628pu5rgdwpivrmn7k6dx8nzpvmfp3crrkuny5cxbkuwtdc"}
+TreasuryLedger verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TreasuryLedger verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TreasuryLedger verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+TreasuryLedger source-present True
+DepositShaman submission {"status": "1", "message": "OK", "result": "x6sxi2fm4tfylni1p6sfbffnmfzirwgbezv2eneed7tjx9vigp"}
+DepositShaman verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+DepositShaman verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+DepositShaman verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+DepositShaman verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+DepositShaman source-present True
+WorkManager submission {"status": "1", "message": "OK", "result": "gufaqt3abjy4vwdydx7ckyzryesy1hjlgpdjuv4zhqjteajqr3"}
+WorkManager verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+WorkManager verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+WorkManager verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+WorkManager verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+WorkManager source-present True
+PaymentDeployer submission {"status": "1", "message": "OK", "result": "xdmrmvhfa4kzzzkeshuwl8gbrtvm7qkdsyepqkyk2rdasqnk5k"}
+PaymentDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+PaymentDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+PaymentDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+PaymentDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+PaymentDeployer source-present True
+StrategyDeployer submission {"status": "1", "message": "OK", "result": "qizz4qhfqy5knqjcvwa4awq67bfqtmtrqnm2h3x7gepy8pmmhz"}
+StrategyDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+StrategyDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+StrategyDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+StrategyDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+StrategyDeployer source-present True
+ProjectDeployer submission {"status": "1", "message": "OK", "result": "jtrdktjucyhtr4x7z1nidjdayryq6awgch7nptqyprqsynqt52"}
+ProjectDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ProjectDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ProjectDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ProjectDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ProjectDeployer source-present True
+ConfigDeployer submission {"status": "1", "message": "OK", "result": "tmjzdubjemu3wawhtibaaamj9yhsvz5np4q2azfxkk8hq6sbag"}
+ConfigDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ConfigDeployer verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ConfigDeployer verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ConfigDeployer source-present True
+TemplateFactory submission {"status": "1", "message": "OK", "result": "cukheqefeuuwpccch9w9i7bpumuldcb6k5ptvjuiz9dvvkcnqv"}
+TemplateFactory verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TemplateFactory verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TemplateFactory verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+TemplateFactory verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+TemplateFactory source-present True
+ZeroOneIntentAccount submission {"status": "1", "message": "OK", "result": "v8aijjzqr6maneh7etbu7k3erqt5u366rq5xd5j52ki9baxtbi"}
+ZeroOneIntentAccount verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ZeroOneIntentAccount verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+ZeroOneIntentAccount verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+ZeroOneIntentAccount source-present True
+Constitution submission {"status": "1", "message": "OK", "result": "cvad6ped6wa1ksh2e4e5sx6xgeimt5ncfsd9jciv6a2klyf9es"}
+Constitution verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Constitution verification-status {"status": "0", "message": "NOTOK", "result": "Pending in queue"}
+Constitution verification-status {"status": "1", "message": "OK", "result": "Pass - Verified"}
+Constitution source-present True
+{"Baal": "verified", "MultiSendCallOnly": "verified", "NavShareToken": "verified", "LootToken": "verified", "TreasuryLedger": "verified", "DepositShaman": "verified", "WorkManager": "verified", "PaymentDeployer": "verified", "StrategyDeployer": "verified", "ProjectDeployer": "verified", "ConfigDeployer": "verified", "TemplateFactory": "verified", "ZeroOneIntentAccount": "verified", "Constitution": "verified"}
